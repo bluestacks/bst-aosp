@@ -1,43 +1,54 @@
 # 定制 Registry
 
-把 `-a13`（win）/`-mac`（mac）BlueStacks fork 相对**上游 android-13** 的定制，port 到 **android-16.0.0_r4** 的权威进度表。机器可读同数据：[registry.json](registry.json)。
+把 `-a13`（win）/`-mac`（mac）BlueStacks fork 相对**上游 android-13** 的定制 port 到 **android-16.0.0_r4** 的权威进度表。机器可读：[registry.json](registry.json)（289 项，Phase 0 自动 triage 生成）。
 
-- **base_from**：android-13（`-a13`/`-mac` fork）
-- **base_to**：android-16.0.0_r4
-- **平台**：win 先行、mac 跟进
-- **初始定制集**：Phase 0 由**自动 diff fork vs 上游 android-13** 导入。
+## 方法与基线（重要）
 
-## 定制表
+- 对每个子模块计算「最新 `android-13.0.0_r*` tag .. HEAD」的偏离提交数 `since`，并统计 `--author=bluestacks` 的提交数 `bst`。
+- **`bst>0` = 真定制（高置信）**；`bst=0` = 待复查（标签漂移或作者过滤未命中）。
+- **win 基线 = `android-13.0.0_r49`**（偏离小，since 可参考）。
+- **mac 基线 = `android-13.0.0_r83`（漂移严重）**——mac 大量 `bst=0` 但 `since` 巨大（cts=36 万、system/core=4.6 万…）= 上游分支跟踪噪声，**非定制**；mac 一律以 `bst>0` 为准。
+- ⚠️ 作者过滤 `--author=bluestacks` 可能漏掉非 bluestacks 邮箱的 mac 提交；mac 的 `bst=0` device/frameworks 仓库 port 前需人工复查。
 
-> 占位——Phase 0 diff 导入后填充。每行一条定制。
+## 汇总
 
-| id | platform | area | summary | phase | port_status | verified_layers | host_compat | notes |
-|---|---|---|---|---|---|---|---|---|
-| _（待 Phase 0 导入）_ | | | | | | | | |
+| 平台 | 总非vanilla | bst>0(真定制) | bst=0(待复查) |
+|---|---|---|---|
+| win (`android-13`) | 75 | 44 | 31 |
+| mac (`android-mac`) | 214 | 11 | 203 |
 
-## 字段说明（registry.json 每条 patch）
+## P1 — 板 / HAL / kernel（先做，关系到 lunch 目标与启动）
 
-| 字段 | 含义 |
-|---|---|
-| `id` | 定制标识（如 `kernel-0001-<slug>`） |
-| `platform` | `win` / `mac` |
-| `area` | 子系统（kernel / goldfish-opengl / frameworks-base / device-overlay / ...） |
-| `project_path` | 远程 AOSP project 路径 |
-| `source_commit` | `-a13`/`-mac` fork 上的源 commit |
-| `summary` | 一句话定制意图 |
-| `phase` | 该项应在哪个阶段做（P1/P2/P3） |
-| `port_status` | `pending` / `in-progress` / `ported` / `blocked` / `dropped` |
-| `port_branch` | 远程 port 分支（`port/android-16/<id>`） |
-| `review_base` | upstream ref（android-16.0.0_r4 在该 project 的 commit） |
-| `conflicts` | rebase 冲突清单 |
-| `conflict_resolution` | 冲突如何解（保留 BS 语义 vs 采用 upstream）+ 原因 |
-| `verified_layers` | `[]` / `["build"]` / `["build","boot"]` |
-| `host_compat` | `unknown` / `ok` / `broken` |
-| `owner` | `agent` / `human` |
-| `notes` | 备注 |
+| 平台 | 仓库 | bst | 说明 |
+|---|---|---|---|
+| **mac** | `device/bst/qvirt` | 8 | **BlueStacks qvirt 虚拟设备 = mac 自定义板 → mac lunch 目标** |
+| mac | `kernel-mac` | 22 | mac guest kernel 定制 |
+| mac | `hardware/bst/{audio,power,memtrack,lights}` | 2/1/1/1 | BlueStacks HAL（无上游） |
+| mac | `device/google/cuttlefish`, `device/generic/vulkan-cereal` | 0/0 | mac 设备配置（bst=0 待复查） |
+| win | `device/google/cuttlefish`, `device/generic/x86_64` | 1/1 | win 设备配置 → win lunch 目标 |
+| win | `hardware/bst/{camera,audio,power,memtrack,lights}` | 3/2/1/0/0 | BlueStacks HAL |
+| win | `kernel` | 2 | win guest kernel gitlink（实际在 `~/kernel-common-a13`） |
 
-## 顺序约束（来自 patch-porting 规则）
+## P2 — 功能定制（非 prebuilt，bst>0）
 
-1. 自定义板（device/board overlay）最先（构建前提）。
-2. kernel → guest 图形 goldfish-opengl → frameworks-base → 其余 AOSP 仓库。
-3. guest 就绪后：两端 `hd` + 图形驱动 + 虚拟化进 host 最小实现。
+- win：`frameworks/native`(1)、`bionic`(2)、`build`(1)、`cts`(8)、`external/chromium-webview`(4)、`external/swiftshader`(2)、`external/efivar`(1)、`tools/tradefederation/prebuilts`(2)、`hardware/libhardware`(1)
+- mac：`external/busybox`(4)
+
+## P3 — prebuilts（二进制版本号，低优先，bst>0）
+
+- win 29 项：`prebuilts/rust`(56)、`prebuilts/gradle-plugin`(48)、`prebuilts/abi-dumps/vndk`(85)、`prebuilts/android-emulator`(20)、`prebuilts/vndk/v{28..32}`、`prebuilts/jdk/*`、`prebuilts/go/*`、`prebuilts/clang/*` 等。
+- mac 4 项：`prebuilts/gradle-plugin`(5)、`prebuilts/ktools/{gcc,ndk-r23,kernel-build-tools}`。
+
+## P3-review — bst=0 待复查（port 前人工确认）
+
+win 31 项、mac 203 项。mac 绝大多数为 r83 标签漂移噪声；但 mac 的 `device/*`、`frameworks/*`（如 `frameworks/base` since=185、`frameworks/native` since=25）需复查是否含非 bluestacks 邮箱的真实定制。完整清单见 registry.json（`has_bst=false`）。
+
+## 字段（registry.json 每条）
+
+`id`、`platform`(win/mac)、`project_path`、`area`、`base_tag`、`since_count`、`bst_count`、`has_bst`、`confidence`(high/low)、`phase_hint`(P1/P2/P3/P3-review)、`port_status`(pending)、`host_compat`(unknown)、`owner`、`notes`。
+
+## 下一步
+
+1. 人工确认 mac `device/bst/qvirt` 与 win `device/{google/cuttlefish,generic/x86_64}` 的板定义 → 确定 **lunch 目标**。
+2. 复查 mac `bst=0` 的 device/frameworks 仓库（作者过滤漏检？）。
+3. aosp16 base 树 sync 完成后，按 P1→P2→P3 顺序 port。

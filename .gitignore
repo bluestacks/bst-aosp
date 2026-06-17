@@ -8,6 +8,7 @@ out/
 *.log
 build.log
 artifacts/
+.triage_tmp/
 
 # 编辑器/系统
 .DS_Store

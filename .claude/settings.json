@@ -33,6 +33,9 @@
       "Bash(repo manifest:*)",
       "Bash(repo forall:*)",
 
+      "Bash(ssh markxu@172.16.6.191:*)",
+      "Bash(scp markxu@172.16.6.191:*)",
+
       "WebSearch",
       "WebFetch(domain:cs.android.com)",
       "WebFetch(domain:android.googlesource.com)",

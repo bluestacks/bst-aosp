@@ -16,8 +16,16 @@
 
 ## 已有 checkout（HOME 下）
 
-- `~/kernel-common-a13/` — remote `git@github.com:bluestacks/kernel-common-a13.git`，分支 **`aosp13-sync`**（win guest kernel，android-13）。
-- `~/kernel-mac/` — remote `git@github.com:bluestacks/kernel-mac.git`，分支 **`bst-v5.0.0-nxt_mac2`**（mac guest kernel）。
+| 目录 | 是什么 | 来源 / 分支 | 状态 |
+|---|---|---|---|
+| `~/aosp16/` | **目标 base**（上游 android-16.0.0_r4） | `repo sync -c -j8` | 🟡 sync 进行中 |
+| `~/android-13/` | **win 定制来源**（guest AOSP fork） | 1056 子模块 → `bluestacks/*-a13.git` | 🟡 子模块初始化中 |
+| `~/android-mac/` | **mac 定制来源**（guest AOSP fork） | 1056 子模块 → `bluestacks/*-mac.git` | 🟡 子模块初始化中 |
+| `~/kernel-common-a13/` | win guest kernel | `bluestacks/kernel-common-a13.git` @ `aosp13-sync` | ✅ 正确检出 |
+| `~/kernel-mac/` | mac guest kernel | `bluestacks/kernel-mac.git` @ `bst-v5.0.0-nxt_mac2` | ✅ 正确检出 |
+
+- **定制清单来源** = `android-13`/`android-mac` 各子模块相对上游 android-13 的 diff（自定义板在 `device/` 子模块里 → 决定 lunch 目标）。
+- `android-13` 非 repo 树（无 `.repo/`），用 **git submodules**（1056 条）组装，每条即一个 bluestacks fork。
 
 ## 构建机角色
 
@@ -36,8 +44,8 @@
 - `envsetup` + `lunch` 在同一 `bash -lc`。
 - 断线恢复：`ssh markxu@172.16.6.191 'ps -p <pid>; tail -n 50 <log>'`。
 
-## ⚠️ 分支出入（待确认，已部分核实）
+## 分支说明（已澄清，非误报）
 
-- **kernel-common-a13 (win)**：checkout 在 `aosp13-sync`；origin 另有 `aosp13-bst`、`bst-v5.20.0-android13` 分支与产品标签 `bst-v5.20.0-android13-5.22.0.4028/4029`。用户给的 win 产品分支 `bst-v5.22.210-5.22.210.1033` 可能对应其中某标签——待确认正确 win base。
-- **kernel-mac (mac)**：checkout 停在**旧分支** `bst-v5.0.0-nxt_mac2`；但 origin 有更新的 `bst-v5.21.680-nxt_mac2`（及 .650/.670/.675/-vulkan 等）。用户给的 `bst-v5.21.700-nxt_mac2` 此处未见、最接近 `.680`——**定制 diff 前需切到正确 mac base 分支**（很可能 .680/.700）。
-- 定制 diff 须以「每个 fork 相对上游 android-13 基线」计算：上游基线 = AOSP common kernel 的 `android13-*`（`aosp.googlesource.com/kernel/common`）。
+- **kernel 仓库用独立分支体系**：`kernel-common-a13`=`aosp13-sync`、`kernel-mac`=`bst-v5.0.0-nxt_mac2` 均为**正确检出**。
+- 用户给的 mac/win **产品分支**（`bst-v5.21.700-nxt_mac2` / `bst-v5.22.210-5.22.210.1033`）适用于 `android-13`/`android-mac` 等 fork 树与产品仓库，**不**适用于 kernel。
+- 定制 diff 基线：`android-13`/`android-mac` 子模块各自相对上游 android-13 对应仓库；kernel 相对上游 common kernel `android13-*`（`aosp.googlesource.com/kernel/common`）。

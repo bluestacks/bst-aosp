@@ -1,0 +1,18 @@
+# 构建产物（远程构建，本地不应有；若有副本也忽略）
+out/
+*.img
+*.iso
+*.qcow2
+
+# 临时远程日志/产物副本
+*.log
+build.log
+artifacts/
+
+# 编辑器/系统
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/

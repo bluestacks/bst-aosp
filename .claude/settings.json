@@ -1,0 +1,71 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(echo:*)",
+      "Bash(test:*)",
+
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(git branch:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git stash list:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git remote:*)",
+      "Bash(git apply --check:*)",
+      "Bash(git apply --stat:*)",
+      "Bash(patch --dry-run:*)",
+
+      "Bash(repo info:*)",
+      "Bash(repo list:*)",
+      "Bash(repo status:*)",
+      "Bash(repo diff:*)",
+      "Bash(repo manifest:*)",
+      "Bash(repo forall:*)",
+
+      "WebSearch",
+      "WebFetch(domain:cs.android.com)",
+      "WebFetch(domain:android.googlesource.com)",
+      "WebFetch(domain:source.android.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:android-review.googlesource.com)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git clean -df:*)",
+      "Bash(repo abandon:*)",
+      "Bash(repo sync -d:*)",
+      "Bash(repo sync --force-sync:*)",
+      "Bash(repo prune:*)",
+      "Bash(repo start:*)",
+      "Bash(m clean:*)",
+      "Bash(installclean:*)",
+      "Bash(rm -rf:*)",
+      "Bash(mkfs:*)",
+      "Bash(dd if:*)"
+    ],
+    "ask": [
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(repo init:*)",
+      "Bash(repo sync:*)",
+      "Bash(m dist:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

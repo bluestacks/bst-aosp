@@ -1,0 +1,11 @@
+{
+  "_doc": "定制 registry —— 把 -a13/-mac BlueStacks fork 相对上游 android-13 的定制 port 到 android-16 的权威进度。初始定制集由 Phase 0 自动 diff 导入。字段见 registry.md。",
+  "base_from": "android-13",
+  "base_from_forks": {
+    "win": "bluestacks/*-a13.git (branch bst-v5.22.210-5.22.210.1033)",
+    "mac": "bluestacks/*-mac.git (branch bst-v5.21.700-nxt_mac2)"
+  },
+  "base_to": "android-16.0.0_r4",
+  "platform_priority": "win 先行，mac 跟进",
+  "patches": []
+}

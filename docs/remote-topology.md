@@ -36,8 +36,8 @@
 - `envsetup` + `lunch` 在同一 `bash -lc`。
 - 断线恢复：`ssh markxu@172.16.6.191 'ps -p <pid>; tail -n 50 <log>'`。
 
-## ⚠️ 分支出入（待确认）
+## ⚠️ 分支出入（待确认，已部分核实）
 
-- 用户给的 win 产品分支 `bst-v5.22.210-5.22.210.1033`，但 `kernel-common-a13` 实际在 **`aosp13-sync`**。
-- 用户给的 mac 分支 `bst-v5.21.700-nxt_mac2`，但 `kernel-mac` 实际在 **`bst-v5.0.0-nxt_mac2`**。
-- → kernel 仓库可能用独立分支体系；或 checkout 在旧分支。port 前需与人类确认每个仓库的正确 base 分支。
+- **kernel-common-a13 (win)**：checkout 在 `aosp13-sync`；origin 另有 `aosp13-bst`、`bst-v5.20.0-android13` 分支与产品标签 `bst-v5.20.0-android13-5.22.0.4028/4029`。用户给的 win 产品分支 `bst-v5.22.210-5.22.210.1033` 可能对应其中某标签——待确认正确 win base。
+- **kernel-mac (mac)**：checkout 停在**旧分支** `bst-v5.0.0-nxt_mac2`；但 origin 有更新的 `bst-v5.21.680-nxt_mac2`（及 .650/.670/.675/-vulkan 等）。用户给的 `bst-v5.21.700-nxt_mac2` 此处未见、最接近 `.680`——**定制 diff 前需切到正确 mac base 分支**（很可能 .680/.700）。
+- 定制 diff 须以「每个 fork 相对上游 android-13 基线」计算：上游基线 = AOSP common kernel 的 `android13-*`（`aosp.googlesource.com/kernel/common`）。

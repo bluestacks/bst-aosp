@@ -18,7 +18,7 @@
 
 | 目录 | 是什么 | 来源 / 分支 | 状态 |
 |---|---|---|---|
-| `~/aosp16/` | **目标 base**（上游 android-16.0.0_r4） | `repo sync -c -j8` | 🟡 sync 进行中 |
+| `~/aosp16/` | **目标 base**（上游 android-16.0.0_r4） | `repo sync -c -j4` 完成(247G, exit 0) | ✅ 就绪 |
 | `~/android-13/` | **win 定制来源**（guest AOSP fork） | 1056 子模块 → `bluestacks/*-a13.git` | 🟡 子模块初始化中 |
 | `~/android-mac/` | **mac 定制来源**（guest AOSP fork） | 1056 子模块 → `bluestacks/*-mac.git` | 🟡 子模块初始化中 |
 | `~/kernel-common-a13/` | win guest kernel | `bluestacks/kernel-common-a13.git` @ `aosp13-sync` | ✅ 正确检出 |

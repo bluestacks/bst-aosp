@@ -4,9 +4,9 @@
 
 ## guest 完整 AOSP 树（远程 `markxu@172.16.6.191`，root `~/aosp16`）
 
-- **manifest**：上游 `https://android.googlesource.com/platform/manifest` `-b android-16.0.0_r4`（已 `repo init`，manifest rev `15128c9e`）。
-- **sync 状态**：后台 `repo sync -c -j8` 进行中；日志 `~/aosp16_sync.log`，完成标记 `~/aosp16_sync_exit`（内容为 exit code，0=成功）。
-- **lunch 目标 / 设备 / 自定义板**：待定制清单确认（自定义板修改在清单里 → 决定 device/BoardConfig → 决定 lunch）。
+- **manifest**：上游 `https://android.googlesource.com/platform/manifest` `-b android-16.0.0_r4`（revision `android-16.0.0_r4`，247G）。
+- **sync 状态**：✅ 完成（`repo sync -c -j4`，`SYNC_EXIT=0`）。首次 `-j8` 因 googlesource 配额失败，降 `-j4` 重试成功。
+- **lunch 目标 / 自定义板**：待确认。registry 已识别自定义板：**mac = `device/bst/qvirt`**、win = `device/google/cuttlefish` + `device/generic/x86_64` → 读其 `AndroidProducts.mk` 定 lunch（Phase 1）。
 
 ```bash
 # 状态检查（无 sleep，快速）

@@ -13,7 +13,8 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 - [x] `.claude/skills/docs-navigator/`
 - [x] `.claude/settings.json`（allow/deny/prompt，SSH 白名单出厂为空）
 - [x] `patches/registry.*` 骨架、`progress/`、`docs/`（含 Phase 0 待填项）
-- [ ] **Phase 0 待办**：确认远程 Ubuntu 主机/路径/lunch 目标（写 `docs/remote-topology.md` + `docs/build-commands.md` + settings.json allowlist）；`repo init`/`sync` 完整 AOSP 树；**自动 diff `-a13`/`-mac` vs 上游 android-13 录入完整定制清单**（registry，标 phase）；vanilla android-16 build 一次（Layer 1 readback）。
+- [x] **Phase 0 已完成**：远程主机 `markxu@clouddev` 确认（docs/remote-topology + settings allowlist）；`repo init`/`sync` 完整 AOSP 树 `~/aosp16`（android-16.0.0_r4，247G，exit 0）；**自动 diff `-a13`/`-mac` vs 上游 android-13** 录入 `patches/registry.json`（289 项，标 phase）。
+- [ ] **Phase 0 收尾 / Phase 1 前置**：确认 lunch 目标（registry 已识别 mac 板 `device/bst/qvirt`、win `device/google/cuttlefish`+`device/generic/x86_64`）；vanilla android-16 build 一次（Layer 1 readback）。
 
 **Gate→P1**：定制清单就绪、vanilla android-16 能构建。
 

@@ -41,3 +41,22 @@ ssh markxu@172.16.6.191 'cd ~/aosp16 && bash -lc "source build/envsetup.sh && lu
 
 - Layer 1：readback exit code + `ls -la out/target/product/<device>/*.img`。
 - Layer 2：见 [boot-oracles.md](boot-oracles.md)（需虚拟化就位）。
+
+## guest 基线构建调用（android-13，buildscripts）
+
+入口 `app-player/buildscripts/build.sh`（Jenkins 用）或直接 make。需环境变量 **`BRANCH`/`OEM`/`ANDROID_IMAGES`**（Jenkins 传入，本地无默认）。
+
+```bash
+cd ~/app-player/buildscripts
+make -j$(nproc) -f Makefile vbox OEM=<oem> IMAGE=<image> IS_HYPERV_BUILD=0
+# Makefile 内部: cd ANDROIDHOME(=~/app-player/android-13 -> ~/android-13) && source build/envsetup.sh && lunch android_x86_64-eng && make iso_img && make ramdisk
+# hd 内核模块: mmm $(BASEPATH)/hd/Source/{xpl,vmsg/guest,hcall/guest,gcall/guest}; 注入 hd/guest/BootImage/initrd
+# 产: Root.vdi + fastboot.vdi（vbox）; hyperv 走 IS_HYPERV_BUILD=1 target=kernel_and_initrd, lunch android_x86_64-eng_hyperv
+```
+
+- **ANDROIDHOME** = `~/app-player/android-13`（symlink → `~/android-13`，根目录已 populate 的树，免重 init）。
+- **hd** = `~/app-player/hd`（submodule re-init 到对应 tag）。
+- **OEM**：nxt（默认）/ bgp64 / msi64 / cn …。
+- **IMAGE**：Jenkins 参数（合法取值本地 `bst/apks/tiramisu/` 为空，未确认）→ **需人类提供**。
+- 需 Java8 + ccache + 充足磁盘（out_ 目录巨大）。
+- 布局就绪核实（2026-06-18）：app-player @ `.1033`、app-player-mac @ `.7526`、android symlink、hd populate 均 ✅。

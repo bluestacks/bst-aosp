@@ -6,7 +6,10 @@
 
 - **manifest**：上游 `https://android.googlesource.com/platform/manifest` `-b android-16.0.0_r4`（revision `android-16.0.0_r4`，247G）。
 - **sync 状态**：✅ 完成（`repo sync -c -j4`，`SYNC_EXIT=0`）。首次 `-j8` 因 googlesource 配额失败，降 `-j4` 重试成功。
-- **lunch 目标 / 自定义板**：待确认。registry 已识别自定义板：**mac = `device/bst/qvirt`**、win = `device/google/cuttlefish` + `device/generic/x86_64` → 读其 `AndroidProducts.mk` 定 lunch（Phase 1）。
+- **lunch 目标 / 自定义板（已确认：两端不可统一，分平台）**：
+  - **mac** → `bst_arm64-userdebug`（板 `device/bst/qvirt`，**arm64**，BlueStacks 原创自定义板：`fstab.bst`/`init.bst.rc` + 自定义 HAL gr-channel/vmsg/gps/gatekeeper；android-16 无 `device/bst`，须 port）。
+  - **win** → `android_x86_64-userdebug`（板 `device/generic/x86_64`，**x86_64**）或 `aosp_cf_x86_64_phone-userdebug`（`device/google/cuttlefish`，上游已有，仅小改 port）。
+  - 根因：架构不同（arm64 vs x86_64）+ 虚拟设备模型不同（qvirt 自定义 vs cuttlefish）→ 单 target 只产一种 arch 镜像，无法共用。「guest 统一」指系统源码统一 port，device 配置必然分平台。
 
 ```bash
 # 状态检查（无 sleep，快速）

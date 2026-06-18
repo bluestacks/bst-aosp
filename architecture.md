@@ -31,6 +31,7 @@
 - **win 先行**，全程跨平台意识（mac 跟进）。同一 guest 须在两个虚拟化栈上运行。
 - **图形驱动可使用 mac 分支 `bst-v5.21.700-nxt_mac2` 的代码构建**（跨平台）。
 - registry 按 `platform`(mac/win) 分组，共用同一套规则。
+- **lunch target / 板不可统一（已确认）**：mac `bst_arm64`（`device/bst/qvirt`，**arm64**，BlueStacks 原创自定义板，须 port）；win `android_x86_64`/`aosp_cf_x86_64_phone`（**x86_64**，上游已有）。根因：架构不同 + 虚拟设备模型不同（qvirt 自定义 vs cuttlefish）→ 单 target 只产一种 arch 镜像。「guest 统一」指系统源码统一 port，device 配置分平台。
 
 ## 5. 验证策略（设计支柱）
 

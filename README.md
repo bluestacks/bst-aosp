@@ -17,11 +17,11 @@
 
 | Phase | 内容 | 状态 |
 |---|---|---|
-| P0 | 环境就绪 + 定制清单（构建前 diff） | ✅ 远程连通 / 全树 sync(247G) / 定制清单(289项) 就绪；lunch 目标 + vanilla build 待 |
-| P1 | 自定义板 + 最小 guest 改动集（Layer 1） | ⬜ |
-| P2 | host 镜像产出 + 虚拟化 port + Layer 2 启动验证 | ⬜ |
-| P3 | 功能对齐 android-13 + 两端 host 兼容 | ⬜ |
-| P4 | 收尾 / CI | ⬜ |
+| P0 | 三端环境设置（win host 本机 / mac host 172.16.0.204 / guest clouddev）+ 定制清单重新生成 | 🟡 clouddev/aosp16 就绪；win/mac host 设置 + 清单重生成 待 |
+| P1 | **android-13 基线**（win+mac：guest 编译→打包→替换 host→运行测试） | ⬜ aosp16 前置 gate |
+| P2 | aosp16 guest 升级（统一板 device/bst/qvirt + 定制 port） | ⬜ 基线通过后开始 |
+| P3 | android-16 host 适配 + 虚拟化 + Layer 2 启动验证 | ⬜ |
+| P4 | 功能对齐 + 收尾 / CI | ⬜ |
 
 见 [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md)。
 

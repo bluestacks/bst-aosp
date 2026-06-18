@@ -5,59 +5,59 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 
 ---
 
-## Phase 0 — 环境就绪 + 定制清单（构建前）  ·  **当前**
+## Phase 0 — 环境设置（三端）+ 定制清单重新生成  ·  **当前**
 
-- [x] `CLAUDE.md`、`README.md`、`architecture.md`/`-brief.md`
-- [x] `.claude/rules/`（6 适配 + remote-build/patch-porting/host-guest-contract）
-- [x] `.claude/commands/`（review/quick-review/save-summary + remote-build/port-patch/boot-verify）
-- [x] `.claude/skills/docs-navigator/`
-- [x] `.claude/settings.json`（allow/deny/prompt，SSH 白名单出厂为空）
-- [x] `patches/registry.*` 骨架、`progress/`、`docs/`（含 Phase 0 待填项）
-- [x] **Phase 0 已完成**：远程主机 `markxu@clouddev` 确认（docs/remote-topology + settings allowlist）；`repo init`/`sync` 完整 AOSP 树 `~/aosp16`（android-16.0.0_r4，247G，exit 0）；**自动 diff `-a13`/`-mac` vs 上游 android-13** 录入 `patches/registry.json`（289 项，标 phase）。
-- [ ] **Phase 0 收尾 / Phase 1 前置**：确认 lunch 目标（registry 已识别 mac 板 `device/bst/qvirt`、win `device/google/cuttlefish`+`device/generic/x86_64`）；vanilla android-16 build 一次（Layer 1 readback）。
+脚手架已就绪。本阶段聚焦三端环境检查+设置，并重新生成定制清单。
 
-**Gate→P1**：定制清单就绪、vanilla android-16 能构建。
+- [x] 脚手架（CLAUDE.md/rules/commands/skill/settings/docs/registry）+ clouddev/aosp16 sync（247G）+ 初版 registry（289 项，待重新生成）。
+- [ ] **win host（本机 `C:\workspace\app-player`）**：tag `bst-v5.22.210-5.22.210.1033`（已✅）；按需 init 子模块（host 构建 hd/ggl；android 部分**只需 android-13**）；确认 BlueStacks 已装 + 镜像替换路径。
+- [ ] **mac host（`zeqing@172.16.0.204 ~/app-player-mac`）**：免密已设；checkout 到 tag `bst-v5.21.700-nxt_mac2-5.21.700.7526`（先处理 submodule 指针漂移）；android-mac 已 init；按需 init 其他；确认 BlueStacks 已装 + 镜像替换路径。
+- [ ] **guest（clouddev）**：android-13/android-mac 子模块递归 init 完成；补 **hd 兄弟目录 + buildscripts + kernel64-hyperv**（buildscripts/Makefile 流程所需）。
+- [ ] **定制清单重新生成**：基于 app-player(win)/app-player-mac(mac) 的 android-13 子模块重新 triage（修正 mac 基线/作者过滤），更新 registry。
 
----
-
-## Phase 1 — 最小 guest 就绪（win 先行；统一板方案）
-
-- [ ] port **单一 `device/bst/qvirt`** 到 android-16（从 `android-mac/device/bst/qvirt`），产出 `bst_arm64`(mac) + `bst_x86_64`(win 新增) 双 product；板配置(`device.mk`/`BoardConfig`/`init.bst.rc`/`fstab.bst`) arch 无关、共享，arch 由 BoardConfig 定。
-- [ ] win guest kernel（`kernel-common-a13`→android-16）含 `bstvmsg`/`bstpgaipc` 驱动（源在 mac `kernel-mac` 22 bst 提交或 hd 模块）。
-- [ ] 按清单评估选**最小 guest 改动集**（让 android-16 能构建的最小定制）。
-- [ ] guest 构建就绪（Layer 1 全量 `m`：win 先 `bst_x86_64`，mac `bst_arm64`）。
-- 此阶段 host 最小实现仅含两端 `hd` + 图形驱动（不含虚拟化）。
-- 解锁：patch-porting 全功能 + `/remote-build`。
-
-**Gate→P2**：最小 guest 改动集构建通过（Layer 1）。
+**Gate→P1**：三端环境就绪、android-13 树可构建、定制清单重新生成。
 
 ---
 
-## Phase 2 — host 镜像产出 + 虚拟化 port + guest 启动验证
+## Phase 1 — android-13 基线（win+mac）· **aosp16 前置 gate**
 
-- [ ] 参考 `app-player` 编译脚本，把 AOSP 产物产出 host 使用的镜像（写 `docs/build-commands.md`）。
-- [ ] 把虚拟化（win `vbox` / mac `qvm`）port 进 host 最小实现。
-- [ ] **此时才** Layer 2 启动验证（`/boot-verify`，oracle 全绿）。
-- 解锁：`/boot-verify` + host-guest-contract 规则激活。
+把**原本 android-13** 完整流水线在两端跑通，验证构建/打包/替换/运行链路：
 
-**Gate→P3**：定制 image 经 host 虚拟化启动到 launcher，oracle 全绿。
+- [ ] guest 编译（clouddev，buildscripts/Makefile）：android-13 → iso_img/ramdisk + hd 内核模块 + kernel → `Root.vdi`（win vbox/hyperv、mac）。
+- [ ] 打包 + 替换：Root.vdi 替换进 win/mac host 已装 BlueStacks 的 guest 镜像位置。
+- [ ] 运行 + 测试：两端启动 BlueStacks、guest 到 launcher、基本 smoke（Layer 2 oracle）。
+- 解锁：`/remote-build`、`/boot-verify`、host-guest-contract 激活。
 
----
-
-## Phase 3 — 功能对齐 android-13 + 两端 host 兼容
-
-- [ ] port 完剩余定制项（框架/HAL/图形等），行为对齐 android-13 baseline。
-- [ ] 两端 host（mac `qvm` / win `app-player`+`vbox`）全流程可用。
-- 解锁：role-agents（architect/implementer/verifier/reviewer）+ `/review` 全功能 + workflow tiers。
-
-**Gate→P4**：功能/回归测试 + bootanim+渲染 对齐 baseline。
+**Gate→P2（关键）**：win+mac 两端 android-13 基线 build→package→replace→run/test 全通过。**未通过不做 aosp16。**
 
 ---
 
-## Phase 4 — 收尾 / CI
+## Phase 2 — aosp16 guest 升级（基线通过后才开始）
 
-- [ ] CI 化回归；deny 收紧（force-push/hard reset/destructive rm）；create-pr 流程。
-- [ ] 复盘：哪些脚手架没挣到 keep，剪掉。
+- [ ] port **统一板 `device/bst/qvirt`** 到 android-16（bst_arm64 mac + bst_x86_64 win）。
+- [ ] port hardware/bst HAL、external/bluestacks/*、frameworks/bionic 等（按重新生成的 registry）。
+- [ ] hd guest 内核模块（vmsg/hcall/gcall/xpl）适配 android-16 内核 API。
+- [ ] android-16 guest 构建就绪（Layer 1）。
+- 解锁：patch-porting 全功能。
+
+**Gate→P3**：android-16 定制 guest 构建通过（Layer 1）。
+
+---
+
+## Phase 3 — android-16 host 适配 + 虚拟化 + 启动验证
+
+- [ ] host 适配（guest 触发）：hd/图形驱动/虚拟化按需调整。
+- [ ] Layer 2 启动验证（android-16 image 经 host 虚拟化启动到 launcher，oracle 全绿）。
+- 解锁：role-agents + `/review` 全功能。
+
+**Gate→P4**：android-16 image 启动到 launcher，两端 host 兼容。
+
+---
+
+## Phase 4 — 功能对齐 + 收尾 / CI
+
+- [ ] 功能对齐 android-13 baseline（功能/回归测试）。
+- [ ] CI 化回归；deny 收紧；create-pr 流程；复盘剪枝。
 
 **Gate**：进入内部 dogfooding。
 

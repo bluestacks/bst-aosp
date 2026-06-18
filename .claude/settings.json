@@ -35,6 +35,8 @@
 
       "Bash(ssh markxu@172.16.6.191:*)",
       "Bash(scp markxu@172.16.6.191:*)",
+      "Bash(ssh zeqing@172.16.0.204:*)",
+      "Bash(scp zeqing@172.16.0.204:*)",
 
       "WebSearch",
       "WebFetch(domain:cs.android.com)",

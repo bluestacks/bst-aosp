@@ -49,6 +49,6 @@ win 31 项、mac 203 项。mac 绝大多数为 r83 标签漂移噪声；但 mac 
 
 ## 下一步
 
-1. ✅ 已确认 lunch 目标（**两端不可统一**）：mac `bst_arm64-userdebug`（`device/bst/qvirt`，arm64，须 port）；win `android_x86_64-userdebug`/`aosp_cf_x86_64_phone-userdebug`（x86_64，上游已有）。根因：arch 不同 + 虚拟设备模型不同。详见 [docs/build-commands.md](../docs/build-commands.md) 与 progress/porting-log。
+1. ✅ 已采纳**统一板方案**：两端共用 BlueStacks 自定义板 `device/bst/qvirt`，mac `bst_arm64-userdebug`(arm64) + win `bst_x86_64-userdebug`(x86_64 新增)。依据：两端虚拟化均实现 qvirt 设备（mac `qvm` / win `hd` 的 `vmsg`+`hst`+`gr`）+ `hardware/bst/*` HAL 两端都有。Phase 1 = port 单一 `device/bst/qvirt` 到 android-16（arm64+x86_64 双 product）。详见 architecture.md / progress/porting-log。
 2. 复查 mac `bst=0` 的 device/frameworks 仓库（作者过滤漏检？）。
 3. aosp16 base 树 sync 完成后，按 P1→P2→P3 顺序 port。

@@ -20,11 +20,12 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 
 ---
 
-## Phase 1 — 最小 guest 就绪（win 先行）
+## Phase 1 — 最小 guest 就绪（win 先行；统一板方案）
 
-- [ ] **自定义板**（device/board overlay）先做——构建前提（如 `-mac` 的自定义板）。
+- [ ] port **单一 `device/bst/qvirt`** 到 android-16（从 `android-mac/device/bst/qvirt`），产出 `bst_arm64`(mac) + `bst_x86_64`(win 新增) 双 product；板配置(`device.mk`/`BoardConfig`/`init.bst.rc`/`fstab.bst`) arch 无关、共享，arch 由 BoardConfig 定。
+- [ ] win guest kernel（`kernel-common-a13`→android-16）含 `bstvmsg`/`bstpgaipc` 驱动（源在 mac `kernel-mac` 22 bst 提交或 hd 模块）。
 - [ ] 按清单评估选**最小 guest 改动集**（让 android-16 能构建的最小定制）。
-- [ ] guest 构建就绪（Layer 1 全量 `m` 过）。
+- [ ] guest 构建就绪（Layer 1 全量 `m`：win 先 `bst_x86_64`，mac `bst_arm64`）。
 - 此阶段 host 最小实现仅含两端 `hd` + 图形驱动（不含虚拟化）。
 - 解锁：patch-porting 全功能 + `/remote-build`。
 

@@ -33,3 +33,11 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - win = `android_x86_64-userdebug`（`device/generic/x86_64`）或 `aosp_cf_x86_64_phone-userdebug`（`device/google/cuttlefish`，x86_64，上游已有，BlueStacks 仅删 apex + init）。
 - 根因：① 架构不同 arm64(mac,Apple Silicon) vs x86_64(win)；② 虚拟设备模型不同 qvirt(自定义) vs cuttlefish/generic；③ 单 lunch target 只产一种 arch 镜像。
 - 决策：**device/板按平台分别 port**；「guest 统一」= 系统源码(frameworks/system/应用)统一 port 到 android-16，device 配置分平台（与 registry 按 platform 分组一致）。
+
+## 2026-06-18 — 采纳统一板方案 device/bst/qvirt（bst_arm64 + bst_x86_64）
+
+- **决策（覆盖早前「不可统一」）**：两端共用 BlueStacks 自定义板 `device/bst/qvirt`，mac `bst_arm64`(arm64) + win `bst_x86_64`(x86_64 新增)；win 不再用 cuttlefish/generic。
+- **验证**：① win host `app-player-dev/hd/Source/` 实现全部 qvirt 设备——`vmsg`(bstvmsg)、`hst`(bstpgaipc，11 命中)、`gr`(gr-channel)；mac `qvm` 同。② `hardware/bst/{audio,camera,lights,memtrack,power}` HAL 两端都有。
+- 板配置(`device.mk`/`BoardConfig`/`init.bst.rc`/`fstab.bst`) arch 无关、共享；`bst_arm64.mk` 已有，需新增 `bst_x86_64.mk` + x86_64 BoardConfig。
+- **待办**：win guest kernel 需 `bstvmsg`/`bstpgaipc` 驱动（两端 `drivers/` 未直接命中，源在 mac `kernel-mac` 22 个 bst 提交或 hd 随模块注入）→ 属 kernel P1 移植细节。
+- Phase 1 重构：port 单一 `device/bst/qvirt` 到 android-16（arm64+x86_64 双 product）。

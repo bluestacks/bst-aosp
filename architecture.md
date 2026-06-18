@@ -31,7 +31,12 @@
 - **win 先行**，全程跨平台意识（mac 跟进）。同一 guest 须在两个虚拟化栈上运行。
 - **图形驱动可使用 mac 分支 `bst-v5.21.700-nxt_mac2` 的代码构建**（跨平台）。
 - registry 按 `platform`(mac/win) 分组，共用同一套规则。
-- **lunch target / 板不可统一（已确认）**：mac `bst_arm64`（`device/bst/qvirt`，**arm64**，BlueStacks 原创自定义板，须 port）；win `android_x86_64`/`aosp_cf_x86_64_phone`（**x86_64**，上游已有）。根因：架构不同 + 虚拟设备模型不同（qvirt 自定义 vs cuttlefish）→ 单 target 只产一种 arch 镜像。「guest 统一」指系统源码统一 port，device 配置分平台。
+- **lunch target / 板：统一板方案（已采纳，覆盖早前「不可统一」结论）**。两端都用 BlueStacks 自定义板 `device/bst/qvirt`，仅 arch 不同：
+  - **mac** → `bst_arm64-userdebug`（arm64，板源自 `android-mac/device/bst/qvirt`，已存在）。
+  - **win** → `bst_x86_64-userdebug`（x86_64，**新增** x86_64 product 变体；win 不再用 cuttlefish/generic）。
+  - 依据：两端虚拟化**均实现 qvirt 设备模型**——mac `qvm`、win `hd/Source/{vmsg(bstvmsg), hst(bstpgaipc), gr(gr-channel)}`；`hardware/bst/*` HAL 两端都有。板配置（`device.mk`/`BoardConfig`/`init.bst.rc`/`fstab.bst`）arch 无关、共享，arch 由 BoardConfig 定。
+  - Phase 1 = port **单一 `device/bst/qvirt`** 到 android-16，产出 arm64+x86_64 双 product。
+  - 待办：win guest kernel（`kernel-common-a13`→android-16）需含 `bstvmsg`/`bstpgaipc` 驱动（驱动源在 mac kernel-mac 的 22 个 bst 提交或 hd 随模块注入；属 kernel P1 移植细节）。
 
 ## 5. 验证策略（设计支柱）
 

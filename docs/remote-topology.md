@@ -7,7 +7,7 @@
 | 角色 | 环境 | 位置 | 仓库 / tag | 状态 |
 |---|---|---|---|---|
 | **win host** | 本机 Windows | `C:\workspace\app-player` | tag `bst-v5.22.210-5.22.210.1033` ✅ | BlueStacks 已装；android 子模块未 init |
-| **mac host** | macOS Mac mini | `zeqing@172.16.0.204`（`~/app-player-mac`） | 需切到 tag `bst-v5.21.700-nxt_mac2-5.21.700.7526`（tag 存在；当前 Fortnite-4103） | BlueStacks 已装；android-mac 已 init；工作区有 submodule 指针漂移 |
+| **mac host** | macOS Mac mini | `zeqing@172.16.0.204`（`~/app-player-mac`） | ✅ tag `bst-v5.21.700-nxt_mac2-5.21.700.7526`（detached, clean；submodule 已 deinit，hd/ggl 构建时按需 init） | BlueStacks 已装 |
 | **guest 构建** | Ubuntu | `markxu@172.16.6.191`（clouddev） | android-13/android-mac 子模块（递归 init 中） | aosp16 已 sync；缺 hd/buildscripts |
 
 > mac 另有 `~/workspace/app-player-mac`（ai-worker 5.22.999 开发用），非本项目规范目录。

@@ -41,3 +41,11 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - 板配置(`device.mk`/`BoardConfig`/`init.bst.rc`/`fstab.bst`) arch 无关、共享；`bst_arm64.mk` 已有，需新增 `bst_x86_64.mk` + x86_64 BoardConfig。
 - **待办**：win guest kernel 需 `bstvmsg`/`bstpgaipc` 驱动（两端 `drivers/` 未直接命中，源在 mac `kernel-mac` 22 个 bst 提交或 hd 随模块注入）→ 属 kernel P1 移植细节。
 - Phase 1 重构：port 单一 `device/bst/qvirt` 到 android-16（arm64+x86_64 双 product）。
+
+## 2026-06-18 — 路线修订 + 环境设置（三端）
+
+- **路线**：① 三端环境设置 → ② **android-13 基线**（win+mac：guest 编译→打包→替换 host→运行测试）通过后才做 aosp16。定制清单重新生成（等子模块）。重构 SETUP-ROADMAP/README/remote-topology。
+- **三端**：win host=本机 app-player(`.1033`✅, BlueStacks_nxt+Tiramisu 安装中)；mac host=`zeqing@172.16.0.204`(免密已设, BlueStacks.app✅)；guest=clouddev。
+- **mac host**：`~/app-player-mac` 已 checkout 到 tag `bst-v5.21.700-nxt_mac2-5.21.700.7526`（detached, clean）；submodule 已 deinit（host 构建 hd/ggl 时按需 init；host 不需 android-mac）。deinit--all + checkout 绕过 submodule 冲突。
+- **clouddev 构建布局（已定）**：win 用 `~/app-player`(buildscripts+hd) + `~/android-13`(根目录,作 ANDROIDHOME)；mac 用 `~/app-player-mac` + `~/android-mac`。**直接用根目录已 populate 的 ~/android-13/android-mac**（不重新 init submodule，太慢）。注意：clouddev `~/app-player` 当前 `A13Fixes-5.22.210.4301`、`~/app-player-mac` 当前 `Fortnite-5.21.700.4103`（均非目标 tag，hd-mac 恰在 .7526）；基线可先用现态，tag 对齐留待必要时。
+- **端到端构建流程**已梳理入 `docs/build-flow.md`（buildscripts/Makefile 编排 guest：AOSP + hd 内核模块 mmm + 注入 initrd + Root.vdi）。

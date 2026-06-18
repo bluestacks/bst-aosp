@@ -28,9 +28,9 @@ ssh markxu@172.16.6.191 'cd ~/aosp16 && bash -lc "source build/envsetup.sh && lu
 - **mac**：`~/kernel-mac/`（remote `bluestacks/kernel-mac.git`，分支 `bst-v5.0.0-nxt_mac2`）。
 - 内核构建命令（`build.config.*` + `build.sh`）待确认（按 Android GKI/common kernel 流程）。
 
-## host 使用的镜像产出（guest 就绪后）
+## host 使用的镜像产出（guest 构建）
 
-参考 `C:\workspace\app-player` 仓库编译脚本，把 AOSP 构建产物产出 host 使用的镜像（格式/打包以 app-player 脚本为准）。【Phase 2 填具体步骤】
+详见 [build-flow.md](build-flow.md)：guest 镜像由 **`app-player/buildscripts/Makefile`**（Linux 构建机）编排——AOSP `make iso_img`/`ramdisk` + hd guest 内核模块（`mmm hd/Source/{vmsg,hcall,gcall,xpl}/guest`）+ 注入 `hd/guest/BootImage/initrd`（`init.sh` mknod `/dev/bstvmsg`）+ 装配 `Root.vdi`（vbox/hyperv）。**升级杠杆 = `ANDROIDHOME` 改指 android-16 树**（树须携带 BlueStacks 定制 + hd 集成 + kernel64-hyperv）。
 
 ## host 构建（本地）
 

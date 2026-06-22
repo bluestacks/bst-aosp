@@ -79,3 +79,9 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - **修复**：`~/android-13` checkout 到 `eb45923b` + `git submodule update --init --recursive`（对齐 1056 子模块到 .1033 一致 pin）。后台 PID 1018335，日志 `~/android13_realign.log`，exit `~/android13_realign_exit`，监控 cron `e748a2f5`（:20/:50）。
 - checkout 中有 `unable to rmdir hardware/bst/*, external/{alsa-*,ffmpeg}: Directory not empty` 警告——待完成后核实 hardware/bst 等 BS HAL 仍在 eb45923b（非真删除）。
 - 完成后（cron 自动）：核实 HEAD==eb45923b + hardware/bst 在 + 未对齐子模块≈0 → 清 out_nxt_Tiramisu64 → 重启 win 构建。
+
+## 2026-06-22 — 同时对齐 android-mac 到 .7526 pin + 清单推迟
+
+- **android-mac 同样错位**：实际 `5.21.720.7511`（ea54f03），**非** .7526 钉的 `86abb115`。启动对齐（checkout 86abb115 + recursive submodule update），PID 1022553，监控 cron `698605e8`（:22/:52），与 android-13 对齐并行。
+- **定制清单推迟**：当前 457 项 registry 是基于错位树（perfOptimization-4400 / 5.21.720）生成，**作废**；待 android-13(.1033) 与 android-mac(.7526) 对齐 + win/mac 构建都通过后，从正确树重新生成。
+- 序列：两端对齐 → win 构建 + mac 构建 都过 → 重新生成清单。

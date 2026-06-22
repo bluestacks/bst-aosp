@@ -85,3 +85,13 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - **android-mac 同样错位**：实际 `5.21.720.7511`（ea54f03），**非** .7526 钉的 `86abb115`。启动对齐（checkout 86abb115 + recursive submodule update），PID 1022553，监控 cron `698605e8`（:22/:52），与 android-13 对齐并行。
 - **定制清单推迟**：当前 457 项 registry 是基于错位树（perfOptimization-4400 / 5.21.720）生成，**作废**；待 android-13(.1033) 与 android-mac(.7526) 对齐 + win/mac 构建都通过后，从正确树重新生成。
 - 序列：两端对齐 → win 构建 + mac 构建 都过 → 重新生成清单。
+
+## 2026-06-22 — 阻塞：submodule update 遇不可访问仓库（Repository not found）
+
+- 两端 checkout 都成功（android-13 HEAD=eb45923b、android-mac HEAD=86abb115 ✅），但 **recursive submodule update 都失败**（exit 1）。
+- 根因：部分 .gitmodules 引用的 BlueStacks 仓库 **`Repository not found`**（仓库不存在或私有且 clouddev key 无权——github 对无权私有仓也返 not found）：
+  - android-13：`bluestacks/external-libtraceevent-a13.git`
+  - android-mac：`bluestacks/kernel-prebuilts-common-modules-virtual-device-4.19-arm64-mac.git`
+- 非 rate-limit（ls-remote 确认 not found）。recursive update 在首个不可访问仓 abort，可能还有更多。
+- 之前用户的 recursive init「完成」(1056/1073) 是在**旧错位状态**（perfOptimization-4400 / 5.21.720），其 .gitmodules 可能未引用这些仓；.1033/.7526 的 .gitmodules 引用了。
+- **待用户定**：① clouddev github key 是否对全部 bluestacks 仓有访问权（这俩是私有需授权？）；② BS 正常构建如何访问（不同 key？manifest 排除？）；③ 这些仓是否构建必需（可否 skip）。已停两个 realign cron。

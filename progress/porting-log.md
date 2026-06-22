@@ -95,3 +95,11 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - 非 rate-limit（ls-remote 确认 not found）。recursive update 在首个不可访问仓 abort，可能还有更多。
 - 之前用户的 recursive init「完成」(1056/1073) 是在**旧错位状态**（perfOptimization-4400 / 5.21.720），其 .gitmodules 可能未引用这些仓；.1033/.7526 的 .gitmodules 引用了。
 - **待用户定**：① clouddev github key 是否对全部 bluestacks 仓有访问权（这俩是私有需授权？）；② BS 正常构建如何访问（不同 key？manifest 排除？）；③ 这些仓是否构建必需（可否 skip）。已停两个 realign cron。
+
+## 2026-06-22 — `-a13` 根因 + 容忍式 update（跳过无 bst fork）
+
+- **用户澄清**：clouddev 有全访问权 → 这些仓确实不存在。`external-libtraceevent-a13` 无此 fork（只有上游 `external-libtraceevent`，无 bst 改动）。**无 bst 分支的子模块跳过 checkout**。
+- **`-a13` 根因**：android-13 的 `.gitmodules` 用 BS fork 命名约定 `bluestacks/<name>-a13.git`（`-a13`=android-13 fork），**对所有子模块套用**。BS 只 fork 了有改动的仓；未 fork 的（libtraceevent/libtracefs/okhttp4 等上游无改动）其 `-a13` 仓不存在 → 悬空 URL → 404。
+- **修复**：容忍式 update 脚本（`~/tolerant_submod.sh`）——bulk `git submodule update --init --recursive` 遇 404 则把该 submodule `update=none` 跳过、重试，直到所有可访问的更新完。android-13/android-mac 并行跑。
+- **规模小**：仅 ~3-5 个未 fork 仓（android-13: libtraceevent/libtracefs/okhttp4；android-mac: ~2）。监控 cron `3087f4f7`（:24/:54）→ android-13 对齐完成自动重启 win 构建。
+- **风险**：跳过的仓留空；若构建需其源码（libtraceevent 等），后续改用上游 checkout。

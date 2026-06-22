@@ -49,3 +49,12 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - **mac host**：`~/app-player-mac` 已 checkout 到 tag `bst-v5.21.700-nxt_mac2-5.21.700.7526`（detached, clean）；submodule 已 deinit（host 构建 hd/ggl 时按需 init；host 不需 android-mac）。deinit--all + checkout 绕过 submodule 冲突。
 - **clouddev 构建布局（已定）**：win 用 `~/app-player`(buildscripts+hd) + `~/android-13`(根目录,作 ANDROIDHOME)；mac 用 `~/app-player-mac` + `~/android-mac`。**直接用根目录已 populate 的 ~/android-13/android-mac**（不重新 init submodule，太慢）。注意：clouddev `~/app-player` 当前 `A13Fixes-5.22.210.4301`、`~/app-player-mac` 当前 `Fortnite-5.21.700.4103`（均非目标 tag，hd-mac 恰在 .7526）；基线可先用现态，tag 对齐留待必要时。
 - **端到端构建流程**已梳理入 `docs/build-flow.md`（buildscripts/Makefile 编排 guest：AOSP + hd 内核模块 mmm + 注入 initrd + Root.vdi）。
+
+## 2026-06-22 — Phase 1 启动：win android-13 基线构建发起
+
+- 环境就绪：clouddev `~/app-player` @ `.1033`（buildscripts+hd populated）；android-13 symlink→根 `~/android-13`；bst/3bt/opengl/tools/scratch-*/ggl-external-qemu 子模块 init 完成（SUBMOD_EXIT=0）。
+- 预检通过：Java8(1.8.0_482)、磁盘 2.0T 可用、envsetup 在、make 变量解析正确（`out_nxt_Tiramisu64`）。
+- 确定 IMAGE=**Tiramisu64**（buildscripts `JENKIN_ANDROID_IMAGES=="*Tiramisu64*"`；Makefile ANDROID_VERSION=tiramisu）。
+- **发起构建**（后台 nohup）：`make -j$(nproc) -f Makefile vbox OEM=nxt IMAGE=Tiramisu64 IS_HYPERV_BUILD=0`（JAVA_HOME=java8, USE_CCACHE=1）；PID 720945；日志 `~/tiramisu_build.log`，exit 标记 `~/tiramisu_build_exit`。已见 libs/apks 阶段（scratch-rosen build_jar）推进。
+- 监控 cron `25cb5887`（:16/:46）：完成报告 exit + Root.vdi 产物并自停；失败报错。
+- 下一步（成功后）：打包 → 替换 win host `C:\ProgramData\BlueStacks_nxt\Engine` 镜像 → 运行测试。

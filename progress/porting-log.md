@@ -58,3 +58,10 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - **发起构建**（后台 nohup）：`make -j$(nproc) -f Makefile vbox OEM=nxt IMAGE=Tiramisu64 IS_HYPERV_BUILD=0`（JAVA_HOME=java8, USE_CCACHE=1）；PID 720945；日志 `~/tiramisu_build.log`，exit 标记 `~/tiramisu_build_exit`。已见 libs/apks 阶段（scratch-rosen build_jar）推进。
 - 监控 cron `25cb5887`（:16/:46）：完成报告 exit + Root.vdi 产物并自停；失败报错。
 - 下一步（成功后）：打包 → 替换 win host `C:\ProgramData\BlueStacks_nxt\Engine` 镜像 → 运行测试。
+
+## 2026-06-22 — 子模块版本对齐 .1033(win)/.7526(mac) + 构建重启
+
+- 发现 .1033 superproject 的 submodule pin 不齐（bst@5.1.0、hd/qemu@5.22.999-ai-worker 等），用户要求全部切到各自版本 tag。
+- **win**：9 个子模块（3bt/bst/opengl/tools/scratch-gaurav/scratch-rosen/ggl-external-qemu/hd/ggl-goldfish-opengl）全部 checkout 到 `bst-v5.22.210-5.22.210.1033`（rev-parse 权威核实 HEAD==tag commit ✅；describe 多样是 annotated-tag 显示 artifact）。
+- 清半成品 out_nxt_Tiramisu64（被 kill 构建仅到 libs/apks），**重启 win 构建** PID 836905（同 `make vbox OEM=nxt IMAGE=Tiramisu64`），监控 cron `fa6314ce`。
+- **mac**：子模块对齐到 `bst-v5.21.700-nxt_mac2-5.21.700.7526` 后台启动（PID 840712，init+checkout，`~/mac_submod_align.done` 标记）。

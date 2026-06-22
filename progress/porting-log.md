@@ -72,3 +72,10 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - 根因：`external/robolectric`（BS optimizations-424）把内嵌 `nativeruntime/external/sqlite` **钉在上游 `android-cts-11.0_r16`（41e1a36）**，其 Android.bp 定义模块名与顶层 `external/sqlite`（BS fork c512ae7）**完全同名** → soong 拒绝重复。
 - pin 与 checkout 一致（robolectric submodule status 空格前缀）→ **非 init 不一致，是该 robolectric 版本固有冲突**。buildscripts 无相关 workaround。
 - 待定（征询）：① 禁用/排除 robolectric 内嵌 sqlite 的 Android.bp（测试专用，镜像构建不需要）后重试；② ~/android-13 是否应处不同（release 一致）状态；③ BlueStacks 正常构建是否有已知 workaround。
+
+## 2026-06-22 — 树状态根因定位 + 对齐 ~/android-13 到 .1033 pin
+
+- **根因**：`~/android-13`（symlink 目标）HEAD=`be7d9511`=`bst-v5.22.210-perfOptimization-5.22.210.4400`（开发分支），**非** .1033 superproject 钉的 `eb45923b`。其子模块也不一致（robolectric/frameworks/base 为 `+`）→ perfOptimization-4400 状态下 robolectric 钉旧 CTS sqlite → 模块重复冲突。**sqlite 冲突是树状态错的症状**。
+- **修复**：`~/android-13` checkout 到 `eb45923b` + `git submodule update --init --recursive`（对齐 1056 子模块到 .1033 一致 pin）。后台 PID 1018335，日志 `~/android13_realign.log`，exit `~/android13_realign_exit`，监控 cron `e748a2f5`（:20/:50）。
+- checkout 中有 `unable to rmdir hardware/bst/*, external/{alsa-*,ffmpeg}: Directory not empty` 警告——待完成后核实 hardware/bst 等 BS HAL 仍在 eb45923b（非真删除）。
+- 完成后（cron 自动）：核实 HEAD==eb45923b + hardware/bst 在 + 未对齐子模块≈0 → 清 out_nxt_Tiramisu64 → 重启 win 构建。

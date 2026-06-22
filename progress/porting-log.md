@@ -65,3 +65,10 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - **win**：9 个子模块（3bt/bst/opengl/tools/scratch-gaurav/scratch-rosen/ggl-external-qemu/hd/ggl-goldfish-opengl）全部 checkout 到 `bst-v5.22.210-5.22.210.1033`（rev-parse 权威核实 HEAD==tag commit ✅；describe 多样是 annotated-tag 显示 artifact）。
 - 清半成品 out_nxt_Tiramisu64（被 kill 构建仅到 libs/apks），**重启 win 构建** PID 836905（同 `make vbox OEM=nxt IMAGE=Tiramisu64`），监控 cron `fa6314ce`。
 - **mac**：子模块对齐到 `bst-v5.21.700-nxt_mac2-5.21.700.7526` 后台启动（PID 840712，init+checkout，`~/mac_submod_align.done` 标记）。
+
+## 2026-06-22 — win android-13 基线构建失败（soong bootstrap，sqlite 模块重复）
+
+- 构建退出 BUILD_EXIT=2（7.5min 处，soong bootstrap）：`error: external/robolectric/nativeruntime/external/sqlite/{android,dist}/Android.bp: module "libsqlite3_android"/"sqlite3"/"libsqlite" already defined`。
+- 根因：`external/robolectric`（BS optimizations-424）把内嵌 `nativeruntime/external/sqlite` **钉在上游 `android-cts-11.0_r16`（41e1a36）**，其 Android.bp 定义模块名与顶层 `external/sqlite`（BS fork c512ae7）**完全同名** → soong 拒绝重复。
+- pin 与 checkout 一致（robolectric submodule status 空格前缀）→ **非 init 不一致，是该 robolectric 版本固有冲突**。buildscripts 无相关 workaround。
+- 待定（征询）：① 禁用/排除 robolectric 内嵌 sqlite 的 Android.bp（测试专用，镜像构建不需要）后重试；② ~/android-13 是否应处不同（release 一致）状态；③ BlueStacks 正常构建是否有已知 workaround。

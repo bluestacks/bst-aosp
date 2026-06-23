@@ -108,6 +108,16 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - **解决**：BootPrebuilt = 预编译内核（arm64 5.4/5.10），x86_64 Tiramisu 编译用不到。kill 卡住进程 + `git submodule deinit -f packages/modules/BootPrebuilt` + `submodule.<...>.update=none` + 重跑 recursive。重跑已绕过 BootPrebuilt、继续（DnsResolver 等）。
 - **教训**：`.git 含全部 objects` 不绝对（预编译/大 binary 子模块可能缺）；recursive init 遇 fetch 挂起时，deinit 该子模块（若构建不需要）+ 重跑。
 
+### 问题 2：`build/envsetup.sh` 不存在 → 构建立即失败（2026-06-23）
+- **现象**：`make android` 立即 `build/envsetup.sh: No such file or directory` + `Error 1`（Makefile line 319）。
+- **根因**：android-13 的 `build/` 子模块（bluestacks/build-a13.git @ e6b7647，.1033 pin）根目录**无 envsetup.sh**——实位于 `build/make/envsetup.sh`。Makefile `android` target source 的是 `build/envsetup.sh`（相对 ANDROIDHOME）。
+- **解决**：对照已知工作设置，`build/envsetup.sh` 应为指向 `make/envsetup.sh` 的软连（本地适配）。`ln -sf make/envsetup.sh android-13/build/envsetup.sh`。修复后 `make android` 过 envsetup，进入 `make iso_img -j30` + `make ramdisk`（真正 AOSP 编译）。
+- **状态**：win android-13 编译进行中（PID 122867，后台，仅 iso_img+ramdisk 无 sudo）。
+
+### 规则：子模块 init 后需切到对应分支
+- **用户明确**：每个 submodule `git submodule update --init` 后处于 detached HEAD（钉在 superproject 记录的 SHA），**必须 checkout 到 `.gitmodules` 中对应的 `branch`**（如 `kitkat-master`）。这是构建正常工作的前提（类似 henry sync.sh 后的 `restore_branch.sh` 步骤）。
+- **当前状态**：android-13 的 recursive init 后各子模块在 detached，但 win 编译已启动（中途切分支会破坏源码）→ **本轮编译完成后**（无论成功/失败），对 android-13 子模块执行 `git submodule foreach --recursive 'git checkout $(git config -f $toplevel/.gitmodules submodule.$name.branch)'` 切分支，再重试编译。
+
 ## 2026-06-22 — 阻塞：submodule update 遇不可访问仓库（Repository not found）
 
 - 两端 checkout 都成功（android-13 HEAD=eb45923b、android-mac HEAD=86abb115 ✅），但 **recursive submodule update 都失败**（exit 1）。

@@ -102,6 +102,12 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 
 **记录约定**：每步+问题+解决详细记入本 log；内部参考（他人目录/引用文档）不写入。
 
+### 问题 1：recursive init 卡在 `packages/modules/BootPrebuilt/5.4/arm64`（2026-06-23）
+- **现象**：android-13 recursive init 跑到 ~1014 子模块后 36 分钟无新日志；卡在 `packages/modules/BootPrebuilt/5.4/arm64`（oid 3130a05a），`git submodule--helper run-update-procedure --just-cloned` 一直 fetch。
+- **根因**：该子模块 oid 非本地 object（`.git` 未含 BootPrebuilt 预编译内核全部 objects）→ git 尝试从远程 fetch → 挂起。
+- **解决**：BootPrebuilt = 预编译内核（arm64 5.4/5.10），x86_64 Tiramisu 编译用不到。kill 卡住进程 + `git submodule deinit -f packages/modules/BootPrebuilt` + `submodule.<...>.update=none` + 重跑 recursive。重跑已绕过 BootPrebuilt、继续（DnsResolver 等）。
+- **教训**：`.git 含全部 objects` 不绝对（预编译/大 binary 子模块可能缺）；recursive init 遇 fetch 挂起时，deinit 该子模块（若构建不需要）+ 重跑。
+
 ## 2026-06-22 — 阻塞：submodule update 遇不可访问仓库（Repository not found）
 
 - 两端 checkout 都成功（android-13 HEAD=eb45923b、android-mac HEAD=86abb115 ✅），但 **recursive submodule update 都失败**（exit 1）。

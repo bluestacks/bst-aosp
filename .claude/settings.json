@@ -11,7 +11,6 @@
       "Bash(wc:*)",
       "Bash(echo:*)",
       "Bash(test:*)",
-
       "Bash(git log:*)",
       "Bash(git show:*)",
       "Bash(git diff:*)",
@@ -25,19 +24,16 @@
       "Bash(git apply --check:*)",
       "Bash(git apply --stat:*)",
       "Bash(patch --dry-run:*)",
-
       "Bash(repo info:*)",
       "Bash(repo list:*)",
       "Bash(repo status:*)",
       "Bash(repo diff:*)",
       "Bash(repo manifest:*)",
       "Bash(repo forall:*)",
-
       "Bash(ssh markxu@172.16.6.191:*)",
       "Bash(scp markxu@172.16.6.191:*)",
       "Bash(ssh zeqing@172.16.0.204:*)",
       "Bash(scp zeqing@172.16.0.204:*)",
-
       "WebSearch",
       "WebFetch(domain:cs.android.com)",
       "WebFetch(domain:android.googlesource.com)",
@@ -64,8 +60,6 @@
       "Bash(dd if:*)"
     ],
     "ask": [
-      "Bash(ssh *)",
-      "Bash(scp *)",
       "Bash(repo init:*)",
       "Bash(repo sync:*)",
       "Bash(m dist:*)",

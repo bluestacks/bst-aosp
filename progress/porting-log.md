@@ -86,6 +86,22 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - **定制清单推迟**：当前 457 项 registry 是基于错位树（perfOptimization-4400 / 5.21.720）生成，**作废**；待 android-13(.1033) 与 android-mac(.7526) 对齐 + win/mac 构建都通过后，从正确树重新生成。
 - 序列：两端对齐 → win 构建 + mac 构建 都过 → 重新生成清单。
 
+## 2026-06-23 — 干净重置：app-player 分支 + android-13 子模块（全本地 objects）
+
+**用户调整**：放弃根目录 `~/android-13`/`~/android-mac`（错位/混乱，已删），改用 **app-player 的 android-13 子模块**；app-player 用 **`bst-v5.22.210` 分支**（非 .1033 tag）；android-16 软连根 `~/aosp16`；app-player-mac 暂不管（仍 init 中）。
+
+**执行**：
+1. app-player 原只有 `.git`（含所有仓库 objects）→ `git checkout -f bst-v5.22.210` populate 工作树（HEAD=8ed098751，buildscripts/Makefile + build.sh 在）。
+2. android-13 子模块 pin = **eb45923b**（与 .1033 同）→ `git submodule update --init android-13` populate（Android.bp/build/art/bionic 全在）✅。
+3. **关键**：app-player `.git` 含全部仓库 objects——连原 404 的 `external/libtraceevent` 都能 checkout（fd0f027b）。recursive init 全本地、**无 404、无需 clone**（之前根树 404 噩梦是因根树 .git 缺 objects）。
+4. android-13 recursive init（1055 子模块）后台启动（PID 26947，`~/a13_rec_exit`）。
+5. host 构建子模块 init：hd/bst/3bt/opengl/tools/scratch-*/ggl-external-qemu ✅（hd/Source/Makefile 在）。
+6. `android-16 -> ~/aosp16` 软连 ✅（envsetup 可达）。
+
+**待**：android-13 recursive 完成 → 启动 win android-13 编译（`make android OEM=nxt IMAGE=Tiramisu64`，java8/LC_ALL=C，FORCE_CLEAN=false，后台无 sudo）。
+
+**记录约定**：每步+问题+解决详细记入本 log；内部参考（他人目录/引用文档）不写入。
+
 ## 2026-06-22 — 阻塞：submodule update 遇不可访问仓库（Repository not found）
 
 - 两端 checkout 都成功（android-13 HEAD=eb45923b、android-mac HEAD=86abb115 ✅），但 **recursive submodule update 都失败**（exit 1）。

@@ -226,3 +226,13 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 
 ### ⚠️ 启动风险（未闭环）
 - 新构建镜像（bst-v5.22.210 android-13）**首次替换启动失败**（VBox Power up failed），历史版本能启动。重打包替换后**必须验证能否启动**——这是独立的 guest/打包层问题，待诊断。
+
+## 2026-06-24 — app-player-mac 子模块初始化（clouddev，并行 win 重打包）
+
+- **superproject checkout**：`bst-v5.21.700-nxt_mac2-Fortnite-...4103`（detached @ c292b8f）→ checkout `bst-v5.21.700-nxt_mac2`（同 commit c292b8f，干净切换）✅。
+- **坑**：之前中止的 `git status` 远程进程没被 TaskStop 杀（只杀本地 SSH），残留持有 `.git/index.lock` 阻塞 checkout → 手动 kill PID + 删锁；`pkill -f "git status"` 误杀自身 ssh（命令串含该模式）→ 避免，用 PID 直杀。
+- **顶层 init**（非递归，9 子模块）：✅ 全部初始化且匹配 index（基分支与 Fortnite tag 同 commit，记录 SHA 一致）。
+- **bst 嵌套**：`bst/contrib/android` 有 staged 删除（`.gitignore/.gitmodules/Makefile` 全 D）阻塞递归 → `git -C bst submodule update --init contrib/android` 重置 ✅。
+- **全量 recursive init 失败但不需要**：`git submodule update --init --recursive` 卡在 android-mac 1073 嵌套子模块（slow clone libtraceevent/libtracefs）+ bst 递归失败。但 android-mac 按 topology **已 init（完整 AOSP 树 + kernel，frameworks/base 在）**，触发 recursive 是过度重同步。→ 不强制全量 recursive。
+- **mac 混合版本 pinning（与 win 不同）**：mac 子模块 pin 在混合版本分支（android-mac@720 / bst@705 / hd@700 / scratch-rosen@715 / tools@770），不像 win 全在 `bst-v5.22.210`。pinned SHA 落后各分支 tip（android-mac 86abb11 vs ea54f03）。**pinned 是集成测试组合**——不投机性统一切 `bst-v5.21.700-nxt_mac2`（会破坏测试组合）。切分支决策 **DEFERRED**：等 mac 实际构建验证 pinned 是否够用（verify-by-readback），需 tip 再切。
+- **状态**：app-player-mac 顶层就绪（pinned/tested SHA），android-mac 有完整源码，可进入 mac 构建评估。

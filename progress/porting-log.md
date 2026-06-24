@@ -177,3 +177,19 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 3. **禁止修改 AOSP 源码**，但 buildscripts/setup 层适配（软连、禁用 Android.bp、PATH 修正）是可以的。
 4. 每个编译失败必须**对照已有工作设置**确定是适配缺失还是真 bug。
 5. 编译当前状态：PID 256874 进行中。
+
+## 2026-06-24 — ✅ Root.vdi + fastboot.vdi 打包成功 + Windows 替换
+
+- **`make Root.vdi` 成功**（BUILD_EXIT=0），产物 1.9G @ `~/releases/Tiramisu64/bst-v5.22.210_Tiramisu64-local/`。
+- **fastboot.vdi**（预制品，11M，从 `hd/guest/BootImage/fastboot/`）。
+- **打包阻塞问题**：
+  - **scratch-gaurav 工作树不完整**（init 时 checkout 失败）→ `git checkout -f bst-v5.22.210` 恢复 → prop 文件出现。
+  - **chown 1000:1000 硬编码**→ 修 Makefile 为 `$(shell id -u):$(shell id -g)`（markxu UID=1011）。
+  - **sudo 免密**→ `NOPASSWD: ALL` sudoers.d 配置。
+  - **create_setuid_su_binary 残留**（bstk/ su chmod 0511 使 cp 失败）→ 清 releases 重来。
+  - **apks local.properties**→ 42 个模块设 `sdk.dir=/home/henry/workspace/android-sdk/sdk`。
+- **APK 构建问题（2 个跳过）**：
+  - **AndroidLauncher**：缺 `flutter`（命令行不可用，需从 henry 复制/下载）。
+  - **BFM**：Gradle 缺 `io.realm:realm-gradle-plugin:4.2.0`（maven 不可达，需更新或代理）。
+- **Windows 替换**：`scp Root.vdi + fastboot.vdi` → `C:\ProgramData\BlueStacks_nxt\Engine\Tiramisu64\` ✅（旧 fastboot 已备份 .bak）。
+- **下一步**：启动 BlueStacks Tiramisu64 实例测试启动；解决 APK 编译问题（flutter 安装 + BFM 依赖）。

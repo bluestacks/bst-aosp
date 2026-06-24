@@ -215,12 +215,14 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 
 ### 镜像 apk 完整性
 - APPCONFFILE（`bst/apks/tiramisu/tiramisu_appPlayerApksToInstall_nxt_tiramisu64`）引用的 apk 经 line 345（rosen）+ copy_g_p_all（GMS）注入 APKFOLDER。
-- `com.bluestacks.filemanager.apk` 源码树无（非 boot 关键，可缺）。
+- `com.bluestacks.filemanager.apk` 源码树无 → **从 henry scratch-rosen/apks 拷入** markxu scratch-rosen/apks（line 345 会带上）。GMS（12 google + chrome）由 datafs `copy_g_p_all` 从 `scratch-gaurav/gapps_tiramisu64` 注入（push 列表已覆盖）。
 
-### 当前进行：make Root.vdi 重打包（PID 2911646）
-- 链：android(iso_img 增量) → libs → apks(已完成) → datafs(GMS 注入) → rooted 打包 → Root.vhd。
-- `android` target 会 `rm -f *.img` + 重跑 `make iso_img`，但**增量**（ninja 见源码未改，仅重新打包，~10-30min，非 4h）。
-- 完成后 scp Root.vhd + fastboot.vdi 替换 Windows Engine\Tiramisu64。
+### ⚠️ 坑：make Root.vdi 全量重编 → 改用 `make -o` 定向重打包
+- **首次 `make Root.vdi` 重打包（PID 2911646）触发全量 android 重编**：日志 `[0% 251/101364]`，soong 报 `make_vars-android_x86_64.mk was modified, regenerating` → ninja 全图标记脏 → 101364 target 全编（~4h，load 68 下 6h+）。对「只改 apk」的变更是纯浪费（system 未变）。
+- **已杀全量重编进程组**（PGID 2911644；残留 henry Baklava + eminhuang AOSP-A13 是他人构建，未误杀）。
+- **改用定向重打包**（PID 3307251）：`make -o android -o libs -o apks -o datafs Root.vdi`——`-o`（assume-old）跳过 4 个 phony 依赖，**只跑 recipe body**（copy_android_files_to_outputdir → copy_data_apks 注入 launcher → create_rootfs → make_vdi_file），复用已编译 system，~10-30min。dry-run 验证无 `make iso_img` = 正确。
+- **教训已写入 `docs/build-commands.md`**（「Root.vdi 重打包：用 make -o 跳过 android 重编」节），防下次重复踩坑。
+- 何时用完整 make Root.vdi：android 源码真变了；何时用 make -o：只改 apk/配置/buildscripts。
 
 ### ⚠️ 启动风险（未闭环）
 - 新构建镜像（bst-v5.22.210 android-13）**首次替换启动失败**（VBox Power up failed），历史版本能启动。重打包替换后**必须验证能否启动**——这是独立的 guest/打包层问题，待诊断。

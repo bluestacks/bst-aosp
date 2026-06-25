@@ -1,0 +1,28 @@
+diff --git a/prebuilts/4.19/arm64 b/prebuilts/4.19/arm64
+index 91780714eb80..bce72ec7c8a8 160000
+--- a/prebuilts/4.19/arm64
++++ b/prebuilts/4.19/arm64
+@@ -1 +1 @@
+-Subproject commit 91780714eb800e8ffde5f7e0f982ac60eea6df85
++Subproject commit bce72ec7c8a80403a46a493c0f0f50c4bcb88b58
+diff --git a/prebuilts/5.10/arm64 b/prebuilts/5.10/arm64
+index adfdedb67198..a3edf8389a14 160000
+--- a/prebuilts/5.10/arm64
++++ b/prebuilts/5.10/arm64
+@@ -1 +1 @@
+-Subproject commit adfdedb6719830a04acb7a9cf2dce40277e9dbb0
++Subproject commit a3edf8389a1436cc4574530dc1b07b191356ff7b
+diff --git a/prebuilts/5.15/arm64 b/prebuilts/5.15/arm64
+index 0a4bd66bfe40..13395f5908d4 160000
+--- a/prebuilts/5.15/arm64
++++ b/prebuilts/5.15/arm64
+@@ -1 +1 @@
+-Subproject commit 0a4bd66bfe407e8614387569c34fb4e990b743cc
++Subproject commit 13395f5908d4df59bd5eb62d5c3672e5f7daf553
+diff --git a/prebuilts/5.4/arm64 b/prebuilts/5.4/arm64
+index 5e2b2a68d63b..4bbe98d11223 160000
+--- a/prebuilts/5.4/arm64
++++ b/prebuilts/5.4/arm64
+@@ -1 +1 @@
+-Subproject commit 5e2b2a68d63b8a763274e12b764f529a23df4685
++Subproject commit 4bbe98d11223074220af82a5b760f53521e75e81

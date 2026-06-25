@@ -1,0 +1,1125 @@
+
+project build/make/
+diff --git a/core/Makefile b/core/Makefile
+index 47ecbd9763..99c0ba4191 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -5472,6 +5472,22 @@ BUILT_KERNEL_VERSION_FILE := $(intermediates)/kernel_version.txt
+ 
+ my_board_extracted_kernel :=
+ 
++# BOARD_KERNEL_CONFIG_FILE and BOARD_KERNEL_VERSION can be used to override the values extracted
++# from INSTALLED_KERNEL_TARGET. (android-x86 / BST custom bzImage has no embedded IKCFG)
++ifdef BOARD_KERNEL_CONFIG_FILE
++ifdef BOARD_KERNEL_VERSION
++$(BUILT_KERNEL_CONFIGS_FILE): $(BOARD_KERNEL_CONFIG_FILE)
++	cp $< $@
++$(BUILT_KERNEL_VERSION_FILE):
++	echo $(BOARD_KERNEL_VERSION) > $@
++
++$(call declare-license-metadata,$(BUILT_KERNEL_CONFIGS_FILE),SPDX-license-identifier-GPL-2.0-only,restricted,$(BUILD_SYSTEM)/LINUX_KERNEL_COPYING,"Kernel",kernel)
++$(call declare-license-metadata,$(BUILT_KERNEL_VERSION_FILE),SPDX-license-identifier-GPL-2.0-only,restricted,$(BUILD_SYSTEM)/LINUX_KERNEL_COPYING,"Kernel",kernel)
++
++my_board_extracted_kernel := true
++endif # BOARD_KERNEL_VERSION
++endif # BOARD_KERNEL_CONFIG_FILE
++
+ # Tools for decompression that is not in PATH.
+ # Check $(EXTRACT_KERNEL) for decompression algorithms supported by the script.
+ # Algorithms that are in the script but not in this list will be found in PATH.
+@@ -5480,7 +5496,8 @@ my_decompress_tools := \
+ 
+ 
+ # BOARD_KERNEL_VERSION can be used to override the values extracted
+-# from INSTALLED_KERNEL_TARGET.
++# from INSTALLED_KERNEL_TARGET (only when not using BOARD_KERNEL_CONFIG_FILE).
++ifndef BOARD_KERNEL_CONFIG_FILE
+ ifdef BOARD_KERNEL_VERSION
+ $(BUILT_KERNEL_VERSION_FILE): PRIVATE_DECOMPRESS_TOOLS := $(my_decompress_tools)
+ $(BUILT_KERNEL_VERSION_FILE): $(foreach pair,$(my_decompress_tools),$(call word-colon,2,$(pair)))
+@@ -5494,6 +5511,7 @@ $(BUILT_KERNEL_VERSION_FILE): $(EXTRACT_KERNEL) $(firstword $(INSTALLED_KERNEL_T
+ $(call declare-license-metadata,$(BUILT_KERNEL_VERSION_FILE),SPDX-license-identifier-GPL-2.0-only,restricted,$(BUILD_SYSTEM)/LINUX_KERNEL_COPYING,"Kernel",kernel)
+ 
+ endif # BOARD_KERNEL_VERSION
++endif # BOARD_KERNEL_CONFIG_FILE
+ 
+ 
+ ifneq ($(my_board_extracted_kernel),true)
+diff --git a/target/product/base_system.mk b/target/product/base_system.mk
+index 423c04cfe8..d26fd78df6 100644
+--- a/target/product/base_system.mk
++++ b/target/product/base_system.mk
+@@ -424,8 +424,9 @@ PRODUCT_PACKAGES += \
+ # those apexes to continue working. The symlink can be removed once we are sure
+ # there are no devices using hwservicemanager (when Android V launching devices
+ # are no longer supported for dessert upgrades).
+-PRODUCT_PACKAGES += \
+-    hwservicemanager_compat_symlink_module \
++# BlueStacks: real hwservicemanager on /system via packages.mk / generic/Android.bp.
++# PRODUCT_PACKAGES += \
++#     hwservicemanager_compat_symlink_module \
+ 
+ PRODUCT_PACKAGES_ARM64 := libclang_rt.hwasan \
+  libclang_rt.hwasan.bootstrap \
+diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
+index 1d7dcbffe7..124832b73d 100644
+--- a/target/product/generic/Android.bp
++++ b/target/product/generic/Android.bp
+@@ -385,9 +385,9 @@ android_filesystem_defaults {
+         "selinux_policy_system_ext",
+         "system_ext_manifest.xml",
+         "system_ext-build.prop",
+-        // Base modules when shipping api level is less than or equal to 34
+-        "hwservicemanager",
+-        "android.hidl.allocator@1.0-service",
++        // BlueStacks: hwservicemanager on /system (see system_image deps), not system_ext.
++        // "hwservicemanager",
++        // "android.hidl.allocator@1.0-service",
+ 
+         ///////////////////////////////////////////
+         // media_system_ext
+@@ -868,7 +868,6 @@ system_image_defaults {
+                 "framework-minus-apex-install-dependencies", // base_system
+                 "framework_compatibility_matrix.device.xml",
+                 "generic_system_fonts", // ok
+-                "hwservicemanager_compat_symlink_module", // base_system
+                 "hyph-data",
+                 "ims-common", // base_system
+                 "init_system", // base_system
+
+project build/soong/
+diff --git a/bin/mm b/bin/mm
+index 6f1c9348d..6461b1e53 100755
+--- a/bin/mm
++++ b/bin/mm
+@@ -19,6 +19,6 @@ source $(cd $(dirname $BASH_SOURCE) &> /dev/null && pwd)/../../make/shell_utils.
+ 
+ require_top
+ 
+-_wrap_build "$TOP/build/soong/soong_ui.bash" --build-mode --modules-in-a-dir --dir="$(pwd)" "$@"
++_wrap_build "$TOP/build/soong/soong_ui.bash" --build-mode --modules-in-a-dir-no-deps --dir="$(pwd)" "$@"
+ 
+ exit $?
+diff --git a/bin/mmm b/bin/mmm
+index d9190e575..ab3a6321c 100755
+--- a/bin/mmm
++++ b/bin/mmm
+@@ -19,6 +19,6 @@ source $(cd $(dirname $BASH_SOURCE) &> /dev/null && pwd)/../../make/shell_utils.
+ 
+ require_top
+ 
+-_wrap_build "$TOP/build/soong/soong_ui.bash" --build-mode --modules-in-dirs --dir="$(pwd)" "$@"
++_wrap_build "$TOP/build/soong/soong_ui.bash" --build-mode --modules-in-dirs-no-deps --dir="$(pwd)" "$@"
+ 
+ exit $?
+diff --git a/cmd/soong_ui/main.go b/cmd/soong_ui/main.go
+index fd82b2d40..38aa76bd4 100644
+--- a/cmd/soong_ui/main.go
++++ b/cmd/soong_ui/main.go
+@@ -463,6 +463,14 @@ func buildActionConfig(ctx build.Context, args ...string) build.Config {
+ 		name:        "all-modules",
+ 		description: "Build action: build from the top of the source tree.",
+ 		action:      build.BUILD_MODULES,
++	}, {
++		name:        "modules-in-a-dir-no-deps",
++		description: "Build action: builds all of the modules in the current directory without their dependencies.",
++		action:      build.BUILD_MODULES_IN_A_DIRECTORY,
++	}, {
++		name:        "modules-in-dirs-no-deps",
++		description: "Build action: builds all of the modules in the supplied directories without their dependencies.",
++		action:      build.BUILD_MODULES_IN_DIRECTORIES,
+ 	}, {
+ 		name:        "modules-in-a-dir",
+ 		description: "Build action: builds all of the modules in the current directory and their dependencies.",
+diff --git a/ui/build/androidmk_denylist.go b/ui/build/androidmk_denylist.go
+index 3cccfcaef..3cd94c1ba 100644
+--- a/ui/build/androidmk_denylist.go
++++ b/ui/build/androidmk_denylist.go
+@@ -61,6 +61,21 @@ var androidmk_denylist []string = []string{
+ 
+ var androidmk_allowlist []string = []string{
+ 	"bootable/deprecated-ota/updater/Android.mk",
++	// Android-x86 ISO installer (ported from app-player android-13)
++	"bootable/newinstaller/Android.mk",
++	"device/generic/common/nativebridge/Android.mk",
++	"device/generic/common/app/Android.mk",
++	// BlueStacks BST native (Baklava64 / android-x86)
++	"packages/apps/BstCommandProcessor/Android.mk",
++	"packages/apps/BstCommandProcessor/jni/Android.mk",
++	"frameworks/base/services/java/com/bluestacks/server/native/Android.mk",
++	"external/bluestacks/sensors/Android.mk",
++	"external/bluestacks/bstshutdown/Android.mk",
++	"external/bluestacks/bstshutdown/shutdown_binary/Android.mk",
++	"external/bluestacks/bstshutdown/shutdown_setprop/Android.mk",
++	"external/bluestacks/bstgps/Android.mk",
++	"external/bluestacks/bstsyncfs/Android.mk",
++	"external/bluestacks/bstfolder/Android.mk",
+ }
+ 
+ func getAllLines(ctx Context, filename string) []string {
+diff --git a/ui/build/finder.go b/ui/build/finder.go
+index 011b5b59e..43ac2abe2 100644
+--- a/ui/build/finder.go
++++ b/ui/build/finder.go
+@@ -141,6 +141,19 @@ func FindSources(ctx Context, config Config, f *finder.Finder) {
+ 
+ 	// Stop searching a subdirectory recursively after finding an Android.mk.
+ 	androidMks := f.FindFirstNamedAt(".", "Android.mk")
++	// BlueStacks: out-of-tree Android.mk paths (same as android-13 app-player).
++	outsideModList := []string{
++		"../hd/Source/vmsg/guest/Android.mk",
++		"../hd/Source/xpl/Android.mk",
++		"../hd/Source/tools/bstconf/Android.mk",
++		"../hd/Source/tools/bstchkdata/Android.mk",
++		"../hd/Source/hcall/guest/Android.mk",
++		"../hd/Source/gcall/guest/Android.mk",
++		"../ggl/goldfish-opengl-pie/Android.mk",
++	}
++	for _, outsideMod := range outsideModList {
++		androidMks = append(androidMks, outsideMod)
++	}
+ 	androidMks = ignoreSomeAndroidMks(androidMks)
+ 	blockAndroidMks(ctx, androidMks)
+ 	err := dumpListToFile(ctx, config, androidMks, filepath.Join(dumpDir, "Android.mk.list"))
+
+project device/generic/common/
+diff --git a/bluetooth/bdroid_buildcfg.h b/bluetooth/bdroid_buildcfg.h
+index 021f192..f86fae9 100644
+--- a/bluetooth/bdroid_buildcfg.h
++++ b/bluetooth/bdroid_buildcfg.h
+@@ -17,6 +17,10 @@
+ #ifndef _BDROID_BUILDCFG_H
+ #define _BDROID_BUILDCFG_H
+ 
+-#define BTM_DEF_LOCAL_NAME   "Android Bluedroid"
++// At present either USB or UART is supported
++#define BLUETOOTH_HCI_USE_USB          TRUE
++// Bluetooth Low Power Mode is supported on BT4.0
++#define HCILP_INCLUDED                 FALSE
++#define KERNEL_MISSING_CLOCK_BOOTTIME_ALARM TRUE
+ 
+ #endif
+
+project device/generic/x86_64/
+diff --git a/AndroidProducts.mk b/AndroidProducts.mk
+index 554ebc1..f5289dc 100644
+--- a/AndroidProducts.mk
++++ b/AndroidProducts.mk
+@@ -15,4 +15,10 @@
+ #
+ 
+ PRODUCT_MAKEFILES := \
+-    $(LOCAL_DIR)/mini_x86_64.mk
+\ No newline at end of file
++    $(LOCAL_DIR)/android_x86_64.mk \
++    $(LOCAL_DIR)/mini_x86_64.mk
++
++COMMON_LUNCH_CHOICES := \
++    android_x86_64-trunk_staging-eng \
++    android_x86_64-trunk_staging-user \
++    android_x86_64-trunk_staging-userdebug
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 68abaff..617a906 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -1,37 +1,26 @@
+-# config.mk
+ #
+ # Product-specific compile-time definitions.
+ #
+ 
+ # The generic product target doesn't have any hardware-specific pieces.
+ TARGET_NO_BOOTLOADER := true
+-TARGET_NO_KERNEL := true
+ TARGET_CPU_ABI := x86_64
+ TARGET_ARCH := x86_64
+ TARGET_ARCH_VARIANT := x86_64
+ 
+-TARGET_2ND_CPU_ABI := x86
+-TARGET_2ND_ARCH := x86
+-TARGET_2ND_ARCH_VARIANT := x86_64
++# TARGET_2ND_CPU_ABI := x86
++# TARGET_2ND_ARCH := x86
++# TARGET_2ND_ARCH_VARIANT := x86_64
+ 
++TARGET_CPU_ABI_LIST_64_BIT := $(TARGET_CPU_ABI) $(TARGET_CPU_ABI2) $(NATIVE_BRIDGE_ABI_LIST_64_BIT)
++TARGET_CPU_ABI_LIST_32_BIT :=
++TARGET_CPU_ABI_LIST := $(TARGET_CPU_ABI) $(TARGET_CPU_ABI2) $(NATIVE_BRIDGE_ABI_LIST_64_BIT)
+ 
+-SMALLER_FONT_FOOTPRINT := true
+-MINIMAL_FONT_FOOTPRINT := true
+-# Disable emulator for "make dist" until there is a 64-bit qemu kernel
+-BUILD_EMULATOR := false
+-# Some framework code requires this to enable BT
+-BOARD_HAVE_BLUETOOTH := true
+-BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/generic/common/bluetooth
+-
+-USE_OPENGL_RENDERER := true
+-
+-BOARD_USE_LEGACY_UI := true
+-
+-# PDK does not use ext4 image, but it is added here to prevent build break.
+ TARGET_USERIMAGES_USE_EXT4 := true
+-BOARD_SYSTEMIMAGE_PARTITION_SIZE := 2147483648
+ BOARD_USERDATAIMAGE_PARTITION_SIZE := 576716800
+ BOARD_CACHEIMAGE_PARTITION_SIZE := 69206016
+ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
+ BOARD_FLASH_BLOCK_SIZE := 512
+ TARGET_USERIMAGES_SPARSE_EXT_DISABLED := true
++
++include device/generic/common/BoardConfig.mk
+
+project external/boringssl/
+diff --git a/selftest/Android.bp b/selftest/Android.bp
+index 1894963a..d0f39806 100644
+--- a/selftest/Android.bp
++++ b/selftest/Android.bp
+@@ -63,11 +63,10 @@ cc_binary {
+     defaults: ["boringssl_self_test_defaults"],
+     stem: "boringssl_self_test",
+     vendor: true,
+-    init_rc: ["boringssl_self_test.rc"],
+-    required: [
+-        "boringssl_self_test.zygote64.rc",
+-        "boringssl_self_test.zygote64_32.rc",
+-    ],
++    // BlueStacks: align A13 — skip vendor init_rc; x86_64-only image has no
++    // boringssl_self_test32 binary but zygote64_32.rc still triggers 32-bit
++    // exec_start and reboot_on_failure kills bringup.
++    // init_rc: ["boringssl_self_test.rc"],
+     visibility: ["//visibility:any_system_partition"],
+ }
+ 
+
+project frameworks/base/
+diff --git a/core/java/Android.bp b/core/java/Android.bp
+index e9a605ad5caf..8b22cea6e490 100644
+--- a/core/java/Android.bp
++++ b/core/java/Android.bp
+@@ -389,6 +389,9 @@ filegroup {
+         "com/android/internal/util/IndentingPrintWriter.java",
+         "com/android/internal/util/MessageUtils.java",
+         "com/android/internal/util/WakeupMessage.java",
++        // TODO: delete as soon as NetworkStatsFactory stops using
++        "com/android/internal/util/ProcFileReader.java",
++        "com/bluestacks/os/IBstFilterAppsService.aidl",
+     ],
+ }
+ 
+diff --git a/core/java/android/app/ActivityManagerInternal.java b/core/java/android/app/ActivityManagerInternal.java
+index 5789e35709e9..b575f00c69ba 100644
+--- a/core/java/android/app/ActivityManagerInternal.java
++++ b/core/java/android/app/ActivityManagerInternal.java
+@@ -1430,4 +1430,7 @@ public abstract class ActivityManagerInternal {
+      * @hide
+      */
+     public abstract void addCreatorToken(Intent intent, String creatorPackage);
++
++    /** @hide BlueStacks: map isolated uid for bstfilter. */
++    public abstract int mapIsolatedUid(int isolatedUid);
+ }
+diff --git a/core/java/android/app/SystemServiceRegistry.java b/core/java/android/app/SystemServiceRegistry.java
+index 60a938d70184..5f0e0debc064 100644
+--- a/core/java/android/app/SystemServiceRegistry.java
++++ b/core/java/android/app/SystemServiceRegistry.java
+@@ -25,6 +25,13 @@ import static android.service.chooser.Flags.interactiveChooser;
+ 
+ import android.accounts.AccountManager;
+ import android.accounts.IAccountManager;
++
++import com.bluestacks.os.BstFilterAppsManager;
++import com.bluestacks.os.BstHostCallManager;
++import com.bluestacks.os.BstUtilsManager;
++import com.bluestacks.os.IBstFilterAppsService;
++import com.bluestacks.os.IBstHostCallService;
++import com.bluestacks.os.IBstUtilsService;
+ import android.adservices.AdServicesFrameworkInitializer;
+ import android.annotation.FlaggedApi;
+ import android.annotation.NonNull;
+@@ -384,6 +391,37 @@ public final class SystemServiceRegistry {
+                 return new AccountManager(ctx, service);
+             }});
+ 
++        registerService(Context.BST_UTILS, BstUtilsManager.class,
++                new CachedServiceFetcher<BstUtilsManager>() {
++            @Override
++            public BstUtilsManager createService(ContextImpl ctx) {
++                IBinder b = ServiceManager.getService(Context.BST_UTILS);
++                IBstUtilsService bstutils = IBstUtilsService.Stub.asInterface(b);
++                return new BstUtilsManager(ctx, bstutils);
++            }});
++
++        registerService(Context.BST_FILTER_APPS, BstFilterAppsManager.class,
++                new CachedServiceFetcher<BstFilterAppsManager>() {
++            @Override
++            public BstFilterAppsManager createService(ContextImpl ctx) {
++                IBinder b = ServiceManager.getService(Context.BST_FILTER_APPS);
++                IBstFilterAppsService bstfilterapps = IBstFilterAppsService.Stub.asInterface(b);
++                return new BstFilterAppsManager(ctx, bstfilterapps);
++            }});
++
++        registerService(Context.BST_HOST_CALL, BstHostCallManager.class,
++                new CachedServiceFetcher<BstHostCallManager>() {
++            @Override
++            public BstHostCallManager createService(ContextImpl ctx) {
++                IBinder b = ServiceManager.getService(Context.BST_HOST_CALL);
++                IBstHostCallService bstHostCallService = IBstHostCallService.Stub.asInterface(b);
++                if (bstHostCallService == null) {
++                    Log.wtf(TAG, "Failed to get BlueStacks HostCall service.");
++                    return null;
++                }
++                return new BstHostCallManager(ctx, bstHostCallService);
++            }});
++
+         registerService(Context.ACTIVITY_SERVICE, ActivityManager.class,
+                 new CachedServiceFetcher<ActivityManager>() {
+             @Override
+diff --git a/core/java/android/content/Context.java b/core/java/android/content/Context.java
+index f41e6a1d4725..9ef0cd8970f3 100644
+--- a/core/java/android/content/Context.java
++++ b/core/java/android/content/Context.java
+@@ -4981,6 +4981,36 @@ public abstract class Context {
+      */
+     public static final String ACCOUNT_SERVICE = "account";
+ 
++    /**
++     * Use with {@link #getSystemService} to retrieve a
++     * {@link com.bluestacks.os.BstUtilsManager}.
++     *
++     * @see #getSystemService
++     * @see com.bluestacks.os.BstUtilsManager
++     * @hide
++     */
++    public static final String BST_UTILS = "bstutils";
++
++    /**
++     * Use with {@link #getSystemService} to retrieve a
++     * {@link com.bluestacks.os.BstFilterAppsManager}.
++     *
++     * @see #getSystemService
++     * @see com.bluestacks.os.BstFilterAppsManager
++     * @hide
++     */
++    public static final String BST_FILTER_APPS = "bstfilterapps";
++
++    /**
++     * Use with {@link #getSystemService} to access the
++     * {@link com.bluestacks.os.BstHostCallManager}.
++     *
++     * @hide
++     * @see #getSystemService
++     * @see com.bluestacks.os.BstHostCallManager
++     */
++    public static final String BST_HOST_CALL = "bsthostcall";
++
+     /**
+      * Use with {@link #getSystemService(String)} to retrieve a
+      * {@link android.app.ActivityManager} for interacting with the global
+diff --git a/core/java/android/permission/ILegacyPermissionManager.aidl b/core/java/android/permission/ILegacyPermissionManager.aidl
+index 78e12de04e89..9c05bdc7589f 100644
+--- a/core/java/android/permission/ILegacyPermissionManager.aidl
++++ b/core/java/android/permission/ILegacyPermissionManager.aidl
+@@ -51,4 +51,6 @@ interface ILegacyPermissionManager {
+     void revokeDefaultPermissionsFromLuiApps(in String[] packageNames, int userId);
+ 
+     void grantDefaultPermissionsToCarrierServiceApp(in String packageName, int userId);
++
++    void assignPermissionsToBstApps(String filepath);
+ }
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index fddcefda8d3d..9737ca3f0335 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -18171,6 +18171,14 @@ public class ActivityManagerService extends IActivityManager.Stub
+                     Binder.getCallingUid(), /*uids*/null);
+         }
+ 
++        @Override
++        public int mapIsolatedUid(int isolatedUid) {
++            final BatteryStatsImpl bstats = mBatteryStatsService.getActiveStatistics();
++            synchronized (bstats) {
++                return bstats.bstMapUid(isolatedUid);
++            }
++        }
++
+         @Override
+         public boolean startForegroundServiceDelegate(
+                 @NonNull ForegroundServiceDelegationOptions options,
+diff --git a/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java b/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
+index b4f79f6f599e..db11f29a88a6 100644
+--- a/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
++++ b/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
+@@ -73,6 +73,7 @@ import com.android.modules.utils.TypedXmlPullParser;
+ import com.android.server.LocalServices;
+ import com.android.server.ServiceThread;
+ import com.android.server.pm.KnownPackages;
++import com.android.server.pm.UserManagerService;
+ import com.android.server.pm.permission.LegacyPermissionManagerInternal.PackagesProvider;
+ import com.android.server.pm.permission.LegacyPermissionManagerInternal.SyncAdapterPackagesProvider;
+ 
+@@ -1144,6 +1145,55 @@ final class DefaultPermissionGrantPolicy {
+                /* whitelistRestricted */ true, NOTIFICATION_PERMISSIONS);
+     }
+ 
++    /**
++     * Assigns permissions to the packages in the file.
++     * Used to update bst apps from cloud and assign them required permissions.
++     * @hide
++     */
++    public void assignPermissionsToBstApps(String filepath) {
++        ArrayMap<String, List<DefaultPermissionGrant>> grantExceptions = new ArrayMap<>();
++        DelayingPackageManagerCache pm = new DelayingPackageManagerCache();
++        File file = new File(filepath);
++        try (InputStream str = new FileInputStream(file)) {
++            TypedXmlPullParser parser = Xml.resolvePullParser(str);
++            parseExceptions(pm, parser, grantExceptions);
++        } catch (XmlPullParserException | IOException e) {
++            Log.w(TAG, "Error reading default permissions file " + file, e);
++        }
++        for (int userId : UserManagerService.getInstance().getUserIds()) {
++            grantDefaultRuntimePermissionsException(pm, userId, grantExceptions);
++        }
++    }
++
++    private void grantDefaultRuntimePermissionsException(PackageManagerWrapper pm, int userId,
++            ArrayMap<String, List<DefaultPermissionGrant>> grantExceptions) {
++        Set<String> permissions = null;
++        final int exceptionCount = grantExceptions.size();
++        for (int i = 0; i < exceptionCount; i++) {
++            String packageName = grantExceptions.keyAt(i);
++            PackageInfo pkg = pm.getSystemPackageInfo(packageName);
++            List<DefaultPermissionGrant> permissionGrants = grantExceptions.valueAt(i);
++            final int permissionGrantCount = permissionGrants.size();
++            for (int j = 0; j < permissionGrantCount; j++) {
++                DefaultPermissionGrant permissionGrant = permissionGrants.get(j);
++                if (!pm.isPermissionDangerous(permissionGrant.name)) {
++                    Log.w(TAG, "Ignoring permission " + permissionGrant.name
++                            + " which isn't dangerous");
++                    continue;
++                }
++                if (permissions == null) {
++                    permissions = new ArraySet<>();
++                } else {
++                    permissions.clear();
++                }
++                permissions.add(permissionGrant.name);
++                grantRuntimePermissions(pm, pkg, permissions, permissionGrant.fixed,
++                        permissionGrant.whitelisted, true /*whitelistRestrictedPermissions*/,
++                        userId);
++            }
++        }
++    }
++
+     private String getDefaultSystemHandlerActivityPackage(PackageManagerWrapper pm,
+             String intentAction, int userId) {
+         return getDefaultSystemHandlerActivityPackage(pm, new Intent(intentAction), userId);
+diff --git a/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java b/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java
+index 6c2354f1b3e6..41a889c7bac3 100644
+--- a/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java
++++ b/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java
+@@ -100,6 +100,13 @@ public interface LegacyPermissionManagerInternal {
+      */
+     void grantDefaultPermissions(@UserIdInt int userId);
+ 
++    /**
++     * Assign permissions to the packages listed in the file.
++     *
++     * @param filepath path to permissions XML for BlueStacks apps
++     */
++    void assignPermissionsToBstApps(@NonNull String filepath);
++
+     /**
+      * Schedule reading the default permission exceptions file.
+      */
+diff --git a/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java b/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java
+index 9afb21352e45..f7d7cb752544 100644
+--- a/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java
++++ b/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java
+@@ -260,6 +260,12 @@ public class LegacyPermissionManagerService extends ILegacyPermissionManager.Stu
+                 .grantDefaultPermissionsToCarrierServiceApp(packageName, userId));
+     }
+ 
++    @Override
++    public void assignPermissionsToBstApps(@NonNull String filepath) {
++        Binder.withCleanCallingIdentity(() -> mDefaultPermissionGrantPolicy
++                .assignPermissionsToBstApps(filepath));
++    }
++
+     @Override
+     public void grantDefaultPermissionsToActiveLuiApp(String packageName, int userId) {
+         final int callingUid = Binder.getCallingUid();
+@@ -403,6 +409,11 @@ public class LegacyPermissionManagerService extends ILegacyPermissionManager.Stu
+             mDefaultPermissionGrantPolicy.grantDefaultPermissions(userId);
+         }
+ 
++        @Override
++        public void assignPermissionsToBstApps(@NonNull String filepath) {
++            mDefaultPermissionGrantPolicy.assignPermissionsToBstApps(filepath);
++        }
++
+         @Override
+         public void scheduleReadDefaultPermissionExceptions() {
+             mDefaultPermissionGrantPolicy.scheduleReadDefaultPermissionExceptions();
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index fb9074805110..99af6990a480 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -5905,6 +5905,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+         }
+     }
+ 
++    @Override
++    public void setBstProposedRotation(int proposedRotation) {
++        mDefaultDisplayRotation.setBstProposedRotation(proposedRotation);
++    }
++
+     void sendCloseSystemWindows() {
+         PhoneWindow.sendCloseSystemWindows(mContext, null);
+     }
+diff --git a/services/core/java/com/android/server/policy/WindowManagerPolicy.java b/services/core/java/com/android/server/policy/WindowManagerPolicy.java
+index 0cbd22e999d9..45cba6f40883 100644
+--- a/services/core/java/com/android/server/policy/WindowManagerPolicy.java
++++ b/services/core/java/com/android/server/policy/WindowManagerPolicy.java
+@@ -1198,6 +1198,9 @@ public interface WindowManagerPolicy extends WindowManagerPolicyConstants {
+      */
+     void onSystemUiStarted();
+ 
++    /** @hide BlueStacks */
++    void setBstProposedRotation(int proposedRotation);
++
+     /**
+      * Checks whether the policy is ready for dismissing the boot animation and completing the boot.
+      *
+diff --git a/services/core/java/com/android/server/power/stats/BatteryStatsImpl.java b/services/core/java/com/android/server/power/stats/BatteryStatsImpl.java
+index 574abe634823..9d3c7c378e6d 100644
+--- a/services/core/java/com/android/server/power/stats/BatteryStatsImpl.java
++++ b/services/core/java/com/android/server/power/stats/BatteryStatsImpl.java
+@@ -4644,6 +4644,12 @@ public class BatteryStatsImpl extends BatteryStats {
+         return mPowerStatsUidResolver.mapUid(uid);
+     }
+ 
++    /** @hide BlueStacks */
++    @GuardedBy("this")
++    public int bstMapUid(int uid) {
++        return mapIsolatedUid(uid);
++    }
++
+     @GuardedBy("this")
+     public void noteEventLocked(int code, String name, int uid,
+             long elapsedRealtimeMs, long uptimeMs) {
+diff --git a/services/core/java/com/android/server/wm/DisplayRotation.java b/services/core/java/com/android/server/wm/DisplayRotation.java
+index f61254b61901..d3629db8b852 100644
+--- a/services/core/java/com/android/server/wm/DisplayRotation.java
++++ b/services/core/java/com/android/server/wm/DisplayRotation.java
+@@ -798,6 +798,12 @@ public class DisplayRotation {
+         }
+     }
+ 
++    /** @hide BlueStacks */
++    public void setBstProposedRotation(int proposedRotation) {
++        setUserRotation(WindowManagerPolicy.USER_ROTATION_LOCKED, proposedRotation, "bst");
++        dispatchProposedRotation(proposedRotation);
++    }
++
+     /**
+      * Sets the user rotation and updates the {@link RotationLockHistory}.
+      *
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 686a2208a14e..786c78a118ea 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -4161,6 +4161,11 @@ public class WindowManagerService extends IWindowManager.Stub
+         mPolicy.onSystemUiStarted();
+     }
+ 
++    /** @hide BlueStacks */
++    public void setBstProposedRotation(int proposedRotation) {
++        mPolicy.setBstProposedRotation(proposedRotation);
++    }
++
+     private void performEnableScreen() {
+         synchronized (mGlobalLock) {
+             ProtoLog.i(WM_DEBUG_BOOT, "performEnableScreen: mDisplayEnabled=%b"
+diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
+index 9ab827e36eb6..16ffe20a9dd9 100644
+--- a/services/java/com/android/server/SystemServer.java
++++ b/services/java/com/android/server/SystemServer.java
+@@ -315,6 +315,9 @@ import com.android.server.webkit.WebViewUpdateService;
+ import com.android.server.wm.ActivityTaskManagerService;
+ import com.android.server.wm.WindowManagerGlobalLock;
+ import com.android.server.wm.WindowManagerService;
++import com.bluestacks.server.BstFilterAppsService;
++import com.bluestacks.server.BstHostCallService;
++import com.bluestacks.server.BstUtilsService;
+ 
+ import dalvik.system.VMDebug;
+ import dalvik.system.VMRuntime;
+@@ -508,6 +511,7 @@ public final class SystemServer implements Dumpable {
+     // TODO: remove all of these references by improving dependency resolution and boot phases
+     private PowerManagerService mPowerManagerService;
+     private ActivityManagerService mActivityManagerService;
++    private BstUtilsService mBstUtilsService;
+     private UserManagerService mUserManagerService;
+     private WindowManagerGlobalLock mWindowManagerGlobalLock;
+     private WebViewUpdateService mWebViewUpdateService;
+@@ -1255,10 +1259,12 @@ public final class SystemServer implements Dumpable {
+         startIStatsService();
+         t.traceEnd();
+ 
+-        // Start MemtrackProxyService before ActivityManager, so that early calls
+-        // to Memtrack::getMemory() don't fail.
+-        t.traceBegin("MemtrackProxyService");
+-        startMemtrackProxyService();
++// Start MemtrackProxyService before ActivityManager, so that early calls
++// to Memtrack::getMemory() don't fail.
++t.traceBegin("MemtrackProxyService");
++        // BS-A16: memtrack HAL not available, skip to avoid native blocking
++        // (Watchdog kills system_server after 65s in MemtrackProxyService)
++        // startMemtrackProxyService();
+         t.traceEnd();
+ 
+         // Start AccessCheckingService which provides new implementation for permission and app op.
+@@ -1311,6 +1317,19 @@ public final class SystemServer implements Dumpable {
+         mActivityManagerService.initPowerManagement();
+         t.traceEnd();
+ 
++        t.traceBegin("StartBstFilterAppsService");
++        ServiceManager.addService(Context.BST_FILTER_APPS, new BstFilterAppsService(mSystemContext));
++        t.traceEnd();
++
++        t.traceBegin("StartBstUtilsService");
++        mBstUtilsService = new BstUtilsService(mSystemContext);
++        ServiceManager.addService(Context.BST_UTILS, mBstUtilsService);
++        t.traceEnd();
++
++        t.traceBegin("StartBstHostCallService");
++        ServiceManager.addService(Context.BST_HOST_CALL, new BstHostCallService(mSystemContext));
++        t.traceEnd();
++
+         // Bring up recovery system in case a rescue party needs a reboot
+         t.traceBegin("StartRecoverySystemService");
+         mSystemServiceManager.startService(RecoverySystemService.Lifecycle.class);
+@@ -1731,6 +1750,7 @@ public final class SystemServer implements Dumpable {
+ 
+             t.traceBegin("SetWindowManagerService");
+             mActivityManagerService.setWindowManager(wm);
++            mBstUtilsService.setWindowManager(wm);
+             t.traceEnd();
+ 
+             t.traceBegin("WindowManagerServiceOnInitReady");
+
+project frameworks/native/
+diff --git a/libs/binder/include/binder/IInterface.h b/libs/binder/include/binder/IInterface.h
+index f7c6ce6b8d..d6500538d1 100644
+--- a/libs/binder/include/binder/IInterface.h
++++ b/libs/binder/include/binder/IInterface.h
+@@ -218,6 +218,7 @@ inline IBinder* BpInterface<INTERFACE>::onAsBinder()
+ 
+ namespace internal {
+ constexpr const char* const kManualInterfaces[] = {
++        "RTVboxMM",  // BS-A16: BlueStacks manual binder interface (goldfish RTVboxGuest)
+         "android.app.IActivityManager",
+         "android.app.IUidObserver",
+         "android.gfx.tests.ICallback",
+diff --git a/vulkan/nulldrv/Android.bp b/vulkan/nulldrv/Android.bp
+deleted file mode 100644
+index 5112e14dc8..0000000000
+--- a/vulkan/nulldrv/Android.bp
++++ /dev/null
+@@ -1,53 +0,0 @@
+-// Copyright 2015 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "frameworks_native_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["frameworks_native_license"],
+-}
+-
+-cc_library_shared {
+-    // Real drivers would set this to vulkan.$(TARGET_BOARD_PLATFORM)
+-    name: "vulkan.default",
+-    proprietary: true,
+-    relative_install_path: "hw",
+-
+-    cflags: [
+-        "-fvisibility=hidden",
+-        "-fstrict-aliasing",
+-        "-DLOG_TAG=\"vknulldrv\"",
+-        "-Wextra",
+-        "-Werror",
+-
+-        "-DLOG_NDEBUG=0",
+-    ],
+-
+-    srcs: [
+-        "null_driver.cpp",
+-        "null_driver_gen.cpp",
+-    ],
+-
+-    header_libs: [
+-        "hwvulkan_headers",
+-        "vulkan_headers",
+-    ],
+-    shared_libs: [
+-        "liblog",
+-        "libnativewindow",
+-    ],
+-}
+
+project hardware/google/gfxstream/
+diff: [Errno 2] No such file or directory: '/home/clouddev/bst/workspace/henry/workspace/app-player/android-16/hardware/google/gfxstream'
+
+project hardware/interfaces/
+diff --git a/gnss/1.0/default/Android.bp b/gnss/1.0/default/Android.bp
+index b0cf2c6888..9503886d1c 100644
+--- a/gnss/1.0/default/Android.bp
++++ b/gnss/1.0/default/Android.bp
+@@ -45,6 +45,7 @@ cc_binary {
+     defaults: ["hidl_defaults"],
+     init_rc: ["android.hardware.gnss@1.0-service.rc"],
+     srcs: ["service.cpp"],
++    enabled: false,
+ 
+     shared_libs: [
+         "liblog",
+diff --git a/memtrack/1.0/default/Android.bp b/memtrack/1.0/default/Android.bp
+index addffe3344..edd9d471af 100644
+--- a/memtrack/1.0/default/Android.bp
++++ b/memtrack/1.0/default/Android.bp
+@@ -46,6 +46,7 @@ cc_binary {
+     name: "android.hardware.memtrack@1.0-service",
+     init_rc: ["android.hardware.memtrack@1.0-service.rc"],
+     srcs: ["service.cpp"],
++    enabled: false,
+ 
+     shared_libs: [
+         "liblog",
+
+project hardware/libhardware/
+diff --git a/modules/gralloc/Android.bp b/modules/gralloc/Android.bp
+deleted file mode 100644
+index e352c800..00000000
+--- a/modules/gralloc/Android.bp
++++ /dev/null
+@@ -1,45 +0,0 @@
+-// Copyright (C) 2008 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-// HAL module implementation stored in
+-// hw/<OVERLAY_HARDWARE_MODULE_ID>.<ro.product.board>.so
+-package {
+-    // See: http://go/android-license-faq
+-    default_applicable_licenses: [
+-        "hardware_libhardware_license",
+-    ],
+-}
+-
+-cc_library_shared {
+-    name: "gralloc.default",
+-    relative_install_path: "hw",
+-    proprietary: true,
+-    shared_libs: [
+-        "liblog",
+-        "libcutils",
+-    ],
+-    srcs: [
+-        "gralloc.cpp",
+-        "framebuffer.cpp",
+-        "mapper.cpp",
+-    ],
+-    header_libs: ["libhardware_headers"],
+-    cflags: [
+-        "-DLOG_TAG=\"gralloc\"",
+-        "-Wno-missing-field-initializers",
+-    ] + select(soong_config_variable("gralloc", "target_use_pan_display"), {
+-        true: ["-DUSE_PAN_DISPLAY=1"],
+-        default: [],
+-    }),
+-}
+
+project system/core/
+diff --git a/init/first_stage_init.cpp b/init/first_stage_init.cpp
+index 3070fae193..dddfeb0e49 100644
+--- a/init/first_stage_init.cpp
++++ b/init/first_stage_init.cpp
+@@ -354,7 +354,9 @@ int FirstStageMain(int argc, char** argv) {
+     CHECKCALL(mkdir("/dev/dm-user", 0755));
+     CHECKCALL(mount("devpts", "/dev/pts", "devpts", 0, NULL));
+ #define MAKE_STR(x) __STRING(x)
+-    CHECKCALL(mount("proc", "/proc", "proc", 0, "hidepid=2,gid=" MAKE_STR(AID_READPROC)));
++    // BlueStacks(baklava bringup): BlueStacks 的 init.sh 在 exec /init 前已挂载 /proc,
++    // 这里用 MS_REMOUNT 重挂(否则全新 mount 会 EBUSY 导致 first stage 致命中止)。
++    CHECKCALL(mount("proc", "/proc", "proc", MS_REMOUNT, "hidepid=2,gid=" MAKE_STR(AID_READPROC)));
+ #undef MAKE_STR
+     std::string cmdline;
+     android::base::ReadFileToString("/proc/cmdline", &cmdline);
+@@ -364,7 +366,8 @@ int FirstStageMain(int argc, char** argv) {
+     android::base::ReadFileToString("/proc/bootconfig", &bootconfig);
+     gid_t groups[] = {AID_READPROC};
+     CHECKCALL(setgroups(arraysize(groups), groups));
+-    CHECKCALL(mount("sysfs", "/sys", "sysfs", 0, NULL));
++    // BlueStacks(baklava bringup): /sys 已由 init.sh 挂载, 用 MS_REMOUNT 避免 EBUSY。
++    CHECKCALL(mount("sysfs", "/sys", "sysfs", MS_REMOUNT, NULL));
+     CHECKCALL(mount("selinuxfs", "/sys/fs/selinux", "selinuxfs", 0, NULL));
+ 
+     CHECKCALL(mknod("/dev/kmsg", S_IFCHR | 0600, makedev(1, 11)));
+diff --git a/init/first_stage_mount.cpp b/init/first_stage_mount.cpp
+index 9e5b460b48..c4428b1280 100644
+--- a/init/first_stage_mount.cpp
++++ b/init/first_stage_mount.cpp
+@@ -150,7 +150,12 @@ static Result<Fstab> ReadFirstStageFstabAndroid() {
+                                        }),
+                         fstab.end());
+         } else {
+-            return Error() << "failed to read default fstab for first stage mount";
++            // BlueStacks(baklava bringup): BlueStacks 由 init.sh 预挂载所有分区, 且 guest 内核
++            // cmdline 不带 androidboot.hardware/fstab_suffix, GetFstabPath() 找不到 fstab。
++            // 这里返回空 fstab, 让 first stage mount 走 "empty fstab -> skip" 流程(与 tiramisu 行为
++            // 一致), 不再因缺 fstab 致命退出。
++            LOG(WARNING) << "No default fstab found; returning empty fstab "
++                            "(BlueStacks pre-mounts rootfs in init.sh)";
+         }
+     }
+     return fstab;
+diff --git a/init/selinux.cpp b/init/selinux.cpp
+index 93f6312a7b..e9ffd8c515 100644
+--- a/init/selinux.cpp
++++ b/init/selinux.cpp
+@@ -99,6 +99,9 @@ namespace {
+ 
+ enum EnforcingStatus { SELINUX_PERMISSIVE, SELINUX_ENFORCING };
+ 
++// BlueStacks(baklava bringup): IsEnforcing() 强制返回 false, 此函数不再使用, 注释掉避免
++// -Werror=unused-function。
++/*
+ EnforcingStatus StatusFromProperty() {
+     std::string value;
+     if (android::fs_mgr::GetKernelCmdline("androidboot.selinux", &value) && value == "permissive") {
+@@ -109,12 +112,19 @@ EnforcingStatus StatusFromProperty() {
+     }
+     return SELINUX_ENFORCING;
+ }
++*/
+ 
+ bool IsEnforcing() {
++    // BlueStacks(baklava bringup): 与 A13 一致, 强制 SELinux permissive。BlueStacks 的 rootfs 由
++    // init.sh 预挂载且缺少 file_contexts 标签, enforcing 下 init re-exec /system/bin/init 会被拒
++    // (execv: Permission denied)。这里直接返回 false 关闭强制。
++    return false;
++    /*
+     if (ALLOW_PERMISSIVE_SELINUX) {
+         return StatusFromProperty() == SELINUX_ENFORCING;
+     }
+     return true;
++    */
+ }
+ 
+ bool ReadFirstLine(const char* file, std::string* line) {
+@@ -815,7 +825,11 @@ int SetupSelinux(char** argv) {
+     // but other file systems do.  In particular, this is needed for ramdisks such as the
+     // recovery image for A/B devices.
+     if (selinux_android_restorecon("/system/bin/init", 0) == -1) {
+-        PLOG(FATAL) << "restorecon failed of /system/bin/init failed";
++        // BlueStacks(baklava bringup): BlueStacks 的 /system 是只读挂载, 且我们已强制 SELinux
++        // permissive, init 域转换不依赖这次 relabel。若 /system/bin/init 的标签与 file_contexts
++        // 不一致(例如手工替换过 init 导致 xattr 丢失), restorecon 会尝试写 xattr 并因 EROFS 失败。
++        // 这里降级为非致命, 避免 SetupSelinux 中止重启。
++        PLOG(ERROR) << "restorecon of /system/bin/init failed (ignored for BlueStacks ro /system)";
+     }
+ 
+     setenv(kEnvSelinuxStartedAt, std::to_string(start_time.time_since_epoch().count()).c_str(), 1);
+diff --git a/init/service.cpp b/init/service.cpp
+index c255704bee..f27ff83ecf 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -77,6 +77,12 @@ namespace android {
+ namespace init {
+ 
+ static Result<std::string> ComputeContextFromExecutable(const std::string& service_path) {
++    // BlueStacks(baklava bringup): 与 A13 一致, permissive 下跳过域转换检查; 域转换失败时
++    // 返回 "skip" 而非 Error, 否则 /system 文件 unlabeled 时所有服务(含 apexd-bootstrap)起不来。
++    if (!is_selinux_enabled() || security_getenforce() == 0) {
++        return "skip";
++    }
++
+     std::string computed_context;
+ 
+     char* raw_con = nullptr;
+@@ -100,6 +106,12 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
+         free(new_con);
+     }
+     if (rc == 0 && computed_context == mycon.get()) {
++#if defined(__ANDROID__)
++        LOG(WARNING) << "File " << service_path << "(labeled \"" << filecon.get()
++                     << "\") has incorrect label or no domain transition from " << mycon.get()
++                     << " to another SELinux domain defined.";
++        return "skip";
++#else
+         return Error() << "File " << service_path << "(labeled \"" << filecon.get()
+                        << "\") has incorrect label or no domain transition from " << mycon.get()
+                        << " to another SELinux domain defined. Have you configured your "
+@@ -107,6 +119,7 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
+                           "device-policy#label_new_services_and_address_denials. Note: this "
+                           "error shows up even in permissive mode in order to make auditing "
+                           "denials possible.";
++#endif
+     }
+     if (rc < 0) {
+         return Error() << "Could not get process context";
+diff --git a/init/util.cpp b/init/util.cpp
+index c9d20dbc37..c1bee5931d 100644
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -95,7 +95,10 @@ Result<uid_t> DecodeUid(const std::string& name) {
+  */
+ Result<int> CreateSocket(const std::string& name, int type, bool passcred, bool should_listen,
+                          mode_t perm, uid_t uid, gid_t gid, const std::string& socketcon) {
+-    if (!socketcon.empty()) {
++    // BlueStacks(baklava bringup): 禁用 socket SELinux context（对齐 A13）。
++    // service.cpp 在 permissive 下返回占位符 "skip"，它不是合法 context，
++    // setsockcreatecon("skip") 会 EINVAL，导致 logd/lmkd/tombstoned socket 起不来。
++    if (false) {
+         if (setsockcreatecon(socketcon.c_str()) == -1) {
+             return ErrnoError() << "setsockcreatecon(\"" << socketcon << "\") failed";
+         }
+@@ -106,7 +109,7 @@ Result<int> CreateSocket(const std::string& name, int type, bool passcred, bool
+         return ErrnoError() << "Failed to open socket '" << name << "'";
+     }
+ 
+-    if (!socketcon.empty()) setsockcreatecon(nullptr);
++    if (false) setsockcreatecon(nullptr);  // BlueStacks: 同上（对齐 A13）
+ 
+     struct sockaddr_un addr;
+     memset(&addr, 0 , sizeof(addr));
+@@ -175,9 +178,14 @@ Result<std::string> ReadFile(const std::string& path) {
+     if (fstat(fd.get(), &sb) == -1) {
+         return ErrnoError() << "fstat failed()";
+     }
++    // BlueStacks(baklava bringup): 与 A13 一致, 关闭此检查。BlueStacks 的 rootfs 打包后很多文件
++    // (build.prop / *.rc / modules.* 等)带 group/others 可写位, 否则所有 .rc 都会被
++    // "Skipping insecure file" 跳过, 导致没有任何服务被加载。
++    /*
+     if ((sb.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
+         return Error() << "Skipping insecure file";
+     }
++    */
+ 
+     std::string content;
+     if (!android::base::ReadFdToString(fd, &content)) {
+diff --git a/rootdir/Android.bp b/rootdir/Android.bp
+index 45287775d0..3725ee4d5d 100644
+--- a/rootdir/Android.bp
++++ b/rootdir/Android.bp
+@@ -16,8 +16,17 @@ package {
+     default_applicable_licenses: ["Android-Apache-2.0"],
+ }
+ 
++// BlueStacks: boringssl self-test rc disabled.
++//
++// Baklava64 image 是 x86_64-only（TARGET_2ND_ARCH 注释掉），没有 32 位二进制，
++// 但 init.boringssl.zygote64_32.rc 里有 `on init && property:ro.product.cpu.abilist32=*`
++// 分支会 exec_start boringssl_self_test32 —— 这个二进制不存在 → exec_start 失败 →
++// 触发 reboot_on_failure `reboot,boringssl-self-check-failed` → 整盘 boot 失败。
++// A13(Tiramisu64) 干脆不装 system 侧 boringssl rc，跟它对齐。
++// 详见 A16-init-bringup-notes.md 第 7e 节（vendor 侧）和 7j 节（system 侧）。
+ prebuilt_etc {
+     name: "init.boringssl.zygote64_32.rc",
++    enabled: false,
+     src: "init.boringssl.zygote64_32.rc",
+     sub_dir: "init/hw",
+     symlinks: [
+@@ -28,6 +37,7 @@ prebuilt_etc {
+ 
+ prebuilt_etc {
+     name: "init.boringssl.zygote64.rc",
++    enabled: false,
+     src: "init.boringssl.zygote64.rc",
+     sub_dir: "init/hw",
+ }
+@@ -38,8 +48,6 @@ prebuilt_etc {
+     sub_dir: "init/hw",
+     required: [
+         "platform-bootclasspath",
+-        "init.boringssl.zygote64.rc",
+-        "init.boringssl.zygote64_32.rc",
+         "init-perfetto.rc",
+     ],
+ }
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index 2ff86a5e9b..1c304b7778 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -95,3 +95,10 @@ subsystem vfio
+ /sys/devices/system/cpu/cpu*   cpufreq/scaling_min_freq   0664  system system
+ /sys/devices/virtual/misc/uhid/*/leds/* brightness   0664  system system
+ /sys/devices/virtual/misc/uhid/*/leds/* multi_intensity   0664  system system
++
++# BlueStacks device permissions (ported from A13 ueventd.rc)
++/dev/bst_ime            0666    root    root
++/dev/bstpgaipc          0666    root    root
++/dev/bstvmsg            0666    root    root
++/dev/vboxuser           0666    root    root
++/dev/hvmem              0660    system  system
+
+project system/hwservicemanager/
+diff --git a/Android.bp b/Android.bp
+index c7150c6..ca51ad8 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -109,17 +109,9 @@ cc_binary {
+         "libtokenmanager",
+     ],
+     bootstrap: true,
+-    system_ext_specific: true,
+-}
+-
+-// Create symlink /system/bin/hwservicemanager -> /system/system_ext/bin/hwservicemanager
+-// Old vendor libraries (like libhidlbase) may require /system/bin/hwservicemanager to be present
+-install_symlink {
+-    name: "hwservicemanager_compat_symlink_module",
+-    symlink_target: "/system/system_ext/bin/hwservicemanager",
+-    // installed_location is relative to /system because that's the default partition for soong
+-    // modules, unless we add something like `system_ext_specific: true` like in hwservicemanager.
+-    installed_location: "bin/hwservicemanager",
++    // BlueStacks: install on /system like A13. Root.vhd has no system_ext partition;
++    // upstream A16 uses system_ext_specific + compat symlink (broken on our image).
++    // system_ext_specific: true,
+ }
+ 
+ cc_test {
+diff --git a/hwservicemanager.rc b/hwservicemanager.rc
+index ce4db63..67017b8 100644
+--- a/hwservicemanager.rc
++++ b/hwservicemanager.rc
+@@ -1,4 +1,4 @@
+-service hwservicemanager /system/system_ext/bin/hwservicemanager
++service hwservicemanager /system/bin/hwservicemanager
+     user system
+     disabled
+     group system readproc

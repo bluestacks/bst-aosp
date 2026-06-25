@@ -1,0 +1,450 @@
+diff --git a/buildscripts/Makefile b/buildscripts/Makefile
+index ae2fad942..a9344b8df 100755
+--- a/buildscripts/Makefile
++++ b/buildscripts/Makefile
+@@ -1,5 +1,6 @@
+ SHELL := /bin/bash
+ BUILD_SCRIPT_PATH := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
++export PATH := $(BUILD_SCRIPT_PATH)bin:$(PATH)
+ BASEPATH := $(shell dirname $(BUILD_SCRIPT_PATH))
+ ANDROID_SDK_PATH := /home/build/workspace/android-sdk/sdk
+ MAKE_TARGET_BOOT_ISO := Boot.iso MAKEFLAGS=
+@@ -18,6 +19,10 @@ else ifneq (,$(findstring Rvc,$(IMAGE)))
+ ANDROID_VERSION := rvc
+ ANDROIDHOME := $(BASEPATH)/android-11
+ GOLDFISH_OPENGL := ggl/goldfish-opengl-pie/
++else ifneq (,$(findstring Baklava,$(IMAGE)))
++ANDROID_VERSION := baklava
++ANDROIDHOME := $(BASEPATH)/android-16
++GOLDFISH_OPENGL := ggl/goldfish-opengl-pie/
+ else
+ ANDROID_VERSION := tiramisu
+ ANDROIDHOME := $(BASEPATH)/android-13
+@@ -37,11 +42,15 @@ BST_USE_JEMALLOC := true
+ CPUINFO_DIR := $(BASEPATH)/3bt/cpuinfo/$(ANDROID_VERSION)64/
+ ifeq ($(IS_HYPERV_BUILD),1)
+ TARGET := android_x86_64-eng_hyperv
++else ifeq ($(ANDROID_VERSION),baklava)
++TARGET := android_x86_64-trunk_staging-eng
+ else
+ TARGET := android_x86_64-eng
+ endif
+ ifeq ($(ANDROID_VERSION),nougat)
+ ROOTSIZE := 2621440
++else ifeq ($(ANDROID_VERSION),baklava)
++ROOTSIZE := 6291456
+ else
+ ROOTSIZE := 2621440
+ MAKE_TARGET += all VBOX_KBUILD_TARGET_ARCH=x86_64 ARCH=x86_64
+@@ -68,6 +77,8 @@ endif
+ 
+ ifeq ($(ANDROID_VERSION),tiramisu)
+ CLANG_PREBUILT_BIN := $(ANDROIDHOME)/prebuilts/clang/host/linux-x86/clang-r450784d/bin
++else ifeq ($(ANDROID_VERSION),baklava)
++CLANG_PREBUILT_BIN := $(ANDROIDHOME)/prebuilts/clang/host/linux-x86/clang-r563880/bin
+ else
+ CROSS_COMPILER := $(ANDROIDHOME)/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6/bin/x86_64-linux-
+ endif
+@@ -78,6 +89,7 @@ IMAGE_TO_LOWER := $(shell echo $(IMAGE) | tr '[:upper:]' '[:lower:]')
+ APPCONFFILE := $(BASEPATH)/bst/apks/$(ANDROID_VERSION)/$(ANDROID_VERSION)_appPlayerApksToInstall_$(OEM)_$(IMAGE_TO_LOWER)
+ TOYBOX := $(ANDROIDHOME)/external/toybox
+ SENSORS_DEFAULT := $(ANDROIDHOME)/external/bluestacks/sensors
++HD_SOURCE_TOP_PATH := $(BASEPATH)/hd
+ OPENGL_DIR := $(BASEPATH)/opengl/Client
+ BSTTOOLS := $(BASEPATH)/tools
+ BSTBIN := $(BASEPATH)/bst/bin
+@@ -94,6 +106,9 @@ BIONIC_LIBC := $(ANDROIDHOME)/bionic/libc
+ FRAMEWORKS_AV := $(ANDROIDHOME)/frameworks/av
+ 
+ DATASIZE := 720896
++ifeq ($(ANDROID_VERSION),baklava)
++DATASIZE := 1572864
++endif
+ MOUNT_POINT := dataFS
+ 
+ ifndef PARALLEL_NX_PROC
+@@ -163,6 +178,9 @@ endif
+ ifeq ($(ANDROID_VERSION),tiramisu)
+ 	$(call	copy,$(BSTTOOLS)/security/config_a13/.swl.cfg,$(OUTPUTDIR)/system/etc/)
+ 	$(call	copy,$(BSTTOOLS)/security/config_a13/.swl.cfg.sig,$(OUTPUTDIR)/system/etc/)
++else ifeq ($(ANDROID_VERSION),baklava)
++	$(call	copy,$(BSTTOOLS)/security/config_a13/.swl.cfg,$(OUTPUTDIR)/system/etc/)
++	$(call	copy,$(BSTTOOLS)/security/config_a13/.swl.cfg.sig,$(OUTPUTDIR)/system/etc/)
+ else
+ 	$(call	copy,$(BSTTOOLS)/security/config/.swl.cfg,$(OUTPUTDIR)/system/etc/)
+ 	$(call	copy,$(BSTTOOLS)/security/config/.swl.cfg.sig,$(OUTPUTDIR)/system/etc/)
+@@ -172,6 +190,9 @@ ifeq ($(ANDROID_VERSION),rvc)
+ endif
+ ifeq ($(ANDROID_VERSION),tiramisu)
+ 	$(call  copy,$(PROPFILES)/additional_system_props,$(OUTPUTDIR)/$(MOUNT_POINT)/propfiles)
++endif
++ifeq ($(ANDROID_VERSION),baklava)
++	$(call  copy,$(PROPFILES)/additional_system_props,$(OUTPUTDIR)/$(MOUNT_POINT)/propfiles)
+ endif
+ 	$(call copy_feature_files,$(MOUNT_POINT))
+ 	$(call copy_appdetails,$(MOUNT_POINT))
+@@ -260,6 +281,16 @@ else ifeq ($(ANDROID_VERSION),tiramisu)
+ 		&& export HD_SOURCE_TOP=$(BASEPATH)/hd \
+ 		&& export PATH=$(shell echo "$(CLANG_PREBUILT_BIN):$(PATH)") \
+ 		&& $(MAKE) MAKEFLAGS= $(MAKE_TARGET) LLVM=1 -j$(numproc) || exit 1)
++else ifeq ($(ANDROID_VERSION),baklava)
++	(cd $(BASEPATH)/hd/guest && export KDIR=$(ANDROIDOUT)/obj/kernel \
++		&& export VBOX_GUEST_ADDITIONS=$(VBOX_GUEST_ADDITIONS_LOC)/$(LOCATION)/src/vboxguest-$(VBOX_VERSION) \
++		&& export KERN_DIR=$(ANDROIDOUT)/obj/kernel \
++		&& export OEM=$(OEM) \
++		&& export IMAGE=$(IMAGE) \
++		&& export IS_64_BUILD=$(IS_64_BUILD) \
++		&& export HD_SOURCE_TOP=$(BASEPATH)/hd \
++		&& export PATH=$(shell echo "$(CLANG_PREBUILT_BIN):$(PATH)") \
++		&& $(MAKE) MAKEFLAGS= $(MAKE_TARGET) LLVM=1 -j$(numproc) || exit 1)
+ else
+ 	(cd $(BASEPATH)/hd/guest && export KDIR=$(ANDROIDOUT)/obj/kernel \
+ 		&& export VBOX_GUEST_ADDITIONS=$(VBOX_GUEST_ADDITIONS_LOC)/$(LOCATION)/src/vboxguest-$(VBOX_VERSION) \
+@@ -316,10 +347,23 @@ endif
+ android: force-aidl-check force-kernel-clean
+ 	@echo "Target android has started, $$(date +%H:%M:%S)"
+ 	if [ -d $(ANDROIDOUT) ]; then cd $(ANDROIDOUT) && rm -f `find . -iname \*.img` && rm -f `find . -iname \*.iso` && rm -f `find . -iname \*.sfs`; fi
++ifeq ($(ANDROID_VERSION),pie)
++	($(call export_env) \
++		&& cd $(ANDROIDHOME)/ \
++		&& OUT_PATH=$(OUT_PATH) OEM=$(OEM) IMAGE=$(IMAGE) APP_PLAYER_DIR=$(BASEPATH) ANDROIDHOME=$(ANDROIDHOME) bash $(BUILD_SCRIPT_PATH)bin/wrap_build_sepolicy_py3.sh \
++		&& make iso_img -j$(numproc) showcommands \
++		&& make ramdisk || exit 1)
++else ifeq ($(ANDROID_VERSION),baklava)
++	($(call export_env) \
++		&& cd $(ANDROIDHOME)/ \
++		&& make iso_img -j$(numproc) \
++		&& make ramdisk || exit 1)
++else
+ 	($(call export_env) \
+ 		&& cd $(ANDROIDHOME)/ \
+ 		&& make iso_img -j$(numproc) showcommands \
+ 		&& make ramdisk || exit 1)
++endif
+ 	@echo "Target android has been completed, $$(date +%H:%M:%S)"
+ 
+ datafs: apks
+@@ -340,8 +384,8 @@ endif
+ apks:
+ 	@echo "Target apks has been started for OEM=$(OEM), $$(date +%H:%M:%S)"
+ 	$(call create_apk_folder)
+-	(cd $(BUILD_SCRIPT_PATH) && export ANDROID_HOME=$(ANDROID_SDK_PATH) && export OEM=$(OEM) && bash -x build_bluestacks_apks.sh || exit 1)
+-	(cd $(BUILD_SCRIPT_PATH) && export ANDROID_HOME=$(ANDROID_SDK_PATH) && export OEM=$(OEM) && bash -x build_nowgg_common_apks.sh || exit 1)
++#	(cd $(BUILD_SCRIPT_PATH) && export ANDROID_HOME=$(ANDROID_SDK_PATH) && export OEM=$(OEM) && bash -x build_bluestacks_apks.sh || exit 1)
++#	(cd $(BUILD_SCRIPT_PATH) && export ANDROID_HOME=$(ANDROID_SDK_PATH) && export OEM=$(OEM) && bash -x build_nowgg_common_apks.sh || exit 1)
+ 	$(call copy,$(SCRATCH_ROSEN)/apks/*apk,$(APKFOLDER)/)
+ 	@echo "Target apks has been completed for OEM=$(OEM), $$(date +%H:%M:%S)"
+ 
+@@ -428,12 +472,14 @@ define mount_disk_file
+     rm -rf $(3)/$(2)
+     mkdir -p $(3)/$(2)
+ 	sudo mount -o loop $(3)/$(1) $(3)/$(2) || exit 1
+-	sudo chown -R 1000:1000 $(3)/$(2) || exit 1
++	sudo chown -R $$(id -u):$$(id -g) $(3)/$(2) || exit 1
+ 	echo "Exiting mount_disk_file function"
+ endef
+ 
+ define create_dataFS_dir_structure
+ 	echo "In create_dataFS_dir_structure function"
++	mkdir -p $(OUTPUTDIR)/$(1) || exit 1
++	sudo chown -R $$(id -u):$$(id -g) $(OUTPUTDIR)/$(1) || exit 1
+ 	(mkdir -p $(OUTPUTDIR)/$(1)/app/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)) \
+ 		&& (chmod 771 $(OUTPUTDIR)/$(1)/app/ ||  (sudo umount -d $(OUTPUTDIR)/$(1)> /dev/null; exit 1)) \
+ 		&& (mkdir -p $(OUTPUTDIR)/$(1)/priv-downloads/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)) \
+@@ -455,7 +501,7 @@ define create_dataFS_dir_structure
+ 		&& (mkdir -p $(OUTPUTDIR)/$(1)/system-lib/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1));
+ 		$(call array_declaration); \
+ 			cd $(PROPFILES) && for i in $${COUNTRIES[@]}; do \
+-			mkdir $(OUTPUTDIR)/$(1)/propfiles/$$i || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1); \
++			mkdir -p $(OUTPUTDIR)/$(1)/propfiles/$$i || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1); \
+ 			done
+ 		echo "Exiting create_dataFS_dir_structure function"
+ endef
+@@ -506,7 +552,9 @@ endef
+ 
+ define build_alternate_memalloc
+ @echo "Target memalloc_libs has been started, $$(date +%H:%M:%S)"
+-if [ $(IS_64_BUILD) == 1 ]; then $(call save_memalloc_libs,$(x86_SRC_LIBS_DIR),$(OUTPUTDIR_x86_LIBS),je) \
++if [ -f $(OUTPUTDIR_x86_LIBS)/libc_je.so ] && [ -f $(OUTPUTDIR_x86_LIBS)/libc_dl.so ] && [ -f $(OUTPUTDIR_x86_LIBS)/libmemunreachable.so ]; then \
++	echo "Skipping memalloc_libs rebuild; artifacts already present in $(OUTPUTDIR_x86_LIBS)"; \
++elif [ $(IS_64_BUILD) == 1 ]; then $(call save_memalloc_libs,$(x86_SRC_LIBS_DIR),$(OUTPUTDIR_x86_LIBS),je) \
+ 	&& $(call save_memalloc_libs,$(x86_64_SRC_LIBS_DIR),$(OUTPUTDIR_x86_64_LIBS),je) \
+ 	&& $(call build_memalloc_libs,false) \
+ 	&& $(call save_memalloc_libs,$(x86_SRC_LIBS_DIR),$(OUTPUTDIR_x86_LIBS),dl) \
+@@ -605,6 +653,8 @@ endef
+ define create_setuid_su_binary
+ echo "Inside create_setuid_su_binary function"
+ mkdir -p $(OUTPUTDIR)/system/xbin/bstk
++sudo chmod 755 $(OUTPUTDIR)/system/xbin/bstk/ || exit 1
++sudo rm -f $(OUTPUTDIR)/system/xbin/bstk/su || exit 1
+ $(call copy,$(OUTPUTDIR)/system/xbin/su,$(OUTPUTDIR)/system/xbin/bstk/)
+ sudo chown 0:0 $(OUTPUTDIR)/system/xbin/bstk/su || exit 1
+ sudo chmod 06755 $(OUTPUTDIR)/system/xbin/bstk/su || exit 1
+@@ -738,13 +788,13 @@ endef
+ 
+ define set_ownership_for_dataFS_dirs
+ echo "Inside set_ownership_for_dataFS_dirs function"
+-sudo chown -R 1000:1000 $(OUTPUTDIR)/$(1)/app/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
++sudo chown -R $$(id -u):$$(id -g) $(OUTPUTDIR)/$(1)/app/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
+ sudo chmod 771 $(OUTPUTDIR)/$(1)/app/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
+-sudo chown -R 1000:1000 $(OUTPUTDIR)/$(1)/priv-downloads/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
++sudo chown -R $$(id -u):$$(id -g) $(OUTPUTDIR)/$(1)/priv-downloads/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
+ sudo chmod -R 775 $(OUTPUTDIR)/$(1)/priv-downloads/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
+-sudo chown -R 1000:1000	$(OUTPUTDIR)/$(1)/downloads/	|| (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
++sudo chown -R $$(id -u):$$(id -g) $(OUTPUTDIR)/$(1)/downloads/	|| (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
+ sudo chmod -R 775 $(OUTPUTDIR)/$(1)/downloads || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
+-sudo chown -R 1000:1000	$(OUTPUTDIR)/$(1)/propfiles/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
++sudo chown -R $$(id -u):$$(id -g) $(OUTPUTDIR)/$(1)/propfiles/ || (sudo umount -d $(OUTPUTDIR)/$(1) > /dev/null; exit 1)
+ if [ -f $(OUTPUTDIR)/$(1)/downloads/.xb/su ]; then \
+ 	(sudo chown 0:0 $(OUTPUTDIR)/$(1)/downloads/.xb/su || exit 1) \
+ 	&& (sudo chmod 06755 $(OUTPUTDIR)/$(1)/downloads/.xb/su || exit 1) \
+@@ -785,7 +835,7 @@ VDI_FILE=$(shell echo $(1) | sed "s/.fs/.vdi/g"); \
+ endef
+ 
+ define create_rooted_ramdisk_img_file
+-(cd $(ANDROIDHOME) && $(OUT_PATH)/host/linux-x86/bin/mkbootfs $(OUTPUTDIR)/rooted_root | $(OUT_PATH)/host/linux-x86/bin/minigzip > $(OUTPUTDIR)/ramdisk.img.rooted)
++(cd $(ANDROIDHOME) && $(OUT_PATH)/host/linux-x86/bin/mkbootfs $(OUTPUTDIR)/rooted_root | gzip -n > $(OUTPUTDIR)/ramdisk.img.rooted)
+ endef
+ 
+ define array_declaration
+@@ -833,16 +883,22 @@ echo "exporting environment variables" \
+ 	&& cd $(ANDROIDHOME)/ \
+ 	&& export OEM="$(OEM)" \
+ 	&& export OUT_DIR="$(OUT_PATH)" \
+-	&& export HD_SOURCE_TOP=$(BASEPATH)/hd/ \
++	&& export HD_SOURCE_TOP=$(HD_SOURCE_TOP_PATH) \
+ 	&& export IS_64_BUILD=$(IS_64_BUILD) \
+ 	&& export BST_USE_JEMALLOC=$(BST_USE_JEMALLOC) \
+ 	&& export APP_PLAYER_DIR=$(BASEPATH) \
++	&& export IMAGE="$(IMAGE)" \
+ 	&& export USE_OPENGL_RENDERER=true \
+ 	&& export BST_BUILD_WITH_DEXPREOPT=$(BST_BUILD_WITH_DEXPREOPT) \
+ 	&& export IS_MAC_BUILD=$(IS_MAC_BUILD) \
+ 	&& export ALLOW_MISSING_DEPENDENCIES=true \
+ 	&& source build/envsetup.sh \
+ 	&& lunch $(TARGET) \
++	&& export LC_ALL=C \
++	&& export LANG=C \
++	&& export JAVA_TOOL_OPTIONS="$${JAVA_TOOL_OPTIONS:+$${JAVA_TOOL_OPTIONS} }-Dfile.encoding=UTF-8" \
++	&& export PATH="$(BUILD_SCRIPT_PATH)bin:$$PATH" \
++	&& export PYTHONPATH="$(BUILD_SCRIPT_PATH)python2_site$${PYTHONPATH:+:$$PYTHONPATH}" \
+ 	&& export TOP=$(ANDROIDHOME) \
+ 	&& cd -
+ endef
+diff --git a/buildscripts/build.sh b/buildscripts/build.sh
+index 7e5983468..02b5138af 100755
+--- a/buildscripts/build.sh
++++ b/buildscripts/build.sh
+@@ -14,7 +14,8 @@ ANDROID="$BASEPATH/android"      # Location where android.git is cloned for this
+ ANDROID_9="$BASEPATH/android-9"      # Location where android-9.git is cloned for this branch.
+ ANDROID_11="$BASEPATH/android-11"      # Location where android-11.git is cloned for this branch.
+ ANDROID_13="$BASEPATH/android-13"      # Location where android-13.git is cloned for this branch.
+-ANDROID_SDK_PATH="/home/build/workspace/android-sdk/sdk"
++ANDROID_16="$BASEPATH/android-16"      # Location where android-16.git is cloned for this branch.
++ANDROID_SDK_PATH="${ANDROID_SDK_PATH:-/home/build/workspace/android-sdk/sdk}"
+ CREATE_ANDROID_BUILD=1
+ JENKIN_BUILD_ERROR=0
+ 
+@@ -36,7 +37,7 @@ OEM_msi64_hyperv_build_hyperv=1
+ #                      SETTING ENVIRONMENT SPECIFIC VARIABLES
+ #########################################################################################################################
+ 
+-PATH="$PATH:/home/build/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
++PATH="$BUILD_SCRIPT_PATH/bin:$PATH:/home/build/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ export JAVA_HOME=$JAVA_HOME
+ export USER=$(whoami)
+ export PATH="$PATH":"$ANDROID_SDK_PATH/tools":"$ANDROID_SDK_PATH/platform-tools":"$JAVA_HOME/bin"
+@@ -117,6 +118,13 @@ if [ $CLEAN_BUILD == "true" ]; then
+             JENKIN_BUILD_ERROR=1
+             exit 1
+         fi
++        echo "Clearing Android out folder, Android location: $ANDROID_16"
++        rm -rf "${ANDROID_16}/out_${OEM}_${IMAGE}"
++        if [ "$?" -ne "0" ]; then
++            echo "Error in removing ${ANDROID_16}/out_${OEM}_${IMAGE} folder, please check the logs at $JENKIN_LOG_FILE"
++            JENKIN_BUILD_ERROR=1
++            exit 1
++        fi
+     done
+ fi
+ 
+@@ -206,8 +214,12 @@ fi
+ #                       BUILD ANDROID COMPONENTS AND BINARIES
+ #########################################################################################################################
+ 
+-OUTPUTDIR_PREFIX="/home/build/workspace/releases"
+-ANDROIDOUTPUTLOC="$OUTPUTDIR_PREFIX/$GIT_BRANCH-$ANDROID_BUILD_NUMBER"
++OUTPUTDIR_PREFIX="${OUTPUTDIR_PREFIX:-/home/build/workspace/releases}"
++if [ -n "${ANDROIDOUTPUTLOC:-}" ]; then
++    :
++else
++    ANDROIDOUTPUTLOC="$OUTPUTDIR_PREFIX/$GIT_BRANCH-$ANDROID_BUILD_NUMBER"
++fi
+ 
+ echo ""
+ echo "[`date +"%d-%B-%Y %r"`]: Running make script"
+@@ -218,7 +230,8 @@ cd $BUILD_SCRIPT_PATH
+ for IMAGE in $(echo $JENKIN_ANDROID_IMAGES | sed "s/,/ /g")
+ do
+     PKG="$GIT_BRANCH"_"$IMAGE"-"$ANDROID_BUILD_NUMBER"
+-    export CCACHE_DIR=/home/build/.ccache/$IMAGE
++    export CCACHE_DIR="${CCACHE_BASE:-/home/build/.ccache}/$IMAGE"
++    mkdir -p "$CCACHE_DIR"
+     if [ -f $CCACHE_BIN_PATH ]; then
+         $CCACHE_BIN_PATH -M 50G
+         $CCACHE_BIN_PATH -F 0
+@@ -233,7 +246,7 @@ do
+         IS_HYPERV_BUILD=0
+     fi
+ 
+-    make -j$numproc -f $MAKE_SCRIPT $MAKE_BUILD_TARGET OEM=$JENKIN_OEM IMAGE="$IMAGE" ANDROIDOUTPUTLOC="$ANDROIDOUTPUTLOC" PKG="$PKG" ENABLE_DEXOPT=$BUILD_WITH_DEXPREOPT IS_HYPERV_BUILD=$IS_HYPERV_BUILD PARALLEL_NX_PROC="$PARALLEL_NX_PROCESSORS_MAKEFILE" $2>&1
++    make -j$numproc -f $MAKE_SCRIPT $MAKE_BUILD_TARGET OEM=$JENKIN_OEM IMAGE="$IMAGE" ANDROIDOUTPUTLOC="$ANDROIDOUTPUTLOC" PKG="$PKG" ENABLE_DEXOPT=$BUILD_WITH_DEXPREOPT IS_HYPERV_BUILD=$IS_HYPERV_BUILD PARALLEL_NX_PROC="$PARALLEL_NX_PROCESSORS_MAKEFILE" ANDROID_SDK_PATH="$ANDROID_SDK_PATH" $2>&1
+     if [ "$?" -ne "0" ]; then
+         echo "Possible error in building Android side components for Image $IMAGE, please check the logs at $JENKIN_LOG_FILE"
+         JENKIN_BUILD_ERROR=1
+diff --git a/buildscripts/build_nowgg_common_apks.sh b/buildscripts/build_nowgg_common_apks.sh
+index 04cdf6b51..34b1d267b 100755
+--- a/buildscripts/build_nowgg_common_apks.sh
++++ b/buildscripts/build_nowgg_common_apks.sh
+@@ -2,9 +2,16 @@
+ 
+ BUILD_SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ BASEPATH="$(dirname "$BUILD_SCRIPT_PATH")"
+-WORKSPACE_DIR="/home/build/workspace"
++WORKSPACE_DIR="${NOWGG_WORKSPACE_DIR:-/home/henry/workspace}"
+ DIR_NAME="nowgg-common"
+ NOWGG_COMMON_APKS="$BASEPATH/$DIR_NAME"
++ROSEN_APKS="$BASEPATH/scratch-rosen/apks"
++REQUIRED_NOWGG_APKS=(
++    "gg.now.accounts.apk"
++    "gg.now.ads.service.apk"
++    "gg.now.billing.interceptor.apk"
++    "gg.now.billing.service2.apk"
++)
+ DATE=`date +%d-%m-%y-%H-%M`
+ BUILD_APKS_LOG_FILE="/tmp/build_apks_$BUILD_DESCRIPTION_$DATE.txt"
+ 
+@@ -41,26 +48,38 @@ function build_nowgg_common_apks()
+     cd $cwd
+ }
+ 
++function nowgg_prebuilt_apks_ready()
++{
++    local apk
++    for apk in "${REQUIRED_NOWGG_APKS[@]}"; do
++        if [ ! -f "$ROSEN_APKS/$apk" ]; then
++            return 1
++        fi
++    done
++    return 0
++}
++
+ function sync_nowgg_common_repo()
+ {
+     local cwd=`pwd`
+     if [ ! -d "$WORKSPACE_DIR/$DIR_NAME" ]; then
+-        cd $WORKSPACE_DIR
+-        git clone git@github.com:bluestacks/nowgg-common.git
+-        echo "Cloning nowgg-common repo\n"
++        mkdir -p "$WORKSPACE_DIR"
++        cd "$WORKSPACE_DIR" || return 1
++        git clone git@github.com:bluestacks/nowgg-common.git || return 1
++        echo "Cloning nowgg-common repo"
+     fi
+ 
+-    if [ -d "$BASEPATH/$DIR_NAME" ]; then
+-        rm $BASEPATH/$DIR_NAME
++    if [ -e "$BASEPATH/$DIR_NAME" ]; then
++        rm -rf "$BASEPATH/$DIR_NAME"
+     fi
+ 
+-    ln -s $WORKSPACE_DIR/$DIR_NAME $BASEPATH
+-    cd $BASEPATH/$DIR_NAME
++    ln -s "$WORKSPACE_DIR/$DIR_NAME" "$BASEPATH"
++    cd "$BASEPATH/$DIR_NAME" || return 1
+     git clean -xdf
+     git checkout .
+     git checkout release
+     git pull origin release
+-    cd $cwd
++    cd "$cwd"
+ }
+ 
+ function remove_nowgg_common_repo()
+@@ -77,9 +96,16 @@ function remove_nowgg_common_repo()
+ #                                   BUILD NOWGG-COMMON APKS
+ #########################################################################################################################
+ 
+-sync_nowgg_common_repo
+-build_nowgg_common_apks
+-remove_nowgg_common_repo
++if nowgg_prebuilt_apks_ready; then
++    echo "Using prebuilt nowgg-common apks from $ROSEN_APKS"
++else
++    sync_nowgg_common_repo || {
++        echo "nowgg-common repo unavailable and prebuilt apks missing under $ROSEN_APKS"
++        exit 1
++    }
++    build_nowgg_common_apks
++    remove_nowgg_common_repo
++fi
+ 
+ echo ""
+ echo ""
+diff --git a/buildscripts/create_vdi.sh b/buildscripts/create_vdi.sh
+index 3ebb4997c..ca25b0951 100755
+--- a/buildscripts/create_vdi.sh
++++ b/buildscripts/create_vdi.sh
+@@ -217,20 +217,10 @@ function prepare_vdi_file()
+     # Sometimes, it takes couple of seconds to recognize disk partitions
+     sleep 2
+ 
+-    sudo fdisk $NBD_DEV << EOF
+-d
+-n
+-p
+-1
+-
+-
+-p
+-w
+-EOF
+-	
+-    if [ "$?" -ne "0" ]; then
+-        die "Cannot partition VDI $VDI_FILE"
+-    fi
++    sudo modprobe nbd max_part=8 2>/dev/null || true
++    sudo parted -s $NBD_DEV mklabel msdos mkpart primary ext4 1MiB 100%
++    sleep 1
++    sudo partx -u $NBD_DEV 2>/dev/null || true
+ 
+ 	if [ $PARTITION_TYPE = "ext4" ]; then
+ 		sudo mke2fs -t ext4 -D -O sparse_super $NBD_PART
+diff --git a/buildscripts/create_zips.sh b/buildscripts/create_zips.sh
+index 95b906819..8c8724faf 100755
+--- a/buildscripts/create_zips.sh
++++ b/buildscripts/create_zips.sh
+@@ -3,7 +3,7 @@
+ 
+ BUILD_SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ BASEPATH="$(dirname "$BUILD_SCRIPT_PATH")"
+-OUTPUTDIR_PREFIX="/home/build/workspace/releases"
++OUTPUTDIR_PREFIX="${OUTPUTDIR_PREFIX:-/home/build/workspace/releases}"
+ 
+ while [ $# -gt 0 ]
+ do
+@@ -78,7 +78,7 @@ function create_zips()
+         exit 1
+     fi
+ 
+-    7z x $BASEPATH/hd/Source/Core/ImageData/$IMAGE/AndroidDataFiles_vhd.7z -o$IMAGE_OUTPUTDIR/$PKG/
++    7z x -y $BASEPATH/hd/Source/Core/ImageData/$IMAGE/AndroidDataFiles_vhd.7z -o$IMAGE_OUTPUTDIR/$PKG/
+     if [ "$?" -ne "0" ]; then
+         echo "Error in extracting AndroidDataFiles_hybrid.7z, exiting..."
+         exit 1
+diff --git a/buildscripts/odex_script.sh b/buildscripts/odex_script.sh
+old mode 100644
+new mode 100755
+diff --git a/buildscripts/sync.sh b/buildscripts/sync.sh
+old mode 100644
+new mode 100755

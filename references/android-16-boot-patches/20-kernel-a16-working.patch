@@ -1,28 +1,159 @@
+diff --git a/arch/x86/kernel/setup.c b/arch/x86/kernel/setup.c
+index a0dc98c8039c..81daf1e5bd80 100644
+--- a/arch/x86/kernel/setup.c
++++ b/arch/x86/kernel/setup.c
+@@ -880,7 +880,7 @@ void __init setup_arch(char **cmdline_p)
+ 	bss_resource.start = __pa_symbol(__bss_start);
+ 	bss_resource.end = __pa_symbol(__bss_stop)-1;
+ 
+-	strcpy(boot_command_line, "earlyprintk=serial,keep idle=nomwait vmalloc=160M nosmap nosmep quiet bstandroid=tiramisu64");
++	strcpy(boot_command_line, "earlyprintk=serial,keep idle=nomwait vmalloc=160M nosmap nosmep quiet bstandroid=baklava64");
+ 
+ #ifdef CONFIG_CMDLINE_BOOL
+ #ifdef CONFIG_CMDLINE_OVERRIDE
+diff --git a/configs b/configs
+deleted file mode 160000
+index c590ab063f72..000000000000
+--- a/configs
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit c590ab063f72cac8214aba7724ad2abe74aa9dd3
+diff --git a/fs/bst_hooks.h b/fs/bst_hooks.h
+index 44efd22a74f4..307da83b69c6 100755
+--- a/fs/bst_hooks.h
++++ b/fs/bst_hooks.h
+@@ -290,7 +290,7 @@ static inline bool bst_current_uid_is_system(void) {
+ 	return false;
+ }
+ 
+-static inline bool bst_current_uid_is_user_app()
++static inline bool bst_current_uid_is_user_app(void)
+ {
+     return ! bst_current_uid_is_system();
+ }
 diff --git a/prebuilts/4.19/arm64 b/prebuilts/4.19/arm64
-index 91780714eb80..bce72ec7c8a8 160000
+deleted file mode 160000
+index 91780714eb80..000000000000
 --- a/prebuilts/4.19/arm64
-+++ b/prebuilts/4.19/arm64
-@@ -1 +1 @@
++++ /dev/null
+@@ -1 +0,0 @@
 -Subproject commit 91780714eb800e8ffde5f7e0f982ac60eea6df85
-+Subproject commit bce72ec7c8a80403a46a493c0f0f50c4bcb88b58
 diff --git a/prebuilts/5.10/arm64 b/prebuilts/5.10/arm64
-index adfdedb67198..a3edf8389a14 160000
+deleted file mode 160000
+index adfdedb67198..000000000000
 --- a/prebuilts/5.10/arm64
-+++ b/prebuilts/5.10/arm64
-@@ -1 +1 @@
++++ /dev/null
+@@ -1 +0,0 @@
 -Subproject commit adfdedb6719830a04acb7a9cf2dce40277e9dbb0
-+Subproject commit a3edf8389a1436cc4574530dc1b07b191356ff7b
+diff --git a/prebuilts/5.10/x86_64 b/prebuilts/5.10/x86_64
+deleted file mode 160000
+index 28affb93bbd3..000000000000
+--- a/prebuilts/5.10/x86_64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 28affb93bbd365e51f53f944abadaa49029ba3bd
 diff --git a/prebuilts/5.15/arm64 b/prebuilts/5.15/arm64
-index 0a4bd66bfe40..13395f5908d4 160000
+deleted file mode 160000
+index 0a4bd66bfe40..000000000000
 --- a/prebuilts/5.15/arm64
-+++ b/prebuilts/5.15/arm64
-@@ -1 +1 @@
++++ /dev/null
+@@ -1 +0,0 @@
 -Subproject commit 0a4bd66bfe407e8614387569c34fb4e990b743cc
-+Subproject commit 13395f5908d4df59bd5eb62d5c3672e5f7daf553
+diff --git a/prebuilts/5.15/x86_64 b/prebuilts/5.15/x86_64
+deleted file mode 160000
+index fc30502866d3..000000000000
+--- a/prebuilts/5.15/x86_64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit fc30502866d337f66f1400272d8df7600b8f1ffa
 diff --git a/prebuilts/5.4/arm64 b/prebuilts/5.4/arm64
-index 5e2b2a68d63b..4bbe98d11223 160000
+deleted file mode 160000
+index 5e2b2a68d63b..000000000000
 --- a/prebuilts/5.4/arm64
-+++ b/prebuilts/5.4/arm64
-@@ -1 +1 @@
++++ /dev/null
+@@ -1 +0,0 @@
 -Subproject commit 5e2b2a68d63b8a763274e12b764f529a23df4685
-+Subproject commit 4bbe98d11223074220af82a5b760f53521e75e81
+diff --git a/prebuilts/5.4/x86_64 b/prebuilts/5.4/x86_64
+deleted file mode 160000
+index 7b6fe321a303..000000000000
+--- a/prebuilts/5.4/x86_64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 7b6fe321a3037846108b790fe6a13d6ff3bf2b87
+diff --git a/prebuilts/common-modules/virtual-device/5.10/arm64 b/prebuilts/common-modules/virtual-device/5.10/arm64
+deleted file mode 160000
+index fb783810c158..000000000000
+--- a/prebuilts/common-modules/virtual-device/5.10/arm64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit fb783810c1584bce2719b703896b32c4d00c58f6
+diff --git a/prebuilts/common-modules/virtual-device/5.10/x86-64 b/prebuilts/common-modules/virtual-device/5.10/x86-64
+deleted file mode 160000
+index 88ae1f89f995..000000000000
+--- a/prebuilts/common-modules/virtual-device/5.10/x86-64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 88ae1f89f99581d542d8cb83d9ce5c5afd11f82a
+diff --git a/prebuilts/common-modules/virtual-device/5.15/arm64 b/prebuilts/common-modules/virtual-device/5.15/arm64
+deleted file mode 160000
+index e1866664007d..000000000000
+--- a/prebuilts/common-modules/virtual-device/5.15/arm64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit e1866664007d94316b8ecf4d9d1afc667918bc98
+diff --git a/prebuilts/common-modules/virtual-device/5.15/x86-64 b/prebuilts/common-modules/virtual-device/5.15/x86-64
+deleted file mode 160000
+index 66943c76851f..000000000000
+--- a/prebuilts/common-modules/virtual-device/5.15/x86-64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 66943c76851fdd8a2220769e311b40fc3870726f
+diff --git a/prebuilts/common-modules/virtual-device/5.4/arm64 b/prebuilts/common-modules/virtual-device/5.4/arm64
+deleted file mode 160000
+index 7c87aaa48b70..000000000000
+--- a/prebuilts/common-modules/virtual-device/5.4/arm64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 7c87aaa48b70b4312bf5f20600fd667286d835a0
+diff --git a/prebuilts/common-modules/virtual-device/5.4/x86-64 b/prebuilts/common-modules/virtual-device/5.4/x86-64
+deleted file mode 160000
+index dd0ef244ae12..000000000000
+--- a/prebuilts/common-modules/virtual-device/5.4/x86-64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit dd0ef244ae1252a7547ad19b85f79b56e57643af
+diff --git a/prebuilts/common-modules/virtual-device/mainline/arm64 b/prebuilts/common-modules/virtual-device/mainline/arm64
+deleted file mode 160000
+index 6b820fef6ca4..000000000000
+--- a/prebuilts/common-modules/virtual-device/mainline/arm64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 6b820fef6ca4b6597db91a8c97abe477f9e27b6c
+diff --git a/prebuilts/common-modules/virtual-device/mainline/x86-64 b/prebuilts/common-modules/virtual-device/mainline/x86-64
+deleted file mode 160000
+index c01f831e932b..000000000000
+--- a/prebuilts/common-modules/virtual-device/mainline/x86-64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit c01f831e932b817fe0b718c3e5a74d24efe01416
+diff --git a/prebuilts/mainline/arm64 b/prebuilts/mainline/arm64
+deleted file mode 160000
+index 3a8af966618e..000000000000
+--- a/prebuilts/mainline/arm64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 3a8af966618e79b8a78e2bd615fd2661a7be78af
+diff --git a/prebuilts/mainline/x86_64 b/prebuilts/mainline/x86_64
+deleted file mode 160000
+index 31aebf09f5e5..000000000000
+--- a/prebuilts/mainline/x86_64
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 31aebf09f5e5d2714b482aee3ccd2d9e9a604b4c
+diff --git a/tests b/tests
+deleted file mode 160000
+index 255116f9f535..000000000000
+--- a/tests
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 255116f9f535d3bd1121bfd6d5ddc44735785dde

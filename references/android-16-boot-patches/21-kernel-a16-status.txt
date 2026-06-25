@@ -1,5 +1,21 @@
- M prebuilts/4.19/arm64
- M prebuilts/5.10/arm64
- M prebuilts/5.15/arm64
- M prebuilts/5.4/arm64
-?? prebuilts/common-modules/virtual-device/4.19/
+ M arch/x86/kernel/setup.c
+ D configs
+ M fs/bst_hooks.h
+ D prebuilts/4.19/arm64
+ D prebuilts/5.10/arm64
+ D prebuilts/5.10/x86_64
+ D prebuilts/5.15/arm64
+ D prebuilts/5.15/x86_64
+ D prebuilts/5.4/arm64
+ D prebuilts/5.4/x86_64
+ D prebuilts/common-modules/virtual-device/5.10/arm64
+ D prebuilts/common-modules/virtual-device/5.10/x86-64
+ D prebuilts/common-modules/virtual-device/5.15/arm64
+ D prebuilts/common-modules/virtual-device/5.15/x86-64
+ D prebuilts/common-modules/virtual-device/5.4/arm64
+ D prebuilts/common-modules/virtual-device/5.4/x86-64
+ D prebuilts/common-modules/virtual-device/mainline/arm64
+ D prebuilts/common-modules/virtual-device/mainline/x86-64
+ D prebuilts/mainline/arm64
+ D prebuilts/mainline/x86_64
+ D tests

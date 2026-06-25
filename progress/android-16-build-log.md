@@ -47,3 +47,36 @@
 - 监控 cron 每 10 分钟。
 
 （编译结果 + 后续问题持续追加 below）
+
+### A16 droid 编译结果
+- **BUILD SUCCESSFUL** `#### build completed successfully (05:18:42) ####`, 0 FAILED, 173,457 targets。
+- **产品目录名差异**：A16 (trunk_staging) lunch product = `generic_x86_64`，但 Makefile 硬编码 ANDROIDOUT `.../product/x86_64`。修复：`ln -s generic_x86_64 x86_64`（不改 Makefile，A13/A16 兼容）。
+- **产物**：system/（apex,app,bin,build.prop,etc...）、root/、ramdisk.img（258bytes gzip, A16 stub ramdisk）。
+- **缺失**：installer/（A16 trunk_staging 无 installer，预期）。
+
+### 问题 4.1：A16 droid 产出在 `generic_x86_64`，Makefile 期望 `x86_64`
+- **症状**：ANDROIDOUT `.../product/x86_64` 为空，实际产出在 `generic_x86_64`。
+- **根因**：A13 lunch `android_x86_64-eng` → product `x86_64`；A16 lunch `aosp_x86_64-trunk_staging-eng` → product `generic_x86_64`。
+- **解决**：软连 `generic_x86_64 → x86_64`（免改 Makefile，两端兼容）。
+
+### 问题 4.2：ramdisk.img 仅 258 bytes
+- **现象**：ramdisk.img gzip compressed, 258B/1792B uncompressed。
+- **判定**：A16 stub ramdisk（极小）。暂接受此值，启动验证时若块设备挂载失败再排查。
+
+## 阶段 4：打包 A16 Root.vhd + fastboot.vdi
+
+- 预置完成：APPCONFFILE（baklava 复用 tiramisu）、APKFOLDER（bst/apks_Baklava64, 20 apk 含 launcher）、4 软连（3bt/gapps/misc/cpuinfo 的 baklava64→tiramisu64）。
+- 打包命令：`make -o android -o libs -o apks -o datafs Root.vdi IMAGE=Baklava64 OEM=nxt`。
+- 后台运行，监控 cron da4d7302。
+
+### 问题 3.1：A16 不支持 `showcommands` 参数
+- **现象**：首次编译 `BUILD_EXIT=2`，日志 `! The argument 'showcommands' is no longer supported` → `Invalid argument` → 失败（1 秒即退出）。
+- **根因**：A16 (android-16) 的 build 系统移除了 `showcommands`，A13 的 android target 用 `make iso_img -j30 showcommands` 在 A16 失效。
+- **解决**：Makefile android target 加 `ifeq baklava` 分支，用 `make iso_img -j$(numproc)`（无 showcommands）；verbose 日志改由 `out_nxt_Baklava64/verbose.log.gz` 提供。
+- 重启编译，进入 make iso_img -j30。
+
+### 问题 3.2：A16 无 `iso_img` target
+- **现象**：`FAILED: ninja: unknown target 'iso_img'`。A16 编译到 soong 自举后，make iso_img 报未知 target。
+- **根因**：A16 的 `trunk_staging` product 是虚拟设备产品，不构建 ISO。A13 的 `iso_img`（android-x86 风格安装 ISO）在 A16 不存在。
+- **BlueStacks 打包实际需要**（copy_android_files_to_outputdir）：`$(ANDROIDOUT)/system`（目录）+ `ramdisk.img` + `root/` + `installer/` + `obj/kernel/Module.symvers`。
+- **解决**：baklava android target 改用 `make droid`（AOSP 顶层完整 target，产出 system/ staging + ramdisk.img + boot.img）+ `make ramdisk`，替代 iso_img。

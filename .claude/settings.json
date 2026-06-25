@@ -62,8 +62,6 @@
     "ask": [
       "Bash(repo init:*)",
       "Bash(repo sync:*)",
-      "Bash(m dist:*)",
-      "Bash(git commit:*)",
       "Bash(git push:*)"
     ]
   }

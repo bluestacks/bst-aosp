@@ -68,6 +68,29 @@
 - 预置完成：APPCONFFILE（baklava 复用 tiramisu）、APKFOLDER（bst/apks_Baklava64, 20 apk 含 launcher）、4 软连（3bt/gapps/misc/cpuinfo 的 baklava64→tiramisu64）。
 - 打包命令：`make -o android -o libs -o apks -o datafs Root.vdi IMAGE=Baklava64 OEM=nxt`。
 - 后台运行，监控 cron da4d7302。
+- **打包阶段连续问题**：
+  - **installer/** 缺失（A16 trunk_staging 不产）→ Makefile `$(call copy,...)` 改为 `[ -d ] && copy || true`
+  - **Module.symvers** 缺失（A16 GKI kernel 不产）→ 同上容错
+  - **baklava.bluestacks.prop.us** 缺失 → 从 tiramisu 版本复制（cp tiramisu.bluestacks.prop.us → baklava.bluestacks.prop.us）
+  - **APKFOLDER 缺 25 apk**（GMS + rosen）→ 从 scratch-rosen/apks + gapps_tiramisu64 批量补入
+  - **adbd_rooted_baklava** 缺失 → 从 tiramisu 版本复制
+  - **hd 子模块未 init**（缺 Source/xpl）→ `git submodule update --init hd && git checkout bst-v5.22.210`
+  - **libs target 失败**（hd/Source/xpl 路径解析 + mmm 模块索引）→ `make -o libs` 跳过（VBox guest modules，初始 boot 不必须）
+  - **Root.fs.debug minigzip 缺失 + su root 权限** → Makefile baklava 跳过 Root.fs.debug 整个步骤
+  - **Blank VDI 模板缺失**（hd/guest/FileSystem/Baklava64/Root_Blank.vdi）→ 从 Tiramisu64 复制 2MB
+  - **Makefile 语法错误**（ifeq/else/endif 前导 tab）→ 修复
+  - **PKG 变量未传入** → 补 `PKG=bst-v5.22.210_Baklava64-local`
+  - **make_vdi tar 阶段卡死**：clouddev I/O 拥塞（0% CPU, sleep 态）。手动执行 create_vdi.sh + clonehd 完成 VDI→VHD 转换。
+- **✅ Root.vhd (1.5G) + fastboot.vdi (11M) 产出！** clonehd 100%，UUID 匹配 .bstk，scp 替换到 Windows Engine\Tiramisu64。A13 版备份为 .bak.A13。
+
+## 阶段 5：完成 — Root.vhd 产出 + Windows 替换
+
+**最终产物**：`C:\ProgramData\BlueStacks_nxt\Engine\Tiramisu64\Root.vhd` (1.5G, A16 guest) + `fastboot.vdi` (11M)。
+
+**改动汇总**（Makefile 7 处 + 软连 2 处 + 文件补全 n 处）：
+- Makefile: ANDROID_VERSION Baklava 映射 + TARGET trunk_staging + ROOTSIZE 6G + CLANG r563880 + DATASIZE 1.5G + android iso_img→droid + 无 showcommands + installer/symvers 容错 + Root.fs.debug skip
+- 软连: generic_x86_64→x86_64, baklava64→tiramisu64 (3bt, gapps, misc, cpuinfo)
+- 文件补全: APPCONFFILE, APKFOLDER (42 apk), blank VDI, prop file, adbd, 等
 
 ### 问题 3.1：A16 不支持 `showcommands` 参数
 - **现象**：首次编译 `BUILD_EXIT=2`，日志 `! The argument 'showcommands' is no longer supported` → `Invalid argument` → 失败（1 秒即退出）。

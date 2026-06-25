@@ -227,6 +227,40 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 ### ⚠️ 启动风险（未闭环）
 - 新构建镜像（bst-v5.22.210 android-13）**首次替换启动失败**（VBox Power up failed），历史版本能启动。重打包替换后**必须验证能否启动**——这是独立的 guest/打包层问题，待诊断。
 
+## 2026-06-25 — ✅✅ Win Tiramisu64 镜像启动到 launcher（里程碑）
+
+**win guest android-13 镜像（bst-v5.22.210）首次成功启动到 launcher。** 完整链路打通：全量重编 → apk 注入（launcher+GMS+filemanager）→ VHD 打包 → UUID 匹配 → Windows 替换 → BlueStacks 启动。
+
+### 关键根因：VBox Power up failed = UUID 不匹配（非 guest 问题）
+
+- **症状**：BlueStacks Tiramisu64 启动 `Power up failed (hrc=E_FAIL)`，0.46 秒立即失败（VM 都没开始执行，与 launcher 内容无关）。
+- **根因**：Makefile `make_vdi_file` 用 `vboxmanage internalcommands sethduuid`（无参数=随机新 UUID）。clouddev build 端靠 `sed 删 VirtualBox.xml + sethduuid` 自洽重新注册，但 **Windows 端 `Tiramisu64.bstk` 仍记录旧介质 UUID** → VBox 找不到匹配介质 → 立即失败。
+- **修复**：clouddev 上 `sethduuid` 把新产物 UUID 改成 Windows `.bstk` 记录的值：
+  - Root.vhd → `54e9ad31-a169-4d5b-a0e0-705d62e96e71`
+  - fastboot.vdi → `91b80c95-aa7d-459d-93e4-c479f5babbb7`
+- **教训**：跨机器替换 VHD/VDI 时，UUID 必须匹配目标 `.bstk`（不是源 build 机的随机 UUID）。
+
+### make_vdi_file 的 clonehd 偶发失败
+
+- `vboxmanage clonehd Root.vdi → Root.vhd` 在 Makefile 内有时 `VBOX_E_FILE_ERROR`（sethduuid 改 UUID 后 medium registry 未注册）。单独跑 clonehd 成功（100%）。Root.vdi 数据有效（2.5G VDI 格式），clonehd 失败时单独重跑即可。
+
+### 固化脚本（防重复踩坑）
+
+已写入 `bst-aosp/scripts/`：
+- **`clouddev-build-tiramisu64.sh`**（clouddev 端）：`full`/`repack`/`uuid` 三子命令。内置全部坑修复（chown UID、bstk 残留、sudo 清理、nowgg skip、filemanager 补齐、clonehd 修复、UUID 匹配 .bstk）。
+- **`win-replace-tiramisu64.ps1`**（Windows 端）：停 BlueStacks → scp（UUID 已匹配）→ 备份 → 替换 → 验证。
+
+### 全流程命令（固化后）
+```bash
+# clouddev: 全量重编(android 变了, ~4h)
+~/clouddev-build-tiramisu64.sh full      # 等 BUILD_EXIT=0
+~/clouddev-build-tiramisu64.sh uuid      # clonehd 修复 + UUID 匹配 .bstk
+
+# Windows: 替换 + 启动
+\scripts\win-replace-tiramisu64.ps1
+& "C:\Program Files\BlueStacks_nxt\HD-Player.exe" --instance Tiramisu64
+```
+
 ## 2026-06-24 — app-player-mac 子模块初始化（clouddev，并行 win 重打包）
 
 - **superproject checkout**：`bst-v5.21.700-nxt_mac2-Fortnite-...4103`（detached @ c292b8f）→ checkout `bst-v5.21.700-nxt_mac2`（同 commit c292b8f，干净切换）✅。

@@ -270,3 +270,32 @@ append-only 叙事时间线（与 `patches/registry.json` 结构化数据互补�
 - **全量 recursive init 失败但不需要**：`git submodule update --init --recursive` 卡在 android-mac 1073 嵌套子模块（slow clone libtraceevent/libtracefs）+ bst 递归失败。但 android-mac 按 topology **已 init（完整 AOSP 树 + kernel，frameworks/base 在）**，触发 recursive 是过度重同步。→ 不强制全量 recursive。
 - **mac 混合版本 pinning（与 win 不同）**：mac 子模块 pin 在混合版本分支（android-mac@720 / bst@705 / hd@700 / scratch-rosen@715 / tools@770），不像 win 全在 `bst-v5.22.210`。pinned SHA 落后各分支 tip（android-mac 86abb11 vs ea54f03）。**pinned 是集成测试组合**——不投机性统一切 `bst-v5.21.700-nxt_mac2`（会破坏测试组合）。切分支决策 **DEFERRED**：等 mac 实际构建验证 pinned 是否够用（verify-by-readback），需 tip 再切。
 - **状态**：app-player-mac 顶层就绪（pinned/tested SHA），android-mac 有完整源码，可进入 mac 构建评估。
+
+## 2026-06-25 — android-16 win 编译启动准备：henry boot patches 抓取
+
+下一里程碑：编译启动 android-16 win。先抓取 henry 在 android-16（Baklava, bst-v5.22.210）上的 boot 修改。
+
+### 关键：必须用 henry 身份跑 repo diff
+- markxu 跑 `repo diff` 输出 0（文件权限）。
+- `sudo -u henry bash -lc "cd android-16 && repo diff"` 才看到 **1125 行**修改。后续复查同样必须 henry 身份。
+
+### 抓取结果 → `references/android-16-boot-patches/`（commit 56cab66）
+- `00-buildscripts.patch`：app-player buildscripts 层适配（Makefile/build.sh/create_vdi/create_zips + build_nowgg）
+- `01/02-build_Baklava*.sh`：henry 的 android-16 构建封装（untracked 新文件，镜像 Tiramisu64 流程）
+- **`10-aosp-repo-diff.patch`**：AOSP 树 **12 项目 1125 行核心 boot patch**：
+  - build/make（BOARD_KERNEL_CONFIG_FILE/VERSION override——BST bzImage 无 IKCFG；hwservicemanager 从 system_ext 移到 /system）
+  - build/soong, device/generic/{common,x86_64}, external/boringssl
+  - frameworks/{base,native}, hardware/{gfxstream,interfaces,libhardware}
+  - system/core, system/hwservicemanager
+- `20-22 kernel-a16-*`：working diff（仅 prebuilts 指针）+ status + HEAD（bst-v5.22.210）
+
+### kernel-a16 复制到 markxu `~/aosp16/kernel-a16`
+- 源码 1.3G ✅ 复制完成 + chown markxu。
+- **.git 指针问题**：kernel-a16 的 `.git` 是 53 字节 gitdir 指针 → henry 上级 `.git/modules/android-13/modules/kernel`（kernel-a16 作为 submodule 注册在 android-13 module 下）。源码 cp 没带 gitdir。
+- **gitdir 3.1G**（百万 commit 历史）复制到 `~/aosp16/kernel-a16/.git_kernel` + 改 `.git` 指针自包含（后台进行）。
+
+### 下一步（kernel gitdir 复制完成后）
+1. apply buildscripts patch + 复制 Baklava 脚本到 markxu app-player
+2. apply AOSP 12 项目 patch 到 ~/aosp16（repo diff 格式需逐项目）
+3. 跑 build_Baklava64.sh 全量编译 android-16 win
+4. 同 Tiramisu64 流程打包 Root.vhd + UUID 匹配 + Windows 替换 + 启动验证

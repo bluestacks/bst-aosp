@@ -146,6 +146,36 @@ Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000100
 - 若挂载成功但 init 失败 → system 是上游 AOSP（无 BS 定制），需后续 patch 移植
 - hd 画面是否出现
 
+## 阶段 8：完整 fastboot.vdi build（参照 A13，含 kernel-a16 + initrd）
+
+### 参照 A13 的完整 fastboot.vdi 流程（buildscripts + hd/guest）
+- `BootImage/Makefile build_fastboot: initrd.img $(KERNEL)`：
+  - `KERNEL = $(KDIR)/arch/x86/boot/bzImage`
+  - `initrd.img` = BlueStacks boot initrd（init.sh + bstmods/*.ko: vboxguest/vboxsf/vmsg/inp/aud/cam/hst + busybox）
+  - cp KERNEL + cp initrd → fastboot/ → make（注入 bzImage+initrd → fastboot.vdi）
+- hd/guest/Makefile fastboot.vdi → Drivers（.ko）+ BootImage（initrd + fastboot）
+
+### 问题 8.1：vboxguest build 失败（VBoxGuest-linux.c）
+- **CONST_4_15**：kernel-a16 5.15 LINUX_VERSION_CODE 报告问题，CONST_4_15 空。参考 henry fix：`#if RTLNX_VER_MIN(4,15,0)` → `#if 1`（强制 const）。
+- **gcc vs clang**：vboxguest module build 默认 gcc，不认 kernel-a16 clang flags（-Qunused-arguments 等）。强制 `CC=clang LLVM=1`。
+- **AssertCompile clang 严格**：hd/guest build 的 vboxguest 重 build 失败。workaround：单独 `make CC=clang` build vboxguest.ko + vboxsf.ko 成功，复制到 Drivers/VirtualBox/，Drivers/Makefile 跳过 VirtualBox。
+
+### 问题 8.2：其他 .ko（vmsg/inp/aud/cam/hst）
+- 同样需 CC=clang（kernel-a16 clang build）。hd/guest build 传 CC=clang LLVM=1。
+
+### ✅ fastboot.vdi 12M 产出（含 kernel-a16 bzImage + initrd with .ko）
+- 之前 3M 是只 bootloader（漏 cp KERNEL + cp initrd）。完整 build_fastboot 后 12M。
+- sethduuid 91b80c95，scp 替换 Windows。
+
+### 当前 Windows（完整 A16 boot 链）
+- `fastboot.vdi` 12M（kernel-a16 + BlueStacks initrd with .ko 模块 + init.sh）
+- `Root.vhd` 1.5G（A16 system，上游 AOSP）
+
+### 待验证（启动测试 2）
+- kernel-a16 boot → initrd init.sh 挂载 Root.vhd（ext4）→ 加载 .ko → 切 system
+- 过 ext4 panic（kernel-a16 ext4 OK）
+- init 阶段：system 上游 AOSP（无 BS 定制），可能在 init/services 失败
+
 ### 问题 3.1：A16 不支持 `showcommands` 参数
 - **现象**：首次编译 `BUILD_EXIT=2`，日志 `! The argument 'showcommands' is no longer supported` → `Invalid argument` → 失败（1 秒即退出）。
 - **根因**：A16 (android-16) 的 build 系统移除了 `showcommands`，A13 的 android target 用 `make iso_img -j30 showcommands` 在 A16 失效。

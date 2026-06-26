@@ -122,6 +122,30 @@ Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000100
 3. system 需 BS 定制（references 12 项目 patch，后续统筹移植阶段）。
 4. libs（hd guest 模块）需构建（hd/Source 路径修复）。
 
+## 阶段 7：kernel-a16 编译 + 接入（修复 panic 根因）
+
+### kernel-a16 编译
+- defconfig: `bst-x86_64_defconfig`（BlueStacks 定制），AOSP clang r563880，LLVM=1。
+- **问题 7.1**：`fs/bst_hooks.h:293` 函数无 prototype → clang 17 `-Werror,-Wstrict-prototypes`。参考修改：`bst_current_uid_is_user_app()` → `(void)`（sed 自改，非 git apply）。
+- **问题 7.2**：`fs/bst_hooks.c:6` `<mount.h>` angled include 本地头 → 改 `"mount.h"`。
+- **✅ bzImage 产出**（8.1M，ext4 + BS 钩子）。
+
+### kernel 接入机制（关键认知）
+- **boot 从 fastboot.vdi**（IDE port 0，UEFI）。kernel 在 fastboot.vdi，不在 Root.vhd。
+- fastboot.vdi = boot loader（fastboot_asm.S + boot_bzImage.c）+ bzImage（kernel）+ initrd（cp_bzImage_initrd.sh 追加）。
+- A16 之前用 GKI 5.15.119（ext2 only）→ panic。换成 kernel-a16 bzImage（ext4）。
+- build: `cd hd/guest/BootImage/fastboot && make`（自动 build boot loader + 追加 bzImage + VBoxManage convertfromraw → fastboot.vdi）。
+- sethduuid fastboot.vdi → 91b80c95（匹配 .bstk）。
+
+### 当前 Windows 状态
+- `fastboot.vdi`（3.0M，kernel-a16，UUID 91b80c95 ✅）
+- `Root.vhd`（1.5G，A16 system，UUID 54e9ad31 ✅）
+
+### 待验证（启动测试）
+- kernel-a16 能否过 ext4 挂载（panic 根因是否解决）
+- 若挂载成功但 init 失败 → system 是上游 AOSP（无 BS 定制），需后续 patch 移植
+- hd 画面是否出现
+
 ### 问题 3.1：A16 不支持 `showcommands` 参数
 - **现象**：首次编译 `BUILD_EXIT=2`，日志 `! The argument 'showcommands' is no longer supported` → `Invalid argument` → 失败（1 秒即退出）。
 - **根因**：A16 (android-16) 的 build 系统移除了 `showcommands`，A13 的 android target 用 `make iso_img -j30 showcommands` 在 A16 失效。

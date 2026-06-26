@@ -92,6 +92,36 @@
 - 软连: generic_x86_64→x86_64, baklava64→tiramisu64 (3bt, gapps, misc, cpuinfo)
 - 文件补全: APPCONFFILE, APKFOLDER (42 apk), blank VDI, prop file, adbd, 等
 
+## 阶段 6：启动测试 — 失败诊断（hd 无画面）
+
+### 启动日志实锤（2026-06-26 09:56）
+```
+Linux version 5.15.119+ (nobody@android-build)  ← AOSP GKI 默认 kernel!
+EXT2-fs (sda1): couldn't mount because of unsupported optional features (2c4)
+Cannot mount Android root file system
+Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000100
+```
+
+### 根因：未接入 kernel-a16
+- **用了 AOSP trunk_staging 默认 GKI kernel**（5.15.119, Android clang 14），**不是 kernel-a16**。
+- GKI kernel **只有 ext2 驱动**，用 ext2 挂 mkfs.ext4 的 Root 分区 → unsupported features → 挂载失败。
+- init 无法启动 → exitcode 0x100 → kernel panic at 3.4s。
+
+### 打包缺陷 review
+| 严重度 | 问题 |
+|---|---|
+| 🔴 致命 | 未接入 kernel-a16（GKI kernel ext2 only，无法挂 ext4 Root） |
+| 🔴 致命 | system 是上游 AOSP（无 BS 定制 init.rc/services/HAL） |
+| 🟡 严重 | libs 跳过（hd guest 模块 xpl/vmsg/hcall/gcall 未构建，host-guest 通信断裂） |
+| 🟡 严重 | ramdisk.img 仅 258B stub |
+| ⚪ 次要 | Root.fs.debug skip / 3bt 软连（不影响 boot） |
+
+### 修复方向
+1. **编译 kernel-a16**（build.config.x86_64 + build.sh → bzImage），含 ext4 + BlueStacks 钩子（bstvmsg 等）。
+2. **AOSP prebuilt kernel 接入**（BOARD_KERNEL_CONFIG_FILE/BOARD_KERNEL_VERSION override，见 references build/make patch）。
+3. system 需 BS 定制（references 12 项目 patch，后续统筹移植阶段）。
+4. libs（hd guest 模块）需构建（hd/Source 路径修复）。
+
 ### 问题 3.1：A16 不支持 `showcommands` 参数
 - **现象**：首次编译 `BUILD_EXIT=2`，日志 `! The argument 'showcommands' is no longer supported` → `Invalid argument` → 失败（1 秒即退出）。
 - **根因**：A16 (android-16) 的 build 系统移除了 `showcommands`，A13 的 android target 用 `make iso_img -j30 showcommands` 在 A16 失效。

@@ -13,6 +13,7 @@
 | `patches/aosp16__<project>.patch` | AOSP 树 16 个 dirty project 的 `git diff HEAD`（tracked 改动） |
 | `patches/aosp16__<project>.base` | 各 project 抓取时的 HEAD commit（apply 基线） |
 | `patches/aosp16__<project>.status` | 各 project `git status --porcelain`（含新增/删除标记） |
+| `patches/aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch` | **TEMP** boot 基线：关 Shell Transitions（Settings EXITING / BLAST commit）；BLAST 修好后删除（见 guide 阶段 11） |
 | `patches/app-player_buildscripts.patch` | `app-player/buildscripts/` 改动（Makefile/build.sh/create_vdi.sh 等） |
 | `patches/hd-guest.patch` | `app-player/hd/guest/` 改动（BootImage 构建/init 脚本） |
 | `patches/goldfish-opengl-pie.patch` | goldfish-opengl-pie 树内 `git diff HEAD`（与 `../goldfish-opengl-pie-a16-fixes.patch` 互为佐证） |
@@ -51,10 +52,17 @@
 # (a) AOSP 树：逐 project apply tracked 改动 + 铺新增文件
 cd $AOSP
 for p in $(ls $ARC/patches/aosp16__*.patch); do
+  # 跳过 TEMP 附加 patch（`__r262`），避免误解析成错误 project 路径
+  case "$(basename "$p")" in
+    *__r262*) continue ;;
+  esac
   name=$(basename "$p" .patch); proj=$(echo "${name#aosp16__}" | tr '_' '/')
   # 注意：project 路径含下划线的需人工核对（如 device/generic/x86_64）
   ( cd "$proj" && git checkout "$(cat "$ARC/patches/$name.base")" 2>/dev/null; git apply "$p" )
 done
+# **TEMP** boot 基线（guide 阶段 11）：在 frameworks/base 主 patch 之后追加
+# BLAST/SF commit callback 修好后删除本 patch 并恢复 ENABLE_SHELL_TRANSITIONS=true
+( cd frameworks/base && git apply "$ARC/patches/aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch" )
 # 新增源文件（untracked-src 下按 aosp16__<proj>/<相对路径>）
 #   将 untracked-src/aosp16__<proj>/* 拷回 $AOSP/<proj>/（保持相对路径）
 
@@ -136,8 +144,10 @@ HD-Player.exe --instance Tiramisu64
 |---|---|
 | Root.vhd UUID | `54e9ad31-a169-4d5b-a0e0-705d62e96e71` |
 | fastboot.vdi UUID | `91b80c95-...` |
-| 最终验证态 Root.vhd md5（R261） | `a05a270129dbb91f5fdcf252036ae364` |
+| 最终验证态 Root.vhd md5（TEMP R262b） | `7a55ef636b0961c87bd0815cfc5c8cde` |
+| SystemUI.apk md5（TEMP R262b，关 shell transitions） | `b1e647bc36ad53db430f705e21f14b7d` |
 | 首个可 boot system.img md5 | `f3228328307e3105d24276a711d806ac` |
+| R261 Root（auth 恢复、Settings 仍可能 EXITING） | `a05a270129dbb91f5fdcf252036ae364`（被 R262b 取代） |
 
 **boot readback oracle（独立回读，不信"命令成功"）**：
 1. `A16DBG: system mounted from sfs` — first-stage 挂载 OK
@@ -145,8 +155,9 @@ HD-Player.exe --instance Tiramisu64
 3. `odsign.key.done` + `odrefresh ... returned 80` + `Unable to open boot.art`=0 — ART/boot.art 链
 4. bootanim exit 0 + `sys.boot_completed=1`（guest ~178s）
 5. `hcallOnActivityDisplayed com.uncube.launcher3` → **`Player state: ready`** → `fUiHideBootProgressBar`（HD overlay 撤掉）
-6. `service check auth` → found（Settings 可开）
-7. 点 HD X → `bst.config.start_shutdown=1` → `Exiting err: 0`，**无 20s `Forcing power down`**
+6. `service check auth` → found（Settings 可启动）
+7. Settings **可见**：SF `Transition Root` = 0；Settings layer visible + Output Layer（**TEMP** R262+R262b；BLAST 修好后应收口）
+8. 点 HD X → `bst.config.start_shutdown=1` → `Exiting err: 0`，**无 20s `Forcing power down`**
 
 日志来源：guest 串口 / `bs_bootlog`；host `C:\ProgramData\BlueStacks_nxt\Logs\{Player.log,BstkCore.log}`。
 

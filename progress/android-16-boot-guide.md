@@ -16,7 +16,7 @@ boot 已跑通到**桌面可见 + 优雅关机**：
 | zygote / odsign / boot.art 全链 | `odsign.key.done`、`odrefresh returned 80`、`Unable to open boot.art` = 0 |
 | `sys.boot_completed=1` | guest ~178s（bootanim exit 0 @177s） |
 | host `Player state: ready` | guest RESUMED → ActivityDisplayed HCALL → `fUiHideBootProgressBar`（HD overlay 撤掉切 GL） |
-| Settings 可打开 | `SettingsHomepageActivity` focused + `isVisible=true` + `HAS_DRAWN` |
+| Settings 可打开且可见 | Activity RESUMED + SF Settings layer visible / Output Layer；`Transition Root` = 0（**TEMP** R262+R262b 关 shell transitions） |
 | 优雅关机 | 点 HD X → `bst.config.start_shutdown=1` → `bstshutdown_core` → `Exiting err: 0`，**无 20s 强制断电** |
 
 **关键构建/产物身份**（恢复时对齐）：
@@ -31,9 +31,11 @@ boot 已跑通到**桌面可见 + 优雅关机**：
 | kernel | kernel-a16 `bzImage`（ext4 + squashfs + BS 钩子，clang/LLVM=1） |
 | guest 图形 | goldfish-opengl-pie（`patches/goldfish-opengl-pie-a16-fixes.patch`） |
 | Root.vhd UUID | `54e9ad31-a169-4d5b-a0e0-705d62e96e71` |
+| 最终验证态 Root.vhd md5（TEMP R262b） | `7a55ef636b0961c87bd0815cfc5c8cde`（含 Settings 可见；SystemUI.apk md5 `b1e647bc36ad53db430f705e21f14b7d`） |
 | fastboot.vdi UUID | `91b80c95-...` |
 | 部署目标 | `C:\ProgramData\BlueStacks_nxt\Engine\Tiramisu64\{Root.vhd,fastboot.vdi}` |
 | host GPU | Intel Iris Xe（NVIDIA nvoglv64 在 SF Skia GL 路径崩溃，见阶段 9） |
+| TEMP patch（boot 基线） | `patches/android-16/patches/aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch`（BLAST/SF commit 修好后删除） |
 
 **核心结论（战略）**：runtime-staging（通用 aosp_x86_64 预编译二进制 + 运行时替换）在 zygote `libandroid_runtime.so` C++ 静态构造阶段撞 ABI 墙，无法调和；最终走**完整源码构建 + BST device overlay** 才把 zygote / keystore2 / keymint 原生打通。见阶段 7「zygote Aborted」。
 
@@ -908,6 +910,16 @@ flowchart TD
 - 解决方法：`scripts/r261-patch-auth-service.py`：恢复 `AuthService` + `AuthenticationPolicyService`；`SystemServer.java` 仍跳过 `BiometricService`。
 - 验证（adb）：`service check auth` → found；无 Settings force-finish/auth missing；`SettingsHomepageActivity` focused + `isVisible=true` + `HAS_DRAWN`；`pidof com.android.settings` 存活（Root `a05a270129dbb91f5fdcf252036ae364`）。
 
+### 问题：Settings Activity 存活但界面不可见（Shell Transitions / EXITING）— **临时 patch**
+- 症状：`service check auth` found；Settings `RESUMED` + uiautomator 树完整，但黑屏/看不见页面；WindowManager 判大量窗口 `EXITING` / `mAnimatingExit`；SF 层 `hidden by parent`；dumpsys SurfaceFlinger 可见卡住的 `Transition Root`；日志 `SurfaceSyncGroup: Failed to receive transaction ready`、`BLASTSyncEngine: never received commit callback`。
+- 根因：A16 Baklava Shell Transitions 默认开；Transition Root leash 的 BLAST/SF transaction **commit callback 在 BST goldfish 路径不返回** → 窗口卡在过渡态。runtime 属性（`persist.wm.debug.shell_transit=0` 等）对 non-automotive Baklava **无效**（`ENABLE_SHELL_TRANSITIONS` 编译期常量；`onInit()` 仍无条件 `registerTransitionPlayer`）。
+- 解决方法：**临时**（BLAST/SF commit 修好后应撤销并恢复 shell transitions）：
+  1. `scripts/r262-patch-disable-shell-transitions.py` — `ENABLE_SHELL_TRANSITIONS = false`
+  2. `scripts/r262b-patch-gate-transition-player.py` — `onInit()` 用 `if (ENABLE_SHELL_TRANSITIONS)` 包住 `registerTransitionPlayer` / `unifyShellBinders`（**仅 R262 无效**：Baklava 无 gate）
+  3. `scripts/r262b-rebuild-systemui.sh` → ninja `SystemUI.apk` → `r228-pack-root.sh`
+  4. 基线存档：`patches/android-16/patches/aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch`（`frameworks/base` base `45034f0663…`）
+- 验证：`Transition Root` = 0；Settings SF layer **visible** + Output Layer；screencap 可见 Settings UI；焦点 `SettingsHomepageActivity`；Root.vhd md5 `7a55ef636b0961c87bd0815cfc5c8cde`，SystemUI.apk md5 `b1e647bc36ad53db430f705e21f14b7d`。说明：SurfaceSyncGroup 超时可能仍在（图形 sync 根因未修）；本 TEMP 只保证 shell transitions 不再把层藏死。
+
 ---
 
 ## 阶段 12 关机闭环
@@ -937,3 +949,4 @@ flowchart TD
 7. **每次换盘回写 UUID**，用独立回读（md5 + oracle）确认，别信"命令成功"（阶段 2）。
 8. **host GPU 用 Intel**（阶段 9 NVIDIA nvoglv64 崩溃）。
 9. **验证靠 readback**：`sys.boot_completed=1`、`Player state: ready`、`fUiHideBootProgressBar`、bootanim exit 0、`service check auth`（各阶段 oracle）。
+10. **Settings「开了但仍看不见」别只查 auth**：Activity RESUMED + uiautomator OK 时查 SF `Transition Root` / BLAST commit；当前 boot 基线用 **TEMP** R262+R262b 关 shell transitions（`aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch`），不是图形根因修复。

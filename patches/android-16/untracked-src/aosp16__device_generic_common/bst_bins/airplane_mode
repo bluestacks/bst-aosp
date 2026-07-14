@@ -1,0 +1,13 @@
+#!/system/bin/sh
+# This script helps in enabling and disabling airplane mode using ifconfig.
+
+#================ ENABLE/DISABLE =====================#
+
+airplane_mode=$(getprop bst.airplane_mode_active)
+echo "airplane_mode=$airplane_mode" > /dev/kmsg
+
+if [[ "$airplane_mode" -eq 1 ]]; then
+    /system/bin/ifconfig eth0 down
+elif [[ "$airplane_mode" -eq 0 ]]; then
+    /system/bin/ifconfig eth0 up
+fi

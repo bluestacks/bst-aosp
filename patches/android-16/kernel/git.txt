@@ -1,0 +1,25 @@
+686f860abf3a5c7117d6a784ef0360ac99bfcef0
+ arch/x86/kernel/setup.c                                 | 2 +-
+ configs                                                 | 1 -
+ fs/bst_hooks.c                                          | 2 +-
+ fs/bst_hooks.h                                          | 2 +-
+ prebuilts/4.19/arm64                                    | 1 -
+ prebuilts/5.10/arm64                                    | 1 -
+ prebuilts/5.10/x86_64                                   | 1 -
+ prebuilts/5.15/arm64                                    | 1 -
+ prebuilts/5.15/x86_64                                   | 1 -
+ prebuilts/5.4/arm64                                     | 1 -
+ prebuilts/5.4/x86_64                                    | 1 -
+ prebuilts/common-modules/virtual-device/5.10/arm64      | 1 -
+ prebuilts/common-modules/virtual-device/5.10/x86-64     | 1 -
+ prebuilts/common-modules/virtual-device/5.15/arm64      | 1 -
+ prebuilts/common-modules/virtual-device/5.15/x86-64     | 1 -
+ prebuilts/common-modules/virtual-device/5.4/arm64       | 1 -
+ prebuilts/common-modules/virtual-device/5.4/x86-64      | 1 -
+ prebuilts/common-modules/virtual-device/mainline/arm64  | 1 -
+ prebuilts/common-modules/virtual-device/mainline/x86-64 | 1 -
+ prebuilts/mainline/arm64                                | 1 -
+ prebuilts/mainline/x86_64                               | 1 -
+ tests                                                   | 1 -
+ 22 files changed, 3 insertions(+), 22 deletions(-)
+kernel: /home/clouddev/bst/workspace/markxu/aosp16/kernel-a16

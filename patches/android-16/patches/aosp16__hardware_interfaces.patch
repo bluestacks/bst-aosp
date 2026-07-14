@@ -1,0 +1,24 @@
+diff --git a/gnss/1.0/default/Android.bp b/gnss/1.0/default/Android.bp
+index b0cf2c6888..9503886d1c 100644
+--- a/gnss/1.0/default/Android.bp
++++ b/gnss/1.0/default/Android.bp
+@@ -45,6 +45,7 @@ cc_binary {
+     defaults: ["hidl_defaults"],
+     init_rc: ["android.hardware.gnss@1.0-service.rc"],
+     srcs: ["service.cpp"],
++    enabled: false,
+ 
+     shared_libs: [
+         "liblog",
+diff --git a/memtrack/1.0/default/Android.bp b/memtrack/1.0/default/Android.bp
+index addffe3344..edd9d471af 100644
+--- a/memtrack/1.0/default/Android.bp
++++ b/memtrack/1.0/default/Android.bp
+@@ -46,6 +46,7 @@ cc_binary {
+     name: "android.hardware.memtrack@1.0-service",
+     init_rc: ["android.hardware.memtrack@1.0-service.rc"],
+     srcs: ["service.cpp"],
++    enabled: false,
+ 
+     shared_libs: [
+         "liblog",

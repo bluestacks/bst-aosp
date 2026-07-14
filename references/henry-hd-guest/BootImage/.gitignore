@@ -1,0 +1,13 @@
+*.o
+*.d
+bstconf
+bzImage
+fastboot.img*
+fastboot.vdi
+fastbootblock*
+zero.file
+Boot
+Boot.iso
+initrd
+initrd.img
+bstchkdata

@@ -1,0 +1,63 @@
+diff --git a/AndroidProducts.mk b/AndroidProducts.mk
+index 554ebc1..f5289dc 100644
+--- a/AndroidProducts.mk
++++ b/AndroidProducts.mk
+@@ -15,4 +15,10 @@
+ #
+ 
+ PRODUCT_MAKEFILES := \
+-    $(LOCAL_DIR)/mini_x86_64.mk
+\ No newline at end of file
++    $(LOCAL_DIR)/android_x86_64.mk \
++    $(LOCAL_DIR)/mini_x86_64.mk
++
++COMMON_LUNCH_CHOICES := \
++    android_x86_64-trunk_staging-eng \
++    android_x86_64-trunk_staging-user \
++    android_x86_64-trunk_staging-userdebug
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 68abaff..07bb4c3 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -1,11 +1,9 @@
+-# config.mk
+ #
+ # Product-specific compile-time definitions.
+ #
+ 
+ # The generic product target doesn't have any hardware-specific pieces.
+ TARGET_NO_BOOTLOADER := true
+-TARGET_NO_KERNEL := true
+ TARGET_CPU_ABI := x86_64
+ TARGET_ARCH := x86_64
+ TARGET_ARCH_VARIANT := x86_64
+@@ -14,24 +12,15 @@ TARGET_2ND_CPU_ABI := x86
+ TARGET_2ND_ARCH := x86
+ TARGET_2ND_ARCH_VARIANT := x86_64
+ 
++TARGET_CPU_ABI_LIST_64_BIT := $(TARGET_CPU_ABI) $(TARGET_CPU_ABI2) $(NATIVE_BRIDGE_ABI_LIST_64_BIT)
++TARGET_CPU_ABI_LIST_32_BIT := $(TARGET_2ND_CPU_ABI) $(TARGET_2ND_CPU_ABI2) $(NATIVE_BRIDGE_ABI_LIST_32_BIT)
++TARGET_CPU_ABI_LIST := $(TARGET_CPU_ABI) $(TARGET_CPU_ABI2) $(TARGET_2ND_CPU_ABI) $(TARGET_2ND_CPU_ABI2) $(NATIVE_BRIDGE_ABI_LIST_32_BIT) $(NATIVE_BRIDGE_ABI_LIST_64_BIT)
+ 
+-SMALLER_FONT_FOOTPRINT := true
+-MINIMAL_FONT_FOOTPRINT := true
+-# Disable emulator for "make dist" until there is a 64-bit qemu kernel
+-BUILD_EMULATOR := false
+-# Some framework code requires this to enable BT
+-BOARD_HAVE_BLUETOOTH := true
+-BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/generic/common/bluetooth
+-
+-USE_OPENGL_RENDERER := true
+-
+-BOARD_USE_LEGACY_UI := true
+-
+-# PDK does not use ext4 image, but it is added here to prevent build break.
+ TARGET_USERIMAGES_USE_EXT4 := true
+-BOARD_SYSTEMIMAGE_PARTITION_SIZE := 2147483648
+ BOARD_USERDATAIMAGE_PARTITION_SIZE := 576716800
+ BOARD_CACHEIMAGE_PARTITION_SIZE := 69206016
+ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
+ BOARD_FLASH_BLOCK_SIZE := 512
+ TARGET_USERIMAGES_SPARSE_EXT_DISABLED := true
++
++include device/generic/common/BoardConfig.mk

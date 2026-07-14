@@ -1,0 +1,390 @@
+#!/boot/bin/sh
+
+PATH=/boot/sbin:/boot/bin
+export PATH
+
+/boot/bin/busybox mknod /dev/kmsg c 1 11
+
+log_echo()
+{
+	echo "$@" > /dev/kmsg
+}
+
+log_echo Starting BlueStacks Userland
+exec >/dev/kmsg 2>/dev/kmsg
+umask 022
+
+die_if_error()
+{
+	if [ $? -ne 0 ]; then
+		log_echo "<2>$@"
+		exit 1
+	fi
+}
+
+#
+# Ask busybox to populate /boot/bin and /boot/sbin.
+#
+
+/boot/bin/busybox --install -s /boot/bin
+
+#
+# Mount /proc and /sys.
+#
+
+mkdir /proc
+mount -t proc proc /proc
+die_if_error "Cannot mount /proc"
+
+# TEMP(A16 bringup debug): force all kmsg to console so we can see where boot dies.
+echo 8 > /proc/sys/kernel/printk 2>/dev/null
+# TEMP(A16 bringup debug): 关闭 /dev/kmsg 限速, 否则 second-stage init 的日志会被
+# "output lines suppressed due to ratelimiting" 大量吞掉, 看不到真正的崩溃点。后续回退。
+echo on > /proc/sys/kernel/printk_devkmsg 2>/dev/null
+echo "<0>A16DBG: init.sh proc mounted, loglevel raised" > /dev/kmsg
+
+mkdir /sys
+mount -t sysfs sysfs /sys
+die_if_error "Cannot mount /sys"
+
+#
+# Now that /sys is mounted, we can populate /dev.
+#
+
+mdev -s
+modprobe loop 2>/dev/null || true
+[ -d /sys/module/loop/parameters ] && echo 64 > /sys/module/loop/parameters/max_loop 2>/dev/null
+
+#
+WINDOWSGATEWAY="10.0.2.2"
+echo "WindowsGateway : $WINDOWSGATEWAY"
+export WINDOWSGATEWAY
+
+# Load our uHD kernel modules.
+#
+
+grep SHELL_BEFORE_KMODS= /proc/cmdline > /dev/null
+if [ $? -eq 0 ]; then
+	log_echo Starting debug shell before kernel modules
+	log_echo Please exit the shell to continue the boot process
+	env HAS_CTTY=Yes setsid cttyhack /boot/bin/sh
+fi
+
+load_module()
+{
+	log_echo "Loading module $1"
+	insmod $1
+	die_if_error "Cannot load module $1"
+}
+
+load_module /boot/bstmods/bstvmsg.ko
+bstvmsg=`/boot/bin/busybox cat /sys/devices/virtual/misc/bstvmsg/uevent`
+if [ ! -z "$bstvmsg" ]; then
+    MAJOR=`/boot/bin/busybox echo $bstvmsg | /boot/bin/busybox cut -d '=' -f 2 | /boot/bin/busybox cut -d ' ' -f 1`
+    MINOR=`/boot/bin/busybox echo $bstvmsg | /boot/bin/busybox cut -d '=' -f 3 | /boot/bin/busybox cut -d ' ' -f 1`
+
+    log_echo "making bstvmsg node"
+    /boot/bin/busybox mknod -m 0666 /dev/bstvmsg c $MAJOR $MINOR
+else
+    log_echo "unable to make bstvmsg dev node"
+fi
+
+load_module /boot/bstmods/bstinput.ko
+
+load_module /boot/bstmods/bstaudio.ko
+
+grep SHELL_BEFORE_VIDEO= /proc/cmdline > /dev/null
+if [ $? -eq 0 ]; then
+	log_echo Starting debug shell before video
+	log_echo Please exit the shell to continue the boot process
+	env HAS_CTTY=Yes setsid cttyhack /boot/bin/sh
+fi
+
+#load_module /boot/bstmods/bstvideo.ko
+
+load_module /boot/bstmods/bstpgaipc.ko
+load_module /boot/bstmods/videobuf-core.ko
+load_module /boot/bstmods/bstcamera.ko
+load_module /boot/bstmods/hvmem.ko
+
+#load_module /boot/bstmods/bstsensor.ko
+
+#
+# Mount the appropriate file system for ramdisk.img and system.img.
+#
+
+grep SHELL_BEFORE_MOUNTS= /proc/cmdline > /dev/null
+if [ $? -eq 0 ]; then
+	log_echo Starting debug shell before mounts
+	log_echo Please exit the shell to continue the boot process
+	env HAS_CTTY=Yes setsid cttyhack /boot/bin/sh
+fi
+
+mkdir /boot/android
+
+log_echo "Mounting Android root file system /dev/sda1"
+
+mount -o ro /dev/sda1 /boot/android
+die_if_error "Cannot mount Android root file system"
+echo "<0>A16DBG: sda1 mounted at /boot/android" > /dev/kmsg
+
+#
+# Prepare our root file system.
+#
+
+cd /
+
+#
+# Use the new /proc/cmdline to populate the environment.
+#
+populate_environment()
+{
+	while [ $# -ne 0 ]; do
+	    # Making sure that if name contains ".", we don't export it in environment
+        case "$1" in
+            *.*=*)
+                log_echo "not setting $1 as this contains '.' in name"
+                ;;
+            *)
+                log_echo "setting env $1"
+                export $1
+                ;;
+        esac
+		shift
+	done
+}
+
+log_echo "Reading cmdline"
+log_echo `cat /proc/cmdline`
+
+log_echo "Setting cmdline as env"
+populate_environment `cat /proc/cmdline`
+
+log_echo "Extracting ramdisk.img"
+bstandroid=baklava64
+
+zcat /boot/android/android/ramdisk.img | cpio -id
+die_if_error "Cannot extract ramdisk.img"
+echo "<0>A16DBG: ramdisk.img extracted; /init=$(ls -l /init 2>&1)" > /dev/kmsg
+
+reserve_loop_dev()
+{
+	n=$1
+	[ -e /dev/loop$n ] || /boot/bin/busybox mknod /dev/loop$n b 7 $n
+	mkdir -p /dev/block
+	[ -e /dev/block/loop$n ] || ln -sf ../loop$n /dev/block/loop$n
+}
+
+if [ "$bstandroid" == "baklava64" ] && [ -f /boot/android/android/system.img ]; then
+	log_echo "Mounting baklava system.img"
+	mkdir -p system
+	find_free_loop_sys()
+	{
+		n=0
+		while [ $n -lt 48 ]; do
+			if [ ! -d /sys/block/loop$n/loop ]; then
+				echo /dev/loop$n
+				return 0
+			fi
+			n=`expr $n + 1`
+		done
+		return 1
+	}
+	sysloop=`find_free_loop_sys`
+	/boot/bin/busybox losetup $sysloop /boot/android/android/system.img
+	if [ $? -ne 0 ]; then die_if_error "Cannot losetup baklava system.img"; fi
+	mount -t ext4 -o ro $sysloop system
+	die_if_error "Cannot mount baklava system.img"
+	echo "<0>A16DBG: system.img mounted on $sysloop; init_bytes=$(wc -c < /system/bin/init 2>&1)" > /dev/kmsg
+
+elif [ -e /boot/android/android/system.sfs ]; then
+
+	mkdir /sfs
+	mkdir -p system
+
+	log_echo "Mounting system.sfs"
+
+	mount -o loop /boot/android/android/system.sfs /sfs
+	die_if_error "Cannot mount system.sfs"
+	echo "<0>A16DBG: system.sfs mounted" > /dev/kmsg
+
+	log_echo "Mounting system.img"
+
+	mount -o loop,ro /sfs/system.img system
+	die_if_error "Cannot mount system.img from SquashFS"
+	echo "<0>A16DBG: system mounted from sfs; init_bytes=$(wc -c < /system/bin/init 2>&1)" > /dev/kmsg
+
+else
+	log_echo "Mounting system directory"
+	mkdir -p system
+	mount -o loop /boot/android/android/system system
+	die_if_error "Cannot mount system directory"
+
+  if [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ]; then
+      ln -s /boot/android/android/system/apex/com.android.runtime /apex/com.android.runtime
+  fi
+
+	if [ "$bstandroid" == "tiramisu64" ]; then
+		mkdir /linkerconfig
+		/apex/com.android.runtime/bin/linkerconfig --target /linkerconfig
+	fi
+fi
+
+# A16(baklava64): pre-mount runtime + art + bootstrap i18n/tzdata before apexd loop exhaustion.
+if [ "$bstandroid" == "baklava64" ]; then
+	APEX_SRC=/system/apex
+	find_free_loop()
+	{
+		n=0
+		while [ $n -lt 48 ]; do
+			if [ ! -d /sys/block/loop$n/loop ]; then
+				echo /dev/loop$n
+				return 0
+			fi
+			n=`expr $n + 1`
+		done
+		return 1
+	}
+	mount_system_apex()
+	{
+		name="$1"
+		ver="$2"
+		apexfile="$APEX_SRC/${name}.apex"
+		mp="/apex/${name}@${ver}"
+		if [ ! -f "$apexfile" ] || [ -f "${mp}/.mounted" ]; then
+			return 0
+		fi
+		mkdir -p "$mp"
+		loopdev=`find_free_loop`
+		/boot/bin/busybox losetup -o 4096 $loopdev "$apexfile"
+		if [ $? -ne 0 ]; then log_echo "WARNING: losetup $name failed"; return 1; fi
+		if mount -t erofs -o ro $loopdev "$mp"; then
+			touch "${mp}/.mounted"
+			ln -sfn "$mp" "/apex/$name"
+			echo "<0>A16DBG: mounted apex $name on $loopdev -> $mp" > /dev/kmsg
+		else
+			log_echo "WARNING: mount apex $name failed"
+		fi
+	}
+	# runtime.apex mounts flat at /apex/com.android.runtime (no @ver suffix)
+	apexfile=$APEX_SRC/com.android.runtime.apex
+	if [ -f "$apexfile" ] && [ ! -d /apex/com.android.runtime/bin ]; then
+		mkdir -p /apex/com.android.runtime
+		loopdev=`find_free_loop`
+		/boot/bin/busybox losetup -o 4096 $loopdev "$apexfile"
+		if [ $? -eq 0 ]; then
+			mount -t erofs -o ro $loopdev /apex/com.android.runtime || log_echo "WARNING: mount runtime failed"
+			echo "<0>A16DBG: mounted apex com.android.runtime on $loopdev" > /dev/kmsg
+		fi
+	fi
+	mount_system_apex com.android.i18n 1
+	mount_system_apex com.android.tzdata 370499999
+	mount_system_apex com.android.os.statsd 361090000
+	ART_MP=/apex/com.android.art@990091000
+	if [ -f /boot/art-payload.img ] && [ ! -f "$ART_MP/bin/dalvikvm64" ]; then
+		mkdir -p "$ART_MP"
+		loopdev=`find_free_loop`
+		/boot/bin/busybox losetup $loopdev /boot/art-payload.img
+		if [ $? -eq 0 ]; then
+			if mount -t erofs -o ro $loopdev "$ART_MP"; then
+				echo "<0>A16DBG: mounted art payload on $loopdev -> $ART_MP" > /dev/kmsg
+				ln -sfn "$ART_MP" /apex/com.android.art
+				ln -sfn "$ART_MP" /apex/com.android.art.debug
+			else
+				log_echo "WARNING: mount art payload failed on $loopdev"
+			fi
+		else
+			log_echo "WARNING: losetup art payload failed"
+		fi
+	fi
+	if [ -f /boot/linkerconfig/ld.config.txt ]; then
+		mkdir -p /linkerconfig/bootstrap /linkerconfig/default
+		cp /boot/linkerconfig/ld.config.txt /linkerconfig/ld.config.txt
+		cp /boot/linkerconfig/ld.config.txt /linkerconfig/bootstrap/ld.config.txt
+		cp /boot/linkerconfig/ld.config.txt /linkerconfig/default/ld.config.txt
+		echo "<0>A16DBG: linkerconfig from initrd in init.sh" > /dev/kmsg
+	else
+		mkdir -p /linkerconfig/bootstrap /linkerconfig/default
+		echo "#" > /linkerconfig/bootstrap/ld.config.txt
+		echo "#" > /linkerconfig/default/ld.config.txt
+		echo "<0>A16DBG: linkerconfig stub for baklava64" > /dev/kmsg
+	fi
+	if [ -f /boot/linkerconfig/com.android.art/ld.config.txt ]; then
+		mkdir -p /linkerconfig/com.android.art
+		cp /boot/linkerconfig/com.android.art/ld.config.txt /linkerconfig/com.android.art/
+	fi
+	if [ -f /boot/linkerconfig/com.android.runtime/ld.config.txt ]; then
+		mkdir -p /linkerconfig/com.android.runtime
+		cp /boot/linkerconfig/com.android.runtime/ld.config.txt /linkerconfig/com.android.runtime/
+	fi
+fi
+echo "<0>A16DBG: system mounted; bstandroid=[$bstandroid]; sysinit=$(ls -l /system/bin/init 2>&1); init_bytes=$(wc -c < /system/bin/init 2>&1); linker=$(ls -l /system/bin/bootstrap/linker64 2>&1); apexrt=$(ls -ld /apex/com.android.runtime 2>&1)" > /dev/kmsg
+
+#mkdir cache
+mount -t tmpfs tmpfs cache
+
+log_echo "Checking for debug shell"
+grep SHELL_BEFORE_STAGE2= /proc/cmdline > /dev/null
+if [ $? -eq 0 ]; then
+	log_echo Starting debug shell before stage 2
+	log_echo Please exit the shell to continue the boot process
+	env HAS_CTTY=Yes setsid cttyhack /boot/bin/sh
+fi
+
+PATH=/system/bin:/system/xbin:/sbin
+
+#bstreport timeline "first_stage_init_completed"
+
+log_echo "Running bstsetconf script"
+source /boot/bstsetconf.sh
+
+populate_bst_conf
+generate_android_ids
+
+# load vbox specific modules
+# TEMP(A16 bringup verify): 重新尝试加载 vboxguest.ko, 但失败不退出, 仅打印 rc 验证。
+log_echo "Loading module /boot/bstmods/vboxguest.ko (non-fatal verify)"
+#DISABLED: insmod /boot/bstmods/vboxguest.ko
+echo "<0>A16DBG: insmod vboxguest.ko rc=$?" > /dev/kmsg
+vboxuser=`/boot/bin/busybox cat /sys/devices/virtual/misc/vboxuser/uevent`
+if [ ! -z "$vboxuser" ]; then
+    MAJOR=`/boot/bin/busybox echo $vboxuser | /boot/bin/busybox cut -d '=' -f 2 | /boot/bin/busybox cut -d ' ' -f 1`
+    MINOR=`/boot/bin/busybox echo $vboxuser | /boot/bin/busybox cut -d '=' -f 3 | /boot/bin/busybox cut -d ' ' -f 1`
+
+    log_echo "making vboxuser node"
+    /boot/bin/busybox mknod -m 0666 /dev/vboxuser c $MAJOR $MINOR
+else
+    log_echo "unable to make vboxuser dev node, bstreport may fail"
+fi
+
+#bstreport timeline "vbox_guest_loaded"
+
+# TEMP(A16 bringup verify): 重新尝试加载 vboxsf.ko, 但失败不退出, 仅打印 rc 验证。
+log_echo "Loading module /boot/bstmods/vboxsf.ko (non-fatal verify)"
+#DISABLED: insmod /boot/bstmods/vboxsf.ko
+echo "<0>A16DBG: insmod vboxsf.ko rc=$?" > /dev/kmsg
+
+if [ ! -z "$BST_GRAPHICS_ENGINE" ]; then
+    echo $BST_GRAPHICS_ENGINE > /proc/glmode
+else
+    log_echo "bst.graphics_engine property not found"
+fi
+
+if [ -e /proc/sys/vm/pcr_enabled -a ! -z "$BST_MEM_PCR_ENABLED" ]; then
+	echo $BST_MEM_PCR_ENABLED > /proc/sys/vm/pcr_enabled
+else
+	log_echo "bst.mem_pcr_enabled property not found"
+fi
+
+if [ -e /proc/sys/vm/pcr_pclimit -a ! -z "$BST_MEM_PCR_PCLIMIT" ]; then
+	echo $BST_MEM_PCR_PCLIMIT > /proc/sys/vm/pcr_pclimit
+else
+	log_echo "bst.mem_pcr_pclimit property not found"
+fi
+
+mkdir /dev/block
+ln -s /dev/sdb1 /dev/block/sdb1
+
+log_echo "Running stage2 script"
+echo "<0>A16DBG: init.sh done, exec stage2.sh" > /dev/kmsg
+exec /boot/bin/sh /boot/stage2.sh

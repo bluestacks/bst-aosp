@@ -1,0 +1,25 @@
+<!--
+    Henry / R243: audio@7.0 + effect@7.0 (from a13 device/generic/common/manifest.xml)
+    Without this, FactoryHal getTransport() returns EMPTY → Found no HAL version →
+    audioserver SIGSEGV → init kills vendor.audio-hal (death spiral).
+-->
+<manifest version="1.0" type="device">
+    <hal format="hidl">
+        <name>android.hardware.audio</name>
+        <transport>hwbinder</transport>
+        <version>7.0</version>
+        <interface>
+            <name>IDevicesFactory</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.audio.effect</name>
+        <transport>hwbinder</transport>
+        <version>7.0</version>
+        <interface>
+            <name>IEffectsFactory</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+</manifest>

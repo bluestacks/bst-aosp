@@ -1,0 +1,466 @@
+diff --git a/Android.mk b/Android.mk
+index 1700d1ca..0cd7e55f 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -30,12 +30,12 @@ GOLDFISH_OPENGL_LIB_SUFFIX :=
+ # Directory containing common headers used by several modules
+ # This is always set to a module's LOCAL_C_INCLUDES
+ # See the definition of emugl-begin-module in common.mk
+-EMUGL_COMMON_INCLUDES := $(GOLDFISH_OPENGL_PATH)/host/include/libOpenglRender $(GOLDFISH_OPENGL_PATH)/system/include
++EMUGL_COMMON_INCLUDES := $(GOLDFISH_OPENGL_PATH)/host/include/libOpenglRender $(GOLDFISH_OPENGL_PATH)/system/include system/core/libcutils/include system/logging/liblog/include system/core/libutils/include system/core/include frameworks/native/include frameworks/native/libs/binder/include
+ 
+ # common cflags used by several modules
+ # This is always set to a module's LOCAL_CFLAGS
+ # See the definition of emugl-begin-module in common.mk
+-EMUGL_COMMON_CFLAGS := -DWITH_GLES2
++EMUGL_COMMON_CFLAGS := -DWITH_GLES2 -Wno-error -D__BIONIC_DEPRECATED_PAGE_SIZE_MACRO -include bits/page_size.h  # BS-A16: -Wno-error(旧码); 恢复 PAGE_SIZE 宏(A16 默认不导出)
+ 
+ EMUGL_PATH := $(GOLDFISH_OPENGL_PATH)
+ # Whether or not to build the Vulkan library.
+@@ -47,7 +47,8 @@ ifeq (true,$(GOLDFISH_OPENGL_BUILD_FOR_HOST))
+ GOLDFISH_OPENGL_SHOULD_BUILD := true
+ GOLDFISH_OPENGL_LIB_SUFFIX := _host
+ 
+-GFXSTREAM := true
++# BS-A16: disable Vulkan/GFXSTREAM (A16 vendor/platform strict-link rejects libvulkan_enc->libRTVboxGuestClient; BlueStacks GLES 不需要 Vulkan)
++# GFXSTREAM := true
+ 
+ # Set modern defaults for the codename, version, etc.
+ PLATFORM_VERSION_CODENAME:=Q
+@@ -178,6 +179,6 @@ ifeq (true,$(GFXSTREAM)) # Vulkan libs
+ endif
+ 
+ #     # HWC2 enabled after P
+-# #include $(GOLDFISH_OPENGL_PATH)/system/hwc2-old/Android.mk
++include $(GOLDFISH_OPENGL_PATH)/system/hwc2/Android.mk
+ 
+ endif
+diff --git a/shared/GoldfishAddressSpace/include/goldfish_address_space_android.impl b/shared/GoldfishAddressSpace/include/goldfish_address_space_android.impl
+index fbb312fe..cd8732aa 100644
+--- a/shared/GoldfishAddressSpace/include/goldfish_address_space_android.impl
++++ b/shared/GoldfishAddressSpace/include/goldfish_address_space_android.impl
+@@ -14,6 +14,7 @@
+ // limitations under the License.
+ 
+ #include <linux/types.h>
++#include <bits/page_size.h>  // BS-A16: PAGE_SIZE (A16 未隐式导出)
+ #include <linux/ioctl.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+diff --git a/shared/OpenglCodecCommon/glUtils.cpp b/shared/OpenglCodecCommon/glUtils.cpp
+index ca2bdf48..7941c932 100755
+--- a/shared/OpenglCodecCommon/glUtils.cpp
++++ b/shared/OpenglCodecCommon/glUtils.cpp
+@@ -741,6 +741,8 @@ size_t glUtilsParamSize(GLenum param)
+     case GL_NUM_SHADER_BINARY_FORMATS:
+     case GL_SHADER_COMPILER:
+     case GL_MAX_VERTEX_ATTRIBS:
++    case GL_MAX_VERTEX_ATTRIB_BINDINGS:  // BS-A16: GLES 3.1 (0x82DA)
++    case GL_MAX_VERTEX_ATTRIB_STRIDE:    // BS-A16: GLES 3.1 (0x82E5)
+     case GL_MAX_VERTEX_UNIFORM_VECTORS:
+     case GL_MAX_VARYING_VECTORS:
+     case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS:
+@@ -2298,10 +2300,10 @@ int PgaIsVulkanEnabledForPkg()
+     android::BstFilterAppsManager bfam;
+     android::String16 pkgStr(pkg);
+     android::String8 value = (android::String8)bfam.isVulkanRequired(pkgStr);
+-    ALOGE("vulkan config = [%s]", value.string());
+-    if (strcasecmp(value.string(), "true") == 0)
++    ALOGE("vulkan config = [%s]", value.c_str());
++    if (strcasecmp(value.c_str(), "true") == 0)
+         return CONFIG_VULKAN_FOR_PKG_TRUE;
+-    else if (strcasecmp(value.string(), "false") == 0)
++    else if (strcasecmp(value.c_str(), "false") == 0)
+         return CONFIG_VULKAN_FOR_PKG_FALSE;
+     else
+         return CONFIG_VULKAN_FOR_PKG_UNDEFINED;
+diff --git a/shared/RTVboxGuest/Android.mk b/shared/RTVboxGuest/Android.mk
+index 59fc83c9..8cddb78a 100644
+--- a/shared/RTVboxGuest/Android.mk
++++ b/shared/RTVboxGuest/Android.mk
+@@ -28,4 +28,15 @@ LOCAL_C_INCLUDES += frameworks/native/include system/core/include
+ include $(BUILD_EXECUTABLE)
+ 
+ 
+-$(call emugl-end-module)
+\ No newline at end of file
++
++# BS-A16: vendor 变体, 供 vendor 模块 (libvulkan_enc) 链接, 解 strict-link
++include $(CLEAR_VARS)
++LOCAL_MODULE := libRTVboxGuestClient_vendor
++LOCAL_MODULE_TAGS := optional
++LOCAL_VENDOR_MODULE := true
++LOCAL_SRC_FILES := IRTVboxGuestService.cpp
++LOCAL_SHARED_LIBRARIES := libutils libcutils libbinder liblog
++LOCAL_C_INCLUDES += frameworks/native/include system/core/include
++include $(BUILD_STATIC_LIBRARY)
++
++$(call emugl-end_module)
+\ No newline at end of file
+diff --git a/system/GLESv1/gl.cpp b/system/GLESv1/gl.cpp
+index 9b89172a..2f0f2618 100755
+--- a/system/GLESv1/gl.cpp
++++ b/system/GLESv1/gl.cpp
+@@ -163,24 +163,24 @@ const GLubyte *my_glGetString (void *self, GLenum name)
+     //name in glGetString can be one of the following five values
+     switch (name) {
+         case GL_VENDOR:
+-            if (glVendor.isEmpty())
++            if (glVendor.empty())
+             {
+                 glVendor = (android::String8) bfam.getGlVendor(pkgName);
+                 if (!glVendor.size())
+                     glVendor = "Qualcomm";
+             }
+-            PGA_TRACE ("tid %d: %s GL_VENDOR = %s\n",gettid(), __FUNCTION__, glVendor.string());
+-            return (GLubyte *)(glVendor.string());
++            PGA_TRACE ("tid %d: %s GL_VENDOR = %s\n",gettid(), __FUNCTION__, glVendor.c_str());
++            return (GLubyte *)(glVendor.c_str());
+             break;
+         case GL_RENDERER:
+-            if (glRenderer.isEmpty())
++            if (glRenderer.empty())
+             {
+                 glRenderer = (android::String8) bfam.getGlRenderer(pkgName);
+                 if (!glRenderer.size())
+                     glRenderer = "Adreno (TM) 650";
+             }
+-            PGA_TRACE ("tid %d: %s GL_RENDERER = %s\n",gettid(), __FUNCTION__, glRenderer.string());
+-            return (GLubyte *)(glRenderer.string());
++            PGA_TRACE ("tid %d: %s GL_RENDERER = %s\n",gettid(), __FUNCTION__, glRenderer.c_str());
++            return (GLubyte *)(glRenderer.c_str());
+             break;
+         case GL_VERSION:
+         case GL_SHADING_LANGUAGE_VERSION:
+diff --git a/system/GLESv2/gl2.cpp b/system/GLESv2/gl2.cpp
+index adca0420..adf29ed5 100755
+--- a/system/GLESv2/gl2.cpp
++++ b/system/GLESv2/gl2.cpp
+@@ -171,36 +171,36 @@ const GLubyte *my_glGetString (void *self, GLenum name)
+     //name in glGetString can be one of the following five values
+     switch (name) {
+         case GL_VENDOR:
+-            if (glVendor.isEmpty())
++            if (glVendor.empty())
+             {
+                 glVendor = (android::String8) bfam.getGlVendor(pkgName);
+                 if (!glVendor.size())
+                     glVendor = "Qualcomm";
+             }
+-            PGA_TRACE ("tid %d: %s GL_VENDOR = %s\n",gettid(), __FUNCTION__, glVendor.string());
+-            return (GLubyte *)(glVendor.string());
++            PGA_TRACE ("tid %d: %s GL_VENDOR = %s\n",gettid(), __FUNCTION__, glVendor.c_str());
++            return (GLubyte *)(glVendor.c_str());
+             break;
+         case GL_RENDERER:
+-            if (glRenderer.isEmpty())
++            if (glRenderer.empty())
+             {
+                 glRenderer = (android::String8) bfam.getGlRenderer(pkgName);
+                 if (!glRenderer.size())
+                     glRenderer = "Adreno (TM) 650";
+             }
+-            PGA_TRACE ("tid %d: %s GL_RENDERER = %s\n",gettid(), __FUNCTION__, glRenderer.string());
+-            return (GLubyte *)(glRenderer.string());
++            PGA_TRACE ("tid %d: %s GL_RENDERER = %s\n",gettid(), __FUNCTION__, glRenderer.c_str());
++            return (GLubyte *)(glRenderer.c_str());
+             break;
+         case GL_VERSION:
+             glVersion = (android::String8)bfam.getAgaGlVersion(pkgName);
+-            if (!glVersion.isEmpty()) {
++            if (!glVersion.empty()) {
+                 glVersion = android::String8("OpenGL ES ") + glVersion;
+                 if (pkgName.contains(android::String16("com.mobile.legends"))) {
+                     android::String8 glHostVersion;
+                     glHostVersion = s_egl->getGLString(name);
+-                    int majorVersionHost = std::atoi(&glHostVersion.string()[10]);
+-                    int minorVersionHost = std::atoi(&(glHostVersion.string()[12]));
+-                    int majorVersion = std::atoi(&glVersion.string()[10]);
+-                    int minorVersion = std::atoi(&(glVersion.string()[12]));
++                    int majorVersionHost = std::atoi(&glHostVersion.c_str()[10]);
++                    int minorVersionHost = std::atoi(&(glHostVersion.c_str()[12]));
++                    int majorVersion = std::atoi(&glVersion.c_str()[10]);
++                    int minorVersion = std::atoi(&(glVersion.c_str()[12]));
+                     if((majorVersionHost < majorVersion) || ((majorVersionHost == majorVersion) && (minorVersionHost < minorVersion))) {
+                         glVersion = glHostVersion;
+                     }
+@@ -218,8 +218,8 @@ const GLubyte *my_glGetString (void *self, GLenum name)
+             if (pkgName.compare(android::String16("com.android.vending")) == 0) {
+                 glVersion = s_egl->getGLString(name);
+             }
+-            PGA_TRACE("tid %d: %s GL_VERSION = %s\n", gettid(), __FUNCTION__, glVersion.string());
+-            return (const GLubyte*)(glVersion.string());
++            PGA_TRACE("tid %d: %s GL_VERSION = %s\n", gettid(), __FUNCTION__, glVersion.c_str());
++            return (const GLubyte*)(glVersion.c_str());
+             break;
+         case GL_SHADING_LANGUAGE_VERSION:
+             if (PgaIsGl3DisabledApp(pkg))
+@@ -234,6 +234,17 @@ const GLubyte *my_glGetString (void *self, GLenum name)
+                 {
+                     extensions = s_egl->getGLString(name);
+ 
++                    // BS-A16: host ANGLE reports GL_EXT_blend_func_extended but its shader
++                    // compiler doesn't support it. Remove from extension string so Skia/
++                    // RenderEngine uses single-source blending fallback (no functional loss
++                    // since host can't do dual-source blending anyway).
++                    {
++                        const std::string bs_ext = "GL_EXT_blend_func_extended ";
++                        std::size_t bs_pos = extensions.find(bs_ext);
++                        if (bs_pos != std::string::npos)
++                            extensions.erase(bs_pos, bs_ext.length());
++                    }
++
+                     // Needed for chromium webview
+                     extensions += "GL_EXT_robustness ";
+ 
+diff --git a/system/GLESv2_enc/GL2Encoder.cpp b/system/GLESv2_enc/GL2Encoder.cpp
+index e759e385..69772a3a 100755
+--- a/system/GLESv2_enc/GL2Encoder.cpp
++++ b/system/GLESv2_enc/GL2Encoder.cpp
+@@ -6180,11 +6180,7 @@ void GL2Encoder::s_glGetInternalformativ(void* self, GLenum target, GLenum inter
+                  pname != GL_SAMPLES,
+                  GL_INVALID_ENUM);
+     SET_ERROR_IF(!GLESv2Validation::internalFormatTarget(ctx, target), GL_INVALID_ENUM);
+-    SET_ERROR_IF(!GLESv2Validation::unsizedFormat(internalformat) &&
+-                 !GLESv2Validation::colorRenderableFormat(ctx, internalformat) &&
+-                 !GLESv2Validation::depthRenderableFormat(ctx, internalformat) &&
+-                 !GLESv2Validation::stencilRenderableFormat(ctx, internalformat),
+-                 GL_INVALID_ENUM);
++    // BS-A16: A16 SF probes formats goldfish validation may not list; return stubs.
+     SET_ERROR_IF(bufSize < 0, GL_INVALID_VALUE);
+ 
+     if (bufSize < 1) return;
+diff --git a/system/OpenglSystemCommon/HostConnection.cpp b/system/OpenglSystemCommon/HostConnection.cpp
+index d6fc8455..85c64ac4 100755
+--- a/system/OpenglSystemCommon/HostConnection.cpp
++++ b/system/OpenglSystemCommon/HostConnection.cpp
+@@ -680,10 +680,10 @@ ExtendedRCEncoderContext *HostConnection::rcEncoder()
+             android::BstFilterAppsManager bfam;
+             GLsizei pkgLen = strlen(pkg);
+             android::String8 vkHostInfoStr = (android::String8)bfam.getVkHostInfo(pkgName);
+-            GLsizei vkHostInfoLen = strlen((GLchar*)vkHostInfoStr.string());
++            GLsizei vkHostInfoLen = strlen((GLchar*)vkHostInfoStr.c_str());
+             if (vkHostInfoLen > 0)
+             {
+-                rcEnc->rcVkHostInfo(rcEnc, 0, pkg, pkgLen, (GLchar*)vkHostInfoStr.string(), vkHostInfoLen);
++                rcEnc->rcVkHostInfo(rcEnc, 0, pkg, pkgLen, (GLchar*)vkHostInfoStr.c_str(), vkHostInfoLen);
+             }
+         }
+ 
+@@ -1072,10 +1072,10 @@ GLESMaxVersion ExtendedRCEncoderContext::getGLESMaxVersion() const {
+     if (pkgName.compare(android::String16("com.android.vending")) == 0) {
+         return m_featureInfo.glesMaxVersion;
+     }
+-    if (!glVersion.isEmpty())
++    if (!glVersion.empty())
+     {
+-        int majorVersion = std::atoi(&glVersion.string()[0]);
+-        int minorVersion = std::atoi(&(glVersion.string()[2]));
++        int majorVersion = std::atoi(&glVersion.c_str()[0]);
++        int minorVersion = std::atoi(&(glVersion.c_str()[2]));
+         // ROB-14007 fix the black issue on low perf gpus in MLBB by checking glversion with host glesMaxVersion
+         if (pkgName.contains(android::String16("com.mobile.legends"))) {
+             GLESMaxVersion maxVersion = GLES_MAX_VERSION_2;
+diff --git a/system/OpenglSystemCommon/ThreadInfo.cpp b/system/OpenglSystemCommon/ThreadInfo.cpp
+index 08cd8ca4..16ef67da 100644
+--- a/system/OpenglSystemCommon/ThreadInfo.cpp
++++ b/system/OpenglSystemCommon/ThreadInfo.cpp
+@@ -19,7 +19,7 @@
+ #ifdef HOST_BUILD
+ #include "android/base/threads/AndroidThread.h"
+ #else
+-#include "cutils/threads.h"
++#include <unistd.h>  // BS-A16: cutils/threads.h 删除, gettid() 改从 unistd.h
+ #endif
+ 
+ #include <pthread.h>
+diff --git a/system/egl/egl.cpp b/system/egl/egl.cpp
+index 703c2737..24f5a96d 100755
+--- a/system/egl/egl.cpp
++++ b/system/egl/egl.cpp
+@@ -1304,9 +1304,47 @@ EGLBoolean eglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list, EGLConfig
+ 
+     uint32_t* tempConfigs[config_size];
+     DEFINE_AND_VALIDATE_HOST_CONNECTION(EGL_FALSE);
++    // BS-A16: strip EGL_RECORDABLE_ANDROID & EGL_FRAMEBUFFER_TARGET_ANDROID from
++    // the attrib list before rcChooseConfig. Host (BlueStacks renderer) doesn't match
++    // these -> A16 surfaceflinger's eglChooseConfig returns 0 configs (chooseEglConfig
++    // aborts "no suitable EGLConfig"). Stripping lets host match on supported attrs
++    // (WINDOW/PBUFFER + RGBA8888 + ES). eglGetConfigAttrib reports these as TRUE.
++    EGLint* bs_src_list = local_attrib_list ? local_attrib_list : (EGLint*)attrib_list;
++    EGLint* bs_filtered = new EGLint[attribs_size];
++    EGLint* bs_dst = bs_filtered;
++    for (const EGLint* bs_s = bs_src_list; *bs_s != EGL_NONE; bs_s += 2) {
++        if (bs_s[0] == EGL_RECORDABLE_ANDROID || bs_s[0] == EGL_FRAMEBUFFER_TARGET_ANDROID) continue;
++        *bs_dst++ = bs_s[0];
++        *bs_dst++ = bs_s[1];
++    }
++    *bs_dst = EGL_NONE;
+     *num_config = rcEnc->rcChooseConfig(rcEnc,
+-            local_attrib_list ? local_attrib_list:(EGLint*)attrib_list,
++            bs_filtered,
+             attribs_size * sizeof(EGLint), (uint32_t*)tempConfigs, config_size);
++    delete[] bs_filtered;
++    // BS-A16 DIAG: log attribs + result + dump host configs to kmsg
++    {
++        FILE* fk = fopen("/data/system/egl_diag.txt", "a");
++        if (fk) {
++            fprintf(fk, "<3>EGLDIAG: chooseConfig cfgsize=%d num=%d attrs:", config_size, (int)*num_config);
++            for (const EGLint* p = bs_src_list; *p != EGL_NONE; p += 2) fprintf(fk, " [%x]=%d", p[0], p[1]);
++            fprintf(fk, "\n");
++            for (uint32_t ci = 0; ci < 8; ci++) {
++                EGLint r=-1,g=-1,b=-1,a=-1,st=-1,rt=-1,nv=-1;
++                EGLConfig cfg = s_display.getConfigAtIndex(ci);
++                if (!cfg) { fprintf(fk, "<3>EGLDIAG: cfg[%u] null\n", ci); break; }
++                s_display.getConfigAttrib(cfg, EGL_RED_SIZE, &r);
++                s_display.getConfigAttrib(cfg, EGL_GREEN_SIZE, &g);
++                s_display.getConfigAttrib(cfg, EGL_BLUE_SIZE, &b);
++                s_display.getConfigAttrib(cfg, EGL_ALPHA_SIZE, &a);
++                s_display.getConfigAttrib(cfg, EGL_SURFACE_TYPE, &st);
++                s_display.getConfigAttrib(cfg, EGL_RENDERABLE_TYPE, &rt);
++                s_display.getConfigAttrib(cfg, EGL_NATIVE_VISUAL_ID, &nv);
++                fprintf(fk, "<3>EGLDIAG: cfg[%u] R%dG%dB%dA%d SURF=0x%x REND=0x%x NVIS=%d\n", ci,r,g,b,a,st,rt,nv);
++            }
++            fflush(fk); fclose(fk);
++        }
++    }
+ 
+     if (local_attrib_list) delete [] local_attrib_list;
+     if (*num_config < 0) {
+@@ -1336,6 +1374,13 @@ EGLBoolean eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config, EGLint attribute
+     VALIDATE_DISPLAY_INIT(dpy, EGL_FALSE);
+     VALIDATE_CONFIG(config, EGL_FALSE);
+ 
++    // BS-A16: A16 surfaceflinger queries these; host (BlueStacks renderer) doesn't
++    // advertise them. Report TRUE so A16 SkiaGLRenderEngine's config checks pass.
++    if (attribute == EGL_RECORDABLE_ANDROID || attribute == EGL_FRAMEBUFFER_TARGET_ANDROID) {
++        *value = EGL_TRUE;
++        return EGL_TRUE;
++    }
++
+     if (s_display.getConfigAttrib(config, attribute, value))
+     {
+         if (attribute == EGL_RENDERABLE_TYPE)
+@@ -2020,17 +2065,17 @@ EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_c
+         android::String16 pkgName(pkg);
+         android::BstFilterAppsManager bfam;
+         android::String8 glShaderWorkaroundStr = (android::String8)bfam.getGLShaderWorkaround(pkgName);
+-        GLsizei glShaderWorkaroundStrLen = strlen((GLchar*)glShaderWorkaroundStr.string());
++        GLsizei glShaderWorkaroundStrLen = strlen((GLchar*)glShaderWorkaroundStr.c_str());
+         GLsizei pkgLen = strlen(pkg);
+         if (glShaderWorkaroundStrLen > 0) {
+-            rcEnc->rcGLShaderWorkaround(rcEnc, pkg, pkgLen, (GLchar*)glShaderWorkaroundStr.string(), glShaderWorkaroundStrLen);
++            rcEnc->rcGLShaderWorkaround(rcEnc, pkg, pkgLen, (GLchar*)glShaderWorkaroundStr.c_str(), glShaderWorkaroundStrLen);
+         }
+ 
+         android::String8 glHostInfoStr = (android::String8)bfam.getGLHostInfo(pkgName);
+-        GLsizei glHostInfoLen = strlen((GLchar*)glHostInfoStr.string());
++        GLsizei glHostInfoLen = strlen((GLchar*)glHostInfoStr.c_str());
+         if (glHostInfoLen > 0)
+         {
+-            rcEnc->rcGLHostInfo(rcEnc, rcContext, pkg, pkgLen, (GLchar*)glHostInfoStr.string(), glHostInfoLen);
++            rcEnc->rcGLHostInfo(rcEnc, rcContext, pkg, pkgLen, (GLchar*)glHostInfoStr.c_str(), glHostInfoLen);
+         }
+     }
+ 
+diff --git a/system/hwc2/EmuHWC2.cpp b/system/hwc2/EmuHWC2.cpp
+index 84fd7b6a..90e19b9d 100644
+--- a/system/hwc2/EmuHWC2.cpp
++++ b/system/hwc2/EmuHWC2.cpp
+@@ -20,6 +20,8 @@
+ #undef LOG_TAG
+ #define LOG_TAG "EmuHWC2"
+ 
++#include <cassert>
++#include <memory>
+ #include <errno.h>
+ #include <log/log.h>
+ #include <sync/sync.h>
+@@ -44,13 +46,13 @@ static hwc2_function_pointer_t asFP(T function)
+     return reinterpret_cast<hwc2_function_pointer_t>(function);
+ }
+ 
+-static HostConnection *sHostCon = nullptr;
++static std::unique_ptr<HostConnection> sHostCon;
+ 
+ static HostConnection* createOrGetHostConnection() {
+     if (!sHostCon) {
+         sHostCon = HostConnection::createUnique();
+     }
+-    return sHostCon;
++    return sHostCon.get();
+ }
+ 
+ #define DEFINE_AND_VALIDATE_HOST_CONNECTION \
+@@ -404,7 +406,6 @@ EmuHWC2::Display::Display(EmuHWC2& device, DisplayType type)
+     mPowerMode(PowerMode::Off),
+     mVsyncEnabled(Vsync::Invalid),
+     mVsyncPeriod(1000*1000*1000/60), // vsync is 60 hz
+-    mVsyncThread(*this),
+     mClientTarget(),
+     mChanges(),
+     mLayers(),
+@@ -416,7 +417,9 @@ EmuHWC2::Display::Display(EmuHWC2& device, DisplayType type)
+     mSetColorTransform(false),
+     mStateMutex()
+     {
+-        mVsyncThread.run("", HAL_PRIORITY_URGENT_DISPLAY);
++        // BS-A16: Thread::run requires existing strong ref (sp::fromExisting)
++        mVsyncThread = sp<VsyncThread>::make(*this);
++        mVsyncThread->run("EmuHWC2-Vsync", HAL_PRIORITY_URGENT_DISPLAY);
+     }
+ 
+ Error EmuHWC2::Display::acceptChanges() {
+diff --git a/system/hwc2/EmuHWC2.h b/system/hwc2/EmuHWC2.h
+index 14e7cec5..9beea519 100644
+--- a/system/hwc2/EmuHWC2.h
++++ b/system/hwc2/EmuHWC2.h
+@@ -320,7 +320,7 @@ private:
+         HWC2::PowerMode mPowerMode;
+         HWC2::Vsync mVsyncEnabled;
+         uint32_t mVsyncPeriod;
+-        VsyncThread mVsyncThread;
++        sp<VsyncThread> mVsyncThread;  // BS-A16: sp-owned before Thread::run
+         FencedBuffer mClientTarget;
+         // Will only be non-null after the Display has been validated and
+         // before it has been presented
+diff --git a/system/mesa/Android.mk b/system/mesa/Android.mk
+index 04c5afda..cece2a43 100644
+--- a/system/mesa/Android.mk
++++ b/system/mesa/Android.mk
+@@ -75,8 +75,8 @@ LOCAL_SRC_FILES := \
+ 
+ LOCAL_C_INCLUDES += \
+ 	$(LOCAL_PATH)/src \
+-	$(LOCAL_PATH)/include \
+-
++	$(LOCAL_PATH)/include
++LOCAL_C_INCLUDES += system/logging/liblog/include system/core/libcutils/include system/core/libutils/include system/core/include frameworks/native/include frameworks/native/libs/binder/include  # BS-A16: A16 旧码需显式 Android include 路径
+ 
+ LOCAL_CFLAGS += \
+ 	-Wno-error \
+diff --git a/system/vulkan_enc/Android.mk b/system/vulkan_enc/Android.mk
+index e4bcb10a..017c0887 100644
+--- a/system/vulkan_enc/Android.mk
++++ b/system/vulkan_enc/Android.mk
+@@ -116,7 +116,7 @@ $(call emugl-export,SHARED_LIBRARIES,libgui)
+ else
+ $(call emugl-export,SHARED_LIBRARIES,libsync libnativewindow)
+ $(call emugl-export,SHARED_LIBRARIES,libsync )
+-LOCAL_STATIC_LIBRARIES += libarect libRTVboxGuestClient
++LOCAL_STATIC_LIBRARIES += libarect libRTVboxGuestClient_vendor
+ endif
+ 
+ $(call emugl-end-module)
+diff --git a/system/vulkan_enc/ResourceTracker.cpp b/system/vulkan_enc/ResourceTracker.cpp
+index 18d39f4d..66484437 100644
+--- a/system/vulkan_enc/ResourceTracker.cpp
++++ b/system/vulkan_enc/ResourceTracker.cpp
+@@ -1836,6 +1836,7 @@ VkResult ResourceTracker::on_vkEnumerateDeviceExtensionProperties(
+     android::BstFilterAppsManager bfam;
+     android::String16 pkgName(gPkgName);
+     std::string ignorExtensions = "";
++    // BS-A16: OK with updated vendor stub
+     ignorExtensions = (android::String8)bfam.getVKDeviceExtIgnore(pkgName);
+     if (ignorExtensions.length()) {
+         std::string delim = " ";

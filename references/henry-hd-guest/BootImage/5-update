@@ -1,0 +1,81 @@
+log_echo()
+{
+    echo "$@"
+    echo "$@" > /dev/kmsg
+}
+
+do_upgrade()
+{
+    if [ -b "$UPGRADE" ]
+    then
+        log_echo -e "Mounting upgrade FS using $UPGRADE"
+        mkdir mnt/upgrade
+        if [ $? -ne 0 ]; then
+            log_echo "ERROR: Failed to make directory mnt/upgrade"
+            return
+        fi
+        mount_fs ext4 $UPGRADE mnt/upgrade rw
+        if [ $? -ne 0 ]; then
+            log_echo "ERROR: Failed to mount upgrade: $UPGRADE"
+            rmdir mnt/upgrade
+            return
+        fi
+        if [ -f "mnt/upgrade/done.txt" ]
+	    then
+	        #Already updated. Do the cleanup and return
+            umount mnt/upgrade
+            rmdir mnt/upgrade
+            log_echo "Already updated. Nothing to do."
+            return
+        else
+            mkdir data/tmp
+            mkdir -p data/cache/recovery
+            log_echo "Upgrading... "
+        fi
+
+        mkdir mnt/prebundled || (log_echo "Failed to make directory mnt/prebundled"; umount mnt/upgrade; rmdir mnt/upgrade; return)
+        mount_fs ext4 $PREBUNDLEDAPPSFS mnt/prebundled ro
+        if [ $? -ne 0 ]; then
+            log_echo "ERROR: Failed to mount prebundled $PREBUNDLEDAPPSFS"
+            umount mnt/upgrade
+            rmdir mnt/upgrade
+            rmdir mnt/prebundled
+            return
+        fi
+#        ln -s /android/data /data 2>/dev/kmsg
+        ln -s /mnt/prebundled /prebundled
+
+        if [ -f "mnt/upgrade/update.zip" ]
+	    then
+            log_echo "ERROR: partial upgrade is not supported."
+            #mount -o remount,rw /boot/android
+            #mount -o remount,rw /system
+            #/boot/bin/recovery --update_package=/mnt/upgrade/update.zip
+            #cp /mnt/upgrade/ramdisk.img /boot/android/android/ramdisk.img || log_echo "Failed to copy ramdisk.img"
+            #zcat /boot/android/android/ramdisk.img | cpio -iud > /dev/null
+            #echo "updated" > updated.txt
+            #log_echo "ls /boot/android/android: `ls /boot/android/android`"
+            #echo "updated" > mnt/upgrade/done.txt
+            #sync
+            #bstsyncfs $ROOT
+            #bstsyncfs $DATA
+            #bstsyncfs $PREBUNDLEDAPPSFS
+            #mount -o remount,ro /system
+            #mount -o remount,ro /boot/android
+        else
+            log_echo "update.zip is not present."
+        fi
+
+	    #cleanup time
+        umount mnt/prebundled
+        umount mnt/upgrade
+
+	    #remove symbolic link from /
+        rm /data
+        rm /prebundled
+        rmdir mnt/upgrade
+        rmdir mnt/prebundled
+    else
+        log_echo "$UPGRADE is not present"
+    fi
+}

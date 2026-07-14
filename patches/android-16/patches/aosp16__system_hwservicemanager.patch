@@ -1,0 +1,35 @@
+diff --git a/Android.bp b/Android.bp
+index c7150c6..ca51ad8 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -109,17 +109,9 @@ cc_binary {
+         "libtokenmanager",
+     ],
+     bootstrap: true,
+-    system_ext_specific: true,
+-}
+-
+-// Create symlink /system/bin/hwservicemanager -> /system/system_ext/bin/hwservicemanager
+-// Old vendor libraries (like libhidlbase) may require /system/bin/hwservicemanager to be present
+-install_symlink {
+-    name: "hwservicemanager_compat_symlink_module",
+-    symlink_target: "/system/system_ext/bin/hwservicemanager",
+-    // installed_location is relative to /system because that's the default partition for soong
+-    // modules, unless we add something like `system_ext_specific: true` like in hwservicemanager.
+-    installed_location: "bin/hwservicemanager",
++    // BlueStacks: install on /system like A13. Root.vhd has no system_ext partition;
++    // upstream A16 uses system_ext_specific + compat symlink (broken on our image).
++    // system_ext_specific: true,
+ }
+ 
+ cc_test {
+diff --git a/hwservicemanager.rc b/hwservicemanager.rc
+index ce4db63..67017b8 100644
+--- a/hwservicemanager.rc
++++ b/hwservicemanager.rc
+@@ -1,4 +1,4 @@
+-service hwservicemanager /system/system_ext/bin/hwservicemanager
++service hwservicemanager /system/bin/hwservicemanager
+     user system
+     disabled
+     group system readproc

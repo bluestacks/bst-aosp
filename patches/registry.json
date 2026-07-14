@@ -1,5 +1,7 @@
 {
   "_doc": "定制 registry: -a13(win)/-mac fork vs 上游 android-13 的 triage 结果。bst>0=真定制(高置信); bst=0=待复查(标签漂移/作者过滤)。Phase 0 自动生成。",
+  "_a16_boot_reference": "A16 boot bringup 全流程问题参考(症状/根因/解法/验证): progress/android-16-boot-guide.md",
+  "_a16_restore": "A16 代码树存档 + 干净树一键恢复清单: patches/android-16/RESTORE.md (权威 diff + untracked-src + bootimage + kernel config)",
   "base_from": "android-13",
   "base_to": "android-16.0.0_r4",
   "win_tree": "~/android-13 (bluestacks/*-a13.git)",
@@ -50,10 +52,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=android-13.0.0_r49 since=107 bst=63; 设备/板配置(关系到 lunch 目标)"
+      "notes": "base=android-13.0.0_r49 since=107 bst=63; 设备/板配置(关系到 lunch 目标); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "win-device-google-cuttlefish",
@@ -66,10 +68,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=android-13.0.0_r49 since=1 bst=1; 设备/板配置(关系到 lunch 目标)"
+      "notes": "base=android-13.0.0_r49 since=1 bst=1; 设备/板配置(关系到 lunch 目标); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "win-external-ktfmt",
@@ -1586,10 +1588,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=android-13.0.0_r49 since=1 bst=1; 设备/板配置(关系到 lunch 目标)"
+      "notes": "base=android-13.0.0_r49 since=1 bst=1; 设备/板配置(关系到 lunch 目标); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "win-external-python-pyfakefs",
@@ -3394,10 +3396,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=55"
+      "notes": "base=NONE since=-1 bst=55; R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "win-hardware-interfaces",
@@ -3522,10 +3524,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=3; BlueStacks 专属 HAL(无上游)"
+      "notes": "base=NONE since=-1 bst=3; BlueStacks 专属 HAL(无上游); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "win-hardware-bst-audio",
@@ -3538,10 +3540,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=2; BlueStacks 专属 HAL(无上游)"
+      "notes": "base=NONE since=-1 bst=2; BlueStacks 专属 HAL(无上游); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "win-external-alsa-lib",
@@ -3602,10 +3604,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游)"
+      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "win-hardware-bst-power",
@@ -3618,10 +3620,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游)"
+      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "win-hardware-bst-lights",
@@ -3634,10 +3636,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游)"
+      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "win-external-ffmpeg",
@@ -3794,10 +3796,10 @@
       "has_bst": false,
       "confidence": "low",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=android-13.0.0_r83 since=2 bst=0; 低置信(bst=0: 标签漂移或作者过滤未命中, 需复查); 设备/板配置(关系到 lunch 目标)"
+      "notes": "base=android-13.0.0_r83 since=2 bst=0; 低置信(bst=0: 标签漂移或作者过滤未命中, 需复查); 设备/板配置(关系到 lunch 目标); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "mac-device-google-cuttlefish",
@@ -3810,10 +3812,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=android-13.0.0_r83 since=10 bst=1; 设备/板配置(关系到 lunch 目标)"
+      "notes": "base=android-13.0.0_r83 since=10 bst=1; 设备/板配置(关系到 lunch 目标); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "mac-external-android-nn-driver",
@@ -7138,10 +7140,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游)"
+      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "mac-hardware-bst-memtrack",
@@ -7154,10 +7156,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=2; BlueStacks 专属 HAL(无上游)"
+      "notes": "base=NONE since=-1 bst=2; BlueStacks 专属 HAL(无上游); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "mac-hardware-bst-power",
@@ -7170,10 +7172,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游)"
+      "notes": "base=NONE since=-1 bst=1; BlueStacks 专属 HAL(无上游); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "mac-device-bst-qvirt",
@@ -7186,10 +7188,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=35; 设备/板配置(关系到 lunch 目标)"
+      "notes": "base=NONE since=-1 bst=35; 设备/板配置(关系到 lunch 目标); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "mac-external-alsa-lib",
@@ -7234,10 +7236,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=2; BlueStacks 专属 HAL(无上游)"
+      "notes": "base=NONE since=-1 bst=2; BlueStacks 专属 HAL(无上游); R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "mac-prebuilts-ktools-gcc",
@@ -7298,10 +7300,10 @@
       "has_bst": true,
       "confidence": "high",
       "phase_hint": "P1",
-      "port_status": "pending",
+      "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "base=NONE since=-1 bst=33"
+      "notes": "base=NONE since=-1 bst=33; R178: strict-reference route in progress, evidence in progress/android-16-reference-alignment.md"
     },
     {
       "id": "mac-external-busybox",

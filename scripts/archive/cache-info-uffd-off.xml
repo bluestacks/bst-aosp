@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cacheInfo>
+    <systemProperties>
+        <item k="persist.device_config.runtime_native_boot.force_disable_uffd_gc" v="true"></item>
+        <item k="persist.device_config.runtime_native_boot.enable_uffd_gc_2" v="false"></item>
+        <item k="ro.dalvik.vm.enable_uffd_gc" v="false"></item>
+    </systemProperties>
+    <artModuleInfo name="com.android.art" versionCode="990091000" versionName="36" lastUpdateMillis="0"></artModuleInfo>
+    <moduleInfoList>
+        <moduleInfo name="com.android.art" versionCode="990091000" versionName="36" lastUpdateMillis="0"></moduleInfo>
+    </moduleInfoList>
+    <bootClasspath>
+        <component file="/apex/com.android.art/javalib/core-oj.jar" size="6035840" checksums="0"></component>
+    </bootClasspath>
+    <dex2oatBootClasspath>
+        <component file="/apex/com.android.art/javalib/core-oj.jar" size="6035840" checksums="0"></component>
+    </dex2oatBootClasspath>
+    <systemServerComponents>
+        <component file="/system/framework/services.jar" size="0" checksums="0" isInClasspath="true"></component>
+    </systemServerComponents>
+</cacheInfo>

@@ -1,5 +1,8 @@
 # android-16-boot-patches — henry 的 android-16 (Baklava) boot 修改差异
 
+> **叙事版 bringup 文档（优先读）**：`/home/henry/workspace/releases/bst-v5.22.210-9527/Baklava64/bst-v5.22.210_Baklava64-9527/A16-init-bringup-notes.md`  
+> （改动分类 A/B、踩坑过程、§9 编译/部署复刻指南；`progress/android-16-boot-debug.md` 调试方法论亦指向此文件。）
+>
 > 来源：`henry@clouddev:/home/henry/workspace/app-player/android-16`（Baklava = android-16，bst-v5.22.210 分支）
 > 抓取方式：`sudo -u henry repo diff`（**必须用 henry 身份**，markxu 因文件权限看不到修改）
 > 抓取日期：2026-06-25
@@ -49,3 +52,18 @@ cd ~/aosp16
 - **henry 身份必需**：`repo diff` 用 markxu 跑输出 0（权限），用 `sudo -u henry` 才看到 1125 行。后续复查同样用 henry 身份。
 - kernel-a16 真正的 BlueStacks 定制在分支 commit 里（`bst-v5.22.210`，百万级 commit 历史），working tree 仅 5 个 prebuilts dirty。kernel 通过完整复制（含 .git）而非 patch 传递。
 - buildscripts.patch 含 win Tiramisu 也用的通用改动（如 chown UID 修复），非 android-16 专属。
+
+## 补充参考资料（2026-07-08）
+
+henry 的 hd/guest boot 脚本和 buildscripts 已镜像到本仓库：
+
+| 目录 | 来源 | 说明 |
+|------|------|------|
+| `references/henry-hd-guest/` | `/home/henry/workspace/app-player/hd/guest/` | henry 的 init.sh、stage2.sh、Makefile、BootImage/ |
+| `references/henry-buildscripts/` | `/home/henry/workspace/app-player/buildscripts/` | henry 的 build.sh、create_vdi.sh、build_Baklava64.sh 等 |
+
+**关键对比（henry vs bst-aosp）**：
+- henry stage2.sh：126 行，`exec /init`（标准 init 流程，无 runtime staging）
+- bst-aosp stage2.sh：2500+ 行（runtime staging：art-libs、odsign bypass、zygote wrapper 等）
+- henry init.sh：307 行，含 A16 APEX losetup 挂载（`com.android.runtime.apex`、`com.android.i18n.apex`）
+- henry 构建方式：完整源码编译（`lunch bst_x86_64` + BS device overlay），所有二进制兼容

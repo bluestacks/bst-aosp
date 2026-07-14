@@ -1,0 +1,93 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 80a6b299eb..89e21d8949 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -64,10 +64,13 @@
+                 <action android:name="android.intent.action.MAIN" />
+                 <action android:name="android.intent.action.SHOW_WORK_APPS" />
+                 <action android:name="android.intent.action.ALL_APPS" />
+-                <category android:name="android.intent.category.HOME" />
+                 <category android:name="android.intent.category.DEFAULT" />
+                 <category android:name="android.intent.category.MONKEY"/>
++                <!--
++                R257 / Henry BS-A16: remove HOME so com.uncube.launcher3 is sole home.
++                <category android:name="android.intent.category.HOME" />
+                 <category android:name="android.intent.category.LAUNCHER_APP" />
++                -->
+             </intent-filter>
+             <meta-data
+                 android:name="com.android.launcher3.grid.control"
+diff --git a/quickstep/AndroidManifest-launcher.xml b/quickstep/AndroidManifest-launcher.xml
+index d6aa886d8c..54dd7b7e72 100644
+--- a/quickstep/AndroidManifest-launcher.xml
++++ b/quickstep/AndroidManifest-launcher.xml
+@@ -58,10 +58,13 @@
+                 <action android:name="android.intent.action.MAIN" />
+                 <action android:name="android.intent.action.SHOW_WORK_APPS" />
+                 <action android:name="android.intent.action.ALL_APPS" />
+-                <category android:name="android.intent.category.HOME" />
+                 <category android:name="android.intent.category.DEFAULT" />
+                 <category android:name="android.intent.category.MONKEY"/>
++                <!--
++                R257 / Henry BS-A16: remove HOME so com.uncube.launcher3 is sole home.
++                <category android:name="android.intent.category.HOME" />
+                 <category android:name="android.intent.category.LAUNCHER_APP" />
++                -->
+             </intent-filter>
+             <meta-data
+                 android:name="com.android.launcher3.grid.control"
+diff --git a/quickstep/src/com/android/quickstep/OverviewComponentObserver.java b/quickstep/src/com/android/quickstep/OverviewComponentObserver.java
+index 68a056debf..b4a903bf0a 100644
+--- a/quickstep/src/com/android/quickstep/OverviewComponentObserver.java
++++ b/quickstep/src/com/android/quickstep/OverviewComponentObserver.java
+@@ -115,12 +115,15 @@ public final class OverviewComponentObserver {
+         mCurrentPrimaryHomeIntent = createHomeIntent();
+         mMyPrimaryHomeIntent = new Intent(mCurrentPrimaryHomeIntent).setPackage(
+                 context.getPackageName());
++        // R257 / Henry BS-A16 OverviewComponentObserver
++        // HOME category removed → resolveActivity may be null; hardcode QuickstepLauncher.
+         ResolveInfo info = context.getPackageManager().resolveActivity(mMyPrimaryHomeIntent, 0);
+-        ComponentName myHomeComponent =
+-                new ComponentName(context.getPackageName(), info.activityInfo.name);
++        ComponentName myHomeComponent = new ComponentName(
++                "com.android.launcher3", "com.android.launcher3.uioverrides.QuickstepLauncher");
+         mMyPrimaryHomeIntent.setComponent(myHomeComponent);
+ 
+-        mConfigChangesMap.append(myHomeComponent.hashCode(), info.activityInfo.configChanges);
++        mConfigChangesMap.append(myHomeComponent.hashCode(),
++                info != null ? info.activityInfo.configChanges : 0);
+         mSetupWizardPkg = context.getString(R.string.setup_wizard_pkg);
+ 
+         ComponentName fallbackComponent = new ComponentName(context, RecentsActivity.class);
+@@ -204,6 +207,13 @@ public final class OverviewComponentObserver {
+ 
+         mIsDefaultHome = Objects.equals(mMyPrimaryHomeIntent.getComponent(), defaultHome);
+ 
++        // R257 / Henry: if defaultHome null at boot, point at BlueStacks/uncube home.
++        if (defaultHome == null) {
++            mIsDefaultHome = false;
++            defaultHome = new ComponentName("com.uncube.launcher3",
++                    "com.bluestacks.launcher.activity.HomeActivity");
++        }
++
+         // Set assistant visibility to 0 from launcher's perspective, ensures any elements that
+         // launcher made invisible become visible again before the new activity control helper
+         // becomes active.
+diff --git a/src/com/android/launcher3/widget/WidgetManagerHelper.java b/src/com/android/launcher3/widget/WidgetManagerHelper.java
+index 23d05852f2..1a69f88b72 100644
+--- a/src/com/android/launcher3/widget/WidgetManagerHelper.java
++++ b/src/com/android/launcher3/widget/WidgetManagerHelper.java
+@@ -172,7 +172,13 @@ public class WidgetManagerHelper {
+     }
+ 
+     private static Stream<AppWidgetProviderInfo> allWidgetsSteam(Context context) {
++        // R256 / Henry BS-A16 AppWidget null-guard
++        // BS-A16: AppWidget service may not be available on BlueStacks (no
++        // appwidget HAL). Guard against null to prevent crash-loop.
+         AppWidgetManager awm = context.getSystemService(AppWidgetManager.class);
++        if (awm == null) {
++            return Stream.empty();
++        }
+         return Stream.concat(
+                 UserCache.INSTANCE.get(context)
+                         .getUserProfiles()

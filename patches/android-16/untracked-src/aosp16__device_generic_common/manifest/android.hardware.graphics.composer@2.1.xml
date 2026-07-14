@@ -1,0 +1,10 @@
+<!--
+    BlueStacks: goldfish-opengl hwc2 + composer@2.1-service
+-->
+<manifest version="9.0" type="device">
+    <hal format="hidl">
+        <name>android.hardware.graphics.composer</name>
+        <transport>hwbinder</transport>
+        <fqname>@2.1::IComposer/default</fqname>
+    </hal>
+</manifest>

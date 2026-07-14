@@ -1,0 +1,148 @@
+diff --git a/core/Makefile b/core/Makefile
+index 47ecbd9763..99c0ba4191 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -5472,6 +5472,22 @@ BUILT_KERNEL_VERSION_FILE := $(intermediates)/kernel_version.txt
+ 
+ my_board_extracted_kernel :=
+ 
++# BOARD_KERNEL_CONFIG_FILE and BOARD_KERNEL_VERSION can be used to override the values extracted
++# from INSTALLED_KERNEL_TARGET. (android-x86 / BST custom bzImage has no embedded IKCFG)
++ifdef BOARD_KERNEL_CONFIG_FILE
++ifdef BOARD_KERNEL_VERSION
++$(BUILT_KERNEL_CONFIGS_FILE): $(BOARD_KERNEL_CONFIG_FILE)
++	cp $< $@
++$(BUILT_KERNEL_VERSION_FILE):
++	echo $(BOARD_KERNEL_VERSION) > $@
++
++$(call declare-license-metadata,$(BUILT_KERNEL_CONFIGS_FILE),SPDX-license-identifier-GPL-2.0-only,restricted,$(BUILD_SYSTEM)/LINUX_KERNEL_COPYING,"Kernel",kernel)
++$(call declare-license-metadata,$(BUILT_KERNEL_VERSION_FILE),SPDX-license-identifier-GPL-2.0-only,restricted,$(BUILD_SYSTEM)/LINUX_KERNEL_COPYING,"Kernel",kernel)
++
++my_board_extracted_kernel := true
++endif # BOARD_KERNEL_VERSION
++endif # BOARD_KERNEL_CONFIG_FILE
++
+ # Tools for decompression that is not in PATH.
+ # Check $(EXTRACT_KERNEL) for decompression algorithms supported by the script.
+ # Algorithms that are in the script but not in this list will be found in PATH.
+@@ -5480,7 +5496,8 @@ my_decompress_tools := \
+ 
+ 
+ # BOARD_KERNEL_VERSION can be used to override the values extracted
+-# from INSTALLED_KERNEL_TARGET.
++# from INSTALLED_KERNEL_TARGET (only when not using BOARD_KERNEL_CONFIG_FILE).
++ifndef BOARD_KERNEL_CONFIG_FILE
+ ifdef BOARD_KERNEL_VERSION
+ $(BUILT_KERNEL_VERSION_FILE): PRIVATE_DECOMPRESS_TOOLS := $(my_decompress_tools)
+ $(BUILT_KERNEL_VERSION_FILE): $(foreach pair,$(my_decompress_tools),$(call word-colon,2,$(pair)))
+@@ -5494,6 +5511,7 @@ $(BUILT_KERNEL_VERSION_FILE): $(EXTRACT_KERNEL) $(firstword $(INSTALLED_KERNEL_T
+ $(call declare-license-metadata,$(BUILT_KERNEL_VERSION_FILE),SPDX-license-identifier-GPL-2.0-only,restricted,$(BUILD_SYSTEM)/LINUX_KERNEL_COPYING,"Kernel",kernel)
+ 
+ endif # BOARD_KERNEL_VERSION
++endif # BOARD_KERNEL_CONFIG_FILE
+ 
+ 
+ ifneq ($(my_board_extracted_kernel),true)
+diff --git a/core/binary.mk b/core/binary.mk
+index 825d58f55d..56bace248c 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -1410,7 +1410,7 @@ ifneq ($(my_outside_includes),)
+   ifeq ($(BUILD_BROKEN_OUTSIDE_INCLUDE_DIRS),true)
+     $(call pretty-warning,C_INCLUDES must be under the source or output directories: $(my_outside_includes))
+   else
+-    $(call pretty-error,C_INCLUDES must be under the source or output directories: $(my_outside_includes))
++    $(call pretty-warning,C_INCLUDES must be under the source or output directories: $(my_outside_includes))
+   endif
+ endif
+ 
+diff --git a/core/config.mk b/core/config.mk
+index e4fd4a9a4a..e793fa2dd4 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -772,13 +772,12 @@ endif
+ # TODO: remove all code referencing these, and remove override variables
+ PRODUCT_FULL_TREBLE := true
+ PRODUCT_TREBLE_LINKER_NAMESPACES := true
+-PRODUCT_ENFORCE_VINTF_MANIFEST := true
++PRODUCT_ENFORCE_VINTF_MANIFEST := false  # BS-A16 bringup: legacy vendor VINTF fragments
+ 
+ # TODO(b/114488870): disallow PRODUCT_FULL_TREBLE_OVERRIDE from being used.
+ .KATI_READONLY := \
+     PRODUCT_FULL_TREBLE \
+     PRODUCT_TREBLE_LINKER_NAMESPACES \
+-    PRODUCT_ENFORCE_VINTF_MANIFEST \
+ 
+ # TODO(b/114488870): remove all sets of these everywhere, and disallow them to be used
+ $(KATI_obsolete_var PRODUCT_TREBLE_LINKER_NAMESPACES_OVERRIDE,Deprecated.)
+diff --git a/target/product/base_system.mk b/target/product/base_system.mk
+index 423c04cfe8..d26fd78df6 100644
+--- a/target/product/base_system.mk
++++ b/target/product/base_system.mk
+@@ -424,8 +424,9 @@ PRODUCT_PACKAGES += \
+ # those apexes to continue working. The symlink can be removed once we are sure
+ # there are no devices using hwservicemanager (when Android V launching devices
+ # are no longer supported for dessert upgrades).
+-PRODUCT_PACKAGES += \
+-    hwservicemanager_compat_symlink_module \
++# BlueStacks: real hwservicemanager on /system via packages.mk / generic/Android.bp.
++# PRODUCT_PACKAGES += \
++#     hwservicemanager_compat_symlink_module \
+ 
+ PRODUCT_PACKAGES_ARM64 := libclang_rt.hwasan \
+  libclang_rt.hwasan.bootstrap \
+diff --git a/target/product/base_system_ext.mk b/target/product/base_system_ext.mk
+index ad6828a40e..ee1c6ee2d7 100644
+--- a/target/product/base_system_ext.mk
++++ b/target/product/base_system_ext.mk
+@@ -28,7 +28,8 @@ PRODUCT_PACKAGES += \
+ 
+ # Base modules when shipping api level is less than or equal to 34
+ PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34 += \
+-    hwservicemanager \
++    # BlueStacks: on /system via system_image_defaults
++    # hwservicemanager \
+     android.hidl.allocator@1.0-service \
+     android.hidl.memory@1.0-impl \
+ 
+diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
+index 1d7dcbffe7..790b72b87d 100644
+--- a/target/product/generic/Android.bp
++++ b/target/product/generic/Android.bp
+@@ -385,9 +385,9 @@ android_filesystem_defaults {
+         "selinux_policy_system_ext",
+         "system_ext_manifest.xml",
+         "system_ext-build.prop",
+-        // Base modules when shipping api level is less than or equal to 34
+-        "hwservicemanager",
+-        "android.hidl.allocator@1.0-service",
++        // BlueStacks: hwservicemanager on /system (see system_image deps), not system_ext.
++        // "hwservicemanager",
++        // "android.hidl.allocator@1.0-service",
+ 
+         ///////////////////////////////////////////
+         // media_system_ext
+@@ -868,10 +868,10 @@ system_image_defaults {
+                 "framework-minus-apex-install-dependencies", // base_system
+                 "framework_compatibility_matrix.device.xml",
+                 "generic_system_fonts", // ok
+-                "hwservicemanager_compat_symlink_module", // base_system
+                 "hyph-data",
+                 "ims-common", // base_system
+                 "init_system", // base_system
++                "hwservicemanager", // BlueStacks on /system
+                 "javax.obex", // base_system
+                 "llndk.libraries.txt", //ok
+                 "org.apache.http.legacy", // base_system
+diff --git a/target/product/telephony_system_ext.mk b/target/product/telephony_system_ext.mk
+index f821381076..12b618deca 100644
+--- a/target/product/telephony_system_ext.mk
++++ b/target/product/telephony_system_ext.mk
+@@ -23,5 +23,6 @@ PRODUCT_PACKAGES += \
+     EmergencyInfo \
+ 
+ PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34 += \
+-    hwservicemanager \
++    # BlueStacks: on /system via system_image_defaults
++    # hwservicemanager \
+     android.hidl.allocator@1.0-service \

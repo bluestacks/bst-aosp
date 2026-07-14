@@ -1,0 +1,8 @@
+ buildscripts/Makefile                   | 118 +++++++++++++++++++++++++++-----
+ buildscripts/build.sh                   |  25 +++++--
+ buildscripts/build_nowgg_common_apks.sh |  50 ++++++++++----
+ buildscripts/create_vdi.sh              |  20 ++----
+ buildscripts/create_zips.sh             |   4 +-
+ buildscripts/odex_script.sh             |   0
+ buildscripts/sync.sh                    |   0
+ 7 files changed, 164 insertions(+), 53 deletions(-)

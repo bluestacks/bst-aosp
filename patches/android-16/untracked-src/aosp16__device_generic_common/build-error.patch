@@ -1,0 +1,39 @@
+diff --git a/app/Android.mk b/app/Android.mk
+old mode 100644
+new mode 100755
+index 5e8c412..cee9e03
+--- a/app/Android.mk
++++ b/app/Android.mk
+@@ -27,8 +27,8 @@ LOCAL_DEX_PREOPT := true
+ LOCAL_ENFORCE_USES_LIBRARIES := false
+ LOCAL_MODULE_TARGET_ARCH := $$(call get-prebuilt-src-arch,$$(notdir $$(patsubst %/,%,$$(dir $$(LOCAL_LIBS)))))
+ LOCAL_PREBUILT_JNI_LIBS := $$(addprefix @,$$(filter lib/$$(LOCAL_MODULE_TARGET_ARCH)/%,$$(LOCAL_LIBS)))
+-#$$(info $$(LOCAL_MODULE) LOCAL_MODULE_TARGET_ARCH=$$(LOCAL_MODULE_TARGET_ARCH))
+-#$$(info $$(LOCAL_MODULE) LOCAL_PREBUILT_JNI_LIBS=$$(LOCAL_PREBUILT_JNI_LIBS))
++$$(info $$(LOCAL_MODULE) LOCAL_MODULE_TARGET_ARCH=$$(LOCAL_MODULE_TARGET_ARCH))
++$$(info $$(LOCAL_MODULE) LOCAL_PREBUILT_JNI_LIBS=$$(LOCAL_PREBUILT_JNI_LIBS))
+ include $$(BUILD_PREBUILT)
+ 
+ ALL_DEFAULT_INSTALLED_MODULES += $$(LOCAL_INSTALLED_MODULE)
+diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
+index 9725227..5656a1c 100755
+--- a/build/tasks/kernel.mk
++++ b/build/tasks/kernel.mk
+@@ -26,6 +26,9 @@ $(info "build kernel with clang")
+ KERNEL_CLANG_CLAGS += CC=$(abspath $(LLVM_PREBUILTS_PATH)/clang) HOSTCXX=$(abspath $(LLVM_PREBUILTS_PATH)/clang++) CLANG_TRIPLE=x86_64-linux-gnu-
+ endif
+ 
++
++KTOOLS := prebuilts/ktools
++KERN_BUILD_TOOLS_BIN := "$(KTOOLS)/kernel-build-tools/linux-x86/bin"
+ KBUILD_OUTPUT := $(TARGET_OUT_INTERMEDIATES)/kernel
+ KBUILD_JOBS := $(shell echo $$((1-(`cat /sys/devices/system/cpu/present`))))
+ 
+@@ -43,6 +46,7 @@ mk_kernel := + prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/make -j$(KBUILD_JO
+ 	YACC=prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/bison \
+ 	LEX=prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/flex \
+ 	M4=prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/m4 DEPMOD=/sbin/depmod \
++	PATH=$(KERN_BUILD_TOOLS_BIN):$$PATH  \
+ 	$(KERNEL_CLANG_CLAGS)
+ 
+ bk_kernel := + prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/make -j$(KBUILD_JOBS)  CC=$(abspath $(LLVM_PREBUILTS_PATH)/clang) \

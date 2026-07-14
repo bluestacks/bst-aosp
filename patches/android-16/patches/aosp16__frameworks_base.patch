@@ -1,0 +1,690 @@
+diff --git a/core/java/Android.bp b/core/java/Android.bp
+index e9a605ad5caf..8b22cea6e490 100644
+--- a/core/java/Android.bp
++++ b/core/java/Android.bp
+@@ -389,6 +389,9 @@ filegroup {
+         "com/android/internal/util/IndentingPrintWriter.java",
+         "com/android/internal/util/MessageUtils.java",
+         "com/android/internal/util/WakeupMessage.java",
++        // TODO: delete as soon as NetworkStatsFactory stops using
++        "com/android/internal/util/ProcFileReader.java",
++        "com/bluestacks/os/IBstFilterAppsService.aidl",
+     ],
+ }
+ 
+diff --git a/core/java/android/app/ActivityManagerInternal.java b/core/java/android/app/ActivityManagerInternal.java
+index 5789e35709e9..b575f00c69ba 100644
+--- a/core/java/android/app/ActivityManagerInternal.java
++++ b/core/java/android/app/ActivityManagerInternal.java
+@@ -1430,4 +1430,7 @@ public abstract class ActivityManagerInternal {
+      * @hide
+      */
+     public abstract void addCreatorToken(Intent intent, String creatorPackage);
++
++    /** @hide BlueStacks: map isolated uid for bstfilter. */
++    public abstract int mapIsolatedUid(int isolatedUid);
+ }
+diff --git a/core/java/android/app/SystemServiceRegistry.java b/core/java/android/app/SystemServiceRegistry.java
+index 60a938d70184..5f0e0debc064 100644
+--- a/core/java/android/app/SystemServiceRegistry.java
++++ b/core/java/android/app/SystemServiceRegistry.java
+@@ -25,6 +25,13 @@ import static android.service.chooser.Flags.interactiveChooser;
+ 
+ import android.accounts.AccountManager;
+ import android.accounts.IAccountManager;
++
++import com.bluestacks.os.BstFilterAppsManager;
++import com.bluestacks.os.BstHostCallManager;
++import com.bluestacks.os.BstUtilsManager;
++import com.bluestacks.os.IBstFilterAppsService;
++import com.bluestacks.os.IBstHostCallService;
++import com.bluestacks.os.IBstUtilsService;
+ import android.adservices.AdServicesFrameworkInitializer;
+ import android.annotation.FlaggedApi;
+ import android.annotation.NonNull;
+@@ -384,6 +391,37 @@ public final class SystemServiceRegistry {
+                 return new AccountManager(ctx, service);
+             }});
+ 
++        registerService(Context.BST_UTILS, BstUtilsManager.class,
++                new CachedServiceFetcher<BstUtilsManager>() {
++            @Override
++            public BstUtilsManager createService(ContextImpl ctx) {
++                IBinder b = ServiceManager.getService(Context.BST_UTILS);
++                IBstUtilsService bstutils = IBstUtilsService.Stub.asInterface(b);
++                return new BstUtilsManager(ctx, bstutils);
++            }});
++
++        registerService(Context.BST_FILTER_APPS, BstFilterAppsManager.class,
++                new CachedServiceFetcher<BstFilterAppsManager>() {
++            @Override
++            public BstFilterAppsManager createService(ContextImpl ctx) {
++                IBinder b = ServiceManager.getService(Context.BST_FILTER_APPS);
++                IBstFilterAppsService bstfilterapps = IBstFilterAppsService.Stub.asInterface(b);
++                return new BstFilterAppsManager(ctx, bstfilterapps);
++            }});
++
++        registerService(Context.BST_HOST_CALL, BstHostCallManager.class,
++                new CachedServiceFetcher<BstHostCallManager>() {
++            @Override
++            public BstHostCallManager createService(ContextImpl ctx) {
++                IBinder b = ServiceManager.getService(Context.BST_HOST_CALL);
++                IBstHostCallService bstHostCallService = IBstHostCallService.Stub.asInterface(b);
++                if (bstHostCallService == null) {
++                    Log.wtf(TAG, "Failed to get BlueStacks HostCall service.");
++                    return null;
++                }
++                return new BstHostCallManager(ctx, bstHostCallService);
++            }});
++
+         registerService(Context.ACTIVITY_SERVICE, ActivityManager.class,
+                 new CachedServiceFetcher<ActivityManager>() {
+             @Override
+diff --git a/core/java/android/content/Context.java b/core/java/android/content/Context.java
+index f41e6a1d4725..9ef0cd8970f3 100644
+--- a/core/java/android/content/Context.java
++++ b/core/java/android/content/Context.java
+@@ -4981,6 +4981,36 @@ public abstract class Context {
+      */
+     public static final String ACCOUNT_SERVICE = "account";
+ 
++    /**
++     * Use with {@link #getSystemService} to retrieve a
++     * {@link com.bluestacks.os.BstUtilsManager}.
++     *
++     * @see #getSystemService
++     * @see com.bluestacks.os.BstUtilsManager
++     * @hide
++     */
++    public static final String BST_UTILS = "bstutils";
++
++    /**
++     * Use with {@link #getSystemService} to retrieve a
++     * {@link com.bluestacks.os.BstFilterAppsManager}.
++     *
++     * @see #getSystemService
++     * @see com.bluestacks.os.BstFilterAppsManager
++     * @hide
++     */
++    public static final String BST_FILTER_APPS = "bstfilterapps";
++
++    /**
++     * Use with {@link #getSystemService} to access the
++     * {@link com.bluestacks.os.BstHostCallManager}.
++     *
++     * @hide
++     * @see #getSystemService
++     * @see com.bluestacks.os.BstHostCallManager
++     */
++    public static final String BST_HOST_CALL = "bsthostcall";
++
+     /**
+      * Use with {@link #getSystemService(String)} to retrieve a
+      * {@link android.app.ActivityManager} for interacting with the global
+diff --git a/core/java/android/permission/ILegacyPermissionManager.aidl b/core/java/android/permission/ILegacyPermissionManager.aidl
+index 78e12de04e89..9c05bdc7589f 100644
+--- a/core/java/android/permission/ILegacyPermissionManager.aidl
++++ b/core/java/android/permission/ILegacyPermissionManager.aidl
+@@ -51,4 +51,6 @@ interface ILegacyPermissionManager {
+     void revokeDefaultPermissionsFromLuiApps(in String[] packageNames, int userId);
+ 
+     void grantDefaultPermissionsToCarrierServiceApp(in String packageName, int userId);
++
++    void assignPermissionsToBstApps(String filepath);
+ }
+diff --git a/core/java/com/android/internal/widget/LockPatternUtils.java b/core/java/com/android/internal/widget/LockPatternUtils.java
+index f9cea6a5b98f..fcc6813212fd 100644
+--- a/core/java/com/android/internal/widget/LockPatternUtils.java
++++ b/core/java/com/android/internal/widget/LockPatternUtils.java
+@@ -699,6 +699,10 @@ public class LockPatternUtils {
+      */
+     @UnsupportedAppUsage
+     public boolean isLockScreenDisabled(int userId) {
++        // R258 / Henry BS-A16: force lockscreen disabled
++        // Without this, SystemUI keyguard steals window focus from the launcher
++        // and blocks HCALL onActivityDisplayed -> HD overlay never clears.
++        /*
+         if (isSecure(userId)) {
+             return false;
+         }
+@@ -710,6 +714,8 @@ public class LockPatternUtils {
+         return getBoolean(DISABLE_LOCKSCREEN_KEY, false, userId)
+                 || disabledByDefault
+                 || isDemoUser;
++        */
++        return true;
+     }
+ 
+     /**
+diff --git a/core/jni/android_os_Debug.cpp b/core/jni/android_os_Debug.cpp
+index 8cf9c6af2653..06df6a2331aa 100644
+--- a/core/jni/android_os_Debug.cpp
++++ b/core/jni/android_os_Debug.cpp
+@@ -796,9 +796,16 @@ static jboolean android_os_Debug_isVmapStack(JNIEnv *env, jobject clazz)
+     if (cfg_state == CONFIG_UNKNOWN) {
+         std::map<std::string, std::string> configs;
+         const status_t result = android::kernelconfigs::LoadKernelConfigs(&configs);
+-        CHECK(result == OK) << "Kernel configs could not be fetched. b/151092221";
+-        std::map<std::string, std::string>::const_iterator it = configs.find("CONFIG_VMAP_STACK");
+-        cfg_state = (it != configs.end() && it->second == "y") ? CONFIG_SET : CONFIG_UNSET;
++        // R249 / Henry 7Y: BS kernel may lack CONFIG_IKCONFIG (/proc/config.gz).
++        if (result != OK) {
++            ALOGW("Kernel configs could not be fetched (no /proc/config.gz). "
++                  "Assuming CONFIG_VMAP_STACK=n.");
++            cfg_state = CONFIG_UNSET;
++        } else {
++            std::map<std::string, std::string>::const_iterator it =
++                    configs.find("CONFIG_VMAP_STACK");
++            cfg_state = (it != configs.end() && it->second == "y") ? CONFIG_SET : CONFIG_UNSET;
++        }
+     }
+     return cfg_state == CONFIG_SET;
+ }
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/AuthController.java b/packages/SystemUI/src/com/android/systemui/biometrics/AuthController.java
+index 201c80537675..31020ddeb9eb 100644
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/AuthController.java
++++ b/packages/SystemUI/src/com/android/systemui/biometrics/AuthController.java
+@@ -886,6 +886,11 @@ public class AuthController implements
+ 
+     @Override
+     public void setBiometricContextListener(IBiometricContextListener listener) {
++        // R253 / Henry: null-safe biometric context listener
++        if (listener == null) {
++            Log.w(TAG, "setBiometricContextListener: ignoring null listener");
++            return;
++        }
+         if (mBiometricContextListenerJob != null) {
+             mBiometricContextListenerJob.cancel(null);
+         }
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index fddcefda8d3d..9737ca3f0335 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -18171,6 +18171,14 @@ public class ActivityManagerService extends IActivityManager.Stub
+                     Binder.getCallingUid(), /*uids*/null);
+         }
+ 
++        @Override
++        public int mapIsolatedUid(int isolatedUid) {
++            final BatteryStatsImpl bstats = mBatteryStatsService.getActiveStatistics();
++            synchronized (bstats) {
++                return bstats.bstMapUid(isolatedUid);
++            }
++        }
++
+         @Override
+         public boolean startForegroundServiceDelegate(
+                 @NonNull ForegroundServiceDelegationOptions options,
+diff --git a/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java b/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
+index b4f79f6f599e..db11f29a88a6 100644
+--- a/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
++++ b/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
+@@ -73,6 +73,7 @@ import com.android.modules.utils.TypedXmlPullParser;
+ import com.android.server.LocalServices;
+ import com.android.server.ServiceThread;
+ import com.android.server.pm.KnownPackages;
++import com.android.server.pm.UserManagerService;
+ import com.android.server.pm.permission.LegacyPermissionManagerInternal.PackagesProvider;
+ import com.android.server.pm.permission.LegacyPermissionManagerInternal.SyncAdapterPackagesProvider;
+ 
+@@ -1144,6 +1145,55 @@ final class DefaultPermissionGrantPolicy {
+                /* whitelistRestricted */ true, NOTIFICATION_PERMISSIONS);
+     }
+ 
++    /**
++     * Assigns permissions to the packages in the file.
++     * Used to update bst apps from cloud and assign them required permissions.
++     * @hide
++     */
++    public void assignPermissionsToBstApps(String filepath) {
++        ArrayMap<String, List<DefaultPermissionGrant>> grantExceptions = new ArrayMap<>();
++        DelayingPackageManagerCache pm = new DelayingPackageManagerCache();
++        File file = new File(filepath);
++        try (InputStream str = new FileInputStream(file)) {
++            TypedXmlPullParser parser = Xml.resolvePullParser(str);
++            parseExceptions(pm, parser, grantExceptions);
++        } catch (XmlPullParserException | IOException e) {
++            Log.w(TAG, "Error reading default permissions file " + file, e);
++        }
++        for (int userId : UserManagerService.getInstance().getUserIds()) {
++            grantDefaultRuntimePermissionsException(pm, userId, grantExceptions);
++        }
++    }
++
++    private void grantDefaultRuntimePermissionsException(PackageManagerWrapper pm, int userId,
++            ArrayMap<String, List<DefaultPermissionGrant>> grantExceptions) {
++        Set<String> permissions = null;
++        final int exceptionCount = grantExceptions.size();
++        for (int i = 0; i < exceptionCount; i++) {
++            String packageName = grantExceptions.keyAt(i);
++            PackageInfo pkg = pm.getSystemPackageInfo(packageName);
++            List<DefaultPermissionGrant> permissionGrants = grantExceptions.valueAt(i);
++            final int permissionGrantCount = permissionGrants.size();
++            for (int j = 0; j < permissionGrantCount; j++) {
++                DefaultPermissionGrant permissionGrant = permissionGrants.get(j);
++                if (!pm.isPermissionDangerous(permissionGrant.name)) {
++                    Log.w(TAG, "Ignoring permission " + permissionGrant.name
++                            + " which isn't dangerous");
++                    continue;
++                }
++                if (permissions == null) {
++                    permissions = new ArraySet<>();
++                } else {
++                    permissions.clear();
++                }
++                permissions.add(permissionGrant.name);
++                grantRuntimePermissions(pm, pkg, permissions, permissionGrant.fixed,
++                        permissionGrant.whitelisted, true /*whitelistRestrictedPermissions*/,
++                        userId);
++            }
++        }
++    }
++
+     private String getDefaultSystemHandlerActivityPackage(PackageManagerWrapper pm,
+             String intentAction, int userId) {
+         return getDefaultSystemHandlerActivityPackage(pm, new Intent(intentAction), userId);
+diff --git a/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java b/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java
+index 6c2354f1b3e6..41a889c7bac3 100644
+--- a/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java
++++ b/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java
+@@ -100,6 +100,13 @@ public interface LegacyPermissionManagerInternal {
+      */
+     void grantDefaultPermissions(@UserIdInt int userId);
+ 
++    /**
++     * Assign permissions to the packages listed in the file.
++     *
++     * @param filepath path to permissions XML for BlueStacks apps
++     */
++    void assignPermissionsToBstApps(@NonNull String filepath);
++
+     /**
+      * Schedule reading the default permission exceptions file.
+      */
+diff --git a/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java b/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java
+index 9afb21352e45..f7d7cb752544 100644
+--- a/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java
++++ b/services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java
+@@ -260,6 +260,12 @@ public class LegacyPermissionManagerService extends ILegacyPermissionManager.Stu
+                 .grantDefaultPermissionsToCarrierServiceApp(packageName, userId));
+     }
+ 
++    @Override
++    public void assignPermissionsToBstApps(@NonNull String filepath) {
++        Binder.withCleanCallingIdentity(() -> mDefaultPermissionGrantPolicy
++                .assignPermissionsToBstApps(filepath));
++    }
++
+     @Override
+     public void grantDefaultPermissionsToActiveLuiApp(String packageName, int userId) {
+         final int callingUid = Binder.getCallingUid();
+@@ -403,6 +409,11 @@ public class LegacyPermissionManagerService extends ILegacyPermissionManager.Stu
+             mDefaultPermissionGrantPolicy.grantDefaultPermissions(userId);
+         }
+ 
++        @Override
++        public void assignPermissionsToBstApps(@NonNull String filepath) {
++            mDefaultPermissionGrantPolicy.assignPermissionsToBstApps(filepath);
++        }
++
+         @Override
+         public void scheduleReadDefaultPermissionExceptions() {
+             mDefaultPermissionGrantPolicy.scheduleReadDefaultPermissionExceptions();
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index fb9074805110..99af6990a480 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -5905,6 +5905,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+         }
+     }
+ 
++    @Override
++    public void setBstProposedRotation(int proposedRotation) {
++        mDefaultDisplayRotation.setBstProposedRotation(proposedRotation);
++    }
++
+     void sendCloseSystemWindows() {
+         PhoneWindow.sendCloseSystemWindows(mContext, null);
+     }
+diff --git a/services/core/java/com/android/server/policy/WindowManagerPolicy.java b/services/core/java/com/android/server/policy/WindowManagerPolicy.java
+index 0cbd22e999d9..45cba6f40883 100644
+--- a/services/core/java/com/android/server/policy/WindowManagerPolicy.java
++++ b/services/core/java/com/android/server/policy/WindowManagerPolicy.java
+@@ -1198,6 +1198,9 @@ public interface WindowManagerPolicy extends WindowManagerPolicyConstants {
+      */
+     void onSystemUiStarted();
+ 
++    /** @hide BlueStacks */
++    void setBstProposedRotation(int proposedRotation);
++
+     /**
+      * Checks whether the policy is ready for dismissing the boot animation and completing the boot.
+      *
+diff --git a/services/core/java/com/android/server/power/stats/BatteryStatsImpl.java b/services/core/java/com/android/server/power/stats/BatteryStatsImpl.java
+index 574abe634823..9d3c7c378e6d 100644
+--- a/services/core/java/com/android/server/power/stats/BatteryStatsImpl.java
++++ b/services/core/java/com/android/server/power/stats/BatteryStatsImpl.java
+@@ -4644,6 +4644,12 @@ public class BatteryStatsImpl extends BatteryStats {
+         return mPowerStatsUidResolver.mapUid(uid);
+     }
+ 
++    /** @hide BlueStacks */
++    @GuardedBy("this")
++    public int bstMapUid(int uid) {
++        return mapIsolatedUid(uid);
++    }
++
+     @GuardedBy("this")
+     public void noteEventLocked(int code, String name, int uid,
+             long elapsedRealtimeMs, long uptimeMs) {
+diff --git a/services/core/java/com/android/server/security/authenticationpolicy/SecureLockDeviceService.java b/services/core/java/com/android/server/security/authenticationpolicy/SecureLockDeviceService.java
+index 84173ab4d5f8..49f5dc6638d6 100644
+--- a/services/core/java/com/android/server/security/authenticationpolicy/SecureLockDeviceService.java
++++ b/services/core/java/com/android/server/security/authenticationpolicy/SecureLockDeviceService.java
+@@ -389,10 +389,18 @@ public class SecureLockDeviceService extends SecureLockDeviceServiceInternal {
+     }
+ 
+     private boolean hasStrongBiometricSensor() {
+-        for (SensorProperties sensorProps : mBiometricManager.getSensorProperties()) {
+-            if (sensorProps.getSensorStrength() == SensorProperties.STRENGTH_STRONG) {
+-                return true;
++        // R251 / Henry SecureLock null-safe: BiometricService may be disabled on BS (no GateKeeper HAL).
++        try {
++            if (mBiometricManager == null) {
++                return false;
+             }
++            for (SensorProperties sensorProps : mBiometricManager.getSensorProperties()) {
++                if (sensorProps.getSensorStrength() == SensorProperties.STRENGTH_STRONG) {
++                    return true;
++                }
++            }
++        } catch (Exception e) {
++            Slog.w(TAG, "hasStrongBiometricSensor: biometrics unavailable", e);
+         }
+         return false;
+     }
+diff --git a/services/core/java/com/android/server/wm/ActivityRecord.java b/services/core/java/com/android/server/wm/ActivityRecord.java
+index aa8d93e99132..1a8e9583fa71 100644
+--- a/services/core/java/com/android/server/wm/ActivityRecord.java
++++ b/services/core/java/com/android/server/wm/ActivityRecord.java
+@@ -5737,6 +5737,13 @@ final class ActivityRecord extends WindowToken {
+             case RESUMED:
+                 mAtmService.updateBatteryStats(this, true);
+                 mAtmService.updateActivityUsageStats(this, Event.ACTIVITY_RESUMED);
++                // R259 bstNotifyActivityDisplayed: focus may stay on SystemUI;
++                // notify host when a real activity becomes RESUMED.
++                try {
++                    mWmService.bstNotifyActivityDisplayed(this);
++                } catch (Exception e) {
++                    Slog.w(TAG, "R259 bstNotifyActivityDisplayed failed: " + e);
++                }
+                 // Fall through.
+             case STARTED:
+                 // Update process info while making an activity from invisible to visible, to make
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index 27427724f0c3..19531b11b459 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -4067,6 +4067,12 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+         getDisplayPolicy().focusChangedLw(oldFocus, newFocus);
+         mAtmService.mBackNavigationController.onFocusChanged(newFocus);
+ 
++        // R255 / Henry bstSendTopDisplayedOnFocusChange
++        // Sending the top displayed activity info to host on Focus change.
++        if (newFocus != null) {
++            mWmService.bstSendTopDisplayedOnFocusChange(newFocus);
++        }
++
+         if (imeLayeringTargetChanged && oldFocus != mInputMethodWindow) {
+             // Focus of the input method window changed. Perform layout if needed.
+             if (mode == UPDATE_FOCUS_PLACING_SURFACES) {
+diff --git a/services/core/java/com/android/server/wm/DisplayRotation.java b/services/core/java/com/android/server/wm/DisplayRotation.java
+index f61254b61901..d3629db8b852 100644
+--- a/services/core/java/com/android/server/wm/DisplayRotation.java
++++ b/services/core/java/com/android/server/wm/DisplayRotation.java
+@@ -798,6 +798,12 @@ public class DisplayRotation {
+         }
+     }
+ 
++    /** @hide BlueStacks */
++    public void setBstProposedRotation(int proposedRotation) {
++        setUserRotation(WindowManagerPolicy.USER_ROTATION_LOCKED, proposedRotation, "bst");
++        dispatchProposedRotation(proposedRotation);
++    }
++
+     /**
+      * Sets the user rotation and updates the {@link RotationLockHistory}.
+      *
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 686a2208a14e..06d4c6963251 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -404,6 +404,13 @@ import java.util.concurrent.CountDownLatch;
+ import java.util.concurrent.TimeUnit;
+ import java.util.function.Supplier;
+ 
++import android.accounts.Account;
++import android.accounts.AccountManager;
++
++import com.bluestacks.os.BstFilterAppsManager;
++import com.bluestacks.os.BstHostCallManager;
++
++
+ /** @hide */
+ public class WindowManagerService extends IWindowManager.Stub
+         implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs {
+@@ -1134,6 +1141,9 @@ public class WindowManagerService extends IWindowManager.Stub
+     final DisplayManager mDisplayManager;
+     @NonNull
+     final ActivityTaskManagerService mAtmService;
++    // R255 / Henry bstSendTopDisplayedOnFocusChange
++    final BstFilterAppsManager mBstFilterApps;
++    final BstHostCallManager mBstHostCallManagerService;
+ 
+     /** Indicates whether this device supports wide color gamut / HDR rendering */
+     private boolean mHasWideColorGamutSupport;
+@@ -1351,6 +1361,10 @@ public class WindowManagerService extends IWindowManager.Stub
+         mTransactionFactory = transactionFactory;
+         mTransaction = mTransactionFactory.get();
+ 
++        // R255 / Henry bstSendTopDisplayedOnFocusChange
++        mBstFilterApps = (BstFilterAppsManager) context.getSystemService(Context.BST_FILTER_APPS);
++        mBstHostCallManagerService = (BstHostCallManager) context.getSystemService(Context.BST_HOST_CALL);
++
+         mPolicy = policy;
+         mAnimator = new WindowAnimator(this);
+         mRoot = new RootWindowContainer(this);
+@@ -4161,6 +4175,11 @@ public class WindowManagerService extends IWindowManager.Stub
+         mPolicy.onSystemUiStarted();
+     }
+ 
++    /** @hide BlueStacks */
++    public void setBstProposedRotation(int proposedRotation) {
++        mPolicy.setBstProposedRotation(proposedRotation);
++    }
++
+     private void performEnableScreen() {
+         synchronized (mGlobalLock) {
+             ProtoLog.i(WM_DEBUG_BOOT, "performEnableScreen: mDisplayEnabled=%b"
+@@ -6843,6 +6862,82 @@ public class WindowManagerService extends IWindowManager.Stub
+         mAnimator.scheduleAnimation();
+     }
+ 
++    // R259 / Henry: require ActivityRecord (no owningPackage fallback for systemui chrome).
++    // Also used by ActivityRecord RESUMED hook.
++    void bstSendTopDisplayedOnFocusChange(WindowState newFocus) {
++        if (newFocus == null) {
++            return;
++        }
++        final ActivityRecord activityRecord = newFocus.mActivityRecord;
++        if (activityRecord == null) {
++            return;
++        }
++        bstNotifyActivityDisplayed(activityRecord);
++    }
++
++    void bstNotifyActivityDisplayed(ActivityRecord activityRecord) {
++        if (activityRecord == null) {
++            return;
++        }
++        BstHostCallManager hostCall = mBstHostCallManagerService;
++        if (hostCall == null) {
++            try {
++                hostCall = (BstHostCallManager) mContext.getSystemService(Context.BST_HOST_CALL);
++            } catch (Exception e) {
++                Slog.w(TAG, "R259: BST_HOST_CALL unavailable: " + e);
++                return;
++            }
++            if (hostCall == null) {
++                return;
++            }
++        }
++
++        String packageName = activityRecord.packageName;
++        String activityName = null;
++        if (activityRecord.mActivityComponent != null) {
++            activityName = activityRecord.mActivityComponent.getClassName();
++        } else if (activityRecord.intent != null
++                && activityRecord.intent.getComponent() != null) {
++            activityName = activityRecord.intent.getComponent().getClassName();
++        }
++        if (packageName == null || packageName.isEmpty()) {
++            return;
++        }
++        if (activityName == null || activityName.isEmpty()) {
++            activityName = packageName;
++        }
++        if (activityName.equalsIgnoreCase("com.android.settings.FallbackHome")) {
++            return;
++        }
++        // Host already ignores these; skip to avoid polluting top_displayed_pkg.
++        if (packageName.equals("android")
++                || packageName.equals("com.android.systemui")
++                || packageName.equals("com.android.settings")) {
++            return;
++        }
++
++        final String lastTopDisplayedPackage =
++                SystemProperties.get("bst.config.top_displayed_pkg", "");
++        if (packageName.equalsIgnoreCase(lastTopDisplayedPackage)) {
++            return;
++        }
++
++        try {
++            SystemProperties.set("bst.r259.last_pkg", packageName);
++            Slog.w(TAG, "R259 onActivityDisplayed package=" + packageName
++                    + " activity=" + activityName);
++            SystemProperties.set("bst.config.top_displayed_pkg", packageName);
++            SystemProperties.set("bst.config.show_mouse_ptr", "false");
++            String callingPackage = SystemProperties.get("bst.config.calling_package", "");
++            int rval = hostCall.onActivityDisplayed(packageName, activityName, callingPackage);
++            if (rval != 0) {
++                Slog.w(TAG, "R259 onActivityDisplayed rval=" + rval);
++            }
++        } catch (Exception ex) {
++            Slog.w(TAG, "R259 bstNotifyActivityDisplayed failed: " + ex);
++        }
++    }
++
+     boolean updateFocusedWindowLocked(int mode, boolean updateInputWindows) {
+         Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "wmUpdateFocus");
+         boolean changed = mRoot.updateFocusedWindowLocked(mode, updateInputWindows);
+diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
+index 9ab827e36eb6..9e535dea015b 100644
+--- a/services/java/com/android/server/SystemServer.java
++++ b/services/java/com/android/server/SystemServer.java
+@@ -315,6 +315,9 @@ import com.android.server.webkit.WebViewUpdateService;
+ import com.android.server.wm.ActivityTaskManagerService;
+ import com.android.server.wm.WindowManagerGlobalLock;
+ import com.android.server.wm.WindowManagerService;
++import com.bluestacks.server.BstFilterAppsService;
++import com.bluestacks.server.BstHostCallService;
++import com.bluestacks.server.BstUtilsService;
+ 
+ import dalvik.system.VMDebug;
+ import dalvik.system.VMRuntime;
+@@ -508,6 +511,7 @@ public final class SystemServer implements Dumpable {
+     // TODO: remove all of these references by improving dependency resolution and boot phases
+     private PowerManagerService mPowerManagerService;
+     private ActivityManagerService mActivityManagerService;
++    private BstUtilsService mBstUtilsService;
+     private UserManagerService mUserManagerService;
+     private WindowManagerGlobalLock mWindowManagerGlobalLock;
+     private WebViewUpdateService mWebViewUpdateService;
+@@ -1255,10 +1259,12 @@ public final class SystemServer implements Dumpable {
+         startIStatsService();
+         t.traceEnd();
+ 
+-        // Start MemtrackProxyService before ActivityManager, so that early calls
+-        // to Memtrack::getMemory() don't fail.
+-        t.traceBegin("MemtrackProxyService");
+-        startMemtrackProxyService();
++// Start MemtrackProxyService before ActivityManager, so that early calls
++// to Memtrack::getMemory() don't fail.
++t.traceBegin("MemtrackProxyService");
++        // BS-A16: memtrack HAL not available, skip to avoid native blocking
++        // (Watchdog kills system_server after 65s in MemtrackProxyService)
++        // startMemtrackProxyService();
+         t.traceEnd();
+ 
+         // Start AccessCheckingService which provides new implementation for permission and app op.
+@@ -1311,6 +1317,19 @@ public final class SystemServer implements Dumpable {
+         mActivityManagerService.initPowerManagement();
+         t.traceEnd();
+ 
++        t.traceBegin("StartBstFilterAppsService");
++        ServiceManager.addService(Context.BST_FILTER_APPS, new BstFilterAppsService(mSystemContext));
++        t.traceEnd();
++
++        t.traceBegin("StartBstUtilsService");
++        mBstUtilsService = new BstUtilsService(mSystemContext);
++        ServiceManager.addService(Context.BST_UTILS, mBstUtilsService);
++        t.traceEnd();
++
++        t.traceBegin("StartBstHostCallService");
++        ServiceManager.addService(Context.BST_HOST_CALL, new BstHostCallService(mSystemContext));
++        t.traceEnd();
++
+         // Bring up recovery system in case a rescue party needs a reboot
+         t.traceBegin("StartRecoverySystemService");
+         mSystemServiceManager.startService(RecoverySystemService.Lifecycle.class);
+@@ -1664,7 +1683,8 @@ public final class SystemServer implements Dumpable {
+             }
+ 
+             t.traceBegin("StartHintManager");
+-            mSystemServiceManager.startService(HintManagerService.class);
++            // R248 / Henry 7W-2: no power HAL on BS
++            // mSystemServiceManager.startService(HintManagerService.class);
+             t.traceEnd();
+ 
+             // Grants default permissions and defines roles
+@@ -1731,6 +1751,7 @@ public final class SystemServer implements Dumpable {
+ 
+             t.traceBegin("SetWindowManagerService");
+             mActivityManagerService.setWindowManager(wm);
++            mBstUtilsService.setWindowManager(wm);
+             t.traceEnd();
+ 
+             t.traceBegin("WindowManagerServiceOnInitReady");
+@@ -2779,10 +2800,12 @@ public final class SystemServer implements Dumpable {
+ 
+             // Start this service after all biometric sensor services are started.
+             t.traceBegin("StartBiometricService");
+-            mSystemServiceManager.startService(BiometricService.class);
++            // R248 / Henry 7X-1: no gatekeeper HAL on BS
++            // mSystemServiceManager.startService(BiometricService.class);
+             t.traceEnd();
+ 
+             t.traceBegin("StartAuthService");
++            // R261 / Henry: keep AuthService (publishes "auth" for Settings)
+             mSystemServiceManager.startService(AuthService.class);
+             t.traceEnd();
+ 
+@@ -2799,6 +2822,7 @@ public final class SystemServer implements Dumpable {
+                 }
+ 
+                 t.traceBegin("StartAuthenticationPolicyService");
++                // R261 / Henry: restore AuthenticationPolicyService
+                 mSystemServiceManager.startService(AuthenticationPolicyService.class);
+                 t.traceEnd();
+             }

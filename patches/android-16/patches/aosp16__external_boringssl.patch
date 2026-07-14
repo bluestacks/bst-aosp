@@ -1,0 +1,20 @@
+diff --git a/selftest/Android.bp b/selftest/Android.bp
+index 1894963a..d0f39806 100644
+--- a/selftest/Android.bp
++++ b/selftest/Android.bp
+@@ -63,11 +63,10 @@ cc_binary {
+     defaults: ["boringssl_self_test_defaults"],
+     stem: "boringssl_self_test",
+     vendor: true,
+-    init_rc: ["boringssl_self_test.rc"],
+-    required: [
+-        "boringssl_self_test.zygote64.rc",
+-        "boringssl_self_test.zygote64_32.rc",
+-    ],
++    // BlueStacks: align A13 — skip vendor init_rc; x86_64-only image has no
++    // boringssl_self_test32 binary but zygote64_32.rc still triggers 32-bit
++    // exec_start and reboot_on_failure kills bringup.
++    // init_rc: ["boringssl_self_test.rc"],
+     visibility: ["//visibility:any_system_partition"],
+ }
+ 

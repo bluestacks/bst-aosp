@@ -1,0 +1,531 @@
+diff --git a/init/coldboot.cpp b/init/coldboot.cpp
+index 91bee9d322..c5941ac94b 100644
+--- a/init/coldboot.cpp
++++ b/init/coldboot.cpp
+@@ -14,6 +14,9 @@
+  * limitations under the License.
+  */
+ 
++#include <fcntl.h>
++#include <unistd.h>
++#include <string>
+ #include "coldboot.h"
+ #include "coldboot_runner.h"
+ #include "com_android_ueventd_flags.h"
+@@ -79,6 +82,7 @@ void ColdBoot::Run() {
+     android::base::Timer cold_boot_timer;
+ 
+     RegenerateUevents();
++    { int _fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC); if (_fd >= 0) { std::string _m = "<0>A16DBG: coldboot: post-regen\n"; write(_fd, _m.c_str(), _m.size()); close(_fd); } }
+ 
+     if (enable_parallel_restorecon_) {
+         if (parallel_restorecon_queue_.empty()) {
+@@ -112,7 +116,9 @@ void ColdBoot::Run() {
+         selinux_android_restorecon("/sys", SELINUX_ANDROID_RESTORECON_RECURSE);
+     }
+ 
++    { int _fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC); if (_fd >= 0) { std::string _m = "<0>A16DBG: coldboot: pre-runner-wait\n"; write(_fd, _m.c_str(), _m.size()); close(_fd); } }
+     runner->Wait();
++    { int _fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC); if (_fd >= 0) { std::string _m = "<0>A16DBG: coldboot: post-runner-wait\n"; write(_fd, _m.c_str(), _m.size()); close(_fd); } }
+ 
+     android::base::SetProperty(kColdBootDoneProp, "true");
+     LOG(INFO) << "Coldboot took " << cold_boot_timer.duration().count() / 1000.0f << " seconds";
+diff --git a/init/first_stage_init.cpp b/init/first_stage_init.cpp
+index 3070fae193..9240e3fa01 100644
+--- a/init/first_stage_init.cpp
++++ b/init/first_stage_init.cpp
+@@ -354,7 +354,7 @@ int FirstStageMain(int argc, char** argv) {
+     CHECKCALL(mkdir("/dev/dm-user", 0755));
+     CHECKCALL(mount("devpts", "/dev/pts", "devpts", 0, NULL));
+ #define MAKE_STR(x) __STRING(x)
+-    CHECKCALL(mount("proc", "/proc", "proc", 0, "hidepid=2,gid=" MAKE_STR(AID_READPROC)));
++    CHECKCALL(mount("proc", "/proc", "proc", MS_REMOUNT, "hidepid=2,gid=" MAKE_STR(AID_READPROC)));
+ #undef MAKE_STR
+     std::string cmdline;
+     android::base::ReadFileToString("/proc/cmdline", &cmdline);
+@@ -364,7 +364,7 @@ int FirstStageMain(int argc, char** argv) {
+     android::base::ReadFileToString("/proc/bootconfig", &bootconfig);
+     gid_t groups[] = {AID_READPROC};
+     CHECKCALL(setgroups(arraysize(groups), groups));
+-    CHECKCALL(mount("sysfs", "/sys", "sysfs", 0, NULL));
++    CHECKCALL(mount("sysfs", "/sys", "sysfs", MS_REMOUNT, NULL));
+     CHECKCALL(mount("selinuxfs", "/sys/fs/selinux", "selinuxfs", 0, NULL));
+ 
+     CHECKCALL(mknod("/dev/kmsg", S_IFCHR | 0600, makedev(1, 11)));
+diff --git a/init/first_stage_mount.cpp b/init/first_stage_mount.cpp
+index 9e5b460b48..c1831fbc68 100644
+--- a/init/first_stage_mount.cpp
++++ b/init/first_stage_mount.cpp
+@@ -150,7 +150,7 @@ static Result<Fstab> ReadFirstStageFstabAndroid() {
+                                        }),
+                         fstab.end());
+         } else {
+-            return Error() << "failed to read default fstab for first stage mount";
++            LOG(WARNING) << "No default fstab (BlueStacks)"; return fstab;
+         }
+     }
+     return fstab;
+@@ -263,6 +263,7 @@ bool FirstStageMountVBootV2::DoCreateDevices() {
+ }
+ 
+ bool FirstStageMountVBootV2::DoFirstStageMount() {
++    return true; // BS bringup: skip all first stage mount logic
+     if (!IsDmLinearEnabled() && fstab_.empty()) {
+         // Nothing to mount.
+         LOG(INFO) << "First stage mount skipped (missing/incompatible/empty fstab in device tree)";
+diff --git a/init/init.cpp b/init/init.cpp
+index 08e7c661d8..5c08868a6a 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -1045,6 +1045,65 @@ static void StartSecondStageBootMonitor(int timeout_sec) {
+     monitor_thread.detach();
+ }
+ 
++
++// [BST] Copy the right cpuinfo_<cores> file to cpuinfo
++static void copy_file(char* src, char* dest) {
++    FILE *fptr1, *fptr2;
++    char c;
++    fptr1 = fopen(src, "r");
++    if (fptr1 == NULL) {
++        LOG(ERROR) << "Cannot open file " << src;
++        return;
++    }
++    fptr2 = fopen(dest, "w");
++    if (fptr2 == NULL) {
++        LOG(ERROR) << "Cannot open file " << dest;
++        fclose(fptr1);
++        return;
++    }
++    c = fgetc(fptr1);
++    while (c != EOF) {
++        fputc(c, fptr2);
++        c = fgetc(fptr1);
++    }
++    fclose(fptr1);
++    fclose(fptr2);
++}
++
++static void copy_cpuinfo_file() {
++    long nop = sysconf(_SC_NPROCESSORS_ONLN);
++    char cpuinfo_path[1024];
++    char cpuinfo_path_main[1024];
++#if defined(__aarch64__) || defined(__x86_64__)
++    char cpuinfo_path64[1024];
++    char cpuinfo_path_main64[1024];
++    snprintf(cpuinfo_path64, sizeof(cpuinfo_path64), "/data/downloads/.oh/cpuinfo/arm64/cpuinfo_%ld", nop);
++    snprintf(cpuinfo_path_main64, sizeof(cpuinfo_path_main64), "/data/downloads/.oh/cpuinfo/arm64/cpuinfo");
++    copy_file(cpuinfo_path64, cpuinfo_path_main64);
++#endif
++    snprintf(cpuinfo_path, sizeof(cpuinfo_path), "/data/downloads/.oh/cpuinfo/arm/cpuinfo_%ld", nop);
++    snprintf(cpuinfo_path_main, sizeof(cpuinfo_path_main), "/data/downloads/.oh/cpuinfo/arm/cpuinfo");
++    copy_file(cpuinfo_path, cpuinfo_path_main);
++}
++
++// [BST] Check if last shutdown was graceful. If not, trigger proper_shutdown to fix corrupt files
++static void check_status_of_last_boot() {
++    const char *fname = "/data/.bstshutdown_sync";
++    const char *packagesxml = "/data/system/packages.xml";
++    if (access(packagesxml, F_OK) == 0) {
++        if (access(fname, F_OK) == 0) {
++            if (remove(fname) != 0)
++                LOG(INFO) << "Unable to delete : " << fname;
++            return;
++        } else {
++            LOG(INFO) << "last shutdown was not graceful as file does not exist, setting prop fix_corruptfiles";
++            SetProperty("bst.config.fix_corruptfiles", "1");
++        }
++    } else {
++        LOG(INFO) << "No packages.xml looks like first boot! Don't run fixcorruptfiles";
++    }
++}
++
+ int SecondStageMain(int argc, char** argv) {
+     if (REBOOT_BOOTLOADER_ON_PANIC) {
+         InstallRebootSignalHandlers();
+@@ -1110,6 +1169,9 @@ int SecondStageMain(int argc, char** argv) {
+     // Umount second stage resources after property service has read the .prop files.
+     UmountSecondStageRes();
+ 
++    // [BST] Copying the right cpuinfo_<cores> file to cpuinfo
++    copy_cpuinfo_file();
++
+     // Umount the debug ramdisk after property service has read the .prop files when it means to.
+     if (load_debug_prop) {
+         UmountDebugRamdisk();
+@@ -1243,6 +1305,9 @@ int SecondStageMain(int argc, char** argv) {
+ 
+     // Restore prio before main loop
+     setpriority(PRIO_PROCESS, 0, 0);
++
++    // [BST] Check if last shutdown was graceful
++    check_status_of_last_boot();
+     while (true) {
+         // By default, sleep until something happens. Do not convert far_future into
+         // std::chrono::milliseconds because that would trigger an overflow. The unit of boot_clock
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 7a137f0783..558ca7d667 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -161,18 +161,12 @@ bool CanReadProperty(const std::string& source_context, const std::string& name)
+ 
+ static bool CheckMacPerms(const std::string& name, const char* target_context,
+                           const char* source_context, const ucred& cr) {
+-    if (!target_context || !source_context) {
+-        return false;
+-    }
+-
+-    PropertyAuditData audit_data;
+-
+-    audit_data.name = name.c_str();
+-    audit_data.cr = &cr;
+-
+-    auto lock = std::lock_guard{selinux_check_access_lock};
+-    return selinux_check_access(source_context, target_context, "property_service", "set",
+-                                &audit_data) == 0;
++    // BS bringup R173g: SELinux policy lacks property_service class (init skips policy load to
++    // avoid vendor sepolicy FATAL) -> selinux_check_access returns !=0 -> all property sets
++    // denied -> init can't track services (init.svc.*) -> critical services reboot-loop.
++    // Bypass: allow all property sets (consistent with setenforce(0) permissive bringup).
++    (void)name; (void)target_context; (void)source_context; (void)cr;
++    return true;
+ }
+ 
+ void NotifyPropertyChange(const std::string& name, const std::string& value) {
+diff --git a/init/reboot.cpp b/init/reboot.cpp
+index 959232aa8b..0af7b3ab23 100644
+--- a/init/reboot.cpp
++++ b/init/reboot.cpp
+@@ -144,6 +144,13 @@ class MountEntry {
+         }
+     }
+ 
++
++    bool RemountRO() {
++        int ret = mount(mnt_fsname_.c_str(), mnt_dir_.c_str(), mnt_type_.c_str(),
++                        MS_REMOUNT | MS_RDONLY, NULL);
++        return ret == 0;
++    }
++
+     static bool IsBlockDevice(const struct mntent& mntent) {
+         return android::base::StartsWith(mntent.mnt_fsname, "/dev/block");
+     }
+@@ -303,7 +310,7 @@ static UmountStat TryUmountPartitions(bool force) {
+     }
+ 
+     for (auto& entry : block_devices) {
+-        if (!entry.Umount(force)) unmount_success = false;
++        if (!entry.RemountRO() && !entry.Umount(force)) unmount_success = false;
+     }
+ 
+     if (unmount_success) {
+@@ -970,6 +977,15 @@ static void DoReboot(unsigned int cmd, const std::string& reason,
+         LOG(INFO) << "vold not running, skipping vold shutdown";
+     }
+     // logcat stopped here
++    // [BST] Create marker file for graceful shutdown check on next boot
++    int fd_bst = open("/data/.bstshutdown_sync", O_RDWR | O_CREAT | O_APPEND, 0660);
++    if (fd_bst < 0)
++        LOG(ERROR) << "error in creating .bstshutdown_sync file, errno: " << strerror(errno);
++    else {
++        close(fd_bst);
++        LOG(INFO) << ".bstshutdown_sync file created";
++    }
++
+     pids = StopServices(kDebuggingServices, false /* SIGKILL */);
+     WaitAndLogViolations(pids, 0ms);
+     // 4. sync, and try umount
+diff --git a/init/selinux.cpp b/init/selinux.cpp
+index 93f6312a7b..3707ca6580 100644
+--- a/init/selinux.cpp
++++ b/init/selinux.cpp
+@@ -111,6 +111,10 @@ EnforcingStatus StatusFromProperty() {
+ }
+ 
+ bool IsEnforcing() {
++    // BlueStacks(baklava bringup): force SELinux permissive (consistent with A13).
++    return false;
++    return false; // BlueStacks
++    return false;
+     if (ALLOW_PERMISSIVE_SELINUX) {
+         return StatusFromProperty() == SELINUX_ENFORCING;
+     }
+@@ -552,14 +556,13 @@ int SelinuxGetVendorAndroidVersion() {
+ 
+         std::string version;
+         if (!GetVendorMappingVersion(&version)) {
+-            LOG(FATAL) << "Could not read vendor SELinux version";
++            LOG(ERROR) << "Could not read vendor SELinux version (BS: default)"; return __ANDROID_API_FUTURE__;;
+         }
+ 
+         int major_version;
+         std::string major_version_str(version, 0, version.find('.'));
+         if (!ParseInt(major_version_str, &major_version)) {
+-            PLOG(FATAL) << "Failed to parse the vendor sepolicy major version "
+-                        << major_version_str;
++            PLOG(ERROR) << "Failed to parse vendor sepolicy version (BS: default)"; return __ANDROID_API_FUTURE__;
+         }
+ 
+         return major_version;
+@@ -643,7 +646,7 @@ static void LoadSelinuxPolicy(std::string& policy) {
+ 
+     set_selinuxmnt("/sys/fs/selinux");
+     if (security_load_policy(policy.data(), policy.size()) < 0) {
+-        PLOG(FATAL) << "SELinux:  Could not load policy";
++        PLOG(ERROR) << "SELinux: Could not load policy (BS: skip)";
+     }
+ }
+ 
+@@ -815,7 +818,7 @@ int SetupSelinux(char** argv) {
+     // but other file systems do.  In particular, this is needed for ramdisks such as the
+     // recovery image for A/B devices.
+     if (selinux_android_restorecon("/system/bin/init", 0) == -1) {
+-        PLOG(FATAL) << "restorecon failed of /system/bin/init failed";
++        PLOG(ERROR) << "restorecon of /system/bin/init failed (ignored for BlueStacks ro /system)";
+     }
+ 
+     setenv(kEnvSelinuxStartedAt, std::to_string(start_time.time_since_epoch().count()).c_str(), 1);
+diff --git a/init/service.cpp b/init/service.cpp
+index c255704bee..da0247eac7 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -77,6 +77,15 @@ namespace android {
+ namespace init {
+ 
+ static Result<std::string> ComputeContextFromExecutable(const std::string& service_path) {
++    // BlueStacks(baklava bringup): skip domain transition check in permissive mode
++    if (!is_selinux_enabled() || security_getenforce() == 0) {
++        return "skip";
++    }
++    // BlueStacks: permissive - skip SELinux domain check
++    if (!is_selinux_enabled() || security_getenforce() == 0) {
++        return "skip";
++    }
++
+     std::string computed_context;
+ 
+     char* raw_con = nullptr;
+@@ -100,7 +109,7 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
+         free(new_con);
+     }
+     if (rc == 0 && computed_context == mycon.get()) {
+-        return Error() << "File " << service_path << "(labeled \"" << filecon.get()
++        LOG(WARNING) << "File " << service_path << "(labeled \"" << filecon.get()
+                        << "\") has incorrect label or no domain transition from " << mycon.get()
+                        << " to another SELinux domain defined. Have you configured your "
+                           "service correctly? https://source.android.com/security/selinux/"
+diff --git a/init/ueventd.cpp b/init/ueventd.cpp
+index 079a62ba85..6ae60ce41d 100644
+--- a/init/ueventd.cpp
++++ b/init/ueventd.cpp
+@@ -164,6 +164,7 @@ void main_loop(const UeventListener& uevent_listener,
+                const std::vector<std::shared_ptr<UeventHandler>>& uevent_handlers) {
+     uevent_listener.Poll([&uevent_handlers](const Uevent& uevent) {
+         for (auto& uevent_handler : uevent_handlers) {
++    { int _fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC); if (_fd >= 0) { std::string _m = "<0>A16DBG: ueventd: post-coldboot (handlers ColdbootDone)\n"; write(_fd, _m.c_str(), _m.size()); close(_fd); } }
+             uevent_handler->HandleUevent(uevent);
+         }
+         return ListenerAction::kContinue;
+@@ -197,6 +198,8 @@ void parallel_main_loop(const UeventListener& uevent_listener,
+ }
+ 
+ int ueventd_main(int argc, char** argv) {
++    { int _fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC);
++      if (_fd >= 0) { std::string _m = "<0>A16DBG: ueventd_main entered (R173 diag)\n"; write(_fd, _m.c_str(), _m.size()); close(_fd); } }
+     /*
+      * init sets the umask to 077 for forked processes. We need to
+      * create files with exact permissions, without modification by
+@@ -207,13 +210,16 @@ int ueventd_main(int argc, char** argv) {
+     android::base::InitLogging(argv, &android::base::KernelLogger);
+ 
+     LOG(INFO) << "ueventd started!";
++    { int _fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC); if (_fd >= 0) { std::string _m = "<0>A16DBG: ueventd: post-started-log\n"; write(_fd, _m.c_str(), _m.size()); close(_fd); } }
+ 
+     SelinuxSetupKernelLogging();
+     SelabelInitialize();
++    { int _fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC); if (_fd >= 0) { std::string _m = "<0>A16DBG: ueventd: post-selabel\n"; write(_fd, _m.c_str(), _m.size()); close(_fd); } }
+ 
+     std::vector<std::shared_ptr<UeventHandler>> uevent_handlers;
+ 
+     auto ueventd_configuration = GetConfiguration();
++    { int _fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC); if (_fd >= 0) { std::string _m = "<0>A16DBG: ueventd: post-config (GetConfiguration)\n"; write(_fd, _m.c_str(), _m.size()); close(_fd); } }
+ 
+     UeventListener uevent_listener(ueventd_configuration.uevent_socket_rcvbuf_size);
+ 
+@@ -247,6 +253,7 @@ int ueventd_main(int argc, char** argv) {
+         ColdBoot cold_boot(uevent_listener, uevent_handlers,
+                            ueventd_configuration.enable_parallel_restorecon,
+                            ueventd_configuration.parallel_restorecon_dirs);
++    { int _fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC); if (_fd >= 0) { std::string _m = "<0>A16DBG: ueventd: pre-coldboot-run\n"; write(_fd, _m.c_str(), _m.size()); close(_fd); } }
+         cold_boot.Run();
+     }
+ 
+diff --git a/init/util.cpp b/init/util.cpp
+index c9d20dbc37..1f2ce142e9 100644
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -95,7 +95,7 @@ Result<uid_t> DecodeUid(const std::string& name) {
+  */
+ Result<int> CreateSocket(const std::string& name, int type, bool passcred, bool should_listen,
+                          mode_t perm, uid_t uid, gid_t gid, const std::string& socketcon) {
+-    if (!socketcon.empty()) {
++    if (false && !socketcon.empty()) {
+         if (setsockcreatecon(socketcon.c_str()) == -1) {
+             return ErrnoError() << "setsockcreatecon(\"" << socketcon << "\") failed";
+         }
+@@ -106,7 +106,7 @@ Result<int> CreateSocket(const std::string& name, int type, bool passcred, bool
+         return ErrnoError() << "Failed to open socket '" << name << "'";
+     }
+ 
+-    if (!socketcon.empty()) setsockcreatecon(nullptr);
++    if (false && !socketcon.empty()) setsockcreatecon(nullptr);
+ 
+     struct sockaddr_un addr;
+     memset(&addr, 0 , sizeof(addr));
+@@ -175,8 +175,8 @@ Result<std::string> ReadFile(const std::string& path) {
+     if (fstat(fd.get(), &sb) == -1) {
+         return ErrnoError() << "fstat failed()";
+     }
+-    if ((sb.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
+-        return Error() << "Skipping insecure file";
++    if (false) { // BS: insecure file check disabled
++        // was: if ((sb.st_mode & (S_IWGRP | S_IWOTH)) != 0) { return Error() << "Skipping insecure file";
+     }
+ 
+     std::string content;
+diff --git a/libprocessgroup/processgroup.cpp b/libprocessgroup/processgroup.cpp
+index cea22b7a6c..7c997bad84 100644
+--- a/libprocessgroup/processgroup.cpp
++++ b/libprocessgroup/processgroup.cpp
+@@ -729,6 +729,8 @@ static int createProcessGroupInternal(uid_t uid, pid_t initialPid, std::string c
+ }
+ 
+ int createProcessGroup(uid_t uid, pid_t initialPid, bool memControl) {
++    // BS bringup: skip cgroup process group creation
++    return 0;
+     if (uid < 0) {
+         LOG(ERROR) << __func__ << ": invalid UID " << uid;
+         return -1;
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 468c139052..6c3570cd64 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -651,6 +651,16 @@ on property:ro.product.cpu.abilist64=* && property:bootreceiver.enable=1
+     write /sys/kernel/tracing/instances/bootreceiver/trace_options disable_on_free
+     write /sys/kernel/tracing/instances/bootreceiver/events/error_report/error_report_end/enable 1
+ 
++# BlueStacks boot diagnostic: logcat -> kmsg for Player.log (Henry 7AJ/7R)
++service bs_bootlog /boot/bin/sh /boot/bin/bs_bootlog.sh
++    user root
++    group system
++    disabled
++    seclabel u:r:su:s0
++
++on post-fs-data
++    start bs_bootlog
++
+ on post-fs-data
+ 
+     # Start checkpoint before we touch data
+@@ -1232,6 +1242,10 @@ on boot
+ 
+     class_start core
+ 
++    # R247 / Henry 7X-2: start installd early for PMS
++    start installd
++    start gatekeeperd
++
+ on nonencrypted
+     class_start main
+     class_start late_start
+@@ -1338,3 +1352,75 @@ on property:sys.snapshotctl.map=requested
+ on property:sys.snapshotctl.unmap=requested
+     exec - root root system -- /system/bin/snapshotctl unmap
+     setprop sys.snapshotctl.unmap "finished"
++
++# [BST] BlueStacks services and property triggers (R260 / Henry shutdown)
++
++service bstshutdown_core /system/bin/logwrapper /system/bin/bstshutdown_core
++    user root
++    group root
++    disabled
++    oneshot
++
++on property:bst.config.start_shutdown=1
++    start bstshutdown_core
++
++service proper_shutdown /system/bin/logwrapper /system/bin/proper_shutdown
++    class main
++    user root
++    group root
++    disabled
++    oneshot
++
++on property:bst.config.fix_corruptfiles=1
++    start proper_shutdown
++
++service mountsf /system/bin/logwrapper /system/bin/mountsf
++    user root
++    group root
++    disabled
++    oneshot
++
++service imeservice /system/bin/logwrapper /system/bin/bstime
++    class main
++    user root
++    group root readproc
++    disabled
++    oneshot
++
++service logcat_redirect /system/bin/logwrapper /system/bin/logcat_redirection
++    class core
++    user root
++    group log root
++    disabled
++    oneshot
++    writepid /dev/cpuset/system-background/tasks
++
++service bindmount /system/bin/logwrapper /system/bin/bindmount
++    user root
++    group root
++    disabled
++    oneshot
++
++service airplane_mode /system/bin/logwrapper /system/bin/airplane_mode
++    user root
++    group root
++    disabled
++    oneshot
++
++on property:bst.enable_logcat_redirection=1
++    start logcat_redirect
++
++on property:bst.config.mountsf=1
++    start mountsf
++
++on property:bst.config.ime_listenerport=*
++    restart imeservice
++
++on property:bst.config.ime_listenerport=0
++    stop imeservice
++
++on property:bst.config.bindmount=*
++    start bindmount
++
++on property:bst.airplane_mode_active=*
++    start airplane_mode
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index 2ff86a5e9b..1c304b7778 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -95,3 +95,10 @@ subsystem vfio
+ /sys/devices/system/cpu/cpu*   cpufreq/scaling_min_freq   0664  system system
+ /sys/devices/virtual/misc/uhid/*/leds/* brightness   0664  system system
+ /sys/devices/virtual/misc/uhid/*/leds/* multi_intensity   0664  system system
++
++# BlueStacks device permissions (ported from A13 ueventd.rc)
++/dev/bst_ime            0666    root    root
++/dev/bstpgaipc          0666    root    root
++/dev/bstvmsg            0666    root    root
++/dev/vboxuser           0666    root    root
++/dev/hvmem              0660    system  system

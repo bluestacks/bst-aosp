@@ -1,0 +1,26 @@
+diff --git a/product/generic.mk b/product/generic.mk
+index f1870181..e061b66a 100644
+--- a/product/generic.mk
++++ b/product/generic.mk
+@@ -41,11 +41,6 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+ PRODUCT_PRODUCT_PROPERTIES += \
+     remote_provisioning.hostname=remoteprovisioning.googleapis.com
+ 
+-PRODUCT_PACKAGES += \
+-    hwservicemanager \
+-    android.hidl.allocator@1.0-service
+-
+-
+ PRODUCT_VENDOR_PROPERTIES += \
+     ro.control_privapp_permissions=enforce \
+     ro.crypto.dm_default_key.options_format.version=2 \
+@@ -232,6 +227,9 @@ PRODUCT_PACKAGES += \
+     android.hardware.bluetooth.audio-impl \
+ 
+ DEVICE_MANIFEST_FILE += device/generic/goldfish/hals/audio/android.hardware.audio.effects@7.0.xml
++DEVICE_MANIFEST_FILE += device/generic/common/manifest/android.hardware.graphics.allocator@2.0.xml
++DEVICE_MANIFEST_FILE += device/generic/common/manifest/android.hardware.graphics.composer@2.1.xml
++DEVICE_MANIFEST_FILE += device/generic/common/manifest/android.hardware.graphics.mapper@2.1.xml
+ 
+ PRODUCT_COPY_FILES += \
+     device/generic/goldfish/hals/audio/policy/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \

@@ -1,0 +1,517 @@
+diff --git a/guest/BootImage/Makefile b/guest/BootImage/Makefile
+index c419e08025..1d4a3df6e5 100755
+--- a/guest/BootImage/Makefile
++++ b/guest/BootImage/Makefile
+@@ -17,6 +17,11 @@ initrd-hyperv.img: clean-initrd.img
+ 	cp bstconf initrd/boot/bin/bstconf
+ 	cp bstchkdata initrd/boot/bin/bstchkdata
+ 	cp stage2.sh initrd/boot/stage2.sh
++	cp /home/clouddev/bst/workspace/markxu/releases/Baklava64/system/bin/logcat initrd/boot/bin/logcat
++	chmod 755 initrd/boot/bin/logcat
++	chmod 755 initrd/boot/bin/logcat
++	cp bs_bootlog.sh initrd/boot/bin/bs_bootlog.sh
++	chmod 755 initrd/boot/bin/bs_bootlog.sh
+ 	cp bstsetup.env initrd/boot/bstsetup.env
+ 	cp 4-dpi initrd/boot/4-dpi
+ 
+@@ -28,7 +33,7 @@ initrd-hyperv.img: clean-initrd.img
+ 	cp ../../Source/cam/guest/driver/bstcamera.ko initrd/boot/bstmods/
+ 	cp ../../Source/hst/guest/driver/hvmem.ko initrd/boot/bstmods/
+ 
+-	cp $(KDIR)/drivers/media/v4l2-core/videobuf-core.ko \
++	-cp $(KDIR)/drivers/media/v4l2-core/videobuf-core.ko \
+ 	    initrd/boot/bstmods
+ 
+ 	cp busybox-ndk initrd/boot/bin/busybox
+@@ -84,8 +89,14 @@ initrd.img: clean-initrd.img
+ 	cp bstconf initrd/boot/bin/bstconf
+ 	cp bstchkdata initrd/boot/bin/bstchkdata
+ 	cp stage2.sh initrd/boot/stage2.sh
++	cp /home/clouddev/bst/workspace/markxu/releases/Baklava64/system/bin/logcat initrd/boot/bin/logcat
++	chmod 755 initrd/boot/bin/logcat
++	cp bs_bootlog.sh initrd/boot/bin/bs_bootlog.sh
++	chmod 755 initrd/boot/bin/bs_bootlog.sh
+ 	cp bstsetup.env initrd/boot/bstsetup.env
+ 	cp 4-dpi initrd/boot/4-dpi
++	mkdir -p initrd/boot/linkerconfig
++	cp -a linkerconfig/. initrd/boot/linkerconfig/
+ 
+ 	cp ../Drivers/VirtualBox/vboxguest.ko initrd/boot/bstmods/
+ 	cp ../Drivers/VirtualBox/vboxsf.ko initrd/boot/bstmods/
+@@ -94,7 +105,7 @@ initrd.img: clean-initrd.img
+ ifneq ($(DONT_COPY_AUDIO_DRIVER_$(OEM)),1)
+ 	cp ../../Source/aud/guest/driver/bstaudio.ko initrd/boot/bstmods/
+ endif
+-	cp $(KDIR)/drivers/media/v4l2-core/videobuf-core.ko initrd/boot/bstmods
++	-cp $(KDIR)/drivers/media/v4l2-core/videobuf-core.ko initrd/boot/bstmods
+ 	cp ../../Source/cam/guest/driver/bstcamera.ko initrd/boot/bstmods/
+ 	cp ../../Source/hst/guest/driver/bstpgaipc.ko initrd/boot/bstmods/
+ 	cp ../../Source/hst/guest/driver/hvmem.ko initrd/boot/bstmods/
+diff --git a/guest/BootImage/bstsetconf.sh b/guest/BootImage/bstsetconf.sh
+index f33844386b..69cc466a43 100644
+--- a/guest/BootImage/bstsetconf.sh
++++ b/guest/BootImage/bstsetconf.sh
+@@ -72,25 +72,24 @@ populate_bst_conf()
+ # Main function that will generate all android specific ids.
+ generate_android_ids()
+ {
+-    if [ -z $BST_ANDROID_ID ]; then
+-        log_echo "<2>ERROR: android_id is empty"
+-        exit 1
+-    else
+-        export SEED_FOR_DIGEST=$BST_ANDROID_ID
+-        export MD5_DIGEST=`echo -n $SEED_FOR_DIGEST | md5sum | md5sum | cut -c '1-16'`
+-        generate_serialno
+-        generate_device_hash_and_imei_id
+-        generate_bst_simissuerid_and_simsuffix
+-        generate_subscriber_id
+-        generate_wifi_mac_addr
+-        generate_bssid_mac_addr
+-        generate_bluetooth_addr
+-        #TODO
+-        #generate_bst_sim_serial_number
+-        #     SimSerialNumber len(19-20)
+-        #     getprop gsm.sim.bstserial(7-8) + BstSimIssuerId(3) + BstSimSuffix(9)  (0-9 digits) 
+-        #     SampleValue: 8901260795128795224
++    if [ -z "$BST_ANDROID_ID" ]; then
++        log_echo "WARNING: android_id empty, using bring-up fallback (hcall not ready)"
++        export BST_ANDROID_ID="a16bklv64dev001"
+     fi
++    export SEED_FOR_DIGEST=$BST_ANDROID_ID
++    export MD5_DIGEST=`echo -n $SEED_FOR_DIGEST | md5sum | md5sum | cut -c '1-16'`
++    generate_serialno
++    generate_device_hash_and_imei_id
++    generate_bst_simissuerid_and_simsuffix
++    generate_subscriber_id
++    generate_wifi_mac_addr
++    generate_bssid_mac_addr
++    generate_bluetooth_addr
++    #TODO
++    #generate_bst_sim_serial_number
++    #     SimSerialNumber len(19-20)
++    #     getprop gsm.sim.bstserial(7-8) + BstSimIssuerId(3) + BstSimSuffix(9)  (0-9 digits) 
++    #     SampleValue: 8901260795128795224
+ }
+ 
+ # length - 12
+diff --git a/guest/BootImage/bstsetup.env b/guest/BootImage/bstsetup.env
+index c65bf3fb97..a1346b1041 100644
+--- a/guest/BootImage/bstsetup.env
++++ b/guest/BootImage/bstsetup.env
+@@ -182,7 +182,7 @@ copy_file()
+     warn_if_error "Error in copying file $filename to location $destination"
+ }
+ 
+-function migrate_launcher_data_if_required()
++migrate_launcher_data_if_required()
+ {
+     if [ ! -f /data/data/com.uncube.launcher3/databases/home.db ]; then
+         log_echo -e "Copying home.db"
+@@ -207,7 +207,7 @@ function migrate_launcher_data_if_required()
+     fi
+ }
+ 
+-function is_greater()
++is_greater()
+ {
+ 
+     local ver=$1
+@@ -485,7 +485,7 @@ update_default_build_prop()
+ 
+     log_echo -e "Updating default propfile"
+ 
+-    if [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ]; then
++    if [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ] || [ "$bstandroid" == "baklava64" ]; then
+         fingerprint=`grep -i "ro\.system\.build\.fingerprint" /data/.bluestacks.prop | cut -d "=" -f 2`
+     else
+         fingerprint=`grep -i "ro\.build\.fingerprint" /data/.bluestacks.prop | cut -d "=" -f 2`
+@@ -509,7 +509,7 @@ update_default_vendor_prop()
+ 
+     log_echo -e "Updating vendor propfile"
+ 
+-    if [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ];  then
++    if [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ] || [ "$bstandroid" == "baklava64" ];  then
+         fingerprint=`grep -i "ro\.system\.build\.fingerprint" /data/.bluestacks.prop | cut -d "=" -f 2`
+     else
+         fingerprint=`grep -i "ro\.build\.fingerprint" /data/.bluestacks.prop | cut -d "=" -f 2`
+@@ -524,7 +524,7 @@ update_default_vendor_prop()
+     device=`grep -i "ro\.product\.device" /data/.bluestacks.prop | cut -d "=" -f 2`
+     sed "/ro.vendor.build.fingerprint=*/c ro.vendor.build.fingerprint=${fingerprint}" /vendor/build.prop > data/.vendor.prop
+ 
+-    if [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ];  then
++    if [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ] || [ "$bstandroid" == "baklava64" ];  then
+         sed -i "/ro.bootimage.build.fingerprint.*/c ro.bootimage.build.fingerprint=${fingerprint}"  data/.vendor.prop
+         date=`grep -i "ro\.build\.date=" /data/.bluestacks.prop | cut -d "=" -f 2`
+         utc=`grep -i "ro\.build\.date\.utc=" /data/.bluestacks.prop | cut -d "=" -f 2`
+@@ -577,7 +577,7 @@ update_additional_system_prop()
+             brand=`grep -i "ro\.product\.brand" /data/.bluestacks.prop | cut -d "=" -f 2`
+             name=`grep -i "ro\.product\.name" /data/.bluestacks.prop | cut -d "=" -f 2`
+             device=`grep -i "ro\.product\.device" /data/.bluestacks.prop | cut -d "=" -f 2`
+-            if [ "$bstandroid" == "tiramisu64" ];  then
++            if [ "$bstandroid" == "tiramisu64" ] || [ "$bstandroid" == "baklava64" ];  then
+                 sync_type='system_ext product odm vendor_dlkm system_dlkm odm_dlkm'
+             else
+                 sync_type='system_ext product odm'
+@@ -645,7 +645,11 @@ update_propfile()
+             totalfiles=`ls $PREBUNDLED_APPS/propfiles/$BST_DEVICE_COUNTRY_CODE | grep -i $BST_DEVICE_CARRIER_CODE | wc -l`
+             RANDOM=`date '+%s'`
+             x=$RANDOM
+-            y=$(($x%$totalfiles+1))
++            if [ "$totalfiles" -eq 0 ]; then
++                y=0
++            else
++                y=$(($x%$totalfiles+1))
++            fi
+             log_echo -e "RANDOM : $x , total eligible files : $totalfiles and final_rand used : $y"
+             propfile=`ls $PREBUNDLED_APPS/propfiles/$BST_DEVICE_COUNTRY_CODE/ | grep -i $BST_DEVICE_CARRIER_CODE | sed -n "${y}p"`
+             if [ -z "$propfile" ]; then
+@@ -654,7 +658,11 @@ update_propfile()
+                 totalfiles=`ls $PREBUNDLED_APPS/propfiles/$BST_DEVICE_COUNTRY_CODE | grep -i $BST_DEVICE_COUNTRY_CODE | wc -l`
+                 RANDOM=`date '+%s'`
+                 x=$RANDOM
++            if [ "$totalfiles" -eq 0 ]; then
++                y=0
++            else
+                 y=$(($x%$totalfiles+1))
++            fi
+                 log_echo -e "RANDOM : $x , total eligible files : $totalfiles and final_rand used : $y"
+                 final_propfile=`ls $PREBUNDLED_APPS/propfiles/$BST_DEVICE_COUNTRY_CODE/ | grep -i $BST_DEVICE_COUNTRY_CODE | sed -n "${y}p"`
+                 if [ -n "$final_propfile" ]; then
+@@ -665,7 +673,11 @@ update_propfile()
+                     totalfiles=`ls $PREBUNDLED_APPS/propfiles/$BST_DEVICE_COUNTRY_CODE | wc -l`
+                     RANDOM=`date '+%s'`
+                     x=$RANDOM
+-                    y=$(($x%$totalfiles+1))
++            if [ "$totalfiles" -eq 0 ]; then
++                y=0
++            else
++                y=$(($x%$totalfiles+1))
++            fi
+                     log_echo -e "RANDOM : $x , total eligible files : $totalfiles and final_rand used : $y"
+                     final_propfile=`ls $PREBUNDLED_APPS/propfiles/$BST_DEVICE_COUNTRY_CODE/ | sed -n "${y}p"`
+                     if [ -n "$final_propfile" ]; then
+@@ -698,7 +710,11 @@ update_propfile()
+                     totalfiles=`ls $PREBUNDLED_APPS/propfiles/$BST_DEVICE_COUNTRY_CODE | grep -iw $BST_DEVICE_PROFILE_CODE | wc -l`
+                     RANDOM=`date '+%s'`
+                     x=$RANDOM
+-                    y=$(($x%$totalfiles+1))
++            if [ "$totalfiles" -eq 0 ]; then
++                y=0
++            else
++                y=$(($x%$totalfiles+1))
++            fi
+                     log_echo -e "RANDOM : $x , total eligible files : $totalfiles and final_rand used : $y"
+                     final_propfile=`ls $PREBUNDLED_APPS/propfiles/$BST_DEVICE_COUNTRY_CODE/ | grep -iw $BST_DEVICE_PROFILE_CODE | sed -n "${y}p"`
+                     if [ -n "$final_propfile" ]; then
+@@ -1019,7 +1035,7 @@ prepare_bst_filesystems()
+             fi
+         fi
+     fi
+-    if [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ]; then
++    if [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ] || [ "$bstandroid" == "baklava64" ]; then
+         update_additional_system_prop
+     fi
+     # making sure that latest conf values are used within android
+@@ -1144,7 +1160,7 @@ mount_libraries() {
+ setup_memory_allocator()
+ {
+     # bstandroid stands for "bst android version" passed from kernel
+-    if [ "$bstandroid" == "pie64" ] || [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ]; then
++    if [ "$bstandroid" == "pie64" ] || [ "$bstandroid" == "rvc64" ] || [ "$bstandroid" == "tiramisu64" ] || [ "$bstandroid" == "baklava64" ]; then
+         log_echo "$bstandroid need not setup memory allocator"
+     else
+         log_echo -e "In setup memory allocator"
+diff --git a/guest/BootImage/fastboot/Makefile b/guest/BootImage/fastboot/Makefile
+index f6bd25f291..a68b7910e2 100755
+--- a/guest/BootImage/fastboot/Makefile
++++ b/guest/BootImage/fastboot/Makefile
+@@ -16,10 +16,10 @@ all: fastboot
+ clean:
+ 	rm -f *.o
+ 	rm -f *.d
+-	rm -f bzImage
++	# Keep bzImage symlink
+ 	rm -f *.asm
+ 	rm -f *.vdi
+-	rm -f *.img
++	rm -f fastboot.img fastboot.img.padded
+ 	rm -f fastbootblock
+ 	rm -f fastboot.vdi
+ 
+diff --git a/guest/BootImage/init.sh b/guest/BootImage/init.sh
+index 0ae2ada372..b49e1c99bd 100755
+--- a/guest/BootImage/init.sh
++++ b/guest/BootImage/init.sh
+@@ -36,6 +36,13 @@ mkdir /proc
+ mount -t proc proc /proc
+ die_if_error "Cannot mount /proc"
+ 
++# TEMP(A16 bringup debug): force all kmsg to console so we can see where boot dies.
++echo 8 > /proc/sys/kernel/printk 2>/dev/null
++# TEMP(A16 bringup debug): 关闭 /dev/kmsg 限速, 否则 second-stage init 的日志会被
++# "output lines suppressed due to ratelimiting" 大量吞掉, 看不到真正的崩溃点。后续回退。
++echo on > /proc/sys/kernel/printk_devkmsg 2>/dev/null
++echo "<0>A16DBG: init.sh proc mounted, loglevel raised" > /dev/kmsg
++
+ mkdir /sys
+ mount -t sysfs sysfs /sys
+ die_if_error "Cannot mount /sys"
+@@ -94,6 +101,15 @@ fi
+ #load_module /boot/bstmods/bstvideo.ko
+ 
+ load_module /boot/bstmods/bstpgaipc.ko
++bstpgaipc=`/boot/bin/busybox cat /sys/class/misc/bstpgaipc/uevent 2>/dev/null || /boot/bin/busybox cat /sys/devices/virtual/misc/bstpgaipc/uevent 2>/dev/null`
++if [ ! -z "$bstpgaipc" ]; then
++    MAJOR=`/boot/bin/busybox echo $bstpgaipc | /boot/bin/busybox cut -d '=' -f 2 | /boot/bin/busybox cut -d ' ' -f 1`
++    MINOR=`/boot/bin/busybox echo $bstpgaipc | /boot/bin/busybox cut -d '=' -f 3 | /boot/bin/busybox cut -d ' ' -f 1`
++    log_echo "making bstpgaipc node"
++    /boot/bin/busybox mknod -m 0666 /dev/bstpgaipc c $MAJOR $MINOR
++else
++    log_echo "unable to make bstpgaipc dev node"
++fi
+ load_module /boot/bstmods/videobuf-core.ko
+ load_module /boot/bstmods/bstcamera.ko
+ load_module /boot/bstmods/hvmem.ko
+@@ -117,6 +133,7 @@ log_echo "Mounting Android root file system /dev/sda1"
+ 
+ mount -o ro /dev/sda1 /boot/android
+ die_if_error "Cannot mount Android root file system"
++echo "<0>A16DBG: sda1 mounted at /boot/android" > /dev/kmsg
+ 
+ #
+ # Prepare our root file system.
+@@ -154,6 +171,7 @@ log_echo "Extracting ramdisk.img"
+ 
+ zcat /boot/android/android/ramdisk.img | cpio -id
+ die_if_error "Cannot extract ramdisk.img"
++echo "<0>A16DBG: ramdisk.img extracted; /init=$(ls -l /init 2>&1)" > /dev/kmsg
+ 
+ if [ -e /boot/android/android/system.sfs ]; then
+ 
+@@ -169,6 +187,40 @@ if [ -e /boot/android/android/system.sfs ]; then
+ 	mount -o loop /sfs/system.img system
+ 	die_if_error "Cannot mount system.img from SquashFS"
+ 
++	# A16(baklava64)+system.sfs: same apex/linkerconfig requirement as directory path.
++	if [ "$bstandroid" == "baklava64" ]; then
++	    APEX_SRC=/system/apex
++	    find_free_loop()
++	    {
++	        n=0
++	        while [ $n -lt 16 ]; do
++	            if [ ! -d /sys/block/loop$n/loop ]; then
++	                echo /dev/loop$n
++	                return 0
++	            fi
++	            n=`expr $n + 1`
++	        done
++	        return 1
++	    }
++	    for apexname in com.android.runtime com.android.i18n; do
++	        apexfile=$APEX_SRC/$apexname.apex
++	        if [ -f "$apexfile" ]; then
++	            mkdir -p /apex/$apexname
++	            loopdev=`find_free_loop`
++	            losetup -o 4096 $loopdev "$apexfile"
++	            die_if_error "Cannot losetup apex $apexname on $loopdev"
++	            mount -t erofs -o ro $loopdev /apex/$apexname
++	            die_if_error "Cannot mount apex $apexname"
++	            echo "<0>A16DBG: mounted apex $apexname on $loopdev" > /dev/kmsg
++	        else
++	            log_echo "apex $apexname.apex not found, skip"
++	        fi
++	    done
++	    mkdir -p /linkerconfig
++	    /apex/com.android.runtime/bin/linkerconfig --target /linkerconfig
++	    echo "<0>A16DBG: linkerconfig rc=$?; ld.config=$(ls -l /linkerconfig/ld.config.txt 2>&1)" > /dev/kmsg
++	fi
++
+ else
+ 	log_echo "Mounting system directory"
+ 
+@@ -179,11 +231,62 @@ else
+       ln -s /boot/android/android/system/apex/com.android.runtime /apex/com.android.runtime
+   fi
+ 
++  # A16(baklava64): apex 不再是 flatten 目录, 而是 .apex 文件(payload=erofs, STORED, 偏移4096).
++  # /system/bin/{sh,linkerconfig,...} 的解释器 /system/bin/linker64 指向 /apex/com.android.runtime,
++  # 所以必须在使用任何 /system 动态二进制前, 把核心 apex 零拷贝 loop 挂载到 /apex/<name>.
++  # 其余(尤其 .capex 压缩包)留给 Android init 阶段的 apexd 处理。
++  if [ "$bstandroid" == "baklava64" ]; then
++      APEX_SRC=/boot/android/android/system/apex
++      # 注意: busybox 1.19.4 的 `losetup -f` 在第二次调用时会段错误,
++      # 所以自己遍历 /sys/block/loopN/loop 找空闲 loop 设备(无该子目录=未占用)。
++      find_free_loop()
++      {
++          n=0
++          while [ $n -lt 16 ]; do
++              if [ ! -d /sys/block/loop$n/loop ]; then
++                  echo /dev/loop$n
++                  return 0
++              fi
++              n=`expr $n + 1`
++          done
++          return 1
++      }
++      for apexname in com.android.runtime com.android.i18n; do
++          apexfile=$APEX_SRC/$apexname.apex
++          if [ -f "$apexfile" ]; then
++              mkdir -p /apex/$apexname
++              loopdev=`find_free_loop`
++              losetup -o 4096 $loopdev "$apexfile"
++              die_if_error "Cannot losetup apex $apexname on $loopdev"
++              mount -t erofs -o ro $loopdev /apex/$apexname
++              die_if_error "Cannot mount apex $apexname"
++              echo "<0>A16DBG: mounted apex $apexname on $loopdev" > /dev/kmsg
++          else
++              log_echo "apex $apexname.apex not found, skip"
++          fi
++      done
++  fi
++
+ 	if [ "$bstandroid" == "tiramisu64" ]; then
+-		mkdir /linkerconfig
+-		/system/bin/linkerconfig --target /linkerconfig
++		mkdir -p /linkerconfig
++		/apex/com.android.runtime/bin/linkerconfig --target /linkerconfig
++	fi
++
++	if [ "$bstandroid" == "baklava64" ]; then
++		mkdir -p /linkerconfig
++		/apex/com.android.runtime/bin/linkerconfig --target /linkerconfig
++		echo "<0>A16DBG: linkerconfig rc=$?; ld.config=$(ls -l /linkerconfig/ld.config.txt 2>&1)" > /dev/kmsg
+ 	fi
+ fi
++	if [ -d /boot/linkerconfig ] && [ -f /boot/linkerconfig/ld.config.txt ]; then
++	    mkdir -p /linkerconfig/bootstrap /linkerconfig/default
++	    cp /boot/linkerconfig/ld.config.txt /linkerconfig/ld.config.txt
++	    cp /boot/linkerconfig/ld.config.txt /linkerconfig/bootstrap/ld.config.txt
++	    cp /boot/linkerconfig/ld.config.txt /linkerconfig/default/ld.config.txt
++	    echo "<0>A16DBG: linkerconfig preinstalled from initrd" > /dev/kmsg
++	fi
++
++echo "<0>A16DBG: system mounted; bstandroid=[$bstandroid]; sysinit=$(ls -l /system/bin/init 2>&1); linker=$(ls -l /system/bin/bootstrap/linker64 2>&1); apexrt=$(ls -ld /apex/com.android.runtime 2>&1)" > /dev/kmsg
+ 
+ #mkdir cache
+ mount -t tmpfs tmpfs cache
+@@ -196,7 +299,7 @@ if [ $? -eq 0 ]; then
+ 	env HAS_CTTY=Yes setsid cttyhack /boot/bin/sh
+ fi
+ 
+-PATH=/system/bin:/system/xbin:/sbin
++PATH=/boot/sbin:/boot/bin:/system/bin:/system/xbin:/sbin
+ 
+ #bstreport timeline "first_stage_init_completed"
+ 
+@@ -207,7 +310,10 @@ populate_bst_conf
+ generate_android_ids
+ 
+ # load vbox specific modules
+-load_module /boot/bstmods/vboxguest.ko
++# TEMP(A16 bringup verify): 重新尝试加载 vboxguest.ko, 但失败不退出, 仅打印 rc 验证。
++log_echo "Loading module /boot/bstmods/vboxguest.ko (non-fatal verify)"
++insmod /boot/bstmods/vboxguest.ko
++echo "<0>A16DBG: insmod vboxguest.ko rc=$?" > /dev/kmsg
+ vboxuser=`/boot/bin/busybox cat /sys/devices/virtual/misc/vboxuser/uevent`
+ if [ ! -z "$vboxuser" ]; then
+     MAJOR=`/boot/bin/busybox echo $vboxuser | /boot/bin/busybox cut -d '=' -f 2 | /boot/bin/busybox cut -d ' ' -f 1`
+@@ -221,7 +327,10 @@ fi
+ 
+ #bstreport timeline "vbox_guest_loaded"
+ 
+-load_module /boot/bstmods/vboxsf.ko
++# TEMP(A16 bringup verify): 重新尝试加载 vboxsf.ko, 但失败不退出, 仅打印 rc 验证。
++log_echo "Loading module /boot/bstmods/vboxsf.ko (non-fatal verify)"
++insmod /boot/bstmods/vboxsf.ko
++echo "<0>A16DBG: insmod vboxsf.ko rc=$?" > /dev/kmsg
+ 
+ if [ ! -z "$BST_GRAPHICS_ENGINE" ]; then
+     echo $BST_GRAPHICS_ENGINE > /proc/glmode
+@@ -241,8 +350,9 @@ else
+ 	log_echo "bst.mem_pcr_pclimit property not found"
+ fi
+ 
+-mkdir /dev/block
+-ln -s /dev/sdb1 /dev/block/sdb1
++/boot/bin/busybox mkdir -p /dev/block
++/boot/bin/busybox ln -s /dev/sdb1 /dev/block/sdb1
+ 
+ log_echo "Running stage2 script"
+-exec sh /boot/stage2.sh
++echo "<0>A16DBG: init.sh done, exec stage2.sh" > /dev/kmsg
++exec /boot/bin/sh /boot/stage2.sh
+diff --git a/guest/BootImage/stage2.sh b/guest/BootImage/stage2.sh
+old mode 100644
+new mode 100755
+index f39b7178c1..9616b660f2
+--- a/guest/BootImage/stage2.sh
++++ b/guest/BootImage/stage2.sh
+@@ -33,19 +33,25 @@ die_if_error()
+ log_echo "Mounting file systems"
+ mkdir -p /mnt/tmp
+ 
++echo "<0>A16DBG: stage2 start, before source bstsetup.env" > /dev/kmsg
+ source /boot/bstsetup.env
++echo "<0>A16DBG: stage2 sourced bstsetup.env rc=$?" > /dev/kmsg
+ source /boot/4-dpi
++echo "<0>A16DBG: stage2 sourced 4-dpi rc=$?" > /dev/kmsg
+ 
+ if [ "$BST_0DCT" -ne 0 ]; then
+     zerofree_data
+ fi
+ 
++echo "<0>A16DBG: stage2 before mount_data (BST_0DCT=[$BST_0DCT])" > /dev/kmsg
+ mount_data
++echo "<0>A16DBG: stage2 mount_data done rc=$?" > /dev/kmsg
+ prepare_bst_filesystems
+ enable_swapspace
+ setup_dpi
+ set_propfile_permissions
+ setup_memory_allocator
++echo "<0>A16DBG: stage2 fs/dpi/mem setup done" > /dev/kmsg
+ 
+ 
+ mount -t debugfs debugfs /sys/kernel/debug 2> /dev/null
+@@ -115,4 +121,28 @@ log_echo "Starting Android"
+ 
+ #bstreport timeline "second_stage_init_completed"
+ 
++
++# R225/R226: HST device probe for graphics bringup (before exec /init)
++if [ -c /dev/bstpgaipc ]; then
++  echo "<0>A16DBG: R226 /dev/bstpgaipc present $(ls -l /dev/bstpgaipc)" > /dev/kmsg
++else
++  echo "<3>A16DBG: R226 /dev/bstpgaipc MISSING" > /dev/kmsg
++fi
++
++# R246: writable /metadata (stock post-fs mkdirs fail on ro root without metadata partition)
++/boot/bin/busybox mkdir -p /metadata 2>/dev/null
++if ! /boot/bin/busybox mountpoint -q /metadata 2>/dev/null; then
++    /boot/bin/busybox mount -t tmpfs tmpfs /metadata -o mode=0711,size=256m 2>/dev/null || true
++elif ! /boot/bin/busybox touch /metadata/.rwtest 2>/dev/null; then
++    /boot/bin/busybox umount /metadata 2>/dev/null || true
++    /boot/bin/busybox mount -t tmpfs tmpfs /metadata -o mode=0711,size=256m 2>/dev/null || true
++fi
++/boot/bin/busybox rm -f /metadata/.rwtest 2>/dev/null
++/boot/bin/busybox mkdir -p /metadata/aconfig/maps /metadata/apex 2>/dev/null
++echo "<0>A16DBG: R246 metadata tmpfs rw mounted" > /dev/kmsg
++
++echo "<0>A16DBG: stage2 about to exec /init; /init=$(ls -l /init 2>&1); target=$(ls -l /system/bin/init 2>&1)" > /dev/kmsg
+ exec /init
++echo "<0>A16DBG: exec /init FAILED rc=$?" > /dev/kmsg
++
++
+diff --git a/guest/Drivers/Makefile b/guest/Drivers/Makefile
+index e4b50a890f..90b2e3ef62 100644
+--- a/guest/Drivers/Makefile
++++ b/guest/Drivers/Makefile
+@@ -1,5 +1,9 @@
+ all:
++ifneq ($(and $(VBOX_GUEST_ADDITIONS),$(wildcard $(VBOX_GUEST_ADDITIONS)/vboxguest)),)
+ 	$(MAKE) -C VirtualBox all
++else
++	@echo "Skipping VirtualBox guest drivers (VBOX_GUEST_ADDITIONS missing)"
++endif
+ 	$(MAKE) -C ${HD_SOURCE_TOP}/Source/vmsg/guest/driver all
+ 	$(MAKE) -C ${HD_SOURCE_TOP}/Source/inp/guest/driver all
+ 	$(MAKE) -C ${HD_SOURCE_TOP}/Source/aud/guest/driver all

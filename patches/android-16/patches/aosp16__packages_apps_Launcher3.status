@@ -1,0 +1,4 @@
+ M AndroidManifest.xml
+ M quickstep/AndroidManifest-launcher.xml
+ M quickstep/src/com/android/quickstep/OverviewComponentObserver.java
+ M src/com/android/launcher3/widget/WidgetManagerHelper.java

@@ -1,0 +1,33 @@
+#!/system/bin/sh
+data_path="/data"
+proper_shutdown_file="$data_path/.bstshutdown_sync"
+output_debug_path="/data/local/tmp"
+corrupt_files_deleted="$output_debug_path/corrupt_files_deleted"
+
+if [ "0$1" = "0" ]
+then
+    /system/bin/proper_shutdown daemon
+    exit 0
+fi
+
+echo -e "Running fix xml as last shutdown was not proper"
+
+cd $data_path
+rm -f $corrupt_files_deleted
+for file in `find . -iname "*.xml" | grep -iv "./data/" | grep -iv "./user_de/"`
+do
+    if [ "$(head -c 3 $file)" == "ABX" ]; then
+        echo -e "$file is binary xml, continue"
+        continue
+    fi
+    /system/bin/xmllint --format $file > /dev/null;
+    if [ "$?" -ne "0" ]; then
+        echo -e "Deleting file $file"
+        rm -rf $file
+        echo $file >> "$corrupt_files_deleted";
+    fi;
+done
+
+echo -e "fix proper_shutdown script exiting"
+exit 0
+

@@ -1,0 +1,35 @@
+diff --git a/base/Android.bp b/base/Android.bp
+index 334f0df..3026c57 100644
+--- a/base/Android.bp
++++ b/base/Android.bp
+@@ -60,7 +60,7 @@ cc_library_static {
+ // Run with `atest --host gfxstream_base_tests`
+ cc_test_host {
+     name: "gfxstream_base_tests",
+-    defaults: ["gfxstream_defaults"],
++    // defaults: ["gfxstream_defaults"],
+     srcs: [
+         "LruCache_unittest.cpp",
+     ],
+@@ -80,7 +80,7 @@ cc_test_host {
+ 
+ cc_test_library {
+     name: "gfxstream_base_test_support",
+-    defaults: ["gfxstream_defaults"],
++    // defaults: ["gfxstream_defaults"],
+     header_libs: [
+         "aemu_common_headers",
+     ],
+diff --git a/host-common/Android.bp b/host-common/Android.bp
+index bea3a53..54949df 100644
+--- a/host-common/Android.bp
++++ b/host-common/Android.bp
+@@ -11,7 +11,7 @@ package {
+ 
+ cc_library_static {
+     name: "gfxstream_host_common",
+-    defaults: ["gfxstream_defaults"],
++    // defaults: ["gfxstream_defaults"],
+     header_libs: [
+         "aemu_common_headers",
+     ],

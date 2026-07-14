@@ -1,0 +1,104 @@
+diff --git a/bin/mm b/bin/mm
+index 6f1c9348d..6461b1e53 100755
+--- a/bin/mm
++++ b/bin/mm
+@@ -19,6 +19,6 @@ source $(cd $(dirname $BASH_SOURCE) &> /dev/null && pwd)/../../make/shell_utils.
+ 
+ require_top
+ 
+-_wrap_build "$TOP/build/soong/soong_ui.bash" --build-mode --modules-in-a-dir --dir="$(pwd)" "$@"
++_wrap_build "$TOP/build/soong/soong_ui.bash" --build-mode --modules-in-a-dir-no-deps --dir="$(pwd)" "$@"
+ 
+ exit $?
+diff --git a/bin/mmm b/bin/mmm
+index d9190e575..ab3a6321c 100755
+--- a/bin/mmm
++++ b/bin/mmm
+@@ -19,6 +19,6 @@ source $(cd $(dirname $BASH_SOURCE) &> /dev/null && pwd)/../../make/shell_utils.
+ 
+ require_top
+ 
+-_wrap_build "$TOP/build/soong/soong_ui.bash" --build-mode --modules-in-dirs --dir="$(pwd)" "$@"
++_wrap_build "$TOP/build/soong/soong_ui.bash" --build-mode --modules-in-dirs-no-deps --dir="$(pwd)" "$@"
+ 
+ exit $?
+diff --git a/cmd/soong_ui/main.go b/cmd/soong_ui/main.go
+index fd82b2d40..7b7e548ed 100644
+--- a/cmd/soong_ui/main.go
++++ b/cmd/soong_ui/main.go
+@@ -467,6 +467,14 @@ func buildActionConfig(ctx build.Context, args ...string) build.Config {
+ 		name:        "modules-in-a-dir",
+ 		description: "Build action: builds all of the modules in the current directory and their dependencies.",
+ 		action:      build.BUILD_MODULES_IN_A_DIRECTORY,
++	}, {
++		name:        "modules-in-a-dir-no-deps",
++		description: "Build action: builds all of the modules in the current directory without their dependencies.",
++		action:      build.BUILD_MODULES_IN_A_DIRECTORY,
++	}, {
++		name:        "modules-in-dirs-no-deps",
++		description: "Build action: builds all of the modules in the supplied directories without their dependencies.",
++		action:      build.BUILD_MODULES_IN_DIRECTORIES,
+ 	}, {
+ 		name:        "modules-in-dirs",
+ 		description: "Build action: builds all of the modules in the supplied directories and their dependencies.",
+diff --git a/scripts/check_boot_jars/package_allowed_list.txt b/scripts/check_boot_jars/package_allowed_list.txt
+index 38c72b8b3..1b71f5874 100644
+--- a/scripts/check_boot_jars/package_allowed_list.txt
++++ b/scripts/check_boot_jars/package_allowed_list.txt
+@@ -220,6 +220,8 @@ javax\.microedition\.khronos\.opengles
+ javax\.microedition\.khronos\.egl
+ 
+ android
++com\.bluestacks\.os
++com\.bluestacks\.os\..*
+ 
+ ###################################################
+ # apache-xml.jar
+diff --git a/ui/build/androidmk_denylist.go b/ui/build/androidmk_denylist.go
+index 3cccfcaef..f7123f67a 100644
+--- a/ui/build/androidmk_denylist.go
++++ b/ui/build/androidmk_denylist.go
+@@ -61,6 +61,19 @@ var androidmk_denylist []string = []string{
+ 
+ var androidmk_allowlist []string = []string{
+ 	"bootable/deprecated-ota/updater/Android.mk",
++	"bootable/newinstaller/Android.mk",
++	"device/generic/common/nativebridge/Android.mk",
++	"device/generic/common/app/Android.mk",
++	"packages/apps/BstCommandProcessor/Android.mk",
++	"packages/apps/BstCommandProcessor/jni/Android.mk",
++	"frameworks/base/services/java/com/bluestacks/server/native/Android.mk",
++	"external/bluestacks/sensors/Android.mk",
++	"external/bluestacks/bstshutdown/Android.mk",
++	"external/bluestacks/bstshutdown/shutdown_binary/Android.mk",
++	"external/bluestacks/bstshutdown/shutdown_setprop/Android.mk",
++	"external/bluestacks/bstgps/Android.mk",
++	"external/bluestacks/bstsyncfs/Android.mk",
++	"external/bluestacks/bstfolder/Android.mk",
+ }
+ 
+ func getAllLines(ctx Context, filename string) []string {
+diff --git a/ui/build/finder.go b/ui/build/finder.go
+index 011b5b59e..43ac2abe2 100644
+--- a/ui/build/finder.go
++++ b/ui/build/finder.go
+@@ -141,6 +141,19 @@ func FindSources(ctx Context, config Config, f *finder.Finder) {
+ 
+ 	// Stop searching a subdirectory recursively after finding an Android.mk.
+ 	androidMks := f.FindFirstNamedAt(".", "Android.mk")
++	// BlueStacks: out-of-tree Android.mk paths (same as android-13 app-player).
++	outsideModList := []string{
++		"../hd/Source/vmsg/guest/Android.mk",
++		"../hd/Source/xpl/Android.mk",
++		"../hd/Source/tools/bstconf/Android.mk",
++		"../hd/Source/tools/bstchkdata/Android.mk",
++		"../hd/Source/hcall/guest/Android.mk",
++		"../hd/Source/gcall/guest/Android.mk",
++		"../ggl/goldfish-opengl-pie/Android.mk",
++	}
++	for _, outsideMod := range outsideModList {
++		androidMks = append(androidMks, outsideMod)
++	}
+ 	androidMks = ignoreSomeAndroidMks(androidMks)
+ 	blockAndroidMks(ctx, androidMks)
+ 	err := dumpListToFile(ctx, config, androidMks, filepath.Join(dumpDir, "Android.mk.list"))

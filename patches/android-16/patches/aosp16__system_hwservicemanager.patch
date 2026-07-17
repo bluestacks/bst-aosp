@@ -33,3 +33,16 @@ index ce4db63..67017b8 100644
      user system
      disabled
      group system readproc
+diff --git a/service.cpp b/service.cpp
+index ec8cef1..92a1e1c 100644
+--- a/service.cpp
++++ b/service.cpp
+@@ -148,7 +148,7 @@ int main() {
+     // TODO(b/36424585): make fatal
+     ProcessState::self()->setCallRestriction(ProcessState::CallRestriction::ERROR_IF_NOT_ONEWAY);
+     auto transport = android::hardware::getTransport(ServiceManager::descriptor, serviceName);
+-    if (transport == android::vintf::Transport::EMPTY) {
++    if (false) /* BlueStacks DIAG 2026-07-17: force HIDL supported; proper fix = VINTF level */ {
+         ALOGI("HIDL is not supported on this device so hwservicemanager is not needed");
+         int rc = property_set("hwservicemanager.disabled", "true");
+         if (rc) {

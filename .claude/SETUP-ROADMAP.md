@@ -5,59 +5,64 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 
 ---
 
-## Phase 0 — 环境设置（三端）+ 定制清单重新生成  ·  **当前**
+## 已完成里程碑（归档）
 
-脚手架已就绪。本阶段聚焦三端环境检查+设置，并重新生成定制清单。
+### M0 — 脚手架 + 环境 + android-13 win 基线
+- [x] 脚手架（CLAUDE.md/rules/commands/skill/docs/registry）。
+- [x] clouddev aosp16 sync（`android-16.0.0_r4`）。
+- [x] win android-13 基线：`Root.vhd` 打包 → UUID 匹配 → BlueStacks 启动到 launcher（2026-06-25）。
 
-- [x] 脚手架（CLAUDE.md/rules/commands/skill/settings/docs/registry）+ clouddev/aosp16 sync（247G）+ 初版 registry（289 项，待重新生成）。
-- [ ] **win host（本机 `C:\workspace\app-player`）**：tag `bst-v5.22.210-5.22.210.1033`（已✅）；按需 init 子模块（host 构建 hd/ggl；android 部分**只需 android-13**）；确认 BlueStacks 已装 + 镜像替换路径。
-- [ ] **mac host（`zeqing@172.16.0.204 ~/app-player-mac`）**：免密已设；checkout 到 tag `bst-v5.21.700-nxt_mac2-5.21.700.7526`（先处理 submodule 指针漂移）；android-mac 已 init；按需 init 其他；确认 BlueStacks 已装 + 镜像替换路径。
-- [ ] **guest（clouddev）**：android-13/android-mac 子模块递归 init 完成；补 **hd 兄弟目录 + buildscripts + kernel64-hyperv**（buildscripts/Makefile 流程所需）。
-- [ ] **定制清单重新生成**：基于 app-player(win)/app-player-mac(mac) 的 android-13 子模块重新 triage（修正 mac 基线/作者过滤），更新 registry。
+### M1 — android-16 win boot（完成 · 2026-07-14）
+- [x] 完整源码构建 `system.img`（lunch `android_x86_64-trunk_staging-eng`）。
+- [x] boot 到 launcher：`sys.boot_completed=1` → host `Player state: ready` → Settings 可见 → 优雅关机。
+- [x] 权威存档：[patches/android-16/RESTORE.md](../patches/android-16/RESTORE.md)（20 tracked patch + 92 untracked + bootimage/kernel）。
+- [x] 问题全流程：[progress/android-16-boot-guide.md](../progress/android-16-boot-guide.md)。
 
-**Gate→P1**：三端环境就绪、android-13 树可构建、定制清单重新生成。
-
----
-
-## Phase 1 — android-13 基线（win+mac）· **aosp16 前置 gate**
-
-把**原本 android-13** 完整流水线在两端跑通，验证构建/打包/替换/运行链路：
-
-- [ ] guest 编译（clouddev，buildscripts/Makefile）：android-13 → iso_img/ramdisk + hd 内核模块 + kernel → `Root.vdi`（win vbox/hyperv、mac）。
-- [ ] 打包 + 替换：Root.vdi 替换进 win/mac host 已装 BlueStacks 的 guest 镜像位置。
-- [ ] 运行 + 测试：两端启动 BlueStacks、guest 到 launcher、基本 smoke（Layer 2 oracle）。
-- 解锁：`/remote-build`、`/boot-verify`、host-guest-contract 激活。
-
-**Gate→P2（关键）**：win+mac 两端 android-13 基线 build→package→replace→run/test 全通过。**未通过不做 aosp16。**
+> **注意**：M1 boot 跑在 `device/generic/common` + `device/generic/x86_64`，含大量 **临时 bringup hack**（permissive SELinux、check bypass、`r262` 关 shell transitions）。下一阶段要把临时 patch 与清单最小 patch **融合转正**，并迁移到统一板 `device/bst/qvirt`。
 
 ---
 
-## Phase 2 — aosp16 guest 升级（基线通过后才开始）
+## 当前阶段：清单融合移植（Phase 1 → Phase 2）
 
-- [ ] port **统一板 `device/bst/qvirt`** 到 android-16（bst_arm64 mac + bst_x86_64 win）。
-- [ ] port hardware/bst HAL、external/bluestacks/*、frameworks/bionic 等（按重新生成的 registry）。
-- [ ] hd guest 内核模块（vmsg/hcall/gcall/xpl）适配 android-16 内核 API。
-- [ ] android-16 guest 构建就绪（Layer 1）。
-- 解锁：patch-porting 全功能。
+```mermaid
+flowchart TD
+    regen["双端清单重生成 (-a13/-mac vs 上游13)"] --> analyze["分析: 统一/平台差异标注 + boot存量映射"]
+    analyze --> p1["Phase 1: 融合(临时patch + 清单最小patch)"]
+    p1 --> p1v["win 全验证回环(Layer1 build + Layer2 boot oracle)"]
+    p1v --> p2["Phase 2: 其余patch 按优先级 + 关联分组"]
+    p2 --> p2v["每组全验证回环 + 存patch + checkpoint"]
+    p2v --> macf["mac: 基于同份代码开发(不做验证)"]
+```
 
-**Gate→P3**：android-16 定制 guest 构建通过（Layer 1）。
+### Phase 1 — 完成（G1 ported，2026-07-17 boot 到 launcher）
 
----
+目标：把「能 boot 的最小集」从临时形态**转正为结构化的最小 BST 定制集**，并迁移到统一板 `device/bst/qvirt`（x86_64/arm64 各自定制）。
 
-## Phase 3 — android-16 host 适配 + 虚拟化 + 启动验证
+- [x] 双端定制清单重生成（`-a13`/`-mac` vs 上游 android-13）→ registry v2（196 条；review-fix 2026-07-15）。
+- [x] boot 存量映射进 registry（真定制 vs `temp_debt`）。
+- [x] Phase 1 / Phase 2 计划成文（`progress/phase1-port-plan.md` / `phase2-port-plan.md`）。
+- [x] **G1** 统一板 `device/bst/qvirt` / `bst_x86_64`（脚手架 ✅；Layer1 ✅ `m droid` rc=0；Layer2 ✅ boot 到 launcher，host oracle 全绿，Root.vhd `2a7a497a`，porting-log cont.4）→ [G1 checkpoint](../patches/android-16/checkpoints/G1.md)。
+- [ ] Phase 1 patch-group G2–G10 移植（见 [patches/registry.md](../patches/registry.md)）。
+- [ ] 每组：文档（源/用途/质量/影响）→ Layer 1 →（并入 boot 镜像时）Layer 2 回归 → 存 patch → checkpoint。
+- 规则：`.claude/rules/dual-platform-customization.md`、`patch-porting.md`、`platform-win-first-mac-reuse.md`、`instrumentation-and-tests.md`。
 
-- [ ] host 适配（guest 触发）：hd/图形驱动/虚拟化按需调整。
-- [ ] Layer 2 启动验证（android-16 image 经 host 虚拟化启动到 launcher，oracle 全绿）。
-- 解锁：role-agents + `/review` 全功能。
+**Gate→P2**：win 上 G1–G10 融合完成 + Layer 2 boot 回归全绿 + 临时债登记完整；检查点可从 `RESTORE` 机制恢复。
 
-**Gate→P4**：android-16 image 启动到 launcher，两端 host 兼容。
+**Phase 1 Gate ✅ 达成（2026-07-17）**：win G1 boot 到 launcher + host oracle 全绿 + 临时债登记完整；检查点可从 `G1-RESTORE.md` 恢复。**当前 = Phase 2**（temp_debt 收口 + G2-G10 余项有序移植）。
 
----
+### Phase 2 — 其余定制 + 临时债收口
 
-## Phase 4 — 功能对齐 + 收尾 / CI
+- [ ] registry 中非 P1 项按优先级 + 关联分组移植。
+- [ ] 临时债真实修复：BST sepolicy、BLAST/SF commit callback（撤销 `r262`）、fstab/vold。
+- [ ] 功能对齐 android-13 baseline。
+- [ ] **mac**：基于同一份代码（统一源 + arm64 平台差异）开发；**不做独立验证**。
 
-- [ ] 功能对齐 android-13 baseline（功能/回归测试）。
-- [ ] CI 化回归；deny 收紧；create-pr 流程；复盘剪枝。
+**Gate→P3**：功能对齐通过；临时债清零或显式 escalate；mac 代码就位。
+
+### Phase 3 — host 适配收尾 / CI
+
+- [ ] host 适配（hd/图形/虚拟化按需）。
+- [ ] CI 化回归；deny 收紧；create-pr；复盘剪枝。
 
 **Gate**：进入内部 dogfooding。
 
@@ -65,11 +70,10 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 
 ## 跨阶段主线：自动 review→fix 循环
 
-把 `implement → checkpoint → review → fix` 做成**可闭环**的循环，happy path 无人介入，人作异常处理器（非收敛/高严重度），不做每步 gate。这是整个项目论点的 dev-loop 表达，在此设计一次，跨阶段搭建。
+把 `implement → checkpoint → review → fix` 做成**可闭环**的循环，happy path 无人介入，人作异常处理器（非收敛/高严重度）。
 
-- **P0 前置**（已建）：`/review` 在新子代理跑 `quick-review`，返回结构化 findings，自动修机械集、readback 重验、≤3 轮、升级其余。
-- **P1**：把循环接到 Layer 1 gate 作机械通过判据。
-- **P2**：把 Layer 2 boot oracle 接入为 pass criterion。
-- **P3+**：加 read-only reviewer agent（opus, fresh context），按改动规模 tiered（quick 每改 / thorough feature 级）。
+- **已建**：`/review` 在新子代理跑 `quick-review`，机械发现自动修并重验，≤3 轮，升级其余。
+- **Phase 1**：Layer 1 每组强制；Layer 2 boot 回归在「并入 boot 镜像」节点跑。
+- **Phase 2+**：Layer 2 为每组 pass criterion；临时债（sepolicy/BLAST）属判断性 → escalate。
 
 **自主边界（仅机械性）**：自动修 `#ifdef`/platform 宏/fstab 字段/clang-format/死 include/BoardConfig typo/init rc 语法/missing plan items；升级 dm-verity/SELinux/打包/binder-HAL/图形契约/虚拟化设备模型/host↔guest 契约/rebase 语义判断。编码于 `/review`。

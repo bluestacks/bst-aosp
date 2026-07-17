@@ -19,14 +19,16 @@ ssh <host> 'cd <remote-root> && bash -lc "source build/envsetup.sh && lunch <tar
 
 ### Layer 2 — 启动/行为 readback oracle 套件
 
-**时序前提**：需 host 最小实现已 port 入虚拟化（`qvm`/`vbox`）。**guest 构建就绪 ≠ 可启动验证**；按 Phase 2 顺序：guest 就绪 → port 虚拟化进 host → 启动验证。Phase 1 仅达 Layer 1。
+**当前（Phase 2）**：win BlueStacks 路径 Layer 2 已跑通（Phase 1 G1 boot 到 launcher，host oracle 全绿，见 `progress/porting-log.md` cont.4 / `patches/android-16/checkpoints/G1-RESTORE.md` §6）。Layer 1 每 patch-group 强制；Layer 2 在「并入 boot 镜像」节点跑（相关组可批量后一次验证）。
 
-oracle 清单与取数见 [docs/boot-oracles.md](../../docs/boot-oracles.md)：kernel boot log（串口/`adb shell dmesg`）、分区 by-name symlink、动态分区创建、分区挂载、init rc 解析、SELinux 域转换、vbmeta/verity、bootanim→launcher。
+> **stale-oracle 教训（2026-07-17 G1 bringup）**：oracle 字符串/取数通道本身要先验真格式，再据它下判断。`g1_boot_verify.ps1` 旧 `Player state: ready` 短语永不命中（HD-Player 实际用 `[Ready]` 行内 tag）→ 成功 boot 也判 FAIL（假阴性）；`VBoxManage showhdinfo` 的 UUID 是注册表缓存值、非文件 footer 实际。**verify-by-readback 适用于 readback 通道本身** —— 先确认通道/字符串对，再读数。
 
-- **陷阱条款**：Layer 1 通过**不构成 done**。只有 Layer 2 至少覆盖「分区挂载 + init 关键服务 + 无 SELinux 阻塞 + 启动到 launcher」才算完成。
+oracle 清单与取数见 [docs/boot-oracles.md](../../docs/boot-oracles.md) + boot-guide：kernel/串口、`system mounted from sfs`、init、odsign/boot.art、`boot_completed`、`Player state: ready`、Settings、优雅关机。
+
+- **陷阱条款**：Layer 1 通过**不构成 done**。并入 boot 的组须 Layer 2 至少覆盖挂载 + init + launcher/ready。
 - 若 Layer 2 因耗时本会话跑不完，summary 标 `verification: build-only, boot-pending` 并登记 `progress/`。
-- **开发中不必每改必跑**：批量改动完成后跑一次即可，不必每个小 edit 都跑。
-- **若跳过**：说明原因并列出补救步骤。**绝不未跑就声称 gate 通过。**
+- **mac 不做 Layer 2**（见 `platform-win-first-mac-reuse.md`）。
+- **绝不未跑就声称 gate 通过。**
 
 ## 以 readback 验证，而非信任确认（Verify by readback）
 

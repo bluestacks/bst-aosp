@@ -4,23 +4,30 @@
 
 ## 一句话
 
-guest 是基于 android-16.0.0_r4 的完整 AOSP 树；把 `-a13`/`-mac` BlueStacks fork 相对上游 android-13 的定制 port 过来；win 先行、mac 跟进；guest 就绪后 port 虚拟化（`qvm`/`vbox`）进 host 最小实现再启动验证。
+guest 是基于 android-16.0.0_r4 的完整 AOSP 树；把 `-a13`/`-mac` 定制 port 过来；**win 先行验证、mac 同码复用**；统一板 `device/bst/qvirt`（x86_64/arm64 各自定制）。
 
 ## 组件角色
 
-- **guest**：kernel + goldfish-opengl（图形）+ frameworks-base 等（完整 AOSP 树）。两端统一。
-- **host 图形驱动**：qemu fork（**非虚拟化**，可从 mac 分支构建）。
-- **host 虚拟化**：mac `qvm` / win `vbox`（在 `app-player` 的 `hd/` 内）。
+- **guest**：kernel + goldfish-opengl（图形）+ frameworks-base 等（完整 AOSP 树）。
+- **host 图形驱动**：qemu fork（**非虚拟化**）。
+- **host 虚拟化**：mac `qvm` / win `vbox`（`app-player` 的 `hd/` 内）。
 - **host 框架**：`hd`（win `hd.git` / mac `hd-mac.git`）。
 
 ## 验证（两层）
 
 - **Layer 1 编译**：远程 `lunch` + `m`，回读 exit code + 产物。
-- **Layer 2 启动**：kernel log / 分区挂载 / init / SELinux / verity / bootanim。需虚拟化就位后跑。
-- 原则：**Verify by readback** —— `m` 成功 ≠ 能启动。
+- **Layer 2 启动**：boot oracle（sfs 挂载 → `boot_completed` → `Player state: ready` → Settings → 优雅关机）。
+- 原则：**Verify by readback**；每次修改加埋点（`A16DBG:`）与测试。
 
-## 阶段
+## 阶段（当前）
 
-P0 环境就绪 + 定制清单（构建前 diff） → P1 自定义板 + 最小 guest 改动集（Layer 1） → P2 host 镜像产出 + port 虚拟化 + Layer 2 启动验证 → P3 功能对齐 + 两端 host 兼容 → P4 收尾/CI。
+| 里程碑 | 状态 |
+|---|---|
+| M1 android-16 win boot | **完成**（2026-07-14；存档 `patches/android-16/`） |
+| Phase 1 清单融合 + qvirt 迁移 | **完成**（G1 ported，2026-07-17 boot 到 launcher，Root.vhd `2a7a497a`） |
+| Phase 2 其余定制 + 临时债收口 + mac 同码 | **当前** |
+| Phase 3 host/CI | 后 |
 
-详见 [architecture.md](architecture.md)。
+工作单元 = **patch-group**（关联一起移植）→ 全验证回环 → 存 patch → checkpoint 可恢复。
+
+详情：[architecture.md](architecture.md) · [SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md) · [phase1-port-plan.md](progress/phase1-port-plan.md)。

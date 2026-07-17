@@ -9,7 +9,7 @@
 
 按顺序自动跑，不等被催：
 
-1. **Validate** — `validation-gate.md` 的两层（Layer 1 远程编译 + Layer 2 启动 readback）。注意时序：Phase 1 仅 Layer 1；Layer 2 需虚拟化就位（Phase 2 起）。按 readback 验证，别假设改对了。
+1. **Validate** — `validation-gate.md` 的两层（Layer 1 远程编译 + Layer 2 启动 readback）。时序：**boot 关键组（G1 统一板 / G10 打包）Layer 2 强制**（Phase 1 G1 已据此 boot 到 launcher）；其余组 Layer 1 先行，Layer 2 在并入 boot 镜像时跑。按 readback 验证，别假设改对了。
 2. **Checkpoint** — 写/刷新 `.claude/summary.md`（若接受的计划还没存，先写 `.claude/plan.md`），按 `/save-summary`。这是 review 读取的轨迹，也是日后 PR 的依据。
 3. **Review→fix** — 跑 `/review`，传入本工作单元的 **review base**（开分支时的 fork 来源，见 `CLAUDE.md` 的「每工作单元开独立分支」）。新子代理对整条分支 vs base diff 审查；机械发现自动修并重验，≤3 轮。
 4. **Report** — 「converged + verified」（附 readback 证据），或升级清单。

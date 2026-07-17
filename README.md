@@ -15,13 +15,13 @@
 
 ## 阶段状态
 
-| Phase | 内容 | 状态 |
+| 阶段 | 内容 | 状态 |
 |---|---|---|
-| P0 | 三端环境设置（win host 本机 / mac host 172.16.0.204 / guest clouddev）+ 定制清单重新生成 | 🟡 clouddev/aosp16 就绪；win/mac host 设置 + 清单重生成 待 |
-| P1 | **android-13 基线**（win+mac：guest 编译→打包→替换 host→运行测试） | ⬜ aosp16 前置 gate |
-| P2 | aosp16 guest 升级（统一板 device/bst/qvirt + 定制 port） | ⬜ 基线通过后开始 |
-| P3 | android-16 host 适配 + 虚拟化 + Layer 2 启动验证 | ⬜ |
-| P4 | 功能对齐 + 收尾 / CI | ⬜ |
+| M0 | 三端环境设置（win host / mac host / guest clouddev）+ 定制清单重新生成（registry v2） | ✅ |
+| M1 | android-16 win boot（临时形态，存档 `patches/android-16/`） | ✅（2026-07-14） |
+| Phase 1 | 融合最小 boot 集转正 + 统一板 `device/bst/qvirt` / `bst_x86_64`（**G1 ported，boot 到 launcher**） | ✅（2026-07-17，Root.vhd `2a7a497a`） |
+| Phase 2 | 其余定制（G2-G10）+ temp_debt 收口（service.cpp→VINTF、gralloc→init.sh、r262 BLAST…） | 🔄 当前 |
+| Phase 3 | mac 同码（`bst_arm64`）+ host 适配 + 功能对齐 + CI | ⬜ |
 
 见 [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md)。
 

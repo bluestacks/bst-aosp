@@ -41,7 +41,7 @@
 
 ## 当前阶段
 
-**Phase 0 — 环境就绪 + 定制清单（构建前）。** 远程主机能连、完整 AOSP 树从拉代码做起、**构建前先 diff 出定制清单并评估分阶段**、vanilla android-16 能构建。详见 [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md)。
+**Phase 1 — 完成（G1 ported，2026-07-17）。** 统一板 `device/bst/qvirt` / `bst_x86_64` boot 到 launcher（host boot oracle 全绿，readback 证实，porting-log cont.4；Root.vhd `2a7a497a`）。修复链：packaging(create_vdi 分区+UUID) → hwservicemanager(PRODUCT_PACKAGES) → bs_bootlog(fastboot KDIR) → gralloc=bst → BST launcher 预装。**当前 Phase 2**：temp_debt 收口 + G2-G10 有序移植。详见 [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md) · [G1 checkpoint](patches/android-16/checkpoints/G1.md)。
 
 ## Build / test / verify（远程形态）
 
@@ -56,19 +56,21 @@ ssh <host> 'cd <remote-root> && bash -lc "source build/envsetup.sh && lunch <tar
 
 **Layer 2 — 启动/行为 readback oracle 套件**（需 host 最小实现已 port 入虚拟化后才能跑；详见 [docs/boot-oracles.md](docs/boot-oracles.md)）：kernel boot log、分区 by-name symlink、动态分区创建、分区挂载、init rc 解析、SELinux 域转换、vbmeta/verity、bootanim→launcher。
 
-> **时序前提**：guest 构建就绪 ≠ 可启动验证。Phase 1 仅达 Layer 1；Phase 2 才 port 虚拟化进 host 最小实现并做 Layer 2。
+> **时序**：Phase 1 起 win 路径 Layer 2 已可用（M1 boot 后）；mac 不做独立验证。详见 [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md)。
 
 ## Working agreement
 
-- **构建前先出定制清单。** 自动 diff `-a13`/`-mac` fork vs 上游 android-13 找出定制，评估每项应在哪个阶段做（写入 `patches/registry.json`，标 phase）。见 [.claude/rules/patch-porting.md](.claude/rules/patch-porting.md)。
-- **自定义板先做。** device/board overlay 是构建前提（如 `-mac` 添加的自定义板），先于其余定制。
-- **每工作单元开独立分支**，记住 fork 来源作为 review base，传给 `/review`。
+- **双端定制清单 + 有意识统一。** diff `-a13`/`-mac` vs 上游 android-13；同一定制归 `unify_group`；平台特有加平台区分。见 [.claude/rules/dual-platform-customization.md](.claude/rules/dual-platform-customization.md)。
+- **统一板先做。** `device/bst/qvirt`（`bst_x86_64` / `bst_arm64`）是构建前提；arch 差异下沉 BoardConfig。
+- **工作单元 = patch-group**（关联 patch 一起移植）；每组全验证回环 + 文档（源/用途/质量/影响）+ 存 patch + checkpoint。见 [.claude/rules/patch-porting.md](.claude/rules/patch-porting.md)。
+- **win 先行验证；mac 基于同码、不做独立验证。** 见 [.claude/rules/platform-win-first-mac-reuse.md](.claude/rules/platform-win-first-mac-reuse.md)。
+- **每次修改加埋点 + 测试。** 见 [.claude/rules/instrumentation-and-tests.md](.claude/rules/instrumentation-and-tests.md)。
 - **完成循环自动跑完**：validate → checkpoint → review→fix → report；人类只在「计划接受」和「escalation」介入。见 [.claude/rules/completion-loop.md](.claude/rules/completion-loop.md)。
-- **Research before action**：先读权威源（上游 AOSP 源码、`-a13`/`-mac` fork 定制、`app-player` 编译脚本），再 grep/猜测。见 [.claude/rules/research-before-action.md](.claude/rules/research-before-action.md)。
-- **机械性自主、契约/歧义升级**：dm-verity/SELinux/打包/binder-HAL/图形契约/虚拟化设备模型/rebase 语义判断 → escalate，不自行修。见 [.claude/commands/review.md](.claude/commands/review.md)。
-- **host-guest 契约**：guest 升级绝不静默破坏 host（mac `qvm` / win `app-player`+`vbox`）。见 [.claude/rules/host-guest-contract.md](.claude/rules/host-guest-contract.md)。
-- **远程长任务必须后台化 + log 落盘**（nohup + PID + log 路径），断线靠 `ps -p <pid>` + `tail <log>` 恢复。见 [.claude/rules/remote-build.md](.claude/rules/remote-build.md)。
-- **文档/规则随改随同步**：机械性过期（路径/链接/phase 标签）直接改并回读验证；行为性规则改动落进 diff 并在 summary 记 Rule changes。见 [.claude/rules/rule-maintenance.md](.claude/rules/rule-maintenance.md)。
+- **Research before action**：先读权威源，再 grep/猜测。见 [.claude/rules/research-before-action.md](.claude/rules/research-before-action.md)。
+- **机械性自主、契约/歧义升级**：dm-verity/SELinux/打包/binder-HAL/图形契约/虚拟化设备模型/rebase 语义判断 → escalate。见 [.claude/commands/review.md](.claude/commands/review.md)。
+- **host-guest 契约**：guest 升级绝不静默破坏 host。见 [.claude/rules/host-guest-contract.md](.claude/rules/host-guest-contract.md)。
+- **远程长任务必须后台化 + log 落盘**。见 [.claude/rules/remote-build.md](.claude/rules/remote-build.md)。
+- **文档/规则随改随同步**。见 [.claude/rules/rule-maintenance.md](.claude/rules/rule-maintenance.md)。
 
 ## Commands
 

@@ -22,6 +22,43 @@ ssh markxu@172.16.6.191 'cd ~/aosp16 && bash -lc "source build/envsetup.sh && lu
 
 - 产物：`~/aosp16/out/target/product/<device>/*.img`、`~/aosp16/out/dist/`。
 
+## G1（android-16 `bst_x86_64`）Phase 1 — build+pack+deploy+verify（权威，对齐 buildscripts）
+
+> 当前活跃流程。单一入口 `scripts/g1_build_pack.sh`（win Git Bash 跑）。详见 [`patches/android-16/checkpoints/G1-RESTORE.md`](../patches/android-16/checkpoints/G1-RESTORE.md) + [`G1.md`](../patches/android-16/checkpoints/G1.md) + porting-log cont.4。
+> 调试约束：**禁 `m clean`（用 installclean）+ 禁 apk 重编**（apk 用 prebuilt，g1_copy_bst_apks 从 apks_Baklava64 拷）。
+
+```bash
+# 全流程（远程 build/pack → win deploy → win boot verify）
+bash scripts/g1_build_pack.sh
+# 调试提速：跳过 m droid（用现有 OUT），只 pack+deploy+verify
+bash scripts/g1_build_pack.sh --no-build
+# 只重 pack（stage+copy_apks+r228），不 build/deploy/verify
+bash scripts/g1_build_pack.sh --pack-only
+```
+
+**流程分解**（g1_build_pack.sh 内部，每步 readback）：
+1. 远程 `g1_build.sh`：`lunch bst_x86_64-trunk_staging-eng` + env（OUT_DIR=out_nxt_Baklava64 / ALLOW_MISSING_DEPENDENCIES=true / 见 G1-RESTORE §1）+ `m droid -j24`（Layer1，含 vendor/system_ext fold 进 OUT system/ 目录）。
+2. 远程 `g1_build_libs.sh`：hd guest 10 模块 + goldfish mmm（EGL/gralloc/hwc2）。
+3. 远程 `g1_stage_system.sh`：rsync OUT `qvirt/system/`（含 vendor/system_ext/product 子目录 = fold）→ `~/releases/Baklava64/system`。
+4. 远程 `g1_copy_bst_apks.sh`：append `ro.hardware.gralloc=bst`+`egl=emulation` 到 staged build.prop（抗 rsync --delete）+ BST apk（launcher/gamecenter/bsxlauncher）预装 priv-app（含 unzip native lib）。
+5. 远程 `r228-pack-root.sh`（= buildscripts pack）：`make-baklava-system-sfs`（含 e2fsdroid SELinux contexts）→ `Root.fs` → **`create_vdi.sh`**（parted msdos 分区 sda1 + mke2fs）→ `VBoxManage clonehd --format VHD` → `sethduuid 54e9ad31`。
+6. win `g1_win_deploy.ps1`：scp Root.vhd（md5 校验，备份旧版替换）。
+7. win 干净首启：`Data_orig.vhdx → Data.vhdx`（**copy，勿删**）。
+8. win `g1_boot_verify.ps1`：Layer2 boot oracle（`[Ready]` tag + fUiHideBootProgressBar + ActivityDisplayed）。
+
+**fastboot.vdi 重建**（kernel-a16 + 修复版 bs_bootlog initrd；非每次，仅 kernel/bs_bootlog 变时）：
+```bash
+ssh markxu@172.16.6.191 'cd ~/app-player/hd/guest/BootImage && KDIR=~/aosp16/kernel-a16 make build_fastboot'
+# → fastboot/fastboot.vdi；sethduuid 91b80c95；scp 到 Engine\Tiramisu64\fastboot.vdi
+```
+
+**⚠️ gotchas（必读，见 G1.md「踩坑速查」）**：
+- **Data.vhdx 勿删**：干净首启 `Data_orig.vhdx → Data.vhdx`（copy）。删了 → VBox `Could not open medium Data.vhdx` → 卡 [Initializing]。
+- **UUID 验 footer 不信 showhdinfo**：`showhdinfo` 显示注册表缓存值；文件实际 UUID 看 hexdump footer offset 64。r228 远程 sethduuid 曾报成功但没真改 footer。
+- **fastboot build_fastboot 须设 `KDIR=~/aosp16/kernel-a16`**（否则 `No rule to make target '/arch/x86/boot/bzImage'`）。
+- **create_vdi「挂起」= chown read-only abort**：r228 开头清 nbd + 重建干净 Root.fs 即解。
+- **launcher 在 Priv-Downloads 段**：buildscripts `copy_system_apks` 遇 Data: 就 break，不拷 launcher（它在 Priv-Downloads）→ G1 删 dataFS 后缺 → FallbackHome。故 `g1_copy_bst_apks.sh` **硬编码 APK 列表 force 预装 priv-app**（不读 APPCONFFILE）。历史：早期版本读 APPCONFFILE 须 `tr -d '\r'`（CRLF）。
+
 ## guest kernel（已 checkout）
 
 - **win**：`~/kernel-common-a13/`（remote `bluestacks/kernel-common-a13.git`，分支 `aosp13-sync`）。

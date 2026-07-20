@@ -25,3 +25,5 @@ PRODUCT_MANUFACTURER := bst
 # trigger a build for the Make systemimage path, so it never compiled -> all HIDL vendor HALs
 # (keymaster/configstore/health/drm/hwcomposer) SIGABRT on register. Formal product-config install.
 PRODUCT_PACKAGES += hwservicemanager
+PRODUCT_SHIPPING_API_LEVEL := 34  # G9/Phase2: claim VINTF level U=8 so build keeps target-level=8 (not legacy); hidl.manager max-level=8 active -> hwsm survives w/o DIAG
+PRODUCT_PROPERTY_OVERRIDES += ro.hardware.gralloc=bst ro.hardware.egl=emulation  # Phase2 formal: bake into build.prop (replaces g1_copy_bst_apks append temp_debt)

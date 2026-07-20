@@ -820,3 +820,22 @@ Phase 2 P0(temp_debt 收口)第一个目标:service.cpp DIAG bypass 正式修。
 4. 若存活 → DIAG 撤,service.cpp temp_debt 收口;gralloc PRODUCT_PROPERTY_OVERRIDES 下一项。
 
 **本地 bst_x86_64.mk 已 sync**(PRODUCT_SHIPPING_API_LEVEL=34)。
+
+## 2026-07-20 (cont.8) — rebuild 完成,PRODUCT_SHIPPING_API_LEVEL=34 未改 target-level(假设推翻)
+
+**m droid rebuild 完成**(PID 2102409→g1_build.sh,~1.5h):system.img md5 `e66990a69d42eef4d3e516f1f65aa04f` + vndservicemanager IN system.img(folded)。build rc=1(goldfish mmm 段可能失败,m droid 本身产 system.img)。
+
+**PRODUCT_PROPERTY_OVERRIDES 未烘进 build.prop**:rebuild 启动后才加的 mk 改动,该 build 没读到(下一 rebuild 才烘)。
+
+**★ PRODUCT_SHIPPING_API_LEVEL=34 假设推翻**:built vendor manifest **target-level 仍 "legacy"**(未变 8)。PRODUCT_SHIPPING_API_LEVEL **不控制** vendor manifest target-level。service.cpp DIAG 正式修方向还需继续查(build 里真正设 target-level 的机制)。
+
+**下一步(Phase 2 续)**:查 build 的 vendor manifest assembly 真正的 target-level 来源(可能是 assemble_vintf 的一个参数、或 device manifest 本身被 build 重新生成的逻辑)。target-level=legacy 的 XML 解析为 UNSPECIFIED(SIZE_MAX>8)→ hidl.manager 被滤 → 这是 DIAG 的真根因。找到设 target-level=8 的 build 机制 → DIAG 可撤。
+
+**service.cpp 当前态**:远程 git commit 42bfd1a(DIAG bypass + temp_debt + A16DBG:HWSM transport)。Windows 部署 5303c8ed(DIAG,boot 到 launcher,host oracle 全绿)。**Phase 1 工作态稳固**。
+
+**bst_x86_64.mk 当前 3 项正式修(待各自 rebuild 验证)**:
+1. `PRODUCT_PACKAGES += hwservicemanager` ✅(已验证:hwsm 产出 + HAL SIGABRT 156→0)。
+2. `PRODUCT_SHIPPING_API_LEVEL := 34` ❌(未改 target-level,假设推翻)。
+3. `PRODUCT_PROPERTY_OVERRIDES += ro.hardware.gralloc=bst` ⏳(待下一 rebuild 烘进 build.prop)。
+
+**Phase 2 整体状态**:service.cpp DIAG 正式修(build target-level 机制待查)+ gralloc PRODUCT_PROPERTY_OVERRIDES(待 rebuild)+ r262 BLAST(待研究)+ sepolicy(escalation)+ 152 pending 条目。Phase 2 是多日工程。

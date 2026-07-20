@@ -806,3 +806,17 @@ Phase 2 P0(temp_debt 收口)第一个目标:service.cpp DIAG bypass 正式修。
 **当前态**:已 revert service.cpp 到 DIAG commit(42bfd1a)+ staged vendor manifest 回 legacy。远程树 = 安全 DIAG 态(与 Windows 5303c8ed 一致)。target-level=8 测试 edits 已撤。
 
 **Phase 2 续**:① 查 build 为何 target-level 8→legacy(grep assemble_vintf + PRODUCT_SHIPPING_API_LEVEL / VINTF level var;G9 build adapt);② 干净 create_vdi 环境(等 nbd/mke2fs 不 flaky)跑 target-level=8 + 撤 DIAG 验证;③ 若 hwsm 存活 → DIAG 撤,service.cpp 正式修落地(temp_debt 收口)。
+
+## 2026-07-20 (cont.7) — Phase 2: service.cpp DIAG 正式修实施(PRODUCT_SHIPPING_API_LEVEL=34 + m droid rebuild 进行中)
+
+**Level.h 关键**:VINTF level `U (Android 14) = 8`。`hidl.manager max-level=8` = U。device 需 target-level ≤ 8。XML `target-level="legacy"` 解析为 **UNSPECIFIED (SIZE_MAX > 8)** → hidl.manager 被滤 → hwsm 自杀。source `target-level="8"`(U)正确,但 build 因 `PRODUCT_SHIPPING_API_LEVEL` 未设 → assemble_vintf 输出 `legacy`(UNSPECIFIED)。
+
+**正式修**:`bst_x86_64.mk` 加 `PRODUCT_SHIPPING_API_LEVEL := 34`(Android 14 = U = VINTF level 8)→ build 计算 level 8 → vendor manifest `target-level=8`(非 legacy)→ hidl.manager active → hwsm 存活 → **DIAG 可撤**。BST guest 基于 A14 HIDL 基线(继承 A13 HIDL HAL),claim VINTF level 8 合理。
+
+**进行中**:m droid rebuild(远程 PID 2090788,~/g1_shipping_rebuild.log,数小时)。rebuild 后:
+1. 验 built vendor manifest `target-level=8`(非 legacy)。
+2. 撤 DIAG(service.cpp 还原 if(transport==EMPTY))。
+3. r228 pack(干净 create_vdi)+ boot → hwsm 存活?(A16DBG:HWSM-EMPTY absent + disabled=0)
+4. 若存活 → DIAG 撤,service.cpp temp_debt 收口;gralloc PRODUCT_PROPERTY_OVERRIDES 下一项。
+
+**本地 bst_x86_64.mk 已 sync**(PRODUCT_SHIPPING_API_LEVEL=34)。

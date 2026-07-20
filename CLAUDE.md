@@ -71,6 +71,7 @@ ssh <host> 'cd <remote-root> && bash -lc "source build/envsetup.sh && lunch <tar
 - **host-guest 契约**：guest 升级绝不静默破坏 host。见 [.claude/rules/host-guest-contract.md](.claude/rules/host-guest-contract.md)。
 - **远程长任务必须后台化 + log 落盘**。见 [.claude/rules/remote-build.md](.claude/rules/remote-build.md)。
 - **文档/规则随改随同步**。见 [.claude/rules/rule-maintenance.md](.claude/rules/rule-maintenance.md)。
+- **改动合规(5 条硬要求)**：远程 commit + 正式/temp_debt 标注 + 关键打点(A16DBG)+ BST 可溯源 + 与本地 patch 一致(干净 AOSP 可恢复)。后续所有移植遵守。见 [.claude/rules/change-compliance.md](.claude/rules/change-compliance.md)。
 
 ## Commands
 

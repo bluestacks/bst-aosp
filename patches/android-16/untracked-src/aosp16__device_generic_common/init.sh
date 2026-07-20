@@ -37,7 +37,8 @@ function init_hal_gralloc()
 {
 	[ "$VULKAN" = "1" ] && GRALLOC=gbm
 
-	[ -z "$(getprop ro.hardware.gralloc)" ] && set_property ro.hardware.egl emulation
+	[ -z "$(getprop ro.hardware.gralloc)" ] && set_property ro.hardware.gralloc bst
+	[ -z "$(getprop ro.hardware.egl)" ] && set_property ro.hardware.egl emulation
 	[ -n "$DEBUG" ] && set_property debug.egl.trace error
 }
 

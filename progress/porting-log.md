@@ -768,3 +768,23 @@ bs_bootlog 修确认生效（ZYGLOG `nested=0/total=59103` = 1:1 真内容，非
 2. **r228 远程 `VBoxManage sethduuid` 不可靠**：报 `UUID changed to 54e9ad31` 但 hexdump footer 实测**没真改**（远程 BstkVBox 怪行为）；`showhdinfo` 显示 54e9ad31 是**注册表缓存值**，非文件实际。文件 footer UUID 实际是 54e9ad31（本就对，sethduuid 是空操作）。教训：验 UUID 看 footer（hexdump offset 64），不信 showhdinfo。
 
 **G1 Phase 1 完成**：boot 到 launcher（可见可交互），host boot oracle 全绿，无 M1 系统产物（launcher 等 BST apk 用 BST prebuilt 源）。累计改动（待存 patch+registry+commit）：PRODUCT_PACKAGES hwsm（G9 正式）、service.cpp DIAG bypass（temp_debt，正式=libhidl_vintf）、gralloc=bst build.prop append（temp_debt，正式=init.sh）、BST apk 预装 g1_copy_bst_apks.sh、pack 对齐 r228 create_vdi、fastboot KDIR、boot_verify [Ready] oracle、libhidl_vintf（VINTF level 正式补丁）。下一步：Phase 1 收尾（本日 cont.4 之后）= 存 patch + registry ported + checkpoint + review + commit + buildscripts 流程整合 + 文档同步。
+
+## 2026-07-20 (cont.5) — 合规化整改 P1a/P1b 验证：VINTF④ 不足（DIAG 留）+ init.sh gralloc 无效（build.prop append 才可靠）
+
+按合规化计划（正式/打点+可测/BST 可溯源 review）做 P1a/P1b 两个 boot 周期验证，**两个原计划的「正式修」都被实测推翻**：
+
+**P1b 验证：VINTF level patch(④) 能否替代 service.cpp DIAG(②) → 不能。**
+- 测试：撤 DIAG（service.cpp 还原 `if(transport==EMPTY)` + EMPTY 分支加 `A16DBG:HWSM-EMPTY`）+ 保留 ④（manifest hidl.manager max-level=8）→ 重 pack + 干净首启。
+- 实测（Root.vhd `4516dc39`）：`hwservicemanager.disabled=true` = **5**（hwsm 自杀）+ HAL SIGABRT = **411** + hwcomposer SIGSEGV = **278** → **boot 失败**。
+- **结论：VINTF ④ runtime 不足**——device manifest `target-level="legacy"` 在 runtime 过滤掉 framework manifest 的 `hidl.manager max-level=8` → `getTransport(IServiceManager)==EMPTY` → hwsm 自杀。④ 只过 build-time `check_vintf_all`，runtime 无效。
+- **DIAG(②) 必须留**（temp_debt）。正式修 ≠ ④，而是 **改 device manifest `target-level` 或 device 侧 manifest**（Phase 2）。已回滚 service.cpp 到 DIAG `if(false)` + 补字面 `temp_debt` + A16DBG:HWSM（移到 if 外，避免死代码消除；ALOGI 在 Player.log 不浮现是通道问题，code 内有）。
+
+**P1a 验证：init.sh gralloc 正式修（替代 build.prop append）→ 无效。**
+- 测试：init.sh `init_hal_gralloc()` 加 `set_property ro.hardware.gralloc bst` + 去掉 g1_copy_bst_apks 的 build.prop append → 重 pack + 干净首启。
+- 实测：hwcomposer SIGSEGV = **490→830**（gralloc 没设，hwcomposer 崩循环）+ adb 不可达 + 无 launcher。
+- **结论：init.sh gralloc 无效**——init.sh 脚本在 hwcomposer 初始化**之后**才跑 → gralloc 在 hwcomposer init 时未设 → SIGSEGV。build.prop 是 init **极早**加载（HAL 之前）→ append 才可靠。
+- **正式修 ≠ init.sh，而是 `PRODUCT_PROPERTY_OVERRIDES += ro.hardware.gralloc=bst` in bst_x86_64.mk**（build 时烘进 build.prop，极早加载）。需 rebuild 才烘；在此之前 build.prop append（g1_copy_bst_apks）是可靠机制（已恢复 + 文档注明）。
+
+**工作态恢复**：回滚 DIAG + 恢复 build.prop append → Root.vhd `5303c8ed4eb6eed671c0dc10a1ad0319` → 干净首启 host oracle 全绿（Player ready + fUiHideBootProgressBar + ActivityDisplayed；hwcomposer SIGSEGV=0；hwsm disabled=0 DIAG 生效）。**Phase 1 工作态恢复，且 service.cpp 带 temp_debt 字面 + A16DBG（合规改进）。**
+
+**合规化状态**：service.cpp DIAG 已标 temp_debt + A16DBG ✓；gralloc 机制（build.prop append）文档注明可靠 + 正式修=PRODUCT_PROPERTY_OVERRIDES（Phase 2 rebuild）✓；VINTF ④ 文档注明 runtime 不足 ✓。待续：P2b(libhidl_vintf registry 登记，降级为 build-time-only)、P2c(temp_debt 标记修正 security/art)、P2d(build_make system_image_defaults dep 清理)、P3a/b(框架 bypass A16DBG + provenance 头)。

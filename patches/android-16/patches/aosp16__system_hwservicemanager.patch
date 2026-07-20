@@ -34,15 +34,17 @@ index ce4db63..67017b8 100644
      disabled
      group system readproc
 diff --git a/service.cpp b/service.cpp
-index ec8cef1..92a1e1c 100644
+index ec8cef1..1134b99 100644
 --- a/service.cpp
 +++ b/service.cpp
-@@ -148,7 +148,7 @@ int main() {
+@@ -148,7 +148,9 @@ int main() {
      // TODO(b/36424585): make fatal
      ProcessState::self()->setCallRestriction(ProcessState::CallRestriction::ERROR_IF_NOT_ONEWAY);
      auto transport = android::hardware::getTransport(ServiceManager::descriptor, serviceName);
 -    if (transport == android::vintf::Transport::EMPTY) {
-+    if (false) /* BlueStacks DIAG 2026-07-17: force HIDL supported; proper fix = VINTF level */ {
++    ALOGI("A16DBG:HWSM transport=%d; DIAG bypass active (if(false) over EMPTY branch; VINTF hidl.manager max-level=8 INSUFFICIENT at runtime target-level=legacy -> keep DIAG temp_debt; Phase 2 formal fix = device manifest target-level)", (int)transport);
++    if (false) /* BlueStacks DIAG temp_debt 2026-07-20: force HIDL supported. VINTF manifest(hidl.manager max-level=8) INSUFFICIENT at runtime — device manifest target-level=legacy filters it -> getTransport EMPTY -> hwservicemanager self-disables (verified 2026-07-20: disabled=true set + HAL SIGABRT 411). Phase 2 formal fix: change device manifest target-level OR device-side manifest, not framework max-level. */ {
++        ALOGI("A16DBG:HWSM-DIAG-BYPASS active (transport==EMPTY bypassed; VINTF runtime insufficient at target-level=legacy)");
          ALOGI("HIDL is not supported on this device so hwservicemanager is not needed");
          int rc = property_set("hwservicemanager.disabled", "true");
          if (rc) {

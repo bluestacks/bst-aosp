@@ -12,10 +12,13 @@ LOG=~/g1_copy_bst_apks.log
 exec > >(tee "$LOG") 2>&1
 echo "A16DBG:G1: copy_bst_apks (force priv-app pre-install) start $(date -Is)"
 
-# --- G3 graphics props (survive re-stage: g1_stage_system.sh rsync --delete wipes manual appends) ---
-# Without ro.hardware.gralloc=bst, hw_get_module("gralloc") falls back to gralloc.default.so (pruned)
-# -> NULL -> hwcomposer.default.so SIGSEGV. init.sh init_hal_gralloc() forgets to set this (formal
-# fix pending in init.sh); build.prop append is the reliable post-stage mechanism for now.
+# ro.hardware.gralloc=bst + ro.hardware.egl=emulation — RELIABLE mechanism (early build.prop load).
+# NOTE: init.sh init_hal_gralloc() was tried as the formal fix but PROVEN INEFFECTIVE (2026-07-20):
+# init.sh runs AFTER hwcomposer inits -> gralloc unset at hwcomposer init -> hwcomposer SIGSEGV ×830.
+# build.prop is loaded by init VERY early (before HALs) -> append here is reliable.
+# FORMAL fix (Phase 2, needs rebuild to bake): PRODUCT_PROPERTY_OVERRIDES += ro.hardware.gralloc=bst
+# in device/bst/qvirt/bst_x86_64.mk (bakes into build.prop at build time). Until that rebuild,
+# this post-stage append is the working mechanism.
 PROP="$OUT/build.prop"
 grep -q '^ro.hardware.gralloc=' "$PROP" 2>/dev/null || echo "ro.hardware.gralloc=bst" >> "$PROP"
 grep -q '^ro.hardware.egl=' "$PROP" 2>/dev/null || echo "ro.hardware.egl=emulation" >> "$PROP"

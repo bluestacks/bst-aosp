@@ -788,3 +788,21 @@ bs_bootlog 修确认生效（ZYGLOG `nested=0/total=59103` = 1:1 真内容，非
 **工作态恢复**：回滚 DIAG + 恢复 build.prop append → Root.vhd `5303c8ed4eb6eed671c0dc10a1ad0319` → 干净首启 host oracle 全绿（Player ready + fUiHideBootProgressBar + ActivityDisplayed；hwcomposer SIGSEGV=0；hwsm disabled=0 DIAG 生效）。**Phase 1 工作态恢复，且 service.cpp 带 temp_debt 字面 + A16DBG（合规改进）。**
 
 **合规化状态**：service.cpp DIAG 已标 temp_debt + A16DBG ✓；gralloc 机制（build.prop append）文档注明可靠 + 正式修=PRODUCT_PROPERTY_OVERRIDES（Phase 2 rebuild）✓；VINTF ④ 文档注明 runtime 不足 ✓。待续：P2b(libhidl_vintf registry 登记，降级为 build-time-only)、P2c(temp_debt 标记修正 security/art)、P2d(build_make system_image_defaults dep 清理)、P3a/b(框架 bypass A16DBG + provenance 头)。
+
+## 2026-07-20 (cont.6) — Phase 2 启动:service.cpp DIAG 正式修方向找到(target-level 8→legacy build bug)
+
+Phase 2 P0(temp_debt 收口)第一个目标:service.cpp DIAG bypass 正式修。P1b(2026-07-17)证 VINTF framework manifest(hidl.manager max-level=8)runtime 不足,推测 device `target-level=legacy` 过滤。本日深查:
+
+**★ 关键发现:source 是 target-level=8,build 改成了 legacy!**
+- source `device/generic/common/manifest.xml`:`target-level="8"`(Henry a13 + keep A16 target-level,正确)。
+- build 产物 `out.../system/vendor/etc/vintf/manifest.xml`:`target-level="legacy"`(version 1.0→9.0,target-level 8→legacy)。
+- 即 **build 的 assemble_vintf 重新生成 vendor manifest,把 source 的 8 覆盖成 legacy**(可能因 PRODUCT_SHIPPING_API_LEVEL / VINTF level 未设 → 默认 legacy)。
+- runtime target-level=legacy → 过滤 framework hidl.manager max-level=8 → getTransport(IServiceManager)==EMPTY → hwsm 自杀 → DIAG 必需。
+
+**正式修方向**:让 build 产 vendor manifest target-level=8(设 PRODUCT_SHIPPING_API_LEVEL / VINTF level,或让 assemble_vintf 保留 source target-level)。target-level=8 at runtime → hidl.manager active → getTransport 非 EMPTY → hwsm 存活 → **DIAG 可撤**。
+
+**测试(target-level=8 + 撤 DIAG)被 create_vdi flaky 阻塞**:4 次 r228 pack,target-level=8 版本都撞 create_vdi `mke2fs nbd4p1: Cannot format as ext4`(环境性 nbd 分区可见性问题;5303c8ed 那次碰巧过了)。非内容问题(staged system.sfs 1GB 正常)。
+
+**当前态**:已 revert service.cpp 到 DIAG commit(42bfd1a)+ staged vendor manifest 回 legacy。远程树 = 安全 DIAG 态(与 Windows 5303c8ed 一致)。target-level=8 测试 edits 已撤。
+
+**Phase 2 续**:① 查 build 为何 target-level 8→legacy(grep assemble_vintf + PRODUCT_SHIPPING_API_LEVEL / VINTF level var;G9 build adapt);② 干净 create_vdi 环境(等 nbd/mke2fs 不 flaky)跑 target-level=8 + 撤 DIAG 验证;③ 若 hwsm 存活 → DIAG 撤,service.cpp 正式修落地(temp_debt 收口)。

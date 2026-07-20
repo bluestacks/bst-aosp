@@ -1,14 +1,15 @@
 diff --git a/keystore2/src/maintenance.rs b/keystore2/src/maintenance.rs
-index 38654850..3fcbda19 100644
+index 38654850..f7178f24 100644
 --- a/keystore2/src/maintenance.rs
 +++ b/keystore2/src/maintenance.rs
-@@ -230,8 +230,9 @@ impl Maintenance {
+@@ -230,8 +230,10 @@ impl Maintenance {
      }
  
      fn early_boot_ended() -> Result<()> {
 -        check_keystore_permission(KeystorePerm::EarlyBootEnded)
 -            .context(ks_err!("Checking permission"))?;
 +        // BS bringup: bypass EarlyBootEnded permission check (TODO(restore))
++        info!("A16DBG:SEC-EARLYBOOT-BYPASS EarlyBootEnded check bypassed (BS bringup temp_debt)");
 +        let _ = check_keystore_permission(KeystorePerm::EarlyBootEnded)
 +            .context(ks_err!("Checking permission (bypassed)"));
          info!("In early_boot_ended.");

@@ -183,6 +183,25 @@
       "boot_artifact": "patches/android-16/patches/aosp16__system_hwservicemanager.patch (service.cpp DIAG 段)"
     },
     {
+      "id": "boot-system-libhidl-vintf",
+      "platform": "win",
+      "project_path": "system/libhidl",
+      "area": "framework",
+      "unify_group": "vintf",
+      "related_group": "G8",
+      "phase": "P1",
+      "temp_debt": false,
+      "confidence": "build-proven",
+      "purpose": "framework manifest (vintfdata/manifest.xml) 加 hidl.manager/allocator/token max-level=8 声明. 让 build-time check_vintf_all 通过 (m droid rc=0).",
+      "quality": "FORMAL build-time fix. RUNTIME INSUFFICIENT (verified 2026-07-20 P1b): device manifest target-level=legacy 在 runtime 过滤掉 framework hidl.manager max-level=8 -> getTransport(IServiceManager)==EMPTY -> hwservicemanager 自杀. 故 service.cpp DIAG bypass 必须留. Phase 2 runtime 正式修 = device manifest target-level 或 device 侧 manifest.",
+      "impact": "build-time VINTF check + framework manifest 声明; runtime 依赖 service.cpp DIAG(temp_debt)",
+      "port_status": "ported",
+      "host_compat": "ok",
+      "verification": "m droid rc=0 (check_vintf_all pass); runtime getTransport 仍 EMPTY (P1b verified) -> service.cpp DIAG 是 runtime 机制",
+      "checkpoint_ref": "patches/android-16/checkpoints/G1.md",
+      "boot_artifact": "patches/android-16/patches/aosp16__system_libhidl_vintf.patch"
+    },
+    {
       "id": "g1-apks-preinstall",
       "platform": "win",
       "project_path": "app-player/buildscripts",

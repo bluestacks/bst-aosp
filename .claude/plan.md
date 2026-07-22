@@ -1,24 +1,29 @@
-# Plan — G1 Phase 1（统一板 device/bst/qvirt / bst_x86_64，boot 到 launcher）
+# Plan — Phase 2 guest 全量功能对齐（2026-07-22 cont.25 — 基线 7/7 恢复）
 
-> 本工作单元的 accepted plan + 执行结果。状态：**✅ 完成（2026-07-17 porting-log cont.4）**。
+> 唯一活跃阶段；host / Phase 3 **暂不规划**。权威：`progress/phase2-port-plan.md` · `progress/porting-log.md`。
 
 ## 目标
-把 M1 boot 的 `device/generic/*` overlay 并入统一板 `device/bst/qvirt`，新增 win 产品 `bst_x86_64`（与 mac `bst_arm64` 同板、arch 差异下沉 BoardConfig），**boot 到 launcher**（Layer2 boot 回归 gate）。无 M1 系统产物；M1 为权威（行为/结构对齐，不搬二进制）。正式改动为主，temp_debt 显式标注。
+按 `patch-porting.md` 把 a13 定制 **功能对齐**到 a16（非机械子集关门）。win Layer1+Layer2；mac 同码不独立验。
 
-## 执行（逐层 readback，非假设）
-1. **统一板脚手架** `device/bst/qvirt/{AndroidProducts,BoardConfig,bst_x86_64}.mk`（薄壳继承 generic，身份 override）+ `g1_equiv_check.sh` → EQUIVALENT。
-2. **Layer1** `m droid`（非 m systemimage —— 后者系统性缺 vendor/system_ext）rc=0，VINTF patch applied。
-3. **packaging** r228-pack-root.sh（= buildscripts create_vdi：msdos 分区 sda1 + clonehd VHD + sethduuid 54e9ad31），替代 qemu-img 绕过（无分区 → kernel panic）。
-4. **hwservicemanager** PRODUCT_PACKAGES（G9）→ HAL SIGABRT 清零；service.cpp DIAG bypass 自杀（temp，正式=VINTF level）。
-5. **fastboot** KDIR=~/aosp16/kernel-a16 make build_fastboot（修 r245 No rule bzImage）→ bs_bootlog 修部署。
-6. **gralloc=bst** build.prop append（temp，正式=init.sh）→ hwcomposer SIGSEGV 清零。
-7. **BST launcher 预装** g1_copy_bst_apks.sh（apks_Baklava64 prebuilt → priv-app + native lib）→ launcher 成 HOME → host [Ready]。
+## 已完成（证据）
+1. **Shell Transitions / r262**：补 `android.hardware.power-service.example` + 恢复 HintManager；Root **`840137ca`** Layer2 7/7；registry r262 → `removed`。
+2. **SELinux**：对齐 a13 permissive；`enabled.c→0` **blocked**。
+3. **FW-WM-1**：ActivityStarter `hideBlueStacksPkg` + ATM `getGlVersion`；patch 存档；树内保留；曾 Layer2 7/7（Root `4571efb3`）。
+4. **P3 prebuilts**：dropped。
 
-## 结果
-G1 boot 到 launcher（可见可交互），host boot oracle 全绿，Root.vhd `2a7a497a`。Phase 1 gate 达成。
+## 阻断 / 进行中
+1. ~~Win Data 污染~~：**已解** — Root `eb309e6c` + Data `wipe20260717` → **Layer2 7/7 @118s**（cont.25）。热路径回归是 Data 污染，非 WM-1 代码。
+2. **frameworks**：`win-frameworks-base` = `in_progress`；gap≈55（core/java 22 / services/core 25 含 PM 族 8 / SystemUI·SettingsProvider·telephony·accessibility·core/jni 共 8）。FW-WM-2 / FW-AM-1 **revert + escalate**。
 
-## 未做（Phase 2 收口 / 后续组）
-- temp_debt 正式化：service.cpp DIAG → libhidl_vintf；gralloc build.prop → init.sh；r262 BLAST；P2-APKS-DATAFS；vndservicemanager G9 build-config。
-- mac bst_arm64（win-first，Phase 3 host 阶段验）。
-- G2-G10 余项有序移植；buildscripts Makefile 把 bst_x86_64 接入 `make vbox`（彻底整合）。
-- CI / pre-commit（后续阶段）。
+## 下一步（基线已恢复，开始 port）
+1. **FW-CORE-APP**：core/java 22 文件 app 框架 BST hooks（Activity/ActivityThread/ContextImpl/View/ViewRootImpl/TextView/Editor/InputManager/Environment/Settings/NativeLibraryHelper…）。a13 fork-diff（base `android-13.0.0_r49`）→ surgical apply a16 → Layer1 `m framework` → 灌 systemimage → Layer2 7/7。
+2. 每次失败 boot **先 cp `wipe20260717`→Data.vhdx 恢复**再继续（Data 污染是已知陷阱）。
+3. 热路径（FW-AM/FW-WM-2/GRM/PM 族）基线稳固后带 persist.bst.* kill-switch 小切片重做。
+
+## 权威 Root（md5 前缀）
+| md5 | 备注 |
+|---|---|
+| `840137ca` | cont.22b 绿 |
+| `4571efb3` | FW-WM-1 曾绿（后被 Data 掩盖） |
+| `eb309e6c` | 当前权威（WM-1 only） |
+| `4e144a82` / `2d2a3f80` | 坏（勿用） |

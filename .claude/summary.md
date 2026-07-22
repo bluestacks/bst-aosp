@@ -1,52 +1,58 @@
-# Summary — G1 Phase 1 完成（统一板 device/bst/qvirt / bst_x86_64）
+# Summary — Phase 2 进行中（2026-07-22 cont.25 — Win Layer2 7/7 基线已恢复）
 
-> checkpoint of the G1 Phase 1 work unit（boot 到 launcher，host oracle 全绿，2026-07-17 porting-log cont.4）。
-> 权威详情：[`patches/android-16/checkpoints/G1.md`](../patches/android-16/checkpoints/G1.md) · 时间线 [`progress/porting-log.md`](../progress/porting-log.md) cont.1~cont.4。
+> guest 全量功能对齐；host/Phase3 暂不规划。权威时间线：`progress/porting-log.md` · 计划：`progress/phase2-port-plan.md`。
 
-## 定制 / 改动（id）
+## 已收口
 
-| registry id | 角色 | temp_debt | 正式化 |
+| 项 | 证据 |
+|---|---|
+| Shell Transitions / r262 | `power-service.example` + HintManager；Root **`840137ca`** Layer2 7/7（cont.22b）；registry r262 → `removed` |
+| SELinux | a13 permissive；`enabled.c→0` **blocked** |
+| mac `bst_arm64` | scaffold；无独立 Layer2 |
+| P3 prebuilts | **dropped**（人类搁置 Phase3） |
+| FW-WM-1 | ActivityStarter hideBlueStacksPkg + ATM getGlVersion；patch 已存；树内保留 |
+
+## 进行中 / 阻断
+
+| 项 | 状态 |
+|---|---|
+| Win Layer2 基线 | ✅ **恢复 7/7 @118s**（Root `eb309e6c` + `Data.vhdx.wipe20260717`）；证实热路径回归是 Data 污染非 WM-1 代码 |
+| `win-frameworks-base` | `in_progress`；gap≈55 文件（core/java 22 / services/core 25 / 其余 8） |
+| FW-WM-2 / FW-AM-1 | **revert + escalate**（热路径；基线稳后带 kill-switch 重做） |
+
+## 绿 / 坏 Root（md5 前缀）
+
+| md5 | 备注 |
+|---|---|
+| **`dc4d2653`** | **当前权威**（FW-CORE-APP-3 foundation，Layer2 7/7 @534s，严格优于 8a5703ac）|
+| `8a5703ac` | FW-CORE-APP-2（7/7 @383s）|
+| `6f6575a1` | FW-CORE-APP-1（7/7 @124s）|
+| `840137ca` | cont.22b 绿（performance_hint） |
+| `eb309e6c` | WM-1 repack（基线恢复用） |
+| `4e144a82` / `2d2a3f80` | AM-1 / WM-2 **坏**（勿用） |
+
+## Data 备用
+
+- **用**：`Data.vhdx.wipe20260717-141744`（首选）、`bak.2137`、`bak-r244-*`
+- **禁**：`Data_orig.vhdx`、`bak.2202`（空盘 panic）
+- 半擦 keystore **不够**：须连 locksettings/spblob，否则 `SP protector key is missing`
+
+## 已完成：FW-CORE-APP-1/2/3（cont.26-30）✅
+
+| 批 | 文件 | commit | Layer2 |
 |---|---|---|---|
-| `boot-device-generic-common` / `-x86_64` | M1 boot 板配置（已 ported 进 G1） | false | — |
-| `g1-apks-preinstall` | BST launcher/gamecenter/bsxlauncher 预装 priv-app（g1_copy_bst_apks.sh） | false | — |
-| `g1-pack-pipeline` | pack 对齐 buildscripts（r228 create_vdi 分区+UUID + fastboot KDIR + boot_verify oracle） | false | — |
-| `g1-verify-ready-tag` | boot_verify ready oracle 对齐 [Ready] tag | false | — |
-| `g1-property-gralloc-egl` | ro.hardware.gralloc=bst / egl=emulation（build.prop append） | **true** | 正式 = init.sh init_hal_gralloc()（Phase 2） |
-| `g1-hwservicemanager-service-bypass` | service.cpp if(false) bypass HIDL 自杀 | **true** | 正式 = libhidl_vintf VINTF level patch（Phase 2） |
-| `boot-vndservicemanager` | m systemimage 不构建 → 现 m droid 原生解决（overlay 弃用） | true | G9 build-config 显式装进 system |
+| APP-1 | AccessibilityManager / EditText / InputMethodService | `c4e34c7f` | 7/7 @124s |
+| APP-2 | View（Roblox）/ ApkLiteParseUtils（Pokemon）| `050e473c` | 7/7 @383s |
+| APP-3 | Instrumentation（bst 方法）/ ContextImpl（startActivity hook，foundation）| `23fe7f0d` | 7/7 @534s |
+| 权威 Root | **`dc4d2653`**（FW-WM-1 + APP-1/2/3，**7/22 core/java ported**）| | |
+| 关键学习 | `m framework` 只产 .class jar（须 m droid 做 dexpreopt+install）；**a16 新增 public BST 方法须 `/** @hide */`**（否则 metalava UnflaggedApi）；henry python3 失控进程饿死 build，merge_zips "ninja may be stuck" 是假警报。 | | |
 
-## 源 commit / patch（已捕获入 patches/android-16/patches/）
-- `aosp16__system_hwservicemanager.patch`（Android.bp + hwservicemanager.rc + **service.cpp DIAG bypass**，temp_debt）
-- `aosp16__system_libhidl_vintf.patch`（framework manifest hidl.manager/allocator/token max-level=8，**VINTF level 正式解**）
-- `aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch`（temp_debt，P2-TEMP-BLAST）
-- `untracked-src/aosp16__device_bst_qvirt/`（bst_x86_64.mk 含 `PRODUCT_PACKAGES += hwservicemanager`，G9）
-- M1 boot patches（frameworks_base/native/build_make/system_core/...）+ device_generic_common overlay
+## 下一步
 
-## 冲突解决（rebase / fork-diff overlay，跨 android-13→16）
-- packaging：早期 `qemu-img convert -O vpc` 绕过 create_vdi → 无分区表（无 sda1）→ kernel panic。改 r228 create_vdi（parted msdos + mke2fs）+ sethduuid 54e9ad31。
-- hwservicemanager：build_make `system_image_defaults` deps 对 Make systemimage 路径不触发编译 → 不产出 → HAL SIGABRT。改 PRODUCT_PACKAGES（device 层）。
-- hwservicemanager 自杀：A16 `getTransport(IServiceManager)==EMPTY`（VINTF level 过滤 hidl.manager）→ 自杀。DIAG bypass（temp）+ VINTF level patch（正式）。
-- gralloc：init.sh init_hal_gralloc() 漏设 ro.hardware.gralloc + prune 删 gralloc.default.so → hw_get_module NULL → hwcomposer SIGSEGV。build.prop append（temp）。
-- launcher：APPCONFFILE 归 Priv-Downloads（dataFS 首启装），G1 删 dataFS → launcher 缺 → FallbackHome → host 不 Ready。force 预装 priv-app。
+1. 剩余 15 core/java（ViewRootImpl FreeFireMax/Editor/TextView/InputManager/InputDevice/Environment/Settings/SharedPreferencesImpl/BaseBundle/ResourcesImpl/Display/…）按批续推（public hook 须加 @hide）
+2. 每次失败 boot **先 cp wipe20260717→Data.vhdx 恢复**再继续
+3. 热路径（FW-AM/FW-WM-2/GRM/PM 族 services/core）基线稳固后带 kill-switch 重做
 
-## upstream delta（android-13 → android-16.0.0_r4）
-- A16 hwservicemanager 加了「HIDL 不支持则自杀」（commit 523130f）→ 需 VINTF level 声明或 bypass。
-- A16 Shell Transitions 默认开 → goldfish BLAST commit callback 不返回 → r262 关（temp）。
-- A16 SF `trackPendingFrame: Invalid present fence` 日志（非致命，M1 同样有）。
+## Rule changes
 
-## verification（readback，非声称）
-- Layer1：`m droid` rc=0，VINTF patch applied。
-- Layer2（**boot 到 launcher**，Root.vhd `2a7a497a` + fastboot `8ebe81e7` + 干净 Data_orig 首启）：host boot oracle 全绿 —— `Player state: ready` + `fUiHideBootProgressBar` + `plrOnActivityDisplayedHcall`；`GlueStartVM failed=0`；`hwcomposer SIGSEGV=0`；adb `topResumedActivity=com.uncube.launcher3/...HomeActivity`。用户视觉确认：界面正常显示。
-
-## host-compat
-- win：smoke（boot 到 launcher）✅。
-- mac：bst_arm64 基于同码 + arm64 BoardConfig，Phase 3 host 阶段集中验（win-first）。
-
-## Rule changes（本工作单元）
-- validation-gate.md：补 stale-oracle 教训（oracle 字符串要先验真格式，见今日 porting-log）。
-- completion-loop.md：修「Phase 1 仅 Layer1」与「G1 必须 Layer2」的矛盾。
-
-## Follow-ups（本次登记不实施）
-- **J1（verify oracle 集）**：`g1_boot_verify.ps1` 有 7 oracle（4 guest 字符串 + 3 host），break 条件要求 7/7；但 summary/G1.md 把「全绿」圈定为 3 条 host 侧。guest 4 条经 bs_bootlog→Player.log 确可命中（cont.4 实测 system mounted=8/init second=8/odsign=4/boot_completed=5），但未跑完整 `g1_boot_verify.ps1` 到 7/7 早退确认。Phase 2：要么跑一次完整 verify 确认 7/7，要么把 oracle 集裁到 host-verifiable 3 条 + 加 `adb getprop sys.boot_completed`。
-- temp_debt 正式化（service.cpp→VINTF、gralloc→init.sh、r262、P2-APKS-DATAFS、vndservicemanager G9）。
-- mac bst_arm64（Phase 3 host 阶段验）；buildscripts Makefile 接 bst_x86_64；CI。
+无新行为规则；文档同步 cont.22–24 事实与 Data 备用策略。

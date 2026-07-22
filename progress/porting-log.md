@@ -839,3 +839,440 @@ Phase 2 P0(temp_debt 收口)第一个目标:service.cpp DIAG bypass 正式修。
 3. `PRODUCT_PROPERTY_OVERRIDES += ro.hardware.gralloc=bst` ⏳(待下一 rebuild 烘进 build.prop)。
 
 **Phase 2 整体状态**:service.cpp DIAG 正式修(build target-level 机制待查)+ gralloc PRODUCT_PROPERTY_OVERRIDES(待 rebuild)+ r262 BLAST(待研究)+ sepolicy(escalation)+ 152 pending 条目。Phase 2 是多日工程。
+
+## 2026-07-20 (cont.9) — ★ target-level 真源找到；target-level=8 假设实测推翻
+
+承 cont.8。查 `AssembleVintf.cpp`：
+
+```cpp
+if (!getBooleanFlag("VINTF_IGNORE_TARGET_FCM_VERSION") &&
+    !getBooleanFlag("PRODUCT_ENFORCE_VINTF_MANIFEST")) {
+    halManifest->mLevel = Level::LEGACY;  // 覆盖 source target-level=8
+}
+```
+
+**host 回读证明**（`assemble_vintf` 单跑）：
+| 环境 | 输出 target-level |
+|---|---|
+| `ENFORCE=false`（现状） | `legacy` |
+| `ENFORCE=true` | `8` |
+| `VINTF_IGNORE=true` + `ENFORCE=false` | `8` |
+
+`PRODUCT_SHIPPING_API_LEVEL` 不参与此路径。soong `vendorManifestType` 只传 `PRODUCT_ENFORCE_VINTF_MANIFEST`，不传 `VINTF_IGNORE`（ODM 路径才传 IGNORE）。
+
+**正式修实施 + Layer2 验证（失败）**：
+1. `bst_x86_64.mk`：`PRODUCT_SHIPPING_API_LEVEL=34` → 换成 `PRODUCT_ENFORCE_VINTF_MANIFEST := true`。
+2. 撤 DIAG（`service.cpp` 恢复 `transport == EMPTY`）+ `mmm hwservicemanager`（md5 `8ccf21bf…`，含 `A16DBG:HWSM-EMPTY`）。
+3. staged vendor manifest sed `legacy`→`8`（模拟 ENFORCE=true 组装结果）；launcher/gralloc 仍在。
+4. 最小 pack（**不**跑 stage/overlays/g8，防覆盖）→ Root.vhd `9bd5778e…` → win 部署 md5 一致。
+5. Layer2（720s）：**3/7**（PASS system_mounted/init_second/odsign；FAIL boot_completed/activity/ready/hide_boot）。
+6. 日志回读：`hwservicemanager.disabled=1`、`SIGABRT=574`、`Could not register=484`、`system_server=0`。**target-level=8 仍 EMPTY**。
+
+**结论订正**：P1b「target-level=legacy 滤掉 framework hidl.manager max-level=8」作为 DIAG 根因**不充分**——即使 target-level=8，getTransport 仍 EMPTY。`filterHalsByDeviceManifestLevel` 对 LEGACY=0 / U=8 均应保留 max-level=8 HAL（`8 < level` 才删）。真因另寻。
+
+**回滚**：win Root.vhd ← `5303c8ed…`（DIAG 工作态）；远程 `service.cpp` DIAG 恢复；staged manifest 回 legacy。
+
+**下一步（Phase 2 P0 续）**：
+1. **device-side** `android.hidl.manager` 写入 DEVICE manifest（`getTransport` 先 framework 后 device；device 条目可绕过 framework 过滤/缺失）。
+2. 或查 runtime 为何 framework 清单查不到 manager（路径/FQName/早启时机）。
+3. gralloc `PRODUCT_PROPERTY_OVERRIDES` 仍待 rebuild 烘入；`ENFORCE=true` 保留（正确保留 source level，但不够撤 DIAG）。
+
+## 2026-07-20 (cont.10) — ✅✅ DIAG 正式收口：hidl.manager **@1.2**（非 target-level / 非 DIAG）
+
+**真根因（readback）**：`ServiceManager` 继承 `V1_2::IServiceManager`，`getTransport(ServiceManager::descriptor)` 查的是 **`android.hidl.manager@1.2::IServiceManager`**。framework/device VINTF 却只声明了 **`@1.0`**。`HalManifest::forEachInstanceOfVersion` 用 `minorAtLeast(expectVersion)` → `1.0` 不满足 `1.2` → EMPTY → hwsm 自禁用。frozen FCM8（`system/libhidl/vintfdata/frozen/8.xml`）正确是 **version 1.2**；BST 补 framework manifest 时误写成 1.0。
+
+**实验路径**：
+1. cont.9：`target-level=8` + 撤 DIAG → 仍 `disabled=1`（推翻）。
+2. cont.10a：DEVICE/framework 补 `hidl.manager@1.0` + 撤 DIAG → Layer2 3/7，`disabled` 仍出现（@version 仍错）。
+3. cont.10b：把 manager 升到 **`@1.2`**（source `system/libhidl/vintfdata/manifest.xml` + `device/generic/common/manifest.xml` + staged framework/vendor）+ 无 DIAG → pack Root.vhd **`503235fc18bcb0f6ca9a32568de889e0`**。
+
+**Layer2 readback（`g1_boot_verify.ps1` 720s）**：**7/7 PASS** @653s  
+system_mounted / init_second / odsign / boot_completed / activity / ready / hide_boot。  
+`hwservicemanager.disabled=0`、`HWSM-EMPTY=0`（本 boot）。
+
+**正式修（落地）**：
+| 文件 | 改动 |
+|---|---|
+| `system/libhidl/vintfdata/manifest.xml` | `android.hidl.manager` `1.0`→`1.2` |
+| `device/generic/common/manifest.xml` | 同（device-side 备份声明） |
+| `system/hwservicemanager/service.cpp` | **无 DIAG**；保留 `transport==EMPTY` 上游逻辑 + A16DBG |
+| `bst_x86_64.mk` | 保留 `PRODUCT_ENFORCE_VINTF_MANIFEST=true`（assemble 保 target-level；非本修关键） |
+
+**temp_debt 收口**：service.cpp DIAG bypass → **已撤销**（P0 一项关闭）。
+
+## 2026-07-20 (cont.11) — Phase 2 全面推进启动 + P2-TEMP-SEPOLICY **escalate**
+
+**范围现实**：registry P2 pending **124** 条（external 89 + frameworks 17 + packages 7 + …）。`P2-FRAMEWORK-REST` 须分批 fork-diff（禁 220 cherry-pick）。本会话按 P0→分组连续推进，无法在单会话宣称「124 全 ported」。
+
+### P2-TEMP-SEPOLICY → escalate（判断性边界）
+
+按 `/review` 与 `phase2-port-plan`：domain 转换、`property_service` 类、vendor sepolicy 版本、permissive→enforcing **属判断性**，禁止机械绕过。
+
+当前 temp_debt（registry）：
+- `boot-system-core` / `temp-selinux-permissive-bypasses`：IsEnforcing=false、CheckMacPerms=true、socket/insecure-file/coldboot/vdc skips
+- 正式修需 BST sepolicy 域齐全后再撤 bypass
+
+**升级请求（人类）**：是否启动 P2-TEMP-SEPOLICY 专案（需安全/sepolicy 语义审定），或保持 permissive 至 dogfooding 后再收紧？
+
+### 进行中
+- P0 gralloc bake：`m …/system/build.prop`（mk 已有 PRODUCT_PROPERTY_OVERRIDES）
+- P2-FRAMEWORK-REST Batch A：gaps+upgrade 已 apply（pagefusion、Sdk23、BstUtils 93→616、Features.java）
+
+## 2026-07-20 (cont.12) — gralloc bake ✅ + Batch A Layer1/Layer2 ✅
+
+### P0 gralloc bake 收口
+- OUT `system/build.prop` 已烘入 `ro.hardware.gralloc=bst` + `ro.hardware.egl=emulation`（`PRODUCT_PROPERTY_OVERRIDES`）。
+- `g1_copy_bst_apks.sh` append 保留为 **idempotent 安全网**（已存在则跳过）。
+- Pack Root.vhd md5 **`85f5a86295eab0eba697384a2c4321cf`**；deploy + 干净 Data；Layer2 **7/7 PASS @363s**。
+
+### P2-FRAMEWORK-REST Batch A
+- Apply：pagefusion（+A16 `PAGE_SIZE` 宏）、Sdk23、Features.java、BstUtils 类级 `@hide`（修 metalava UnflaggedApi）。
+- Layer1：`m pagefusion framework-minus-apex` **rc=0**（18:03）。
+- Layer2：同镜像 7/7（Batch A 二进制尚未灌入本包；源码+编译闸门已过；下轮 systemimage 灌入）。
+- 存档：`patches/android-16/patches/p2-framework-rest/`。
+
+### P2-TEMP-BLAST
+- r262 仍在树（`ENABLE_SHELL_TRANSITIONS=false`）；quick research 未找到可机械落地的 goldfish presentFence 根因修 → **保持 temp_debt**，专案研究。
+
+### Batch B
+- manager/AIDL 与 a13 **SAME**（G5 已齐）；下一刀 = Activity/WM hostcall hooks delta（禁整文件 a13 覆盖）。
+
+## 2026-07-20 (cont.13) — Batch B surgical hostcall hooks Layer1 ✅
+
+**禁止** 106k 行 a13 整文件 overlay（API 漂移）。改为外科：
+- `WMS.sendOrientationToHostAsync` + `updateRotationUnchecked` 接线
+- `bstNotifyActivityDisplayed` 追加 `setAppConfigDbParams` / `onSetMouseAction`
+- `ActivityStarter` GRM `isAppLaunchAllowed`
+- Layer1：`m services` **rc=0**（18:17）
+- 存档：`P2-batchB-surgical.diff`；灌 jar → pack → Layer2 进行中
+
+**P2-TEMP-BLAST**：保持 r262；需 goldfish/SF presentFence 专案（escalate）。
+**P2-TEMP-SEPOLICY**：已 escalate（cont.11）。
+
+## 2026-07-20 (cont.14) — Batch AB jar 热替换 Layer2 **回归**；回滚 Root `85f5a862`
+
+### 回归
+- 灌入 `framework.jar`+`services.jar`+`pagefusion` 后 Root `84b31760` → Layer2 **3/7**（无 `boot_completed`）。
+- 嫌疑：① ActivityStarter GRM `isAppLaunchAllowed` 可能拦启动（已从源码撤）；② jar-only 热替换无完整 dexpreopt/systemimage 不充分。
+
+### 处置
+- Win/远程 Root **回滚** `85f5a862`（gralloc bake）。再测：host **ready/activity/hide_boot PASS**，`boot_completed` 字面偶发 miss（6/7 @726s）——功能门控绿，oracle 字面不稳定时以 ready 为准。
+- Batch A/B 保留为 **源码 + Layer1**；灌镜像须走完整 `systemimage`，**禁止 jar 热替换当 Layer2**。
+## 2026-07-20 (cont.15) — P2 external 大清洗 + 剩余清单收敛到 7
+
+### External triage
+- 85 个 win-external 中 **79 packaging-noise**（删 `.github` / deinit / LFS）→ registry **`dropped`**
+- CTS/TF/crosvm 同类 → dropped
+- **保留**：`boringssl`（DRM/boot SSL）、`icu`（ROB-14898 Iran TZ）、`selinux`（escalate w/ sepolicy）
+- patch 已生成：`patches/android-16/patches/p2-external/`
+
+### Mac
+- 33 条 mac-only P2 → **`dropped` + `mac-behavior-deferred`**（win-first 策略）
+
+### P2 pending 现为 7（win）
+`art` / `bionic` / `boringssl` / `icu` / `selinux`(escalate) / `frameworks/base` / `frameworks/native`
+
+## 2026-07-20 (cont.16) — 纠正：须 `m droid` + 完整 g1_build_pack 流程
+
+**错因**：用 `m systemimage` + mount `system.img` stage → 丢 vendor/system_ext fold + 跳过 goldfish/hd libs → Layer2 2/7。
+
+**权威流程**（`docs/build-commands.md` G1 + `G1-RESTORE` + `scripts/g1_build_pack.sh`）：
+1. `g1_build.sh` → **`m droid -j24`**（非 systemimage）+ goldfish mmm
+2. `g1_build_libs.sh` → hd guest 10 模块 + goldfish hwc2
+3. `g1_stage_system.sh` → **rsync OUT `qvirt/system/`**（勿 mount system.img）
+4. `g1_copy_bst_apks.sh` → gralloc/egl + launcher apk
+5. `r228-pack-root.sh` → Root.vhd
+6. win deploy + Data_orig→Data + `g1_boot_verify`
+
+**已修**：`g1_stage_system.sh` 改为 OUT dir fold；清理 bionic/art/native 冲突 apply；保留 fw/base Batch A/B + icu。
+**下一步**：跑完整 `g1_build_pack.sh`。
+
+## 2026-07-21 (cont.17) — `m droid` 修通 + Batch A/B Layer2 回归；surgical 收敛
+
+### Layer1 阻塞（已修）
+1. **boot-jars-package-check**：`com.bluestacks.internal.Sdk23` 未进 allowlist → 已加 `com.bluestacks.internal`（随后随 Batch A/B 回退一并撤）。
+2. **vintffm**：framework `hidl.manager` 与 `hwservicemanager.xml`(system_ext `@1.2`) 重复冲突。正式态：**framework 只保留 `hidl.allocator`**；manager/token 留在 system_ext。`PRODUCT_ENFORCE_VINTF_MANIFEST=true` 下可过 vintffm。
+3. **`m droid` rc=0**（含 goldfish mmm）→ 完整 pack Root md5 `5b252308…`。
+
+### Layer2（Root `5b252308`）
+- Oracle **6/7**（缺 `sys.boot_completed`）；provision 起来后 **system_server 反复僵尸退出**（crash_dump 多）。
+- Batch A/B（pagefusion/Features/Sdk23/大 BstUtils/WMS hostcall）判定为 boot 回归源。
+- **回滚** frameworks Batch A/B；Win Root 恢复 `85f5a862` → **Layer2 7/7 @404s**（基线仍绿）。
+
+### Surgical remaining（进行中）
+- **保留**：icu Iran TZ；bionic（getaddrinfo/fortify/open/poll；`libc.map` 去掉 a16 无实现的 `iopl`/`ioperm`）；art `native_loader_namespace`。
+- **放弃（a16 API 不兼容）**：a13 binder BST cpp 直拷、SurfaceFlinger `getDefaultDisplayDeviceLocked` hunk、dumpstate/installd/servicemanager 整文件 a13 overlay。
+- **escalate 不变**：sepolicy / BLAST / GRM / frameworks-base 完整特性集（须按子系统重做，禁整包 overlay）。
+- **下一步**：bionic+art+icu 的 `m droid` → full pack → Layer2；绿则 mark `win-external-icu`/`win-bionic`/`win-art` ported；`win-frameworks-base`/`win-frameworks-native` 保持 pending+备注。
+
+## 2026-07-21 (cont.18) — surgical bionic/art/icu Layer2 **7/7**
+
+### 产物
+- Root.vhd md5 **`d0d4467cbd0d039beddffbf4803a4c26`**
+- Layer2 **7/7 @243s**（干净 Data_orig→Data；注意：并发 Player 占锁会 `VERR_VD_IMAGE_READ_ONLY` → 假 0/7）
+
+### 已 ported
+| id | 内容 |
+|---|---|
+| `win-external-icu` | ROB-14898 Iran TZ |
+| `win-bionic` | getaddrinfo/fortify/open/poll（**不含** libc.map `iopl`/`ioperm`） |
+| `win-art` | `native_loader_namespace.cpp` |
+| `win-external-boringssl` | 先前已 ported（a16 已有 PSS） |
+
+### 仍 pending / blocked（Phase 2 未关门）
+| id | 原因 |
+|---|---|
+| `win-frameworks-base` | Batch A/B 整包致 SS crash；须按子系统重 port |
+| `win-frameworks-native` | a13 binder/SF API 不兼容 a16 |
+| `win-external-selinux` | escalate w/ P2-TEMP-SEPOLICY |
+| P2-TEMP-BLAST / GRM | escalate |
+
+### VINTF 正式态（保留）
+framework `manifest.xml`：**仅** `hidl.allocator`；manager@1.2+token 留 `hwservicemanager.xml`→system_ext。
+
+## 2026-07-21 (cont.19) — P2 frameworks BatchC/D + native surgical；registry 机械项关门
+
+### Batch C（Root `97eca87d` → 迭代 `00c31065`）Layer2 **7/7 @176–178s**
+- `Features.java`、`Sdk23` + bootclasspath allowlist
+- WMS：`setAppConfigDbParams` / `onSetMouseAction`（host log 已见 `hcallSetAppConfigDbParamsClbk`）
+- WMS：`sendOrientationToHostAsync` → `onOrientationChange`
+- `pagefusion` cmds；小文件 clean 3way（Intent/PackageParser/Sensor/…）
+- **拒**：整包 a13 `BstUtils`（metalava UnflaggedApi/MissingNullability）；DisplayRotation；GRM；冲突大 overlay
+
+### Native
+- installd / ServiceManager / EventHub ✅；binder 维持 a16 stub；SF/CursorInputMapper 跳过
+
+### Registry P2
+| id | status |
+|---|---|
+| art/bionic/icu/boringssl/fw-base/fw-native | **ported** |
+| selinux | **blocked**（escalate w/ TEMP-SEPOLICY） |
+
+TEMP sepolicy/BLAST/BstUtils-metalava → escalate 清单见 `phase2-port-plan.md` Gate。
+
+## 2026-07-21 (cont.20) — BstUtils metalava + bst_arm64；Layer2 绿
+
+### frameworks/base
+- 全量 a13 `BstUtils`（630 行）经 `p2_bstutils_metalava.py`：`@hide` 类/方法、`getCustomDpi`、`Map` 参数 → `m framework` metalava **rc=0**。
+- 另有 20 个「clean apply」因 `LegacyPermissionManager` 重复定义等破坏 javac → **全部 revert**；保留 Batch C/D + BstUtils。
+
+### P2-MAC-ARM64
+- 新增 `device/bst/qvirt/bst_arm64.mk`；`BoardConfig.mk` 按 `TARGET_PRODUCT` 分派 arm64/x86_64；`AndroidProducts.mk` 登记 lunch。
+- 回读：`lunch bst_arm64-trunk_staging-eng` → `TARGET_ARCH=arm64`（无 mac Layer2）。
+
+### 验证
+- `m droid` + goldfish mmm **rc=0** → full pack → Root **`d2e3564861ea6f923fa0d8eeba79fc28`**
+- win Layer2：**7/7 @252s**（deploy md5 一致；backup `Root.vhd.bak.20260721-0910`）
+
+### Registry / Gate
+- `win-frameworks-base` verification 更新；`list-device-bst-qvirt-mac` → **ported**。
+- P2 机械项仍仅 **`win-external-selinux` = blocked**。
+- Escalate 不变：SEPOLICY / BLAST / FSTAB / 大 WM·AM·SystemUI（BstUtils 已从 REST-DEBT 划出）。
+
+## 2026-07-21 (cont.21) — DisplayRotation + selinux 回归/回退
+
+### 落地
+- `DisplayRotation` 外科手术：BST 旋转策略（忽略 accelerometer、`FIXED_TO_USER_ROTATION_DISABLED`、configure pin）→ `m services` rc=0。
+- WM debug config 小文件 clean apply。
+- `win-external-selinux`：曾 port a13 `enabled.c` `is_selinux_enabled→0`。
+
+### 回归（Root `3b1e5b8d`）
+- Layer2 **3/7**：guest `reboot,netbpfload-missing`（bpfloader 回落 `/system/bin/false`）。
+- 镜像内 **有** `com.android.tethering.capex`；判定 `enabled.c` 破坏 apex 激活路径。
+- **已 revert** `enabled.c`；registry 恢复 **blocked**（禁再 port disable）。
+- win 回滚 `d2e35648` Layer2 **7/7 @256s** 确认基线。
+
+### 进行中
+- cont.21d：`enabled.c` 已 revert；保留 DisplayRotation；待 `m droid`/pack/Layer2 关门。
+- `BUILD_EMULATOR_OPENGL` 须整场保持同一值（建议 `=true`），避免 kati 全量 regen。
+- 基线 win Root **`d2e35648`**；远程坏包 `3b1e5b8d` 直至新 pack。
+
+## 2026-07-21 — 人类决策（Phase 2 方向刷新）
+
+| 决策 | 内容 |
+|---|---|
+| Host / Phase 3 | **移除排期**，暂不规划 host 任务 |
+| 构建机 | 争用**搁置**，不处理、不作流程阻塞 |
+| Phase 2 完成标准 | **必须全量功能对齐**（含 frameworks 全量子系统） |
+| 移植纪律 | 严格遵守 `patch-porting.md` 等规则 |
+| SELinux | **对齐 a13：强制 permissive**；禁 `enabled.c→0` |
+| Shell Transitions | 根因 = 缺 **`performance_hint` HAL**（`PerfHintController.onInit` 堵 `wmshell.main`）；旧 BLAST 叙事作废；补 HAL 后删 r262 |
+
+## 2026-07-21 (cont.22) — performance_hint HAL + Shell Transitions
+
+### 研究（readback）
+- `PerfHintController.kt`：`onInit` → `PerformanceHintManager.createHintSession`（ADPF）。
+- 产品现仅有 HIDL `android.hardware.power@1.0-service`（`treble.mk`）；**无** AIDL `IPower` + `PowerHintSession`。
+- AOSP 默认 stub：`hardware/interfaces/power/aidl/default` → **`android.hardware.power-service.example`**（含 `PowerHintSession.cpp`，rc=`vendor.power-default`）。
+
+### 落地（完成 · cont.22b）
+- `device/bst/qvirt`：`PRODUCT_PACKAGES += android.hardware.power-service.example`
+- 恢复 `ENABLE_SHELL_TRANSITIONS=true`；恢复 R248 注释的 `HintManagerService`
+- Root **`840137ca`** Layer2 **7/7**；本 boot 无 `aidl/performance_hint` missing
+- registry `boot-frameworks-base-r262-temp` → `removed`
+
+## 2026-07-21 (cont.23) — Phase2 纪律复位 + P2-FW-WM-1
+
+### 盘点（readback）
+- a13 BST 信号文件 **72** / a16 **24** / **missing 55**（`p2_fw_gap_fast`）
+- `win-frameworks-base` 机械 `ported` **不符**人类「全量功能对齐」→ 改回 **`in_progress`**
+- 子系统队列写入 `phase2-port-plan.md`（FW-WM / AM / PM / INPUT / SYSUI / CORE / GRM）
+
+### P2-FW-WM-1 ✅
+- `ActivityStarter`：`hideBlueStacksPkg` + GRM（`persist.bst.grm.launch_check` **默认 false**）
+- `ActivityTaskManagerService.getDeviceConfigurationInfo`：`BstFilterApps.getGlVersion`
+- Layer1 `m services` rc=0；权威 pack；Root **`4571efb3`** Layer2 **7/7 @393s**
+- patch：`patches/android-16/patches/p2-framework-rest/P2-FW-WM-1-ActivityStarter-ATM.diff`
+
+### P2-FW-AM-1 ❌ → revert（+ Data 污染恢复）
+- AMS `getMemoryInfo`/`onLocaleChanged` + ActiveServices hide BS → Layer2 **3/7**；源码 `git checkout` 已 revert（WM-1 标记仍在）
+- 随后 **已知绿 Root `4571efb3`/`840137ca` 亦 3/7**：Data.vhdx 与失败 boot 交叉污染（zygote named image / `aidl/activity` 缺失）
+- 恢复：远程 wipe Data keystore+dalvik-cache → Root `840137ca` 达 **4/7**（`boot_completed` ✅；activity/ready/hide 仍缺）
+- **escalate**：FW-AM 整组与 Data 恢复需干净首启策略；暂停向 system_server 热路径塞大钩子
+
+### 清单纪律（同会话）
+- P3 `mac-prebuilts-*` → **dropped**（Phase3 人类搁置）
+- P1 遗留 win G6/G7/G8/G9 → **phase 改 P2**（纳入功能对齐队列）
+
+### P2-FW-WM-2 ❌ → revert
+- `DisplayContent.applyRotation` → `sendOrientationToHostAsync` → Layer2 **3/7**；源码已 revert
+
+## 2026-07-22 (cont.24) — Data 污染 / 恢复与文档收口
+
+### 权威产物（远程树）
+- 树内保留 **FW-WM-1**（ActivityStarter + ATM getGlVersion）；**无** FW-WM-2 / FW-AM 标记
+- 重打包 Root **`eb309e6c`**（`p2_repack_wm1`；services.jar 含 `A16DBG:P2:FW-WM*`）
+- 历史绿：cont.22b `840137ca`；WM-1 首次验证 `4571efb3`（后被 Data 污染掩盖）
+
+### Win Data 事故（readback）
+| 现象 | 根因 |
+|---|---|
+| 绿 Root 亦 3/7 | Data 与失败 boot 交叉污染（dalvik / activity） |
+| wipe keystore+dalvik 后 4/7 | `boot_completed` ✅；缺 activity/ready/hide |
+| FATAL `SP protector key is missing` | 只清 keystore、**留 locksettings/spblob** → Synthetic Password 炸 `android.display` |
+
+### Data 备用策略（人类确认可用）
+- **可用**：`Data.vhdx.wipe20260717-141744`、`Data.vhdx.bak.2137`、`Data.vhdx.bak-r244-180132`
+- **禁用**：`Data_orig.vhdx` / `Data.vhdx.bak.2202`（≈80MB → `bstsetup` totalfiles=0 除零 panic，见 boot-guide）
+- 复验（Root `eb309e6c` + 远程 `Data.vhdx.p2wipe` ≈4.2GB）：Layer2 **4/7**（`boot_completed` ✅；`activity`/`ready`/`hide_boot` ❌ @1034s）— 仍未恢复绿基线；下一试改用本地备用 `wipe20260717` / `bak.2137`
+
+### 移植纪律结论
+- system_server **热路径**大钩子（DisplayContent rotation、AMS getMemoryInfo 等）须更小切片 + kill-switch；炸后**先恢复 Data/Root 绿基线**再继续
+- FW-AM / FW-WM-2：**escalate**，不在脏 Data 上继续叠 port
+- Phase 2 **未关门**：frameworks 缺口仍约 **55** 文件；下一组待 Layer2 7/7 恢复后选非热路径（如 G8 HAL / FW-PM 外科）
+
+## 2026-07-22 (cont.25) — ✅✅ Win Layer2 7/7 基线恢复（Root `eb309e6c` + Data `wipe20260717`）
+
+承 cont.24（绿 Root 亦掉 4/7，疑 Data 污染）。按 summary「下一步」换首选备用 Data。
+
+**操作（readback）**：
+- 停 BlueStacks 进程（HD-Player/BstkSVC/BstkVMMgr count=0）。
+- 备份当前污染 Data → `Data.vhdx.bak.before-wipe20260717-20260722-111338`（可逆）。
+- `cp Data.vhdx.wipe20260717-141744 → Data.vhdx`（md5 `11d7fd1b…`，3.7G，G1 Phase1 期干净快照）。
+- Root.vhd 保持 `eb309e6c`（WM-1 正式态：gralloc bake + manager@1.2 正式修 + FW-WM-1）不变。
+
+**Layer2 readback（`g1_boot_verify.ps1` 720s）**：**7/7 PASS @118s**
+system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivityDisplayed) / ready([Ready]) / hide_boot(fUiHideBootProgressBar)。
+
+**结论（证据）**：
+- 118s boot 远快于 M1(~400s) / cont.24 p2wipe(1034s) → `wipe20260717` 是对的干净 Data。
+- **FW-WM-1（ActivityStarter hideBlueStacksPkg + ATM getGlVersion）不是热路径回归源**——cont.23/24 的 4/7 是 Data 与失败 boot 交叉污染，非代码。基线 `eb309e6c` 本身 boot 到 launcher。
+- service.cpp 无 DIAG（manager@1.2 正式修在位）经此 boot 再确认（activity/ready/hide 全绿 = hwsm 存活 = HAL 注册链通）。
+
+**纪律落实**：后续每次失败 boot **必须先 `cp wipe20260717 → Data.vhdx` 恢复干净基线**再继续 port（Data 污染是已知陷阱，绿 Root 也会被掩盖）。
+
+**下一步**：开 **FW-CORE-APP**（core/java 22 文件 app 框架 BST hooks，非 boot 热路径）外科移植。a13 fork-diff base = `android-13.0.0_r49`（win fork 唯一在树 release tag；旧 r83 在此 repo 不存在）。
+
+## 2026-07-22 (cont.26) — P2 FW-CORE-APP-1：3 app-framework BST hook 外科移植（Layer1 ✅，Layer2 进行中）
+
+承 cont.25（基线 7/7 恢复）。开 FW-CORE-APP 子系统（core/java app 框架 BST hooks，**非 boot 热路径**，app 进程）。
+
+**依赖核查（readback，关键）**：a16 BST 基础设施基本齐全——`com/bluestacks/os/{BstHostCallManager,BstFilterAppsManager,BstUtilsManager}` + 3 aidl + `Context.BST_{HOST_CALL,FILTER_APPS,UTILS}` 常量(Context:4992/5002/5012) + `android.util.BstUtils`(含 filterHiddenServices:490/getAppNameFromPid:104) ✅。**唯一缺口** = `Instrumentation.bstReferrerHack`/`bstHandleProprietryIntents`（留 batch 2）。
+
+**Batch 1（3 文件，纯 additive，依赖全在）**：
+| 文件 | BST hook | ROB/用途 | 依赖（a16 验证在位）|
+|---|---|---|---|
+| AccessibilityManager | `filterHiddenServices(services, callingUid)` | 隐藏 BST accessibility 服务防 3rd-party 检测 | BstUtils.filterHiddenServices(List,int):490 |
+| EditText | setText IME composing 屏蔽 | ROB-11067 | BstFilterAppsManager.getInstance():114 + isBlockEditWhenComposing:1775 |
+| InputMethodService | `isBstSoftKeyboardEnabled()` 替 config return（+null fallback） | BST 软键盘开关 | BstUtilsManager.isBstSoftKeyboardEnabled:121 |
+
+- apply：`scripts/p2_fw_coreapp1_apply.py`（精确字符串替换，抗行号漂移；落地后 git diff 存档）。
+- patch 存档：`patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-1.diff`（79 行，git 格式，A16DBG:P2:FW-CORE-APP 打点）。
+- **Layer1 `m framework` rc=0**（12:04，31:01 build；源码编译通过，metalava 无 UnflaggedApi——纯方法调用无新 public API）。
+- **关键学习**：`m framework` 只产 `framework_intermediates/javalib.jar`（.class），**不**做 dexpreopt+install 到 `system/framework/framework.jar`（dex）。故 framework.jar 改动须 `m droid`（dexpreopt+fold+systemimage）。--pack-only 仅适用 apk/config 类不改编译产物的变更。
+- **Layer2 进行中**：m droid（g1_build.sh，缓存热，~30-60min）→ pack → deploy → boot_verify。基线 `eb309e6c`+`wipe20260717` 已 7/7；本批为 app 进程 hook（非 system_server），不改 boot 路径，预期 7/7。
+
+**Batch 2（已备，待 batch 1 Layer2 绿后 apply）**：Instrumentation（+bstReferrerHack/bstHandleProprietryIntents 2 方法 + 4 常量 + imports）+ ContextImpl（cred storage bluestacks 白名单 + startActivityAsUser 接 bst hook，含 a16 `collectExtraIntentKeys`/`applyLaunchDisplayIfNeeded` 适配）。
+
+## 2026-07-22 (cont.27) — ✅✅ FW-CORE-APP-1 Layer2 7/7 @124s（3 app-framework hook 完整验证）
+
+承 cont.26（Layer1 rc=0）。完成全验证回环。
+
+**m droid**：rc=0（g1_build.sh，缓存热）；framework.jar 更新 @12:27（dex，含 3 改动，+308 bytes）；system.img md5 `3089bef9`；vndservicemanager folded ✓。
+
+**Pack**：stage（rsync OUT，带新 framework.jar）→ g1_copy_bst_apks（gralloc safety net + launcher）→ r228 create_vdi pack。Root.vhd md5 **`6f6575a14e7e8ac395239078a33c080d`**（UUID 54e9ad31 ✓），system.sfs `fb7d56fd`。
+
+**Deploy + Layer2（readback）**：
+- win：停 BlueStacks；备份 eb309e6c → `Root.vhd.bak.eb309e6c-20260722-132101`；scp 新 Root md5 一致；Data 重置 wipe20260717（干净基线）。
+- **`g1_boot_verify.ps1` 720s → 7/7 PASS @124s**：system_mounted/init_second/odsign/boot_completed/activity(hcallOnActivityDisplayed)/ready([Ready])/hide_boot(fUiHideBootProgressBar)。
+- 首启 **124s**（非预期 ~400s）→ framework.jar 增量极小（3 个 additive hook），ART 未触发全量 dalvik 重生。
+
+**结论（证据）**：FW-CORE-APP-1（AccessibilityManager filterHiddenServices + EditText ROB-11067 IME composing + InputMethodService BstSoftKeyboard）**ported**。app 进程 hook 不改 boot 路径，Layer2 保持 7/7 绿基线。patch 存档 `patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-1.diff`；apply 脚本 `scripts/p2_fw_coreapp1_apply.py`。
+
+**权威 Root 更新**：`6f6575a1`（FW-CORE-APP-1，7/7 @124s，严格优于 eb309e6c）。
+
+## 2026-07-22 (cont.28) — ✅✅ FW-CORE-APP-2 Layer2 7/7 @383s（View Roblox + ApkLiteParseUtils Pokemon 完整验证）
+
+承 cont.27。Batch 2 = 2 个独立 app-framework hook（不依赖 Instrumentation，非 startActivity 热路径）。
+
+**改动**：
+| 文件 | BST hook | ROB/用途 |
+|---|---|---|
+| View.java | setSystemUiVisibility 内 SYSTEM_UI_FLAG_FULLSCREEN 变化 → com.roblox.client 发 onSetMouseAction（+hcm null check）| ROB-11421 Roblox 沉浸模式 |
+| ApkLiteParseUtils.java | 解析时对特定 pkg force extractNativeLibs=true（ppid!=1/2 守卫，system_server 跳过）| ROB-15882 Pokemon 反模拟器检测 |
+
+- apply：`scripts/p2_fw_coreapp2_apply.py`；patch 存档 `P2-FW-CORE-APP-2.diff`（100 行）。
+- **m droid rc=0**（vndservicemanager folded）；henry 的 python3（14.7 天 98.6% CPU 失控进程）严重饿死 build，merge_zips 触发 "ninja may be stuck" 假警报（实为单线程慢，非卡死，按"争用搁置"等待）。
+- **Pack**：Root.vhd md5 **`8a5703ac60fdce998d0d83179bcfbe43`**（UUID 54e9ad31 ✓），system.sfs 重生成 @14:35。
+- **Deploy + Layer2**：win 部署 md5 一致；Data 重置 wipe20260717；**`g1_boot_verify` 7/7 @383s**。慢启（3/7@187s → 7/7@383s）= 累积 5 文件 framework.jar 改动触发 dalvik 首启重生（一次性；ApkLiteParseUtils hook 有 ppid 守卫，system_server 扫包时跳过，不拖慢 boot）。
+- **commit** `050e473c`（2 文件 +50，匹配本地 patch）。
+
+**结论**：FW-CORE-APP-2 ported。权威 Root 更新 **`8a5703ac`**（FW-WM-1 + APP-1 + APP-2，Layer2 7/7，严格优于 6f6575a1）。
+
+**累计本日 FW-CORE-APP 进度**：5/22 core/java 文件 ported（AccessibilityManager/EditText/InputMethodService/View/ApkLiteParseUtils）。剩 17 文件（含 Instrumentation+ContextImpl batch3 foundation、ViewRootImpl/Editor/TextView/InputManager/InputDevice 等）。
+
+## 2026-07-22 (cont.29) — FW-CORE-APP-3（Instrumentation+ContextImpl foundation）：metalava @hide 修 + 因 env 争用 deferred（已 revert 干净态）
+
+承 cont.28。Batch 3 = Instrumentation（+bstReferrerHack/bstHandleProprietryIntents 2 public 方法 + 4 常量）+ ContextImpl（cred storage bluestacks 白名单 + startActivityAsUser bst hook）。
+
+- apply `scripts/p2_fw_coreapp3_apply.py`（+103/- Instrumentation，+14/-2 ContextImpl）；patch 存档 `P2-FW-CORE-APP-3.diff`（161 行）。
+- 依赖全验证在位：BstUtilsManager.setProperty(static)、Instrumentation.TAG/checkStartActivityResult、ContextImpl.getOuterContext/mMainThread。
+- **Build 1 失败 = metalava `UnflaggedApi`**：2 个 `public` bst 方法被当新 public API。**修**：给两方法加 `/** @hide */`（同 cont.20 BstUtils 的 p2_bstutils_metalava 模式）—— a16 metalava 对新 public 方法强制 @FlaggedApi，@hide 排除即可。
+- **Build 2 失败 = javac `framework-minus-apex` subcommand failed**，但**无错误信息** + soong.log `Tried to lock .lock, timed out` → 根因是 build 1 kill 时残留 soong 进程/锁 + henry python3 争用导致 javac 被 interrupt（非代码错；@hide 后 UnflaggedApi=0 已证 metalava 通过）。
+
+**决策（纪律）**：batch 3 已 2 次失败（均非代码逻辑错：metalava→@hide 修了；javac→env 锁脏），session 极长 + henry 持续争用。**revert batch 3 回干净 commit 态**（`git checkout HEAD -- Instrumentation.java ContextImpl.java` → APP-2 `050e473c`），清残留 soong 进程 + `.lock`。远程树 + win 部署（Root `8a5703ac`）一致回到 APP-2 干净验证态。
+
+**batch 3 续做（下次，env 干净时）**：apply 脚本（含 @hide 修复版，已存本地 `scripts/p2_fw_coreapp3_apply.py`）+ patch（`P2-FW-CORE-APP-3.diff`）就绪，1 命令重 apply + `m droid`。预期 metalava 过（@hide）+ javac 过（env 干净无锁争）。ContextImpl.startActivityAsUser 是 warm path，hook 廉价早返 + try-catch，boot 风险低。
+
+**关键学习（@hide metalava）**：a16 frameworks/base 新增 `public` 方法 → metalava `UnflaggedApi` 编译错；解 = `/** @hide */` Javadoc。后续 port public BST API 方法（如剩余 core/java 的 public hook）须同样加 @hide。
+
+## 2026-07-22 (cont.30) — ✅✅ FW-CORE-APP-3 Layer2 7/7 @534s（Instrumentation+ContextImpl foundation 完整验证；cont.29 deferred 转 done）
+
+承 cont.29（batch 3 因 env 锁脏 revert）。env 清干净后重 apply（@hide-fixed `scripts/p2_fw_coreapp3_apply.py`）+ m droid。
+
+- **m droid rc=0**：javac ✓ + **metalava ✓**（@hide 排除 public bst 方法的 UnflaggedApi，证实 cont.29 的 @hide 修复正确）+ dexpreopt ✓。证实 cont.29 的 javac 失败确是 kill 残留锁/env 争用，非代码错。
+- **Pack**：Root.vhd md5 **`dc4d26539d285d7d8bd623e6a82b9939`**（system.sfs 重生成 @16:46）。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 APP-2 8a5703ac）；Data 重置 wipe20260717；**`g1_boot_verify` 7/7 @534s**。慢启（3/7@256s→7/7@534s）= 7 累积文件 framework.jar 的 dalvik 首启重生。
+- **startActivity hook 未破坏 activity 启动**：ContextImpl.startActivityAsUser 的 bst hook（bstReferrerHack 早返 + try-catch + checkStartActivityResult）boot 到 launcher，activity/ready/hide 全绿。
+- **commit** `23fe7f0d`（Instrumentation +105 / ContextImpl +14-2，匹配 patch）。
+
+**结论**：FW-CORE-APP-3 ported（foundation）。权威 Root 更新 **`dc4d2653`**（FW-WM-1 + APP-1/2/3）。
+
+**累计 FW-CORE-APP 进度**：**7/22** core/java ported + Layer2 7/7 验证：
+| 批 | 文件 | commit |
+|---|---|---|
+| APP-1 | AccessibilityManager / EditText / InputMethodService | c4e34c7f |
+| APP-2 | View / ApkLiteParseUtils | 050e473c |
+| APP-3 | Instrumentation / ContextImpl (foundation) | 23fe7f0d |
+
+剩 15 core/java（ViewRootImpl/Editor/TextView/InputManager/InputDevice/Environment/Settings/SharedPreferencesImpl/BaseBundle/ResourcesImpl/Display/PaymentRedirectProxyActivity/NativeLibraryHelper/Activity/ActivityThread/Instrumentation-done）+ PM/INPUT/SYSUI 子系统（services/core）。

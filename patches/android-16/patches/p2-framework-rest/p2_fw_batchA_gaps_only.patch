@@ -1,0 +1,3082 @@
+diff --git a/cmds/pagefusion/Android.bp b/cmds/pagefusion/Android.bp
+new file mode 100644
+index 000000000000..d5efd3640ac8
+--- /dev/null
++++ b/cmds/pagefusion/Android.bp
+@@ -0,0 +1,21 @@
++cc_binary {
++    name: "pagefusion",
++
++    srcs: [
++	"PageFusion.cpp", 
++	"RTVboxGuest.cpp",
++	"util.cpp"
++	],
++
++    shared_libs: [
++        "libcutils",
++        "liblog"
++    ],
++
++    cflags: [
++        "-Wall",
++        "-Werror",
++        "-Wunused",
++        "-Wunreachable-code",
++    ],
++}
+diff --git a/cmds/pagefusion/PageFusion.cpp b/cmds/pagefusion/PageFusion.cpp
+new file mode 100644
+index 000000000000..56bea7773028
+--- /dev/null
++++ b/cmds/pagefusion/PageFusion.cpp
+@@ -0,0 +1,993 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <limits.h>
++#include <string.h>
++#include <dirent.h>
++#include <getopt.h>
++#include <sys/time.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <sys/mman.h>
++#include <cutils/properties.h>
++#include <android/log.h>
++#include <map>
++#include <string>
++#include "list.h"
++#include "RTVboxGuest.h"
++#include "util.h"
++
++using namespace std;
++
++#define SUFFIX32    "_32"
++#define SUFFIX64    "_64"
++
++#define PAGE_ALIGN(addr)    (((addr)+PAGE_SIZE-1)&PAGE_MASK)
++
++static bool debug = false;
++
++enum {
++    STATUS_OK = 0,      /*Multiple instances and this feature is supported*/
++    STATUS_ONE_INSTANCE,/*Only one instance*/
++    STATUS_UNSUPPORTED  /*Pagefusion is not allowed*/
++};
++
++enum MODULETYPE
++{
++    TYPE_SO = 0,    /*Dynamic library*/
++    TYPE_EXE,       /*Executable file*/
++    TYPE_FONT,      /*Font file and hyb file - Hyphenation*/
++    TYPE_FRAMEWORK, /*System apk & jar*/
++    TYPE_OAT,       /*oat & dex with oat*/
++    TYPE_KERNEL = 99/*Kernel text section*/
++};
++
++/*The descriptor of one module*/
++typedef struct _SharedModule
++{
++    LIST            node;           /*Doubly linked list*/
++    char            name[128];      /*File name*/
++    char            version[16];    /*Module version*/
++    unsigned long   base_address;   /*Base address*/
++    unsigned long   size;           /*Module size*/
++    unsigned long   file_offset;    /*Offset in file. After experiments, this value is basically 0*/
++    uint8_t*        page_bmap;      /*Bitmap of page location. If set, the page is present in RAM*/
++    MODULETYPE      type;           /*Module type*/
++    unsigned int    age;            /*Module age*/
++    bool            bRegistered;    /*Whether the module is registered*/
++    bool            bMapped;        /*Whether the module is mapped */
++}SHAREDMODULE, *PSHAREDMODULE;
++
++/*Match pattern of specified Module*/
++typedef struct _ModulePattern
++{
++    MODULETYPE  type;                               /*Module type*/
++    bool (*match)( char* name, char* permissions ); /*match function*/
++}MODULEPATTERN, *PMODULEPATTERN;
++
++/*Global objects*/
++static char s_ModuleVersion[16] = "";       /*The Module version*/
++static SHAREDMODULE* s_SharedModuleList = NULL;         /*Module List*/
++static std::map<std::string, PSHAREDMODULE> s_ModuleMap;/*Module map*/
++
++/**
++ * @brief Create a new shared module and init it.
++ */
++PSHAREDMODULE CreateSharedModule()
++{
++    PSHAREDMODULE module = (PSHAREDMODULE)calloc( 1, sizeof(SHAREDMODULE) );
++    if( module )
++    {
++        INIT_LIST_HEAD( &module->node );
++    }
++    else
++    {
++        ALOGE( "No enough memory!\n" );
++    }
++    return module;
++}
++
++/**
++ * Free one node
++ */
++void FreeSharedModule( PSHAREDMODULE module )
++{
++    if( module )
++    {
++        list_del( &module->node );
++        if( module->page_bmap )
++        {
++            free( module->page_bmap );
++        }
++        free( module );
++    }
++}
++
++/**
++ * @brief Free the shared module list.
++ */
++void FreeSharedModuleList()
++{
++    if( s_SharedModuleList )
++    {
++        PSHAREDMODULE module;
++        struct list_head *pos;
++        struct list_head *n;
++        list_for_each_safe( pos, n, &s_SharedModuleList->node )
++        {
++            module = list_entry( pos, SHAREDMODULE, node );
++            FreeSharedModule( module );
++        }
++    }
++}
++
++/**
++ * @brief Get module's version, i.e. 7.1_32
++ */
++const char* GetModuleVersion( void )
++{
++    if( strlen( s_ModuleVersion ) == 0 )
++    {
++        char tempBuff[ PROPERTY_VALUE_MAX ];
++        char szROMVersion[ PROPERTY_VALUE_MAX ];
++        char szSuffix[4];
++
++        if( property_get( "ro.build.version.release", szROMVersion, NULL) > 0 && property_get("ro.zygote", tempBuff, NULL) > 0 )
++        {
++            if (!strncmp(tempBuff, "zygote32", strlen("zygote32")))
++            {
++                strncpy( szSuffix, SUFFIX32, 4 );
++            }
++            else
++            {
++                strncpy( szSuffix, SUFFIX64, 4 );
++            }
++
++            memset( s_ModuleVersion, 0, sizeof(s_ModuleVersion) );
++            snprintf( s_ModuleVersion, sizeof(s_ModuleVersion), "%s%s", szROMVersion, szSuffix );
++        }
++    }
++    return &s_ModuleVersion[0];
++}
++
++/**
++ * @brief Create a new shared module and put it into the list.
++ */
++PSHAREDMODULE AddSharedModule( const char* path_name, unsigned long base_address, unsigned long size, MODULETYPE type,
++                                unsigned long file_offset )
++{
++    PSHAREDMODULE module = CreateSharedModule();
++    if( module )
++    {
++        /* If the file path of a module is too long, exceeding 128 bytes, forbid to create it */
++        if( strlen(path_name) > sizeof(module->name)-1 )
++        {
++            ALOGW( "Because module name is too long, can't create it. Its len %d, name '%s'\n", (int)strlen(path_name), path_name );
++            return NULL;
++        }
++
++        strncpy( module->name, path_name, sizeof(module->name)-1 );
++        strncpy( module->version, GetModuleVersion(), sizeof(module->version)-1 );
++        module->base_address = base_address;
++        module->size = size;
++        module->type = type;
++        module->file_offset = file_offset;
++
++        /*Allocate some memory for saving the bitmap. The default setting page status is not in memory. */
++        uint32_t bmapSize = ((size/PAGE_SIZE)+7)/sizeof(uint8_t);
++        module->page_bmap = (uint8_t*)calloc( 1, bmapSize );
++        if( !module->page_bmap )
++        {
++            ALOGE( "No enough memory!\n" );
++            FreeSharedModule( module );
++            return NULL;
++        }
++
++        list_add_tail( &module->node, &s_SharedModuleList->node );
++    }
++    return module;
++}
++
++/**
++ * @brief Check whether a file is a dynamic library and can be shared
++ */
++bool MatchSOModule( char* name, char* permissions )
++{
++    /* Almost all dynamic libraries can be shared, except for a few non-PIC dynamic libraries.
++     * Generally, each dynamic library will map at least two segments, and only the first one
++     * with executable permissions can be used for sharing
++     */
++    if( EndsWith( name, ".so" ) && permissions[0] == 'r' && permissions[2] == 'x' )
++    {
++        if( IsPICDynamicModule( name ) )
++        {
++            return true;
++        }
++        ALOGW( "Module %s is non PIC!\n", name );
++    }
++    return false;
++}
++
++/**
++ * @brief Check whether a file is a executable file and can be shared
++ */
++bool MatchExeModule( char* name, char* permissions )
++{
++    /* All executalbe files can be shared. Generally, each file will map three segments.
++     * Only the first segment with executable permission can be used for sharing.
++     */
++    if( permissions[0] == 'r' && permissions[2] == 'x'
++        && IsElfExe( name ) )
++    {
++        return true;
++    }
++    return false;
++}
++
++/**
++ * @brief Check whether a file is a font or hyb file and can be shared
++ */
++bool MatchFontModule( char* name, char* permissions )
++{
++    /* All fonts can be shared. Their permissions are 'r--s'.*/
++    if( permissions[0] == 'r' && permissions[3] == 's' && StartsWith( name, "/system/fonts/") )
++    {
++        if( EndsWith( name, ".ttf") || EndsWith( name, ".ttc") )
++        {
++            return true;
++        }
++    }
++    return false;
++}
++
++/**
++ * @brief Check whether a file is a apk or jar file and can be shared
++ */
++bool MatchFrameworkModule( char* name, char* permissions )
++{
++    static const char* FRAMEWORKFILELIST[] =
++    {
++        "/system/usr/icu/icudt56l.dat",
++        "/system/usr/share/zoneinfo/tzdata"
++    };
++
++    /* Some framework files including apk, jar and ICU files can be shared.
++     * Their permissions are 'r--s'.
++     */
++    if( permissions[0] == 'r' && permissions[3] == 's' && StartsWith( name, "/system/" ) )
++    {
++        for( unsigned int i = 0; i < _countof(FRAMEWORKFILELIST); i++ )
++        {
++            if( strncmp( name, FRAMEWORKFILELIST[i], strlen(FRAMEWORKFILELIST[i]) ) == 0 )
++            {
++                return true;
++            }
++        }
++
++        if( EndsWith( name, ".apk" ) || EndsWith( name, ".jar") )
++        {
++            return true;
++        }
++    }
++
++    return false;
++}
++
++/**
++ * @brief Check whether a file is a oat or dex file and can be shared
++ */
++bool MatchOATModule( char* name, char* permissions )
++{
++    /* For OAT and dex files, only the first one including rodata section can be shared.
++     * Their permissions is r--p. The second segment is a executable segment. But Android
++     * will be modified according to the user's historical operations at runtime in order
++     * to improve the performance of the execution.
++     */
++    if( permissions[0] == 'r' && permissions[2] == '-' && permissions[3] == 'p'
++        && StartsWith( name, "/data/dalvik-cache/" ) )
++    {
++        if( (EndsWith( name, ".oat") || EndsWith( name, "@classes.dex")) && IsDynamicLibrary( name ) )
++        {
++            return true;
++        }
++    }
++
++    return false;
++}
++
++
++/*Pattern list*/
++MODULEPATTERN s_ModulePatterns[] = {
++    { TYPE_SO,          MatchSOModule   },
++    { TYPE_EXE,         MatchExeModule  },
++    { TYPE_FONT,        MatchFontModule },
++    { TYPE_FRAMEWORK,   MatchFrameworkModule },
++    { TYPE_OAT,         MatchOATModule },
++};
++
++/**
++ * @brief Statistics module of specified type
++ */
++void StatisticsModule( MODULETYPE type )
++{
++    unsigned long totalSize = 0;
++    unsigned long totalMapSize = 0;
++    int cnt = 0;
++    PSHAREDMODULE module;
++    struct list_head* pos;
++
++    list_for_each( pos, &s_SharedModuleList->node )
++    {
++        module = list_entry( pos, SHAREDMODULE, node );
++        if( module->type != type )
++        {
++            continue;
++        }
++
++        cnt++;
++        totalSize += module->size;
++        totalMapSize += PAGE_SIZE * GetBitmapSetNum( &module->page_bmap[0], module->size/PAGE_SIZE );
++    }
++    if (debug) ALOGI( "Statistics: module type=%d, count=%d, total size=%lu, total mapped size=%lu\n", type, cnt, totalSize, totalMapSize );
++}
++
++static inline uint8_t ASMProbeReadByte(const void *pvByte)
++{
++    /** We have verified that the compiler actually doesn't optimize this away. (intel & gcc, AMD & gcc) */
++    uint8_t u8;
++    __asm__ __volatile__("movb (%1), %0\n\t"
++    : "=r" (u8)
++    : "r" (pvByte));
++    return u8;
++}
++
++/**
++ * @brief Map all modules to virtual address of this process
++ */
++void MapAllModules(void)
++{
++    PSHAREDMODULE module;
++    struct list_head* pos;
++    list_for_each( pos, &s_SharedModuleList->node )
++    {
++        module = list_entry( pos, SHAREDMODULE, node );
++        if( module->bMapped )
++        {
++            continue;
++        }
++        module->base_address = 0;
++
++        /* Skip the module whose pages are not present in RAM*/
++        if( GetBitmapSetNum( &module->page_bmap[0], module->size/PAGE_SIZE ) == 0 )
++        {
++            continue;
++        }
++
++        int fd = open( module->name, O_RDONLY );
++        if( fd > 0 )
++        {
++            void* base_addr = mmap(NULL, module->size, PROT_READ, MAP_PRIVATE, fd, module->file_offset );
++            if( !base_addr )
++            {
++                ALOGW( "Map %s failed!\n", module->name );
++            }
++            else/*touch the module file*/
++            {
++                uint8_t* pageAddr = (uint8_t*)base_addr;
++                for( unsigned long i = 0; i < module->size; i += PAGE_SIZE )
++                {
++                    /*Only touch the page which is present in RAM*/
++                    if( IsBitSet( &module->page_bmap[0], i/PAGE_SIZE ))
++                    {
++                        /* Should we use attribute((used)) for variable 'c' as an aggressive compiler option
++                         * may remove this call if 'c' is not being referenced below. Although, I think this
++                         * is not likely as the called function can have side affects that impact the correctness
++                         * of the program - but just in case.
++                         * We must add static modification, otherwise get a compile warning: 'used' attribute ignored [-Wignored-attributes]
++                         * But the compiler will remove this call when using 'static uint8_t c __attribute__((used))',
++                         * so keep it.
++                         */
++                        __unused uint8_t c = ASMProbeReadByte( pageAddr );
++                    }
++                    pageAddr += PAGE_SIZE;
++                }
++
++                module->base_address = (unsigned long)base_addr;
++                module->bMapped = true;
++            }
++            close( fd );
++        }
++        else
++        {
++            ALOGW( "Failed to open file %s!\n", module->name );
++        }
++    }
++}
++
++/**
++ * @brief Unmap all modules
++ */
++void UnmapAllModules()
++{
++    if(!s_SharedModuleList)
++        return;
++
++    PSHAREDMODULE module;
++    struct list_head* pos;
++    list_for_each( pos, &s_SharedModuleList->node )
++    {
++        module = list_entry( pos, SHAREDMODULE, node );
++
++        /* unmap can be called on the module which have been mapped into pagefusion address space. */
++        if( module->bMapped && module->base_address && module->type != TYPE_KERNEL )
++        {
++            munmap( (void*)module->base_address, (size_t)module->size );
++            module->bMapped = false;
++        }
++    }
++}
++
++/**
++ * @brief Check whether only one instance is running or this function is not supported
++ */
++int CheckOneInstanceRunningOrUnsupported(void)
++{
++    char name[32] = "PageFusionServiceNeedRun";
++    char version[16] = "7.1";
++    VBOXOSFAMILY osType = VBOXOSFAMILY_Linux32;
++    VMMDEVSHAREDREGIONDESC RegionDesc;
++
++    /* @TODO After making a new hypercall in VBox, modify the following implementation.*/
++    RegionDesc.GCRegionAddr = (RTGCPTR64)0x60000000;/*Any value*/
++    RegionDesc.cbRegion = (uint32_t)0x1000;
++    int rc = VbglR3RegisterSharedModule( name, version, (RTGCPTR64)0x60000000, 0x1000, 1, &RegionDesc, osType );
++    if( rc == VINF_SUCCESS )
++    {
++        VbglR3UnregisterSharedModule( name, version, (RTGCPTR64)0x60000000, 0x1000 );
++        return STATUS_OK;
++    }
++    else if( rc == VERR_IGNORED )
++    {
++        if(debug) ALOGI("Only one instance is running. Disable this feature.\n" );
++        return STATUS_ONE_INSTANCE;
++    }
++    /*else rc == VERR_NOT_SUPPORTED */
++
++    ALOGW("This feature is not supported.\n" );
++    return STATUS_UNSUPPORTED;
++}
++
++/**
++ * @brief Register all modules
++ */
++int RegisterAllModules(void)
++{
++    PSHAREDMODULE module;
++    struct list_head* pos;
++
++    /* Walk the list and register each module */
++    list_for_each( pos, &s_SharedModuleList->node )
++    {
++        module = list_entry( pos, SHAREDMODULE, node );
++        if( module->bRegistered || !module->bMapped )continue;
++
++        VBOXOSFAMILY osType = VBOXOSFAMILY_Linux32;
++        if( strstr( module->version, SUFFIX64 ))osType = VBOXOSFAMILY_Linux64;
++
++        /* If dividing a module into multiple regions based on whether the page is in RAM,
++         * you will find that different VM instances have different numbers of regions,
++         * and Vbox will find the differences and consider the module as unshareable. So all modules
++         * are registered with only one region. When VBox is doing the check operation,
++         * it'll ignore those pages which are not present in RAM.
++         */
++        VMMDEVSHAREDREGIONDESC RegionDesc;
++        RegionDesc.GCRegionAddr = (RTGCPTR64)module->base_address;
++        RegionDesc.cbRegion = (uint32_t)module->size;
++        int rc = VbglR3RegisterSharedModule( module->name, module->version, (RTGCPTR64)module->base_address,
++                                            (uint32_t)module->size, 1, &RegionDesc, osType );
++
++        if( rc != VINF_SUCCESS )
++        {
++            ALOGW("Falled to register the module %s, verion=%s! rc = %d\n", module->name, module->version, rc );
++            return rc;
++        }
++        module->bRegistered = true;
++
++        if (debug)
++        {
++            ALOGI( "Regiser module %s: %s, base address=0x%08lx, memsize=0x%lx, version=%s, type=%d\n", module->name,
++                    rc == VINF_SUCCESS?"ok":"fail", module->base_address, module->size, module->version, module->type );
++        }
++    }
++
++    return VINF_SUCCESS;
++}
++
++/**
++ * @brief Unregister all modules
++ */
++void UnregisterAllModules(void)
++{
++    if(!s_SharedModuleList)
++        return;
++
++    PSHAREDMODULE module;
++    struct list_head* pos;
++
++    list_for_each( pos, &s_SharedModuleList->node )
++    {
++        module = list_entry( pos, SHAREDMODULE, node );
++        if( !module->bRegistered )continue;
++
++        int rc = VbglR3UnregisterSharedModule( module->name, module->version, (RTGCPTR64)module->base_address,
++                                            (uint32_t)module->size );
++
++        if( rc != VINF_SUCCESS )
++        {
++            ALOGE("Unregister %s failed!\n", module->name );
++        }
++        if (debug) ALOGI( "Unregister module %s: %s\n", module->name, rc == VINF_SUCCESS?"ok":"fail" );
++    }
++}
++
++/**
++ * @brief Unregister, unmap and delete old modules which have been unloaded
++ */
++void UnregisterOutdatedModules( unsigned int expectedAge )
++{
++    PSHAREDMODULE module;
++    struct list_head* pos;
++    struct list_head* tmpNode;
++
++    list_for_each_safe( pos, tmpNode, &s_SharedModuleList->node )
++    {
++        module = list_entry( pos, SHAREDMODULE, node );
++        if( module->age == expectedAge )continue;
++
++        if( module->bRegistered )
++        {
++            int rc = VbglR3UnregisterSharedModule( module->name, module->version, (RTGCPTR64)module->base_address,
++                    (uint32_t)module->size );
++
++            if( rc != VINF_SUCCESS )
++            {
++                ALOGE("Unregister %s failed!\n", module->name );
++            }
++            else
++            {
++                module->bRegistered = false;
++            }
++            if (debug) ALOGI( "Unregister module %s: %s\n", module->name, rc == VINF_SUCCESS?"ok":"fail" );
++        }/*else skip the unregistered modules*/
++
++        if( module->bRegistered == false && module->bMapped )
++        {
++            munmap( (void*)module->base_address, (size_t)module->size );
++            module->bMapped = false;
++        }
++
++        /* When a module was released, it must be removed from std::map.*/
++        string strName = module->name;
++        s_ModuleMap.erase( strName );
++        FreeSharedModule( module );
++    }
++}
++
++/**
++ * @brief Create a module for sharing kernel text section. It refers to Sumedh's POC.
++ */
++void CreateKernelSharedModule( int age )
++{
++    const char* name = "vmlinux";
++    string strName = name;
++    PSHAREDMODULE mod;
++
++    map<string,PSHAREDMODULE>::iterator it = s_ModuleMap.find( strName );
++    if( it == s_ModuleMap.end() )
++    {
++        char line[256];
++
++        FILE* fp = fopen( "/proc/kinfo", "r" );
++        if( fp )
++        {
++            memset( line, 0, sizeof(line));
++            if( fgets( line, sizeof(line), fp ) != NULL )
++            {
++                unsigned long ktext_start, ktext_end;
++                if( sscanf( line, "%lx-%lx", &ktext_start, &ktext_end ) == 2 )
++                {
++                    ktext_start = PAGE_ALIGN(ktext_start);
++                    ktext_end = (ktext_end + PAGE_SIZE) & PAGE_MASK;
++
++                    mod = AddSharedModule( name, ktext_start, ktext_end - ktext_start, TYPE_KERNEL, 0 );
++                    if( mod )
++                    {
++                        s_ModuleMap.insert( std::pair<string,PSHAREDMODULE>(strName, mod) );
++                        mod->age = age;
++                        mod->bMapped = true;/*No need to map Kernel */
++                    }
++                }
++            }/*else return on error*/
++            fclose( fp );
++        }
++    }
++    else
++    {
++        mod = it->second;
++        mod->age = age;
++    }
++}
++
++/**
++ * @brief Check whether the module is a file
++ */
++bool IsValidModule( const char* name )
++{
++    if( name[0] == '['
++        || StartsWith( name, "/dev/" )
++        || StartsWith( name, "/sys/" ))/*strncmp + strlen is much more efficient than strstr*/
++    {
++        return false;
++    }
++    return true;
++}
++
++/**
++ * @brief Build the bitmap. Each bit represents whether the page is present in RAM
++ */
++bool BuildModuleRegionPresentBitmap( int pid, PSHAREDMODULE mod )
++{
++    bool ret_val = true;
++    char mapFilePath[MAX_PATH];
++    int fd;
++
++    snprintf( mapFilePath, sizeof(mapFilePath), "/proc/%d/pagemap", pid );
++    fd = open( mapFilePath, O_RDONLY );
++    if( fd < 0 )
++    {
++        ALOGW("Failed to access the file %s!\n", mapFilePath );
++        return false;
++    }
++
++    /* Walk the pagemaps and record those pages which are present in RAM.*/
++    int startIdx = mod->base_address/PAGE_SIZE;
++    int lastIdx = startIdx + mod->size/PAGE_SIZE;
++
++    for( int pageIdx = startIdx; pageIdx < lastIdx; pageIdx++ )
++    {
++        uint64_t data;
++        uint64_t offsetPageMap = pageIdx * sizeof(data);
++        if( pread( fd, &data, sizeof(data), offsetPageMap ) != sizeof(data) )
++        {
++            ALOGE( "Error reading pagemap for offset addr 0x%llx\n", (unsigned long long)offsetPageMap );
++            ret_val = false;
++            break;
++        }
++
++        /* 63bit: If set, the page is present in RAM.
++         * 61bit: If set, the page is a file-mapped page.
++         */
++        #define RAM_PRESENT_MASK    ((((uint64_t)1)<<63)|(((uint64_t)1)<<61))
++        if( (data & RAM_PRESENT_MASK) == RAM_PRESENT_MASK )
++        {
++            SetBit( &mod->page_bmap[0], pageIdx - startIdx );
++        }
++    }
++
++    close( fd );
++    return ret_val;
++}
++
++/**
++ * @brief Read memory map file of specified process and get all modules
++ */
++void WalkProcessMemMaps( int pid, unsigned int age )
++{
++    char mapFilePath[MAX_PATH];
++    FILE* fpMapFile;
++    char line[512];
++
++    snprintf( mapFilePath, sizeof(mapFilePath), "/proc/%d/maps", pid );
++    fpMapFile = fopen( mapFilePath, "r" );
++    if( !fpMapFile )
++    {
++        return;
++    }
++
++    /*scan all modules*/
++    memset( line, 0, sizeof(line));
++    while( fgets( line, sizeof(line), fpMapFile ) != NULL )
++    {
++        unsigned long base_address;
++        unsigned long end_address;
++        char permissions[8];
++        unsigned long offset = 0;
++        int dev_major = 0;
++        int dev_minor = 0;
++        int inode = 0;                  /*device inode*/
++        char path_name[MAX_PATH];
++
++        /*parse the line*/
++        memset( path_name, 0, sizeof(path_name ));
++        memset( permissions, 0, sizeof(permissions));
++        int n = sscanf( line, "%08lx-%08lx %s %08lx %02x:%02x %d    %s\n",
++                        &base_address, &end_address, permissions, &offset,
++                        &dev_major, &dev_minor, &inode, path_name );
++        if( n != 8 )
++        {
++            continue;
++        }
++
++        /*skip particular files*/
++        TrimString( path_name );
++        if( strlen( path_name ) == 0 || !IsValidModule( path_name ) || permissions[1] == 'w' )
++        {
++            continue;
++        }
++
++        /*  Check whether it is an existing module first, the performance will be better */
++        PSHAREDMODULE mod;
++        string strName = path_name;
++
++        map<string,PSHAREDMODULE>::iterator it = s_ModuleMap.find( strName );
++        if( it == s_ModuleMap.end() )
++        {
++            /* Find the module and insert into the list */
++            for( unsigned int i = 0; i < _countof( s_ModulePatterns ); i++ )
++            {
++                /*Check whether it's a valid module */
++                PMODULEPATTERN pattern = &s_ModulePatterns[i];
++                if( pattern->match && pattern->match( path_name, permissions ) )
++                {
++                    /* For OAT and dex files, only rodata section can be shared.
++                     * And the first two pages must be ignored, which include ELF header and OAT header.
++                     */
++                    if( pattern->type == TYPE_OAT )
++                    {
++                        base_address += 2*PAGE_SIZE;
++                        offset += 2*PAGE_SIZE;
++                    }
++
++                    mod = AddSharedModule( path_name, base_address, end_address - base_address, pattern->type, offset );
++                    if( mod && BuildModuleRegionPresentBitmap( pid, mod ))
++                    {
++                        s_ModuleMap.insert( std::pair<string,PSHAREDMODULE>(strName, mod) );
++                        mod->age = age;
++                    }
++
++                    break;
++                }/*else continue*/
++            }
++        }
++        else/*update the age of existing module*/
++        {
++            mod = it->second;
++            mod->age = age;
++        }
++    }
++
++    fclose( fpMapFile );
++}
++
++static void sigaction_exception(int signal, siginfo_t *si, void *arg)
++{
++    ucontext_t *ctx = (ucontext_t *)arg;
++
++    /* We are on linux x86, the returning IP is stored in RIP (64bit) or EIP (32bit).
++       In this example, the length of the offending instruction is 6 bytes.
++       So we skip the offender ! */
++    #if __WORDSIZE == 64
++        ALOGI("[%d]Caught SIGNAL(%d), addr %p, RIP 0x%lx\n", getpid(), signal, si->si_addr, ctx->uc_mcontext.gregs[REG_RIP]);
++        ctx->uc_mcontext.gregs[REG_RIP] += 2;
++    #else
++        ALOGI("[%d]Caught SIGNAL(%d), addr %p, EIP 0x%x\n", getpid(), signal, si->si_addr, ctx->uc_mcontext.gregs[REG_EIP]);
++        ctx->uc_mcontext.gregs[REG_EIP] += 2;
++    #endif
++
++    UnregisterAllModules();
++    UnmapAllModules();
++    s_ModuleMap.clear();
++    FreeSharedModuleList();
++    VbglR3Uninit();
++    exit( -1 );
++}
++
++/**
++ * @brief Init the- callback of signals
++ */
++void InitSignalAction( void )
++{
++    struct sigaction sa;
++    memset( &sa, 0, sizeof(sa) );
++    sigemptyset( &sa.sa_mask );
++    sa.sa_sigaction = sigaction_exception;
++    sa.sa_flags = SA_SIGINFO;
++    sigaction( SIGSEGV, &sa, NULL );
++    sigaction( SIGINT,  &sa, NULL );
++    sigaction( SIGTERM, &sa, NULL );
++}
++
++/**
++ * @brief Print the usage message
++ */
++static void Usage(void)
++{
++    fprintf( stderr,
++            "usage: pagefusion [-h] [--no-exe] [--no-font] [--no-framework]\n"
++            "   -h:             this message\n"
++            "   --no-exe:       disable sharing of executable files\n"
++            "   --no-font:      disable sharing of font files\n"
++            "   --no-framework: disable sharing of framework files\n");
++}
++
++/**
++ * @brief Parse arguments
++ */
++void ParseArgs( int argc, char** argv )
++{
++    struct option long_opts[] =
++    {
++        { "no-exe", 0, NULL, 'x' },
++        { "no-font", 0, NULL, 'f' },
++        { "no-framework", 0, NULL, 'w' },
++        { NULL, 0, NULL, 0 }
++    };
++    int c;
++    int opt_index = 0;
++    while(( c = getopt_long( argc, argv, "h", long_opts, &opt_index )) != -1)
++    {
++        switch( c )
++        {
++            case 'f':
++                s_ModulePatterns[TYPE_FONT].match = NULL;
++                break;
++
++            case 'w':
++                s_ModulePatterns[TYPE_FRAMEWORK].match = NULL;
++                break;
++
++            case 'x':
++                s_ModulePatterns[TYPE_EXE].match = NULL;
++                break;
++
++            case '?':
++            case 'h':
++                Usage();
++                exit( 0 );
++                break;
++
++            default:
++                break;
++        }
++    }
++}
++
++
++int main(int argc, char** argv)
++{
++    int ret_val = 0;
++    int pid_self = getpid();
++    int rc;
++    char value[PROPERTY_VALUE_MAX];
++
++    property_get("bst.debug.pagefusion", value, "0");
++    debug = atoi(value) > 0 ? true : false;
++
++    /*Parse arguments*/
++    ParseArgs( argc, argv );
++
++    InitSignalAction();
++
++    ALOGI( "Init page sharing service.\n" );
++    if( VINF_SUCCESS != VbglR3Init() || VINF_SUCCESS != VgsvcPageSharingInit() )
++    {
++        ALOGE( "Failed to init page sharing service!" );
++        return -1;
++    }
++
++    /*Init the shared module list.*/
++    s_SharedModuleList = CreateSharedModule();
++    s_ModuleMap.clear();
++
++    /* Each loop, the age value of the found module will be increased by 1.
++       Modules not found will remain unchanged.
++       Those modules that have not been added are outdated and should be unregistered. */
++    unsigned int age = 1;
++
++    /*Run a loop for scanning process and performing share operation */
++    do
++    {
++        int featureStatus = CheckOneInstanceRunningOrUnsupported();
++        if( featureStatus == STATUS_UNSUPPORTED )
++        {
++            break;
++        }
++        else if( featureStatus == STATUS_ONE_INSTANCE )
++        {
++            /*If only one instance is running, check the status faster */
++            if(debug) ALOGI( "Waiting 15 seconds for next loop\n");
++            sleep( 15 );
++            continue;
++        }/*else multiple instances & supported */
++
++        /*Scan all processes and get all modules which can be shared*/
++        struct dirent* dirEntry;
++        DIR* dirProc = opendir( "/proc" );
++        if( !dirProc )
++        {
++            ret_val = -1;
++            ALOGE( "Failed to open proc directory!" );
++            break;
++        }
++
++        while( (dirEntry = readdir( dirProc )))
++        {
++            char c = dirEntry->d_name[0];
++            if( dirEntry->d_type != DT_DIR || c > '9' || c < '0' )/*Only open the directory representing the process*/
++            {
++                continue;
++            }
++
++            /*scan the map file and get all modules*/
++            int pid = atoi( dirEntry->d_name );
++            if( pid != pid_self )
++            {
++                WalkProcessMemMaps( pid, age );
++            }
++        }
++        closedir( dirProc );
++
++        /*
++         * The freezing issue on AMD machine has been resolved. The sharing of the kernel text section can be reopened.
++         */
++        CreateKernelSharedModule( age );
++
++        /*delete outdated modules*/
++        UnregisterOutdatedModules( age );
++        age++;
++
++        /*Map the files of all modules to the virtual memory of this process*/
++        MapAllModules();
++        if (debug) ALOGI( "RegisterAllModules ...\n" );
++        rc = RegisterAllModules();
++        if( rc != VINF_SUCCESS )
++        {
++            ALOGW( "Failed to register all modules!\n" );
++            break;
++        }
++
++        if (debug) ALOGI( "Check shared modules ...\n" );
++        rc = VbglR3CheckSharedModules();
++        if( rc != VINF_SUCCESS )
++        {
++            ALOGW( "Failed to check all modules!\n" );
++            break;
++        }
++
++        StatisticsModule( TYPE_SO );
++        StatisticsModule( TYPE_EXE );
++        StatisticsModule( TYPE_FONT );
++        StatisticsModule( TYPE_FRAMEWORK );
++        StatisticsModule( TYPE_OAT );
++
++        /*Sleep for 60 seconds and proceed to the next scan*/
++        if (debug) ALOGI( "Waiting 60 seconds for next loop\n");
++        sleep( 60 );
++    }while(1);
++
++    StatisticsModule( TYPE_SO );
++    StatisticsModule( TYPE_EXE );
++    StatisticsModule( TYPE_FONT );
++    StatisticsModule( TYPE_FRAMEWORK );
++    StatisticsModule( TYPE_OAT );
++
++    if (debug) ALOGI( "UnregisterAllModules ...\n" );
++    UnregisterAllModules();
++    UnmapAllModules();
++
++    s_ModuleMap.clear();
++    FreeSharedModuleList();
++    VbglR3Uninit();
++    return ret_val;
++}
+diff --git a/cmds/pagefusion/RTVboxGuest.cpp b/cmds/pagefusion/RTVboxGuest.cpp
+new file mode 100644
+index 000000000000..49afcdd226e2
+--- /dev/null
++++ b/cmds/pagefusion/RTVboxGuest.cpp
+@@ -0,0 +1,356 @@
++/* Most of the codes are derived from VBoxService for windows
++ * Guest page sharing.
++ */
++
++/*
++ * Copyright (C) 2006-2016 Oracle Corporation
++ *
++ * This file is part of VirtualBox Open Source Edition (OSE), as
++ * available from http://www.virtualbox.org. This file is free software;
++ * you can redistribute it and/or modify it under the terms of the GNU
++ * General Public License (GPL) as published by the Free Software
++ * Foundation, in version 2 as it comes in the "COPYING" file of the
++ * VirtualBox OSE distribution. VirtualBox OSE is distributed in the
++ * hope that it will be useful, but WITHOUT ANY WARRANTY of any kind.
++ */
++
++
++/** @page pg_vgsvc_pagesharing VBoxService - Page Sharing
++ *
++ * The Page Sharing subservice is responsible for finding memory mappings
++ * suitable page fusions.
++ *
++ * It is the driving force behind the Page Fusion feature in VirtualBox.
++ * Working with PGM and GMM (ring-0) thru the VMMDev interface.  Every so often
++ * it reenumerates the memory mappings (executables and shared libraries) of the
++ * guest OS and reports additions and removals to GMM.  For each mapping there
++ * is a filename and version as well as and address range and subsections.  GMM
++ * will match the mapping with mapping with the same name and version from other
++ * VMs and see if there are any identical pages between the two.
++ *
++ * To increase the hit rate and reduce the volatility, the service launches a
++ * child process which loads all the Windows system DLLs it can.  The child
++ * process is necessary as the DLLs are loaded without running the init code,
++ * and therefore not actually callable for other VBoxService code (may crash).
++ *
++ * This is currently only implemented on Windows.  There is no technical reason
++ * for it not to be doable for all the other guests too, it's just a matter of
++ * customer demand and engineering time.
++ *
++ */
++#include <android/log.h>
++#include <ctype.h>
++#include <cutils/properties.h>
++#include <dirent.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <pwd.h>
++#include <signal.h>
++#include <stdint.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/ioctl.h>
++#include <sys/mman.h>
++#include <sys/prctl.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <time.h>
++#include <ucontext.h>
++#include <unistd.h>
++
++#include <algorithm>
++#include <string>
++#include <unordered_map>
++#include <vector>
++#include "RTVboxGuest.h"
++
++static int g_File = -1;
++
++/**
++ * Implementation of VbglR3Init and VbglR3InitUser
++ */
++static int vbglR3Init(const char *pszDeviceName)
++{
++    if (g_File != -1)
++        return VERR_INTERNAL_ERROR;
++
++    /* The default implementation. (linux, solaris, freebsd, netbsd, haiku) */
++    int File = open(pszDeviceName, O_RDWR);
++    if (File == -1)
++	{
++        ALOGI("Couldn't open %s file, error %s", pszDeviceName, strerror(errno));
++        return errno;
++    }
++	
++    if (fcntl(File, F_SETFD, FD_CLOEXEC) < 0)
++    {
++        ALOGI("Couldn't set close on exec flag for /dev/vboxguest file");
++        return errno;
++    }
++    g_File = File;
++    return VINF_SUCCESS;
++}
++
++/**
++ * Open the VBox R3 Guest Library.  This should be called by system daemons
++ * and processes.
++ */
++int VbglR3Init(void)
++{
++    return vbglR3Init( VBOXGUEST_DEVICE_NAME );
++}
++
++/**
++ * Close the VBox device file.
++ */
++void VbglR3Uninit(void)
++{
++    close( g_File );
++}
++
++
++/**
++ * Internal wrapper around various OS specific ioctl implementations.
++ *
++ * @returns VBox status code as returned by VBoxGuestCommonIOCtl, or
++ *          an failure returned by the OS specific ioctl APIs.
++ *
++ * @param   iFunction   The requested function.
++ * @param   pvData      The input and output data buffer.
++ * @param   cbData      The size of the buffer.
++ *
++ * @remark  Exactly how the VBoxGuestCommonIOCtl is ferried back
++ *          here is OS specific. On BSD and Darwin we can use errno,
++ *          while on OS/2 we use the 2nd buffer of the IOCtl.
++ */
++int vbglR3DoIOCtl(unsigned iFunction, void *pvData, size_t cbData)
++{
++    NOREF(cbData);
++    if (g_File == -1)
++        return VERR_INVALID_HANDLE;
++		
++    int rc = ioctl(g_File, iFunction, pvData);
++    if (rc == 0)
++        return VINF_SUCCESS;
++
++    /* Positive values are negated VBox error status codes. */
++    if (rc > 0)
++        rc = -rc;
++    else
++        rc = errno;
++    return rc;
++}
++
++int vbglR3GRPerform(VMMDevRequestHeader *pReq)
++{
++    return vbglR3DoIOCtl(VBOXGUEST_IOCTL_VMMREQUEST(pReq->size), pReq, pReq->size);
++}
++
++/**
++ * Inline helper to determine the request size for the given operation.
++ * Returns 0 if the given operation is not handled and/or supported.
++ *
++ * @returns Size.
++ * @param   requestType     The VMMDev request type.
++ */
++static inline size_t vmmdevGetRequestSize(VMMDevRequestType requestType)
++{
++    switch (requestType)
++    {
++        case VMMDevReq_RegisterSharedModule:
++            return sizeof(VMMDevSharedModuleRegistrationRequest);
++        case VMMDevReq_UnregisterSharedModule:
++            return sizeof(VMMDevSharedModuleUnregistrationRequest);
++        case VMMDevReq_CheckSharedModules:
++            return sizeof(VMMDevSharedModuleCheckRequest);
++        case VMMDevReq_GetPageSharingStatus:
++            return sizeof(VMMDevPageSharingStatusRequest);
++        case VMMDevReq_DebugIsPageShared:
++            return sizeof(VMMDevPageIsSharedRequest);
++        case VMMDevReq_GetSessionId:
++            return sizeof(VMMDevReqSessionId);
++        default:
++            break;
++    }
++
++    return 0;
++}
++
++/**
++* Initializes a request structure.
++*
++* @returns VBox status code.
++* @param   req             The request structure to initialize.
++* @param   type            The request type.
++*/
++static inline int vmmdevInitRequest(VMMDevRequestHeader *req, VMMDevRequestType type)
++{
++    uint32_t requestSize;
++    if (!req)
++        return VERR_INVALID_PARAMETER;
++		
++    requestSize = (uint32_t)vmmdevGetRequestSize(type);
++    if (!requestSize)
++        return VERR_INVALID_PARAMETER;
++		
++    req->size        = requestSize;
++    req->version     = VMMDEV_REQUEST_HEADER_VERSION;
++    req->requestType = type;
++    req->rc          = VERR_GENERAL_FAILURE;
++    req->reserved1   = 0;
++    req->reserved2   = 0;
++    return VINF_SUCCESS;
++}
++
++
++int RTStrCopy(char *pszDst, size_t cbDst, const char *pszSrc)
++{
++    size_t cchSrc = strlen(pszSrc);
++    if (RT_LIKELY(cchSrc < cbDst))
++    {
++        memcpy(pszDst, pszSrc, cchSrc + 1);
++        return VINF_SUCCESS;
++    }
++
++    if (cbDst != 0)
++    {
++        memcpy(pszDst, pszSrc, cbDst - 1);
++        pszDst[cbDst - 1] = '\0';
++    }
++    return VERR_BUFFER_OVERFLOW;
++}
++
++/**
++ * Registers a new shared module for the VM
++ *
++ * @returns IPRT status code.
++ * @param   pszModuleName       Module name
++ * @param   pszVersion          Module version
++ * @param   GCBaseAddr          Module base address
++ * @param   cbModule            Module size
++ * @param   cRegions            Number of shared region descriptors
++ * @param   pRegions            Shared region(s)
++ * @param 	enmGuestOS			Guest OS type 
++ */
++int VbglR3RegisterSharedModule(char *pszModuleName, char *pszVersion,
++                                RTGCPTR64  GCBaseAddr, uint32_t cbModule,
++                                unsigned cRegions, VMMDEVSHAREDREGIONDESC *pRegions, 
++								VBOXOSFAMILY enmGuestOS )
++{
++    VMMDevSharedModuleRegistrationRequest *pReq;
++    int rc;
++
++    pReq = (VMMDevSharedModuleRegistrationRequest *)calloc(1, RT_OFFSETOF(VMMDevSharedModuleRegistrationRequest, aRegions[cRegions]));
++
++    vmmdevInitRequest(&pReq->header, VMMDevReq_RegisterSharedModule);
++    pReq->header.size   = RT_OFFSETOF(VMMDevSharedModuleRegistrationRequest, aRegions[cRegions]);
++    pReq->GCBaseAddr    = GCBaseAddr;
++    pReq->cbModule      = cbModule;
++    pReq->cRegions      = cRegions;
++    pReq->enmGuestOS    = enmGuestOS;
++	
++    for (unsigned i = 0; i < cRegions; i++)
++        pReq->aRegions[i] = pRegions[i];
++
++    if ( RTStrCopy(pReq->szName, sizeof(pReq->szName), pszModuleName) != VINF_SUCCESS
++        || RTStrCopy(pReq->szVersion, sizeof(pReq->szVersion), pszVersion) != VINF_SUCCESS )
++    {
++        rc = VERR_BUFFER_OVERFLOW;
++        goto end;
++    }
++
++    rc = vbglR3GRPerform(&pReq->header);
++
++end:
++    free(pReq);
++    return rc;
++}
++
++/**
++ * Unregisters a shared module for the VM
++ *
++ * @returns IPRT status code.
++ * @param   pszModuleName       Module name
++ * @param   pszVersion          Module version
++ * @param   GCBaseAddr          Module base address
++ * @param   cbModule            Module size
++ */
++int VbglR3UnregisterSharedModule(char *pszModuleName, char *pszVersion, RTGCPTR64 GCBaseAddr, uint32_t cbModule)
++{
++    VMMDevSharedModuleUnregistrationRequest Req;
++
++    vmmdevInitRequest(&Req.header, VMMDevReq_UnregisterSharedModule);
++    Req.GCBaseAddr    = GCBaseAddr;
++    Req.cbModule      = cbModule;
++
++    if( RTStrCopy(Req.szName, sizeof(Req.szName), pszModuleName) != VINF_SUCCESS
++        || RTStrCopy(Req.szVersion, sizeof(Req.szVersion), pszVersion) != VINF_SUCCESS)
++    {
++        return VERR_BUFFER_OVERFLOW;
++    }
++    return vbglR3GRPerform(&Req.header);
++}
++
++
++/**
++ * Checks registered modules for shared pages
++ *
++ * @returns IPRT status code.
++ */
++int VbglR3CheckSharedModules()
++{
++    VMMDevSharedModuleCheckRequest Req;
++
++    vmmdevInitRequest(&Req.header, VMMDevReq_CheckSharedModules);
++    return vbglR3GRPerform(&Req.header);
++}
++
++
++/**
++ * Query the session ID of this VM.
++ *
++ * The session id is an unique identifier that gets changed for each VM start,
++ * reset or restore.  Useful for detection a VM restore.
++ *
++ * @returns IPRT status code.
++ * @param   pu64IdSession       Session id (out).  This is NOT changed on
++ *                              failure, so the caller can depend on this to
++ *                              deal with backward compatibility (see
++ *                              VBoxServiceVMInfoWorker() for an example.)
++ */
++static int VbglR3GetSessionId(uint64_t *pu64IdSession)
++{
++    VMMDevReqSessionId Req;
++
++    vmmdevInitRequest(&Req.header, VMMDevReq_GetSessionId);
++    Req.idSession = 0;
++    int rc = vbglR3GRPerform(&Req.header);
++    if (RT_SUCCESS(rc))
++        *pu64IdSession = Req.idSession;
++
++    return rc;
++}
++
++static uint64_t         g_idSession = 0;
++/** @interface_method_impl{VBOXSERVICE,pfnInit} */
++int VgsvcPageSharingInit(void)
++{
++    int rc;
++
++    rc = VbglR3GetSessionId( &g_idSession );
++    if ( RT_FAILURE(rc) )
++    {
++        if ( rc == VERR_IO_GEN_FAILURE )
++            VGSvcVerbose(0, "PageSharing: Page sharing support is not available by the host\n");
++        else
++            VGSvcError("vgsvcPageSharingInit: Failed with rc=%d\n", rc);
++
++        rc = VERR_GENERAL_FAILURE;
++    }
++    else
++	{
++        ALOGI( "Got session id %lx\n", (unsigned long)g_idSession );
++    }
++
++    return rc;
++}
+diff --git a/cmds/pagefusion/RTVboxGuest.h b/cmds/pagefusion/RTVboxGuest.h
+new file mode 100644
+index 000000000000..a898bb4d9110
+--- /dev/null
++++ b/cmds/pagefusion/RTVboxGuest.h
+@@ -0,0 +1,423 @@
++/**
++ * @brief Most of the codes are derived from VBoxService for windows. 
++ * Guest page sharing.
++ */
++
++/*
++ * Copyright (C) 2006-2016 Oracle Corporation
++ *
++ * This file is part of VirtualBox Open Source Edition (OSE), as
++ * available from http://www.virtualbox.org. This file is free software;
++ * you can redistribute it and/or modify it under the terms of the GNU
++ * General Public License (GPL) as published by the Free Software
++ * Foundation, in version 2 as it comes in the "COPYING" file of the
++ * VirtualBox OSE distribution. VirtualBox OSE is distributed in the
++ * hope that it will be useful, but WITHOUT ANY WARRANTY of any kind.
++ */
++
++
++/** @page pg_vgsvc_pagesharing VBoxService - Page Sharing
++ *
++ * The Page Sharing subservice is responsible for finding memory mappings
++ * suitable page fusions.
++ *
++ * It is the driving force behind the Page Fusion feature in VirtualBox.
++ * Working with PGM and GMM (ring-0) thru the VMMDev interface.  Every so often
++ * it reenumerates the memory mappings (executables and shared libraries) of the
++ * guest OS and reports additions and removals to GMM.  For each mapping there
++ * is a filename and version as well as and address range and subsections.  GMM
++ * will match the mapping with mapping with the same name and version from other
++ * VMs and see if there are any identical pages between the two.
++ *
++ * To increase the hit rate and reduce the volatility, the service launches a
++ * child process which loads all the Windows system DLLs it can.  The child
++ * process is necessary as the DLLs are loaded without running the init code,
++ * and therefore not actually callable for other VBoxService code (may crash).
++ *
++ * This is currently only implemented on Windows.  There is no technical reason
++ * for it not to be doable for all the other guests too, it's just a matter of
++ * customer demand and engineering time.
++ *
++ */
++
++#ifndef __RTVBOXGUEST_H_H
++#define __RTVBOXGUEST_H_H
++
++#define VGSvcVerbose(log_level, ...)    ALOGI(__VA_ARGS__)
++#define VGSvcError(...)                 ALOGI(__VA_ARGS__)
++#define RTCALL                          __attribute__((__cdecl__, __regparm__(0)))
++#define DECLCALLBACK(type)              type
++#define RT_SUCCESS(rc)                 (rc == 0)
++#define RT_FAILURE(rc)                 !RT_SUCCESS(rc)
++
++#define ALOGE(...)                     ((void)__android_log_print(ANDROID_LOG_ERROR, "page-fusion", __VA_ARGS__))
++#define ALOGW(...)                     ((void)__android_log_print(ANDROID_LOG_WARN, "page-fusion", __VA_ARGS__))
++#define ALOGI(...)                     ((void)__android_log_print(ANDROID_LOG_INFO, "page-fusion", __VA_ARGS__))
++
++# if __GNUC__ >= 3 && !defined(FORTIFY_RUNNING)
++#  define RT_LIKELY(expr)       __builtin_expect(!!(expr), 1)
++#  define RT_UNLIKELY(expr)     __builtin_expect(!!(expr), 0)
++# else
++#  define RT_LIKELY(expr)       (expr)
++#  define RT_UNLIKELY(expr)     (expr)
++# endif
++
++/** @name Misc. Status Codes
++ * @{
++ */
++/** Success. */
++#define VINF_SUCCESS                        0
++
++/** General failure - DON'T USE THIS!!! */
++#define VERR_GENERAL_FAILURE                (-1)
++/** Invalid parameter. */
++#define VERR_INVALID_PARAMETER              (-2)
++/** Invalid loader handle. */
++#define VERR_INVALID_HANDLE                 (-4)
++/** Not supported. */
++#define VERR_NOT_SUPPORTED                  (-37)
++/** Buffer too small to save result. */
++#define VERR_BUFFER_OVERFLOW                (-41)
++#define VERR_IGNORED                        (-91)
++#define VERR_INTERNAL_ERROR                 (-225)
++/** Device i/o: General failure. */
++#define VERR_IO_GEN_FAILURE                 (-257)
++
++
++#define PAGE_STATE_INVALID           0
++#define PAGE_STATE_SHARED            1
++#define PAGE_STATE_READ_WRITE        2
++#define PAGE_STATE_READ_ONLY         3
++#define PAGE_STATE_NOT_PRESENT       4
++
++
++/** @def RT_BIT_32
++ * Convert a bit number into a 32-bit bitmask (unsigned).
++ * @param   bit     The bit number.
++ */
++#define RT_BIT_32(bit)                          ( UINT32_C(1) << (bit) )
++/** Bit 0 -  P  - Present bit mask. */
++#define X86_PTE_P                           	RT_BIT_32(0)
++/** Bit 1 - R/W - Read (clear) / Write (set) bit mask. */
++#define X86_PTE_RW                          	RT_BIT_32(1)
++/** Invalid parameter. */
++/** Invalid loader handle. */
++/** Version of VMMDevRequestHeader structure. */
++#define VMMDEV_REQUEST_HEADER_VERSION 		(0x10001)
++#define VBOXGUEST_DEVICE_NAME          			   "/dev/vboxguest"
++#define VBOXGUEST_IOCTL_CODE_(Function, Size)      _IOC(_IOC_READ|_IOC_WRITE, 'V', (Function), (Size))
++
++/** IOCTL to VBoxGuest to perform a VMM request
++ * @remark  The data buffer for this IOCtl has an variable size, keep this in mind
++ *          on systems where this matters. */
++#define VBOXGUEST_IOCTL_VMMREQUEST(Size)            VBOXGUEST_IOCTL_CODE_(3, (Size))
++
++/** @def RT_GNUC_PREREQ
++ * Shorter than fiddling with __GNUC__ and __GNUC_MINOR__.
++ *
++ * @param   a_MinMajor      Minimum major version
++ * @param   a_MinMinor      The minor version number part.
++ */
++#define RT_GNUC_PREREQ(a_MinMajor, a_MinMinor)      RT_GNUC_PREREQ_EX(a_MinMajor, a_MinMinor, 0)
++
++/** @def RT_GNUC_PREREQ_EX
++ * Simplified way of checking __GNUC__ and __GNUC_MINOR__ regardless of actual
++ * compiler used, returns @a a_OtherRet for other compilers.
++ *
++ * @param   a_MinMajor      Minimum major version
++ * @param   a_MinMinor      The minor version number part.
++ * @param   a_OtherRet      What to return for non-GCC compilers.
++ */
++#if defined(__GNUC__) && defined(__GNUC_MINOR__)
++# define RT_GNUC_PREREQ_EX(a_MinMajor, a_MinMinor, a_OtherRet) \
++    ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((a_MinMajor) << 16) + (a_MinMinor))
++#else
++# define RT_GNUC_PREREQ_EX(a_MinMajor, a_MinMinor, a_OtherRet) (a_OtherRet)
++#endif
++
++/** @def RT_OFFSETOF
++ * Our own special offsetof() variant, returns a signed result.
++ *
++ * This differs from the usual offsetof() in that it's not relying on builtin
++ * compiler stuff and thus can use variables in arrays the structure may
++ * contain. This is useful to determine the sizes of structures ending
++ * with a variable length field. For gcc >= 4.4 see @bugref{7775}.
++ *
++ * @returns offset into the structure of the specified member. signed.
++ * @param   type    Structure type.
++ * @param   member  Member.
++ */
++#if defined(__cplusplus) && RT_GNUC_PREREQ(4, 4)
++# define RT_OFFSETOF(type, member)              ( (int)(uintptr_t)&( ((type *)(void *)0x1000)->member) - 0x1000 )
++#else
++# define RT_OFFSETOF(type, member)              ( (int)(uintptr_t)&( ((type *)(void *)0)->member) )
++#endif
++
++/** @def NOREF
++ * Keeps the compiler from bitching about an unused parameter, local variable,
++ * or other stuff, will never use _Pragma are is thus more flexible.
++ */
++#define NOREF(var)               (void)(var)
++
++
++typedef uint64_t RTGCPTR64;
++typedef uint32_t RTGCPTR32;
++
++typedef RTGCPTR64 RTGCPTR; // TODO: Based on GC Arch bits, either typedef RTGCPTR64 or RTGCPTR32
++
++ /* Global list of guest OS families.
++ */
++typedef enum VBOXOSFAMILY
++{
++    VBOXOSFAMILY_Unknown          = 0,
++    VBOXOSFAMILY_Windows32        = 1,
++    VBOXOSFAMILY_Windows64        = 2,
++    VBOXOSFAMILY_Linux32          = 3,
++    VBOXOSFAMILY_Linux64          = 4,
++    VBOXOSFAMILY_FreeBSD32        = 5,
++    VBOXOSFAMILY_FreeBSD64        = 6,
++    VBOXOSFAMILY_Solaris32        = 7,
++    VBOXOSFAMILY_Solaris64        = 8,
++    VBOXOSFAMILY_MacOSX32         = 9,
++    VBOXOSFAMILY_MacOSX64         = 10,
++    /** The usual 32-bit hack. */
++    VBOXOSFAMILY_32BIT_HACK = 0x7fffffff
++} VBOXOSFAMILY;
++
++/**
++ * VMMDev request types.
++ * @note when updating this, adjust vmmdevGetRequestSize() as well
++ */
++typedef enum
++{
++    VMMDevReq_InvalidRequest             =  0,
++    VMMDevReq_GetMouseStatus             =  1,
++    VMMDevReq_SetMouseStatus             =  2,
++    VMMDevReq_SetPointerShape            =  3,
++    VMMDevReq_GetHostVersion             =  4,
++    VMMDevReq_Idle                       =  5,
++    VMMDevReq_GetHostTime                = 10,
++    VMMDevReq_GetHypervisorInfo          = 20,
++    VMMDevReq_SetHypervisorInfo          = 21,
++    VMMDevReq_RegisterPatchMemory        = 22, /* since version 3.0.6 */
++    VMMDevReq_DeregisterPatchMemory      = 23, /* since version 3.0.6 */
++    VMMDevReq_SetPowerStatus             = 30,
++    VMMDevReq_AcknowledgeEvents          = 41,
++    VMMDevReq_CtlGuestFilterMask         = 42,
++    VMMDevReq_ReportGuestInfo            = 50,
++    VMMDevReq_ReportGuestInfo2           = 58, /* since version 3.2.0 */
++    VMMDevReq_ReportGuestStatus          = 59, /* since version 3.2.8 */
++    VMMDevReq_ReportGuestUserState       = 74, /* since version 4.3 */
++    /**
++     * Retrieve a display resize request sent by the host using
++     * @a IDisplay:setVideoModeHint.  Deprecated.
++     *
++     * Similar to @a VMMDevReq_GetDisplayChangeRequest2, except that it only
++     * considers host requests sent for the first virtual display.  This guest
++     * request should not be used in new guest code, and the results are
++     * undefined if a guest mixes calls to this and
++     * @a VMMDevReq_GetDisplayChangeRequest2.
++     */
++    VMMDevReq_GetDisplayChangeRequest    = 51,
++    VMMDevReq_VideoModeSupported         = 52,
++    VMMDevReq_GetHeightReduction         = 53,
++    /**
++     * Retrieve a display resize request sent by the host using
++     * @a IDisplay:setVideoModeHint.
++     *
++     * Queries a display resize request sent from the host.  If the
++     * @a eventAck member is sent to true and there is an unqueried
++     * request available for one of the virtual display then that request will
++     * be returned.  If several displays have unqueried requests the lowest
++     * numbered display will be chosen first.  Only the most recent unseen
++     * request for each display is remembered.
++     * If @a eventAck is set to false, the last host request queried with
++     * @a eventAck set is resent, or failing that the most recent received from
++     * the host.  If no host request was ever received then all zeros are
++     * returned.
++     */
++    VMMDevReq_GetDisplayChangeRequest2   = 54,
++    VMMDevReq_ReportGuestCapabilities    = 55,
++    VMMDevReq_SetGuestCapabilities       = 56,
++    VMMDevReq_VideoModeSupported2        = 57, /* since version 3.2.0 */
++    VMMDevReq_GetDisplayChangeRequestEx  = 80, /* since version 4.2.4 */
++#ifdef VBOX_WITH_HGCM
++    VMMDevReq_HGCMConnect                = 60,
++    VMMDevReq_HGCMDisconnect             = 61,
++#ifdef VBOX_WITH_64_BITS_GUESTS
++    VMMDevReq_HGCMCall32                 = 62,
++    VMMDevReq_HGCMCall64                 = 63,
++#else
++    VMMDevReq_HGCMCall                   = 62,
++#endif /* VBOX_WITH_64_BITS_GUESTS */
++    VMMDevReq_HGCMCancel                 = 64,
++    VMMDevReq_HGCMCancel2                = 65,
++#endif
++    VMMDevReq_VideoAccelEnable           = 70,
++    VMMDevReq_VideoAccelFlush            = 71,
++    VMMDevReq_VideoSetVisibleRegion      = 72,
++    VMMDevReq_GetSeamlessChangeRequest   = 73,
++    VMMDevReq_QueryCredentials           = 100,
++    VMMDevReq_ReportCredentialsJudgement = 101,
++    VMMDevReq_ReportGuestStats           = 110,
++    VMMDevReq_GetMemBalloonChangeRequest = 111,
++    VMMDevReq_GetStatisticsChangeRequest = 112,
++    VMMDevReq_ChangeMemBalloon           = 113,
++    VMMDevReq_GetVRDPChangeRequest       = 150,
++    VMMDevReq_LogString                  = 200,
++    VMMDevReq_GetCpuHotPlugRequest       = 210,
++    VMMDevReq_SetCpuHotPlugStatus        = 211,
++    VMMDevReq_RegisterSharedModule       = 212,
++    VMMDevReq_UnregisterSharedModule     = 213,
++    VMMDevReq_CheckSharedModules         = 214,
++    VMMDevReq_GetPageSharingStatus       = 215,
++    VMMDevReq_DebugIsPageShared          = 216,
++    VMMDevReq_GetSessionId               = 217, /* since version 3.2.8 */
++    VMMDevReq_WriteCoreDump              = 218,
++    VMMDevReq_GuestHeartbeat             = 219,
++    VMMDevReq_HeartbeatConfigure         = 220,
++    VMMDevReq_SizeHack                   = 0x7fffffff
++} VMMDevRequestType;
++
++/**
++ * Generic VMMDev request header.
++ */
++typedef struct
++{
++    /** IN: Size of the structure in bytes (including body). */
++    uint32_t size;
++    /** IN: Version of the structure.  */
++    uint32_t version;
++    /** IN: Type of the request. */
++    VMMDevRequestType requestType;
++    /** OUT: Return code. */
++    int32_t  rc;
++    /** Reserved field no.1. MBZ. */
++    uint32_t reserved1;
++    /** Reserved field no.2. MBZ. */
++    uint32_t reserved2;
++} VMMDevRequestHeader;
++
++/**
++ * Session id request structure.
++ *
++ * Used by VMMDevReq_GetSessionId.
++ */
++typedef struct
++{
++    /** Header */
++    VMMDevRequestHeader header;
++    /** OUT: unique session id; the id will be different after each start, reset or restore of the VM */
++    uint64_t            idSession;
++} VMMDevReqSessionId;
++
++/**
++ * Shared region description
++ */
++typedef struct VMMDEVSHAREDREGIONDESC
++{
++    RTGCPTR64           GCRegionAddr;
++    uint32_t            cbRegion;
++    uint32_t            u32Alignment;
++} VMMDEVSHAREDREGIONDESC;
++
++#define VMMDEVSHAREDREGIONDESC_MAX          32
++
++/**
++ * Shared module registration
++ */
++typedef struct
++{
++    /** Header. */
++    VMMDevRequestHeader         header;
++    /** Shared module size. */
++    uint32_t                    cbModule;
++    /** Number of included region descriptors */
++    uint32_t                    cRegions;
++    /** Base address of the shared module. */
++    RTGCPTR64                   GCBaseAddr;
++    /** Guest OS type. */
++    VBOXOSFAMILY                enmGuestOS;
++    /** Alignment. */
++    uint32_t                    u32Align;
++    /** Module name */
++    char                        szName[128];
++    /** Module version */
++    char                        szVersion[16];
++    /** Shared region descriptor(s). */
++    VMMDEVSHAREDREGIONDESC      aRegions[1];
++} VMMDevSharedModuleRegistrationRequest;
++
++
++/**
++ * Shared module unregistration
++ */
++typedef struct
++{
++    /** Header. */
++    VMMDevRequestHeader         header;
++    /** Shared module size. */
++    uint32_t                    cbModule;
++    /** Align at 8 byte boundary. */
++    uint32_t                    u32Alignment;
++    /** Base address of the shared module. */
++    RTGCPTR64                   GCBaseAddr;
++    /** Module name */
++    char                        szName[128];
++    /** Module version */
++    char                        szVersion[16];
++} VMMDevSharedModuleUnregistrationRequest;
++
++
++/**
++ * Shared module periodic check
++ */
++typedef struct
++{
++    /** Header. */
++    VMMDevRequestHeader         header;
++} VMMDevSharedModuleCheckRequest;
++
++/**
++ * Paging sharing enabled query
++ */
++typedef struct
++{
++    /** Header. */
++    VMMDevRequestHeader         header;
++    /** Enabled flag (out) */
++    bool                        fEnabled;
++    /** Alignment */
++    bool                        fAlignment[3];
++} VMMDevPageSharingStatusRequest;
++
++#pragma pack(4)
++/**
++ * Page sharing status query (debug build only)
++ */
++typedef struct
++{
++    /** Header. */
++    VMMDevRequestHeader         header;
++    /** Page address. */
++    RTGCPTR                     GCPtrPage;
++    /** Page flags. */
++    uint64_t                    uPageFlags;
++    /** Shared flag (out) */
++    bool                        fShared;
++    /** Alignment */
++    bool                        fAlignment[3];
++} VMMDevPageIsSharedRequest;
++#pragma pack()
++
++int VbglR3Init(void);
++void VbglR3Uninit(void);
++int VgsvcPageSharingInit(void);
++int VbglR3CheckSharedModules();
++int VbglR3RegisterSharedModule(char *pszModuleName, char *pszVersion,
++                                RTGCPTR64  GCBaseAddr, uint32_t cbModule,
++                                unsigned cRegions, VMMDEVSHAREDREGIONDESC *pRegions,
++								VBOXOSFAMILY enmGuestOS);
++int VbglR3UnregisterSharedModule(char *pszModuleName, char *pszVersion, RTGCPTR64 GCBaseAddr, uint32_t cbModule);
++
++#endif
+diff --git a/cmds/pagefusion/list.h b/cmds/pagefusion/list.h
+new file mode 100644
+index 000000000000..43a7cd1f5296
+--- /dev/null
++++ b/cmds/pagefusion/list.h
+@@ -0,0 +1,773 @@
++#ifndef _LINUX_LIST_H
++#define _LINUX_LIST_H
++
++#define READ_ONCE(x)	(x)
++#define WRITE_ONCE(x,y) ((x)=(y))
++#define LIST_POISON1  (NULL)
++#define LIST_POISON2  (NULL)
++
++#define container_of(ptr, type, member) ({			\
++	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
++	(type *)( (char *)__mptr - offsetof(type,member) );})
++
++
++typedef struct list_head {
++	struct list_head *next, *prev;
++}LIST;
++
++/*
++ * Simple doubly linked list implementation.
++ *
++ * Some of the internal functions ("__xxx") are useful when
++ * manipulating whole lists rather than single entries, as
++ * sometimes we already know the next/prev entries and we can
++ * generate better code by using them directly rather than
++ * using the generic single-entry routines.
++ */
++
++#define LIST_HEAD_INIT(name) { &(name), &(name) }
++
++#define LIST_HEAD(name) \
++	struct list_head name = LIST_HEAD_INIT(name)
++
++static inline void INIT_LIST_HEAD(struct list_head *list)
++{
++	WRITE_ONCE(list->next, list);
++	list->prev = list;
++}
++
++/*
++ * Insert a new entry between two known consecutive entries.
++ *
++ * This is only for internal list manipulation where we know
++ * the prev/next entries already!
++ */
++static inline void __list_add(struct list_head *new_node,
++			      struct list_head *prev,
++			      struct list_head *next)
++{
++	next->prev = new_node;
++	new_node->next = next;
++	new_node->prev = prev;
++	WRITE_ONCE(prev->next, new_node);
++}
++
++/**
++ * list_add - add a new entry
++ * @new: new entry to be added
++ * @head: list head to add it after
++ *
++ * Insert a new entry after the specified head.
++ * This is good for implementing stacks.
++ */
++static inline void list_add(struct list_head *new_node, struct list_head *head)
++{
++	__list_add(new_node, head, head->next);
++}
++
++
++/**
++ * list_add_tail - add a new entry
++ * @new: new entry to be added
++ * @head: list head to add it before
++ *
++ * Insert a new entry before the specified head.
++ * This is useful for implementing queues.
++ */
++static inline void list_add_tail(struct list_head *new_node, struct list_head *head)
++{
++	__list_add(new_node, head->prev, head);
++}
++
++/*
++ * Delete a list entry by making the prev/next entries
++ * point to each other.
++ *
++ * This is only for internal list manipulation where we know
++ * the prev/next entries already!
++ */
++static inline void __list_del(struct list_head * prev, struct list_head * next)
++{
++	next->prev = prev;
++	WRITE_ONCE(prev->next, next);
++}
++
++/**
++ * list_del - deletes entry from list.
++ * @entry: the element to delete from the list.
++ * Note: list_empty() on entry does not return true after this, the entry is
++ * in an undefined state.
++ */
++#ifndef CONFIG_DEBUG_LIST
++static inline void __list_del_entry(struct list_head *entry)
++{
++	__list_del(entry->prev, entry->next);
++}
++
++static inline void list_del(struct list_head *entry)
++{
++	__list_del(entry->prev, entry->next);
++	entry->next = LIST_POISON1;
++	entry->prev = LIST_POISON2;
++}
++#else
++extern void __list_del_entry(struct list_head *entry);
++extern void list_del(struct list_head *entry);
++#endif
++
++/**
++ * list_replace - replace old entry by new one
++ * @old : the element to be replaced
++ * @new : the new element to insert
++ *
++ * If @old was empty, it will be overwritten.
++ */
++static inline void list_replace(struct list_head *old,
++				struct list_head *new_node)
++{
++	new_node->next = old->next;
++	new_node->next->prev = new_node;
++	new_node->prev = old->prev;
++	new_node->prev->next = new_node;
++}
++
++static inline void list_replace_init(struct list_head *old,
++					struct list_head *new_node)
++{
++	list_replace(old, new_node);
++	INIT_LIST_HEAD(old);
++}
++
++/**
++ * list_del_init - deletes entry from list and reinitialize it.
++ * @entry: the element to delete from the list.
++ */
++static inline void list_del_init(struct list_head *entry)
++{
++	__list_del_entry(entry);
++	INIT_LIST_HEAD(entry);
++}
++
++/**
++ * list_move - delete from one list and add as another's head
++ * @list: the entry to move
++ * @head: the head that will precede our entry
++ */
++static inline void list_move(struct list_head *list, struct list_head *head)
++{
++	__list_del_entry(list);
++	list_add(list, head);
++}
++
++/**
++ * list_move_tail - delete from one list and add as another's tail
++ * @list: the entry to move
++ * @head: the head that will follow our entry
++ */
++static inline void list_move_tail(struct list_head *list,
++				  struct list_head *head)
++{
++	__list_del_entry(list);
++	list_add_tail(list, head);
++}
++
++/**
++ * list_is_last - tests whether @list is the last entry in list @head
++ * @list: the entry to test
++ * @head: the head of the list
++ */
++static inline int list_is_last(const struct list_head *list,
++				const struct list_head *head)
++{
++	return list->next == head;
++}
++
++/**
++ * list_empty - tests whether a list is empty
++ * @head: the list to test.
++ */
++static inline int list_empty(const struct list_head *head)
++{
++	return READ_ONCE(head->next) == head;
++}
++
++/**
++ * list_empty_careful - tests whether a list is empty and not being modified
++ * @head: the list to test
++ *
++ * Description:
++ * tests whether a list is empty _and_ checks that no other CPU might be
++ * in the process of modifying either member (next or prev)
++ *
++ * NOTE: using list_empty_careful() without synchronization
++ * can only be safe if the only activity that can happen
++ * to the list entry is list_del_init(). Eg. it cannot be used
++ * if another CPU could re-list_add() it.
++ */
++static inline int list_empty_careful(const struct list_head *head)
++{
++	struct list_head *next = head->next;
++	return (next == head) && (next == head->prev);
++}
++
++/**
++ * list_rotate_left - rotate the list to the left
++ * @head: the head of the list
++ */
++static inline void list_rotate_left(struct list_head *head)
++{
++	struct list_head *first;
++
++	if (!list_empty(head)) {
++		first = head->next;
++		list_move_tail(first, head);
++	}
++}
++
++/**
++ * list_is_singular - tests whether a list has just one entry.
++ * @head: the list to test.
++ */
++static inline int list_is_singular(const struct list_head *head)
++{
++	return !list_empty(head) && (head->next == head->prev);
++}
++
++static inline void __list_cut_position(struct list_head *list,
++		struct list_head *head, struct list_head *entry)
++{
++	struct list_head *new_first = entry->next;
++	list->next = head->next;
++	list->next->prev = list;
++	list->prev = entry;
++	entry->next = list;
++	head->next = new_first;
++	new_first->prev = head;
++}
++
++/**
++ * list_cut_position - cut a list into two
++ * @list: a new list to add all removed entries
++ * @head: a list with entries
++ * @entry: an entry within head, could be the head itself
++ *	and if so we won't cut the list
++ *
++ * This helper moves the initial part of @head, up to and
++ * including @entry, from @head to @list. You should
++ * pass on @entry an element you know is on @head. @list
++ * should be an empty list or a list you do not care about
++ * losing its data.
++ *
++ */
++static inline void list_cut_position(struct list_head *list,
++		struct list_head *head, struct list_head *entry)
++{
++	if (list_empty(head))
++		return;
++	if (list_is_singular(head) &&
++		(head->next != entry && head != entry))
++		return;
++	if (entry == head)
++		INIT_LIST_HEAD(list);
++	else
++		__list_cut_position(list, head, entry);
++}
++
++static inline void __list_splice(const struct list_head *list,
++				 struct list_head *prev,
++				 struct list_head *next)
++{
++	struct list_head *first = list->next;
++	struct list_head *last = list->prev;
++
++	first->prev = prev;
++	prev->next = first;
++
++	last->next = next;
++	next->prev = last;
++}
++
++/**
++ * list_splice - join two lists, this is designed for stacks
++ * @list: the new list to add.
++ * @head: the place to add it in the first list.
++ */
++static inline void list_splice(const struct list_head *list,
++				struct list_head *head)
++{
++	if (!list_empty(list))
++		__list_splice(list, head, head->next);
++}
++
++/**
++ * list_splice_tail - join two lists, each list being a queue
++ * @list: the new list to add.
++ * @head: the place to add it in the first list.
++ */
++static inline void list_splice_tail(struct list_head *list,
++				struct list_head *head)
++{
++	if (!list_empty(list))
++		__list_splice(list, head->prev, head);
++}
++
++/**
++ * list_splice_init - join two lists and reinitialise the emptied list.
++ * @list: the new list to add.
++ * @head: the place to add it in the first list.
++ *
++ * The list at @list is reinitialised
++ */
++static inline void list_splice_init(struct list_head *list,
++				    struct list_head *head)
++{
++	if (!list_empty(list)) {
++		__list_splice(list, head, head->next);
++		INIT_LIST_HEAD(list);
++	}
++}
++
++/**
++ * list_splice_tail_init - join two lists and reinitialise the emptied list
++ * @list: the new list to add.
++ * @head: the place to add it in the first list.
++ *
++ * Each of the lists is a queue.
++ * The list at @list is reinitialised
++ */
++static inline void list_splice_tail_init(struct list_head *list,
++					 struct list_head *head)
++{
++	if (!list_empty(list)) {
++		__list_splice(list, head->prev, head);
++		INIT_LIST_HEAD(list);
++	}
++}
++
++/**
++ * list_entry - get the struct for this entry
++ * @ptr:	the &struct list_head pointer.
++ * @type:	the type of the struct this is embedded in.
++ * @member:	the name of the list_head within the struct.
++ */
++#define list_entry(ptr, type, member) \
++	container_of(ptr, type, member)
++
++/**
++ * list_first_entry - get the first element from a list
++ * @ptr:	the list head to take the element from.
++ * @type:	the type of the struct this is embedded in.
++ * @member:	the name of the list_head within the struct.
++ *
++ * Note, that list is expected to be not empty.
++ */
++#define list_first_entry(ptr, type, member) \
++	list_entry((ptr)->next, type, member)
++
++/**
++ * list_last_entry - get the last element from a list
++ * @ptr:	the list head to take the element from.
++ * @type:	the type of the struct this is embedded in.
++ * @member:	the name of the list_head within the struct.
++ *
++ * Note, that list is expected to be not empty.
++ */
++#define list_last_entry(ptr, type, member) \
++	list_entry((ptr)->prev, type, member)
++
++/**
++ * list_first_entry_or_null - get the first element from a list
++ * @ptr:	the list head to take the element from.
++ * @type:	the type of the struct this is embedded in.
++ * @member:	the name of the list_head within the struct.
++ *
++ * Note that if the list is empty, it returns NULL.
++ */
++#define list_first_entry_or_null(ptr, type, member) ({ \
++	struct list_head *head__ = (ptr); \
++	struct list_head *pos__ = READ_ONCE(head__->next); \
++	pos__ != head__ ? list_entry(pos__, type, member) : NULL; \
++})
++
++/**
++ * list_next_entry - get the next element in list
++ * @pos:	the type * to cursor
++ * @member:	the name of the list_head within the struct.
++ */
++#define list_next_entry(pos, member) \
++	list_entry((pos)->member.next, typeof(*(pos)), member)
++
++/**
++ * list_prev_entry - get the prev element in list
++ * @pos:	the type * to cursor
++ * @member:	the name of the list_head within the struct.
++ */
++#define list_prev_entry(pos, member) \
++	list_entry((pos)->member.prev, typeof(*(pos)), member)
++
++/**
++ * list_for_each	-	iterate over a list
++ * @pos:	the &struct list_head to use as a loop cursor.
++ * @head:	the head for your list.
++ */
++#define list_for_each(pos, head) \
++	for (pos = (head)->next; pos != (head); pos = pos->next)
++
++/**
++ * list_for_each_prev	-	iterate over a list backwards
++ * @pos:	the &struct list_head to use as a loop cursor.
++ * @head:	the head for your list.
++ */
++#define list_for_each_prev(pos, head) \
++	for (pos = (head)->prev; pos != (head); pos = pos->prev)
++
++/**
++ * list_for_each_safe - iterate over a list safe against removal of list entry
++ * @pos:	the &struct list_head to use as a loop cursor.
++ * @n:		another &struct list_head to use as temporary storage
++ * @head:	the head for your list.
++ */
++#define list_for_each_safe(pos, n, head) \
++	for (pos = (head)->next, n = pos->next; pos != (head); \
++		pos = n, n = pos->next)
++
++/**
++ * list_for_each_prev_safe - iterate over a list backwards safe against removal of list entry
++ * @pos:	the &struct list_head to use as a loop cursor.
++ * @n:		another &struct list_head to use as temporary storage
++ * @head:	the head for your list.
++ */
++#define list_for_each_prev_safe(pos, n, head) \
++	for (pos = (head)->prev, n = pos->prev; \
++	     pos != (head); \
++	     pos = n, n = pos->prev)
++
++/**
++ * list_for_each_entry	-	iterate over list of given type
++ * @pos:	the type * to use as a loop cursor.
++ * @head:	the head for your list.
++ * @member:	the name of the list_head within the struct.
++ */
++#define list_for_each_entry(pos, head, member)				\
++	for (pos = list_first_entry(head, typeof(*pos), member);	\
++	     &pos->member != (head);					\
++	     pos = list_next_entry(pos, member))
++
++/**
++ * list_for_each_entry_reverse - iterate backwards over list of given type.
++ * @pos:	the type * to use as a loop cursor.
++ * @head:	the head for your list.
++ * @member:	the name of the list_head within the struct.
++ */
++#define list_for_each_entry_reverse(pos, head, member)			\
++	for (pos = list_last_entry(head, typeof(*pos), member);		\
++	     &pos->member != (head); 					\
++	     pos = list_prev_entry(pos, member))
++
++/**
++ * list_prepare_entry - prepare a pos entry for use in list_for_each_entry_continue()
++ * @pos:	the type * to use as a start point
++ * @head:	the head of the list
++ * @member:	the name of the list_head within the struct.
++ *
++ * Prepares a pos entry for use as a start point in list_for_each_entry_continue().
++ */
++#define list_prepare_entry(pos, head, member) \
++	((pos) ? : list_entry(head, typeof(*pos), member))
++
++/**
++ * list_for_each_entry_continue - continue iteration over list of given type
++ * @pos:	the type * to use as a loop cursor.
++ * @head:	the head for your list.
++ * @member:	the name of the list_head within the struct.
++ *
++ * Continue to iterate over list of given type, continuing after
++ * the current position.
++ */
++#define list_for_each_entry_continue(pos, head, member) 		\
++	for (pos = list_next_entry(pos, member);			\
++	     &pos->member != (head);					\
++	     pos = list_next_entry(pos, member))
++
++/**
++ * list_for_each_entry_continue_reverse - iterate backwards from the given point
++ * @pos:	the type * to use as a loop cursor.
++ * @head:	the head for your list.
++ * @member:	the name of the list_head within the struct.
++ *
++ * Start to iterate over list of given type backwards, continuing after
++ * the current position.
++ */
++#define list_for_each_entry_continue_reverse(pos, head, member)		\
++	for (pos = list_prev_entry(pos, member);			\
++	     &pos->member != (head);					\
++	     pos = list_prev_entry(pos, member))
++
++/**
++ * list_for_each_entry_from - iterate over list of given type from the current point
++ * @pos:	the type * to use as a loop cursor.
++ * @head:	the head for your list.
++ * @member:	the name of the list_head within the struct.
++ *
++ * Iterate over list of given type, continuing from current position.
++ */
++#define list_for_each_entry_from(pos, head, member) 			\
++	for (; &pos->member != (head);					\
++	     pos = list_next_entry(pos, member))
++
++/**
++ * list_for_each_entry_safe - iterate over list of given type safe against removal of list entry
++ * @pos:	the type * to use as a loop cursor.
++ * @n:		another type * to use as temporary storage
++ * @head:	the head for your list.
++ * @member:	the name of the list_head within the struct.
++ */
++#define list_for_each_entry_safe(pos, n, head, member)			\
++	for (pos = list_first_entry(head, typeof(*pos), member),	\
++		n = list_next_entry(pos, member);			\
++	     &pos->member != (head); 					\
++	     pos = n, n = list_next_entry(n, member))
++
++/**
++ * list_for_each_entry_safe_continue - continue list iteration safe against removal
++ * @pos:	the type * to use as a loop cursor.
++ * @n:		another type * to use as temporary storage
++ * @head:	the head for your list.
++ * @member:	the name of the list_head within the struct.
++ *
++ * Iterate over list of given type, continuing after current point,
++ * safe against removal of list entry.
++ */
++#define list_for_each_entry_safe_continue(pos, n, head, member) 		\
++	for (pos = list_next_entry(pos, member), 				\
++		n = list_next_entry(pos, member);				\
++	     &pos->member != (head);						\
++	     pos = n, n = list_next_entry(n, member))
++
++/**
++ * list_for_each_entry_safe_from - iterate over list from current point safe against removal
++ * @pos:	the type * to use as a loop cursor.
++ * @n:		another type * to use as temporary storage
++ * @head:	the head for your list.
++ * @member:	the name of the list_head within the struct.
++ *
++ * Iterate over list of given type from current point, safe against
++ * removal of list entry.
++ */
++#define list_for_each_entry_safe_from(pos, n, head, member) 			\
++	for (n = list_next_entry(pos, member);					\
++	     &pos->member != (head);						\
++	     pos = n, n = list_next_entry(n, member))
++
++/**
++ * list_for_each_entry_safe_reverse - iterate backwards over list safe against removal
++ * @pos:	the type * to use as a loop cursor.
++ * @n:		another type * to use as temporary storage
++ * @head:	the head for your list.
++ * @member:	the name of the list_head within the struct.
++ *
++ * Iterate backwards over list of given type, safe against removal
++ * of list entry.
++ */
++#define list_for_each_entry_safe_reverse(pos, n, head, member)		\
++	for (pos = list_last_entry(head, typeof(*pos), member),		\
++		n = list_prev_entry(pos, member);			\
++	     &pos->member != (head); 					\
++	     pos = n, n = list_prev_entry(n, member))
++
++/**
++ * list_safe_reset_next - reset a stale list_for_each_entry_safe loop
++ * @pos:	the loop cursor used in the list_for_each_entry_safe loop
++ * @n:		temporary storage used in list_for_each_entry_safe
++ * @member:	the name of the list_head within the struct.
++ *
++ * list_safe_reset_next is not safe to use in general if the list may be
++ * modified concurrently (eg. the lock is dropped in the loop body). An
++ * exception to this is if the cursor element (pos) is pinned in the list,
++ * and list_safe_reset_next is called after re-taking the lock and before
++ * completing the current iteration of the loop body.
++ */
++#define list_safe_reset_next(pos, n, member)				\
++	n = list_next_entry(pos, member)
++
++/*
++ * Double linked lists with a single pointer list head.
++ * Mostly useful for hash tables where the two pointer list head is
++ * too wasteful.
++ * You lose the ability to access the tail in O(1).
++ */
++ 
++ struct hlist_head {
++	struct hlist_node *first;
++};
++
++struct hlist_node {
++	struct hlist_node *next, **pprev;
++};
++
++#define HLIST_HEAD_INIT { .first = NULL }
++#define HLIST_HEAD(name) struct hlist_head name = {  .first = NULL }
++#define INIT_HLIST_HEAD(ptr) ((ptr)->first = NULL)
++static inline void INIT_HLIST_NODE(struct hlist_node *h)
++{
++	h->next = NULL;
++	h->pprev = NULL;
++}
++
++static inline int hlist_unhashed(const struct hlist_node *h)
++{
++	return !h->pprev;
++}
++
++static inline int hlist_empty(const struct hlist_head *h)
++{
++	return !READ_ONCE(h->first);
++}
++
++static inline void __hlist_del(struct hlist_node *n)
++{
++	struct hlist_node *next = n->next;
++	struct hlist_node **pprev = n->pprev;
++
++	WRITE_ONCE(*pprev, next);
++	if (next)
++		next->pprev = pprev;
++}
++
++static inline void hlist_del(struct hlist_node *n)
++{
++	__hlist_del(n);
++	n->next = LIST_POISON1;
++	n->pprev = LIST_POISON2;
++}
++
++static inline void hlist_del_init(struct hlist_node *n)
++{
++	if (!hlist_unhashed(n)) {
++		__hlist_del(n);
++		INIT_HLIST_NODE(n);
++	}
++}
++
++static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
++{
++	struct hlist_node *first = h->first;
++	n->next = first;
++	if (first)
++		first->pprev = &n->next;
++	WRITE_ONCE(h->first, n);
++	n->pprev = &h->first;
++}
++
++/* next must be != NULL */
++static inline void hlist_add_before(struct hlist_node *n,
++					struct hlist_node *next)
++{
++	n->pprev = next->pprev;
++	n->next = next;
++	next->pprev = &n->next;
++	WRITE_ONCE(*(n->pprev), n);
++}
++
++static inline void hlist_add_behind(struct hlist_node *n,
++				    struct hlist_node *prev)
++{
++	n->next = prev->next;
++	WRITE_ONCE(prev->next, n);
++	n->pprev = &prev->next;
++
++	if (n->next)
++		n->next->pprev  = &n->next;
++}
++
++/* after that we'll appear to be on some hlist and hlist_del will work */
++static inline void hlist_add_fake(struct hlist_node *n)
++{
++	n->pprev = &n->next;
++}
++
++static inline bool hlist_fake(struct hlist_node *h)
++{
++	return h->pprev == &h->next;
++}
++
++/*
++ * Check whether the node is the only node of the head without
++ * accessing head:
++ */
++static inline bool
++hlist_is_singular_node(struct hlist_node *n, struct hlist_head *h)
++{
++	return !n->next && n->pprev == &h->first;
++}
++
++/*
++ * Move a list from one list head to another. Fixup the pprev
++ * reference of the first entry if it exists.
++ */
++static inline void hlist_move_list(struct hlist_head *old,
++				   struct hlist_head *new_node)
++{
++	new_node->first = old->first;
++	if (new_node->first)
++		new_node->first->pprev = &new_node->first;
++	old->first = NULL;
++}
++
++#define hlist_entry(ptr, type, member) container_of(ptr,type,member)
++
++#define hlist_for_each(pos, head) \
++	for (pos = (head)->first; pos ; pos = pos->next)
++
++#define hlist_for_each_safe(pos, n, head) \
++	for (pos = (head)->first; pos && ({ n = pos->next; 1; }); \
++	     pos = n)
++
++#define hlist_entry_safe(ptr, type, member) \
++	({ typeof(ptr) ____ptr = (ptr); \
++	   ____ptr ? hlist_entry(____ptr, type, member) : NULL; \
++	})
++
++/**
++ * hlist_for_each_entry	- iterate over list of given type
++ * @pos:	the type * to use as a loop cursor.
++ * @head:	the head for your list.
++ * @member:	the name of the hlist_node within the struct.
++ */
++#define hlist_for_each_entry(pos, head, member)				\
++	for (pos = hlist_entry_safe((head)->first, typeof(*(pos)), member);\
++	     pos;							\
++	     pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
++
++/**
++ * hlist_for_each_entry_continue - iterate over a hlist continuing after current point
++ * @pos:	the type * to use as a loop cursor.
++ * @member:	the name of the hlist_node within the struct.
++ */
++#define hlist_for_each_entry_continue(pos, member)			\
++	for (pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member);\
++	     pos;							\
++	     pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
++
++/**
++ * hlist_for_each_entry_from - iterate over a hlist continuing from current point
++ * @pos:	the type * to use as a loop cursor.
++ * @member:	the name of the hlist_node within the struct.
++ */
++#define hlist_for_each_entry_from(pos, member)				\
++	for (; pos;							\
++	     pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
++
++/**
++ * hlist_for_each_entry_safe - iterate over list of given type safe against removal of list entry
++ * @pos:	the type * to use as a loop cursor.
++ * @n:		another &struct hlist_node to use as temporary storage
++ * @head:	the head for your list.
++ * @member:	the name of the hlist_node within the struct.
++ */
++#define hlist_for_each_entry_safe(pos, n, head, member) 		\
++	for (pos = hlist_entry_safe((head)->first, typeof(*pos), member);\
++	     pos && ({ n = pos->member.next; 1; });			\
++	     pos = hlist_entry_safe(n, typeof(*pos), member))
++
++#endif
+diff --git a/cmds/pagefusion/util.cpp b/cmds/pagefusion/util.cpp
+new file mode 100644
+index 000000000000..629ee81cf88f
+--- /dev/null
++++ b/cmds/pagefusion/util.cpp
+@@ -0,0 +1,326 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <elf.h>
++#include <string.h>
++#include "util.h"
++
++union Elf_Ehdr {
++    Elf32_Ehdr header32;
++    Elf64_Ehdr header64;
++};
++
++union Elf_Phdr {
++    Elf32_Phdr phdr32;
++    Elf64_Phdr phdr64;
++};
++
++union Elf_Dyn {
++    Elf32_Dyn dyn32;
++    Elf64_Dyn dyn64;
++};
++
++/**
++ * @brief Read the data of one file
++ */
++bool GetFileData( const char* file_path, unsigned char* data_buffer, size_t buffer_size )
++{
++    size_t n = 0;
++    FILE* fp = fopen( file_path, "rb" );
++    if( fp )
++    {
++        n = fread( data_buffer, 1, buffer_size, fp );
++        fclose( fp );
++    }
++    return n == buffer_size;
++}
++
++/**
++ * @brief allocate a memory and read one region of one file from specified offset
++ */
++unsigned char* ReadFileRegionData( const char* file_path, long offset, size_t region_len )
++{
++    if( offset < 0 || region_len == 0 )
++    {
++        return NULL;
++    }
++
++    unsigned char* data = (uint8_t*)malloc( region_len );
++    if( data )
++    {
++        size_t n = 0;
++        FILE* fp = fopen( file_path, "rb" );
++        if( fp )
++        {
++            if( fseek( fp, offset, SEEK_SET ) == 0)
++            {
++                n = fread( data, 1, region_len, fp );
++            }
++            fclose( fp );
++        }
++
++        if( n != region_len )
++        {
++            free( data );
++            data = NULL;
++        }
++    }
++    return data;
++}
++
++/**
++ * @brief Get file class if the file is an ELF binary
++ * @retval ELFCLASSNONE - Invalid class
++ * @retval ELFCLASS32 - 32–bit objects
++ * @retval ELFCLASS64 - 64–bit objects
++ */
++static uint8_t GetElfClass(const char* file_path)
++{
++    uint8_t ident[EI_NIDENT];
++    if (GetFileData(file_path, ident, EI_NIDENT))
++    {
++        if (ident[EI_MAG0] == 0x7F && ident[EI_MAG1] == 'E'
++            && ident[EI_MAG2] == 'L' && ident[EI_MAG3] == 'F')
++        {
++            return ident[EI_CLASS];
++        }
++    }
++    return ELFCLASSNONE;
++}
++
++/**
++ * @brief Read ELF header that can be 32 bit or 64 bit
++ */
++static bool ReadElfHeader(const char* file_path, Elf_Ehdr *header, uint8_t elf_class)
++{
++    return GetFileData(file_path, (unsigned char*)header,
++            elf_class == ELFCLASS32 ? sizeof(Elf32_Ehdr) : sizeof(Elf64_Ehdr));
++}
++
++static inline uint16_t ELF_GetType(Elf_Ehdr *header, uint8_t elf_class)
++{
++    return elf_class == ELFCLASS32 ? header->header32.e_type : header->header64.e_type;
++}
++
++static inline long ELF_GetPHOffset(Elf_Ehdr *header, uint8_t elf_class)
++{
++    return elf_class == ELFCLASS32 ? header->header32.e_phoff : header->header64.e_phoff;
++}
++
++static inline uint16_t ELF_GetPHEntSize(Elf_Ehdr *header, uint8_t elf_class)
++{
++    return elf_class == ELFCLASS32 ? header->header32.e_phentsize : header->header64.e_phentsize;
++}
++
++static inline uint16_t ELF_GetPHEntNum(Elf_Ehdr *header, uint8_t elf_class)
++{
++    return elf_class == ELFCLASS32 ? header->header32.e_phnum : header->header64.e_phnum;
++}
++
++static inline Elf_Phdr* ElfPH_GetEntry(uint8_t* phtable, int idx, uint8_t elf_class)
++{
++    if (elf_class == ELFCLASS32)
++        return (Elf_Phdr*) &((Elf32_Phdr*)phtable)[idx];
++    else
++        return (Elf_Phdr*) &((Elf64_Phdr*)phtable)[idx];
++}
++
++static inline uint32_t ElfPHEnt_GetType(Elf_Phdr *phdr, uint8_t elf_class)
++{
++    return elf_class == ELFCLASS32 ? phdr->phdr32.p_type : phdr->phdr64.p_type;
++}
++
++static inline long ElfPHEnt_GetOffset(Elf_Phdr *phdr, uint8_t elf_class)
++{
++    return elf_class == ELFCLASS32 ? (long)phdr->phdr32.p_offset : (long)phdr->phdr64.p_offset;
++}
++
++static inline size_t ElfPHEnt_GetSize(Elf_Phdr *phdr, uint8_t elf_class)
++{
++    return elf_class == ELFCLASS32 ? (size_t)phdr->phdr32.p_filesz : (size_t)phdr->phdr64.p_filesz;
++}
++
++static inline int ElfPHEnt_GetNum(size_t dynsize, uint8_t elf_class)
++{
++    return elf_class == ELFCLASS32 ? (int)(dynsize / sizeof(Elf32_Dyn)) : (int)(dynsize / sizeof(Elf64_Dyn));
++}
++
++static inline Elf_Dyn* ElfDyn_GetEntry(uint8_t* dyntable, int idx, uint8_t elf_class)
++{
++    if (elf_class == ELFCLASS32)
++        return (Elf_Dyn*) &((Elf32_Dyn*)dyntable)[idx];
++    else
++        return (Elf_Dyn*) &((Elf64_Dyn*)dyntable)[idx];
++}
++
++static inline long ElfDyn_GetTag(Elf_Dyn *dynhdr, uint8_t elf_class)
++{
++    return elf_class == ELFCLASS32 ? (long)dynhdr->dyn32.d_tag : (long)dynhdr->dyn64.d_tag;
++}
++
++/**
++ * @brief Check whether the file is a dynamic library
++ */
++bool IsDynamicLibrary( const char* file_path )
++{
++    uint8_t elf_class = GetElfClass(file_path);
++    if (elf_class != ELFCLASSNONE)
++    {
++        Elf_Ehdr header;
++        if(ReadElfHeader(file_path, &header, elf_class))
++            return ELF_GetType(&header, elf_class) == ET_DYN;
++    }
++
++    return false;
++}
++
++/**
++ * @brief Check whether the file is a executable file
++ */
++bool IsElfExe( const char* file_path )
++{
++    uint8_t elf_class = GetElfClass(file_path);
++    if (elf_class != ELFCLASSNONE)
++    {
++        Elf_Ehdr header;
++        if(ReadElfHeader(file_path, &header, elf_class))
++        {
++            uint16_t type = ELF_GetType(&header, elf_class);
++            if (type == ET_EXEC || (type == ET_DYN && strstr(file_path, "/system/bin/")))
++                return true;
++        }
++    }
++
++    return false;
++}
++
++/**
++ * @brief Check whether the module is PIC
++ */
++bool IsPICDynamicModule(const char* file_path)
++{
++    uint8_t elf_class = GetElfClass(file_path);
++    if (elf_class == ELFCLASSNONE)
++        return false;
++
++    Elf_Ehdr header;
++    if(!ReadElfHeader(file_path, &header, elf_class))
++        return false;
++
++    /* Check the file is a dynamic file */
++    if (ELF_GetType(&header, elf_class) != ET_DYN)
++        return false;
++
++    /* Read the program header table.*/
++    long phoff = ELF_GetPHOffset(&header, elf_class);
++    uint16_t phentsize = ELF_GetPHEntSize(&header, elf_class);
++    uint16_t phnum = ELF_GetPHEntNum(&header, elf_class);
++    uint32_t phtable_size = ((uint32_t)phnum) * ((uint32_t)phentsize);
++    uint8_t* phtable = ReadFileRegionData(file_path, phoff, phtable_size);
++    if (!phtable)
++        return false;
++
++    bool bPIC = false;
++    uint8_t* dyntable = NULL;
++    int dynentnum;
++    long dynoff = 0;
++    size_t dynsize;
++    int i;
++
++    /* Find DYNAMIC section*/
++    for (i = 0; (uint16_t)i < phnum; i++)
++    {
++        Elf_Phdr* phdr = ElfPH_GetEntry(phtable, i, elf_class);
++        if (ElfPHEnt_GetType(phdr, elf_class) == PT_DYNAMIC)
++        {
++            dynoff = ElfPHEnt_GetOffset(phdr, elf_class);
++            dynsize = ElfPHEnt_GetSize(phdr, elf_class);
++            break;
++        }
++    }
++    if (dynoff == 0)/* DYNAMIC section not found */
++        goto cleanup_and_exit;
++
++    /*Read the DYNAMIC section.*/
++    dyntable = ReadFileRegionData(file_path, dynoff, dynsize);
++    if (!dyntable)
++        goto cleanup_and_exit;
++
++    dynentnum = ElfPHEnt_GetNum(dynsize, elf_class);
++    bPIC = true;
++
++    /* Walk all entry and check whether TEXTREL not exists. */
++    for (i = 0; i < dynentnum; i++)
++    {
++        Elf_Dyn* dynhdr = ElfDyn_GetEntry(dyntable, i, elf_class);
++        if (ElfDyn_GetTag(dynhdr, elf_class) == DT_TEXTREL)
++        {
++            bPIC = false;
++            break;
++        }
++    }
++
++cleanup_and_exit:
++    if (phtable)
++        free(phtable);
++    if (dyntable)
++        free(dyntable);
++
++    return bPIC;
++}
++
++
++/**
++ * @brief Remove the trailing newlines, spaces and tabs character
++ */
++void TrimString( char* data )
++{
++    int n = strlen( data );
++    for( int i = n-1; i >= 0; i-- )
++    {
++        char c = data[ i ];
++        if( c == '\n' || c == 0x20 || c == '\t' )
++        {
++            data[ i ] = '\0';
++        }
++        else
++        {
++            break;
++        }
++    }
++}
++
++/**
++ * @brief Get Get the file extension
++ */
++bool GetFileExtension( const char* file_name, char* extension, const int extension_max_size )
++{
++    const char* pDot = strrchr( file_name, '.' );
++    if( pDot )
++    {
++        pDot++;
++        if( *pDot == '\0' )return false;
++        strncpy( extension, pDot, extension_max_size );
++        return true;
++    }
++
++    return false;
++}
++
++/**
++ * @brief count the maped page number in one bitmap
++ */
++int GetBitmapSetNum( unsigned char* bitmap, int totalBits )
++{
++    int n = 0;
++    for( int i = 0; i < totalBits; i++ )
++    {
++        if( IsBitSet( bitmap, i ))
++        {
++            n++;
++        }
++    }
++    return n;
++}
++
++
++
+diff --git a/cmds/pagefusion/util.h b/cmds/pagefusion/util.h
+new file mode 100644
+index 000000000000..49f9a322a99a
+--- /dev/null
++++ b/cmds/pagefusion/util.h
+@@ -0,0 +1,83 @@
++#ifndef _UTIL_H_H
++#define _UTIL_H_H
++
++#define MAX_PATH    (260)
++#define _countof(a) (sizeof(a)/sizeof(a[0]))
++
++/**
++ * @brief Read the data of one file
++ */
++bool GetFileData( const char* file_path, unsigned char* data_buffer, size_t buffer_size );
++
++/**
++ * @brief Check whether the file is a dynamic library
++ */
++bool IsDynamicLibrary( const char* file_path );
++
++/**
++ * @brief Check whether the file is a executable file
++ */
++bool IsElfExe( const char* file_path );
++
++/**
++ * @brief Check whether the module is PIC
++ */
++bool IsPICDynamicModule( const char* file_path );
++
++/**
++ * @brief Remove the trailing newlines, spaces and tabs character
++ */
++void TrimString( char* data );
++
++/**
++ * @brief Get the file extension
++ */
++bool GetFileExtension( const char* file_name, char* extension, const int extension_max_size );
++
++/**
++ * @brief Set one bit
++ */
++static inline void SetBit( unsigned char* data, int idxBit )
++{
++    int n = idxBit/8;
++    int m = idxBit%8;
++    data[n] = data[n] | (1<<m);
++}
++
++/**
++ * @brief Check whether one bit is set
++ */
++static inline bool IsBitSet( unsigned char* data, int idxBit )
++{
++    int n = idxBit/8;
++    int m = idxBit%8;
++    return !!( data[n] & (1<<m) );
++}
++
++/**
++ * @brief count the maped page number in one bitmap
++ */
++int GetBitmapSetNum( unsigned char* bitmap, int totalBits );
++
++/**
++ * @brief Tests if this string starts with the specified prefix.
++ */
++static inline bool StartsWith( const char* str, const char* prefix )
++{
++    return strncmp( str, prefix, strlen(prefix)) == 0;
++}
++
++/**
++ * @brief Tests if this string ends with the specified suffix.
++ */
++static inline bool EndsWith( const char* str, const char* suffix )
++{
++    int n = strlen( suffix );
++    int m = strlen( str );
++    if( m < n )return false;
++
++    return strncmp( &str[m-n], suffix, n ) == 0;
++}
++
++#endif
++
+diff --git a/core/java/com/bluestacks/internal/Sdk23.java b/core/java/com/bluestacks/internal/Sdk23.java
+new file mode 100644
+index 000000000000..821077d86703
+--- /dev/null
++++ b/core/java/com/bluestacks/internal/Sdk23.java
+@@ -0,0 +1,59 @@
++
++package com.bluestacks.internal;
++
++import android.os.SystemProperties;
++import java.util.Objects;
++
++public class Sdk23 {
++    private static final String TAG = "Sdk23";
++
++    /** Value used for when a build property is unknown. */
++    public static final String UNKNOWN = "unknown";
++
++    /** Various version strings. */
++    public static class VERSION {
++
++        public static final String INCREMENTAL = getString("ro.build.version.incremental");
++
++        public static final String RELEASE = getString("ro.build.version.release");
++
++        public static final String BASE_OS = SystemProperties.get("ro.build.version.base_os", "");
++
++        public static final String SECURITY_PATCH = SystemProperties.get(
++                "ro.build.version.security_patch", "");
++
++        // Android 6
++        public static final String SDK = "23";
++
++        public static final int SDK_INT = 23;
++
++        public static final int PREVIEW_SDK_INT = SystemProperties.getInt(
++                "ro.build.version.preview_sdk", 0);
++
++        public static final String CODENAME = getString("ro.build.version.codename");
++
++        private static final String[] ALL_CODENAMES
++                = getStringList("ro.build.version.all_codenames", ",");
++
++        /**
++         * @hide
++         */
++        public static final String[] ACTIVE_CODENAMES = "REL".equals(ALL_CODENAMES[0])
++                ? new String[0] : ALL_CODENAMES;
++
++        public static final int RESOURCES_SDK_INT = SDK_INT + ACTIVE_CODENAMES.length;
++    }
++
++    private static String getString(String property) {
++        return SystemProperties.get(property, UNKNOWN);
++    }
++
++    private static String[] getStringList(String property, String separator) {
++        String value = SystemProperties.get(property);
++        if (value.isEmpty()) {
++            return new String[0];
++        } else {
++            return value.split(separator);
++        }
++    }
++}

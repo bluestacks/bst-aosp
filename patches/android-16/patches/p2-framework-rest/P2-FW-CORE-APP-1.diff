@@ -1,0 +1,79 @@
+diff --git a/core/java/android/inputmethodservice/InputMethodService.java b/core/java/android/inputmethodservice/InputMethodService.java
+index 7c669bb67e8b..41c02a3e76a3 100644
+--- a/core/java/android/inputmethodservice/InputMethodService.java
++++ b/core/java/android/inputmethodservice/InputMethodService.java
+@@ -182,6 +182,7 @@ import java.util.List;
+ import java.util.Objects;
+ import java.util.OptionalInt;
+ import java.util.concurrent.Executor;
++import com.bluestacks.os.BstUtilsManager;
+ 
+ /**
+  * InputMethodService provides a standard implementation of an InputMethod,
+@@ -2371,6 +2372,11 @@ public class InputMethodService extends AbstractInputMethodService {
+             return true;
+         }
+         Configuration config = getResources().getConfiguration();
++        // A16DBG:P2:FW-CORE-APP BST soft-keyboard toggle (a13); fall back to config if svc absent
++        BstUtilsManager mBstUtils = (BstUtilsManager) getSystemService(Context.BST_UTILS);
++        if (mBstUtils != null) {
++            return mBstUtils.isBstSoftKeyboardEnabled();
++        }
+         return config.keyboard == Configuration.KEYBOARD_NOKEYS
+                 || config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES;
+     }
+diff --git a/core/java/android/view/accessibility/AccessibilityManager.java b/core/java/android/view/accessibility/AccessibilityManager.java
+index 3e4bda4ac8a9..69c690dbef54 100644
+--- a/core/java/android/view/accessibility/AccessibilityManager.java
++++ b/core/java/android/view/accessibility/AccessibilityManager.java
+@@ -49,6 +49,7 @@ import android.content.pm.ResolveInfo;
+ import android.content.pm.ServiceInfo;
+ import android.content.res.Resources;
+ import android.os.Binder;
++import android.util.BstUtils;
+ import android.os.Build;
+ import android.os.Bundle;
+ import android.os.Handler;
+@@ -959,6 +960,8 @@ public final class AccessibilityManager {
+             services = mAccessibilityPolicy.getEnabledAccessibilityServiceList(
+                     feedbackTypeFlags, services);
+         }
++        // A16DBG:P2:FW-CORE-APP hide BST accessibility svcs from 3rd-party detection (a13)
++        services = BstUtils.filterHiddenServices(services, Binder.getCallingUid());
+         if (services != null) {
+             return Collections.unmodifiableList(services);
+         } else {
+diff --git a/core/java/android/widget/EditText.java b/core/java/android/widget/EditText.java
+index 2056e2254ecd..4d28d698acd3 100644
+--- a/core/java/android/widget/EditText.java
++++ b/core/java/android/widget/EditText.java
+@@ -31,6 +31,10 @@ import android.text.method.ArrowKeyMovementMethod;
+ import android.text.method.MovementMethod;
+ import android.text.style.SpanUtils;
+ import android.util.AttributeSet;
++import android.util.BstUtils;
++import android.os.Binder;
++
++import com.bluestacks.os.BstFilterAppsManager;
+ import android.view.KeyEvent;
+ 
+ import com.android.internal.R;
+@@ -181,6 +185,18 @@ public class EditText extends TextView {
+ 
+     @Override
+     public void setText(CharSequence text, BufferType type) {
++        // A16DBG:P2:FW-CORE-APP ROB-11067 block setText while IME composing (a13)
++        boolean isComposing = android.os.SystemProperties.getInt("bst.ime_is_composing", 0) == 1;
++        if (isComposing) {
++            int uid = Binder.getCallingUid();
++            if (uid >= 10000) {
++                String packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++                BstFilterAppsManager bstfilter = BstFilterAppsManager.getInstance();
++                if (bstfilter.isBlockEditWhenComposing(packageName)) {
++                    return;
++                }
++            }
++        }
+         super.setText(text, BufferType.EDITABLE);
+     }
+ 

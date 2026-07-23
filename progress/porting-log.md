@@ -1798,3 +1798,22 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **累计**：services/core 9/21 + IMMS 两子集 + 5 extra peripheral（SystemVibrator/MediaCodecInfo/TelephonyPermissions/TelephonyManager-operator/ServiceState-LTE）。
 
 **TM/telephony 反检测状态**：operator 伪装（PERIPH-3）+ LTE（PERIPH-4）在位；device-id（PERIPH-3b，无条件破 boot，defer 须 conditional）；subscription（createSubInfoInstance，消费者移 SubscriptionManager，re-arch defer）。
+
+## 2026-07-23 (cont.58) — ✅✅ FW-PERIPH-5 Layer2 7/7 @126s（TM device-id uid-gated — PERIPH-3b 教训修复）
+
+承 cont.56（PERIPH-3b 无条件 device-id 破 boot）。重做带 **uid 守卫**：仅第三方 caller（uid>=10000）得 "01"，system_server（uid<10000）得真实 id → boot-safe。
+
+**改动**（`TelephonyManager.java`，BST_TELEPHONY_CHANGES_ENABLED && Binder.getCallingUid()>=10000 gate）：
+- `getDeviceId()` → "01"（仅第三方）
+- `getDeviceSoftwareVersion(int)` → "01"（仅第三方）
+
+- apply：`scripts/p2_fw_periph5_apply.py`；patch `P2-FW-PERIPH-5.diff`（23 行）。
+- **m droid rc=0**；**Pack Root `45bf8e14f505d75393789893f964e535`** @23:34。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 1ccc2a81）；Data 重置 wipe20260717；**7/7 @126s** ✓。
+- **commit** `<remote>`（+6）。
+
+**结论**：device-id 反检测 **ported**（uid-gated，boot-safe）。证实 PERIPH-3b 的 regression 根因是无条件 override（system_server boot 期读 device-id 失败）；uid gate（system 得真实）解决。**telephony 反检测现在齐全**：operator(PERIPH-3) + LTE(PERIPH-4) + device-id(PERIPH-5)。
+
+**权威 Root 更新**：**`45bf8e14`**（FW-PERIPH-5，严格优于 1ccc2a81）。
+
+**累计**：services/core 9/21 + IMMS 两子集 + 6 extra peripheral。

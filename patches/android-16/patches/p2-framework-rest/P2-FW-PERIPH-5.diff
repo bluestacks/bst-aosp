@@ -1,0 +1,23 @@
+diff --git a/telephony/java/android/telephony/TelephonyManager.java b/telephony/java/android/telephony/TelephonyManager.java
+index 599614151fac..0874401bd3f3 100644
+--- a/telephony/java/android/telephony/TelephonyManager.java
++++ b/telephony/java/android/telephony/TelephonyManager.java
+@@ -2260,6 +2260,8 @@ public class TelephonyManager {
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY)
+     @Nullable
+     public String getDeviceSoftwareVersion(int slotIndex) {
++        // A16DBG:P2:FW-PERIPH-5 BST spoof software version for 3rd-party only (a13; uid-gated)
++        if (BST_TELEPHONY_CHANGES_ENABLED && Binder.getCallingUid() >= 10000) return "01";
+         ITelephony telephony = getITelephony();
+         if (telephony == null) return null;
+ 
+@@ -2311,6 +2313,9 @@ public class TelephonyManager {
+     @SuppressAutoDoc // No support for device / profile owner or carrier privileges (b/72967236).
+     @RequiresPermission(android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE)
+     public String getDeviceId() {
++        // A16DBG:P2:FW-PERIPH-5 BST spoof device id for 3rd-party only (anti-detection, a13;
++        //  uid-gated so system_server boot path gets real id — PERIPH-3b lesson)
++        if (BST_TELEPHONY_CHANGES_ENABLED && Binder.getCallingUid() >= 10000) return "01";
+         try {
+             ITelephony telephony = getITelephony();
+             if (telephony == null)

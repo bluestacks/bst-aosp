@@ -1,0 +1,43 @@
+diff --git a/telephony/java/android/telephony/TelephonyManager.java b/telephony/java/android/telephony/TelephonyManager.java
+index fe8796270ac2..599614151fac 100644
+--- a/telephony/java/android/telephony/TelephonyManager.java
++++ b/telephony/java/android/telephony/TelephonyManager.java
+@@ -191,6 +191,10 @@ import java.util.stream.IntStream;
+ @SystemService(Context.TELEPHONY_SERVICE)
+ @RequiresFeature(PackageManager.FEATURE_TELEPHONY)
+ public class TelephonyManager {
++    // A16DBG:P2:FW-PERIPH-3 BST operator spoof (anti-emulator-detection, a13)
++    private static final boolean BST_TELEPHONY_CHANGES_ENABLED = true;
++    private static final String PROPERTY_OPERATOR_ALPHA = "gsm.operator.alpha";
++    private static final String PROPERTY_OPERATOR_NUMERIC = "gsm.operator.numeric";
+     private static final String TAG = "TelephonyManager";
+ 
+     /**
+@@ -2817,7 +2821,12 @@ public class TelephonyManager {
+      */
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+     public String getNetworkOperatorName() {
+-        return getNetworkOperatorName(getSubId());
++        // A16DBG:P2:FW-PERIPH-3 BST spoof operator name (a13)
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getNetworkOperatorName(getSubId());
++        } else {
++            return SystemProperties.get(PROPERTY_OPERATOR_ALPHA, "T-Mobile");
++        }
+     }
+ 
+     /**
+@@ -2839,7 +2848,12 @@ public class TelephonyManager {
+      */
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+     public String getNetworkOperator() {
+-        return getNetworkOperatorForPhone(getPhoneId());
++        // A16DBG:P2:FW-PERIPH-3 BST spoof operator numeric (a13)
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getNetworkOperatorForPhone(getPhoneId());
++        } else {
++            return SystemProperties.get(PROPERTY_OPERATOR_NUMERIC, "310260");
++        }
+     }
+ 
+     /**

@@ -1743,3 +1743,23 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **累计**：services/core 9/21 gap（IMMS 已 onImeChange + text-edit-mode 两子集，键盘映射核心功能在位）+ 3 extra peripheral。
 
 **IMMS 剩余（dedicated，低优先）**：setBstIME/setBstIMEFromClient + MSG_SET_IME（需 IInputMethodManager aidl 加方法 + setInputMethodEnabledLocked 适配）；@4076 auto-show 分支（drift）。核心 IME 通知 + text-edit-mode 已在位。
+
+## 2026-07-23 (cont.55) — ✅✅ FW-PERIPH-3 Layer2 7/7 @197s（TelephonyManager operator 伪装）
+
+承 cont.54。TelephonyManager 18-hunk 大 port 的 **bounded 子集**：operator 伪装（反模拟器检测）。
+
+**改动**（`TelephonyManager.java`，a16 锚与 a13 完全匹配）：
+- field `BST_TELEPHONY_CHANGES_ENABLED=true` + `PROPERTY_OPERATOR_ALPHA/NUMERIC`
+- `getNetworkOperatorName()` → `SystemProperties.get(gsm.operator.alpha, "T-Mobile")`
+- `getNetworkOperator()` → `SystemProperties.get(gsm.operator.numeric, "310260")`
+
+- apply：`scripts/p2_fw_periph3_apply.py`；patch `P2-FW-PERIPH-3.diff`（43 行）。
+- **m droid rc=0**（仅无关 warning）；**Pack Root `e9003acc9cc88311c8df4ba6077fafd9`** @21:38。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 74592b9f）；Data 重置 wipe20260717；**7/7 @197s**。
+- **commit** `<remote>`（+18/-2）。
+
+**权威 Root 更新**：**`e9003acc`**（FW-PERIPH-3，严格优于 74592b9f）。
+
+**累计**：services/core 9/21 + IMMS 两子集 + 4 extra peripheral（SystemVibrator/MediaCodecInfo/TelephonyPermissions/TelephonyManager-operator）。
+
+**TM 剩余（dedicated，低优先）**：createSubInfoInstance + getDeviceId("01") + getNeighboringCellInfo + getNetworkOperatorName(subId) + 其余 ~14 hunk（device-id/IMEI/cell 反检测）。operator 伪装已在位。

@@ -1854,3 +1854,18 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **累计**：services/core 9/21 + IMMS 两子集 + 7 extra peripheral（a11y hide 双层：service-list + setting）。
 
 **剩余 drift**：PointerIcon(TYPE_NULL 重排)、WallpaperManager(缺 msi 资源)、SystemUI TunerServiceImpl(deps 缺)；热路径 PM/AM/WM(escalate)、ActivityManager(aidl 契约 escalate)、TM subscription(re-arch)、IMMS setBstIME(aidl)。
+
+## 2026-07-24 (cont.61) — ✅✅ FW-PERIPH-7 Layer2 7/7 @136s（SettingsService a11y bulk-read 过滤）
+
+补 SettingsProvider（PERIPH-6 单读）的 shell/get-command bulk-read 路径。
+
+**改动**（`SettingsService.java`）：`MyShellCommand` get 路径 `result = b.getPairValue()` 后，对 `secure` table + ENABLED_ACCESSIBILITY_SERVICES 调 filterHiddenServices。a16 锚与 a13 匹配。
+
+- apply：`scripts/p2_fw_periph7_apply.py`；patch `P2-FW-PERIPH-7.diff`。
+- **m droid rc=0**；**Pack Root `848e9737e8cd50bd6a6bfbeb6108979f`** @01:12。
+- **Deploy + Layer2**：win 部署（备份 02c94d60）；Data 重置；**7/7 @136s**。
+- **commit** `<remote>`。
+
+**权威 Root 更新**：**`848e9737`**。a11y hide 现三层（service-list SERVICES-5 + setting 单读 PERIPH-6 + bulk-read PERIPH-7）。
+
+**累计**：services/core 9/21 + IMMS 两子集 + 8 extra peripheral。PointerIcon(defer,re-arch)、WallpaperManager(defer,resource)、SystemUI TunerServiceImpl(defer,deps) 仍缺；热路径/aidl escalate。

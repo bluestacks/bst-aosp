@@ -3374,7 +3374,7 @@
       "host_compat": "unknown",
       "owner": "agent",
       "notes": "22/22 core/java DONE. Root a551d823 Layer2 7/7 @199s (SERVICES-4a Audio+AppOps). services/core 7/21 gap.",
-      "verification": "Root 43895325 + Data wipe20260717 = Layer2 7/7 @131s (cont.53). commit d63b9c983ac1. core/java 22/22 ✅ (+ SystemVibrator/MediaCodecInfo/TelephonyPermissions extra peripheral); services/core 9/21 gap (Clipboard/Location/NMS/ComponentResolver/IntentResolver/AccountManager/Audio/AppOps/AccessibilityManagerService/IMMS-onImeChange).",
+      "verification": "Root 74592b9f + Data wipe20260717 = Layer2 7/7 @123s (cont.54). commit 990813b39f9a. core/java 22/22 ✅ (+ SystemVibrator/MediaCodecInfo/TelephonyPermissions extra peripheral); services/core 9/21 gap (Clipboard/Location/NMS/ComponentResolver/IntentResolver/AccountManager/Audio/AppOps/AccessibilityManagerService + IMMS onImeChange+text-edit-mode=keyboard-mapping core).",
       "checkpoint_ref": "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-4a.diff + P2-FW-CORE-APP-1..17",
       "boot_artifact": null,
       "source_commit": null

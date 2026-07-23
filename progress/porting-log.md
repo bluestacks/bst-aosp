@@ -1722,3 +1722,24 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **累计**：services/core 9/21 gap（+ IMMS bounded）+ 3 extra peripheral。
 
 **IMMS 剩余（dedicated 续做）**：bstSendSetInputMapperStatusAsync（text-edit-mode/password host 同步，用 mCurAttribute + getSelectedMethodIdLocked→bindingController 适配）+ setBstIME/setBstIMEFromClient + MSG_SET_IME + show/hideCurrentInput call site + auto-show 分支。deps 全在位，需逐 hunk 适配 a16 bindingController。
+
+## 2026-07-23 (cont.54) — ✅✅ FW-SERVICES-6b Layer2 7/7 @123s（IMMS text-edit-mode 键盘映射核心）
+
+承 cont.53（IMMS onImeChange）。续做 IMMS text-edit-mode（键盘映射核心 host 同步）。
+
+**改动**（`InputMethodManagerService.java`，bounded 子集，lazy-init）：
+- field `bstWinKeyboardInputEnabled` + `mBstFilterAppsManager`（lazy-init）
+- `bstSendSetInputMapperStatusAsync(boolean)`：isIMEDisabled 门控（禁 IME 的 app 不弹键盘）+ `onTextEditModeChange`（host 同步文本编辑模式）。
+  **a16 适配**：去掉 a13 的 mCurAttribute 密码检测块（a16 IMMS 无 mCurAttribute 字段，重构）；保留 isIMEDisabled + onTextEditModeChange 核心。
+- `showCurrentInputLocked` → `bstSendSetInputMapperStatusAsync(true)`；`hideCurrentInputLocked` → `(false)`
+
+- apply：`scripts/p2_fw_services6b_apply.py`；patch `P2-FW-SERVICES-6b.diff`（75 行）。
+- **m droid rc=0**；**Pack Root `74592b9f671d7d3804327c14d48b432f`** @21:03。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 43895325）；Data 重置 wipe20260717；**7/7 @123s**。
+- **commit** `<remote>`。
+
+**权威 Root 更新**：**`74592b9f`**（FW-SERVICES-6b，严格优于 43895325）。
+
+**累计**：services/core 9/21 gap（IMMS 已 onImeChange + text-edit-mode 两子集，键盘映射核心功能在位）+ 3 extra peripheral。
+
+**IMMS 剩余（dedicated，低优先）**：setBstIME/setBstIMEFromClient + MSG_SET_IME（需 IInputMethodManager aidl 加方法 + setInputMethodEnabledLocked 适配）；@4076 auto-show 分支（drift）。核心 IME 通知 + text-edit-mode 已在位。

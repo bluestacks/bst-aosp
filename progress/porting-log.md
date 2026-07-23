@@ -1832,3 +1832,25 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 - **aidl**：IMMS setBstIME/setBstIMEFromClient + MSG_SET_IME。
 
 权威 Root 保持 **`45bf8e14`**（9 ports，7/7）。下一步须人类判断定热路径/契约方向。
+
+## 2026-07-24 (cont.60) — ✅✅ FW-PERIPH-6 Layer2 7/7 @126s（SettingsProvider a11y setting 过滤，drift 适配）
+
+承 cont.59。SettingsProvider drift 适配 port（机械，非 judgment）：补 AccessibilityManagerService 的 a11y 隐藏（setting 字符串层）。
+
+**改动**（`SettingsProvider.java`，drift 适配）：
+- a16 `getSettingLocked` 加 `deviceId` 参数（a13 3-arg→a16 4-arg）
+- a16 `getSettingsLocked` 3-arg(type,userId,deviceId)（a13 2-arg）
+- a16 `Setting` ctor @1769 arg 顺序 (name,value,defaultValue,packageName,tag,fromSystem,id)（a13 不同，重排）
+- hook：`getSecureSetting` 捕获 setting → ENABLED_ACCESSIBILITY_SERVICES 过滤 + 重建 Setting（filterHiddenServices）
+
+- apply：`scripts/p2_fw_periph6_apply.py`；patch `P2-FW-PERIPH-6.diff`（41 行）。
+- **Build1/2 失败**：getSettingsLocked 签名（2-arg→3-arg 修复）。
+- **m droid rc=0**；**Pack Root `02c94d60f40668e1287e84f83755769b`** @00:37。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 45bf8e14）；Data 重置 wipe20260717；**7/7 @126s**。
+- **commit** `<remote>`。
+
+**权威 Root 更新**：**`02c94d60`**（FW-PERIPH-6，严格优于 45bf8e14）。
+
+**累计**：services/core 9/21 + IMMS 两子集 + 7 extra peripheral（a11y hide 双层：service-list + setting）。
+
+**剩余 drift**：PointerIcon(TYPE_NULL 重排)、WallpaperManager(缺 msi 资源)、SystemUI TunerServiceImpl(deps 缺)；热路径 PM/AM/WM(escalate)、ActivityManager(aidl 契约 escalate)、TM subscription(re-arch)、IMMS setBstIME(aidl)。

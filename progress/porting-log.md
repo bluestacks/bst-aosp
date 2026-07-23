@@ -1779,3 +1779,22 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **结论**：PERIPH-3b（device-id "01"）**defer**。operator 伪装（PERIPH-3, e9003acc）稳固。device-id spoof 须 conditional/gated（仅特定 caller 或非 boot 期），不可无条件 early-return。
 
 **权威 Root 保持**：**`e9003acc`**（PERIPH-3，7/7 @175s 复验）。
+
+## 2026-07-23 (cont.57) — ✅✅ FW-PERIPH-4 Layer2 7/7 @169s（ServiceState LTE 反检测）
+
+承 cont.56（PERIPH-3b device-id revert）。换 clean TM 反检测：ServiceState 报 LTE 网络类型。
+
+**改动**（`ServiceState.java`，a16 锚与 a13 完全匹配，gated by `bst.config.modify_nwtype` 默认 on）：
+- field `BST_CHANGES_ENABLED`（property gated）
+- `getDataNetworkType()` early-return `NETWORK_TYPE_LTE`
+
+- apply：`scripts/p2_fw_periph4_apply.py`；patch `P2-FW-PERIPH-4.diff`（25 行）。
+- **m droid rc=0**；**Pack Root `1ccc2a814f2965ce176ab1f8bd32cd66`** @22:59。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 e9003acc）；Data 重置 wipe20260717；**7/7 @169s**。
+- **commit** `<remote>`（+7）。
+
+**权威 Root 更新**：**`1ccc2a81`**（FW-PERIPH-4，严格优于 e9003acc）。
+
+**累计**：services/core 9/21 + IMMS 两子集 + 5 extra peripheral（SystemVibrator/MediaCodecInfo/TelephonyPermissions/TelephonyManager-operator/ServiceState-LTE）。
+
+**TM/telephony 反检测状态**：operator 伪装（PERIPH-3）+ LTE（PERIPH-4）在位；device-id（PERIPH-3b，无条件破 boot，defer 须 conditional）；subscription（createSubInfoInstance，消费者移 SubscriptionManager，re-arch defer）。

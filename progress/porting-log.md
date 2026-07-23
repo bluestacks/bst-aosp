@@ -1817,3 +1817,18 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **权威 Root 更新**：**`45bf8e14`**（FW-PERIPH-5，严格优于 1ccc2a81）。
 
 **累计**：services/core 9/21 + IMMS 两子集 + 6 extra peripheral。
+
+## 2026-07-24 (cont.59) — 移植盘点：InputManager netease 已在 InputManagerGlobal；机械 peripheral 尽
+
+核查 InputManager gap：a13 `InputManager.java` ROB-18338 netease 过滤，a16 移至 `InputManagerGlobal.getInputDeviceIds()`(:445) 且**已 ported**（`A16DBG:P2:FW-CORE-APP-9`，先前 session）。gap 分析的 false positive（hook 迁移+已落地）。
+
+**机械可移植 peripheral 全部完成**（cont.50-58，9 verified）：a11y hide / vibrator / codec / telephony-perms / IMMS(onImeChange+text-edit-mode) / telephony 反检测(operator+LTE+device-id-uid-gated)。
+
+**剩余全部 escalation/dedicated（非机械 unilateral）**：
+- **services/core 热路径 boot-critical**：PackageManagerService(204行,package-scan路径) + PM族 + AM(AMS/ActiveServices) + WM(DisplayContent/ActivityTaskSupervisor)。cont.23 AM-1/WM-2 曾 revert；device-id regression 前车之鉴。**按规则 escalate（热路径/IPC 判断性）**。
+- **ActivityManager.removeTaskWrapper**：跨文件 aidl 契约变更（须加 IActivityManager.aidl 方法 + AMS 实现）→ **escalate（binder 契约）**。
+- **drift/dedicated**：SettingsProvider(deviceId+Setting 构造 drift)、PointerIcon(TYPE_NULL 重排)、WallpaperManager(缺 default_wallpaper_msi 资源)、SystemUI TunerServiceImpl(缺 getIconHideList deps)。
+- **re-arch**：TM createSubInfoInstance（消费者移 SubscriptionManager）。
+- **aidl**：IMMS setBstIME/setBstIMEFromClient + MSG_SET_IME。
+
+权威 Root 保持 **`45bf8e14`**（9 ports，7/7）。下一步须人类判断定热路径/契约方向。

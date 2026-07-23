@@ -1702,3 +1702,23 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **累计**：services/core 8/21 + 3 extra peripheral（SystemVibrator/MediaCodecInfo/TelephonyPermissions）。
 
 **下一步**：InputMethodManagerService（100 行 peripheral，IME/text-edit-mode host 同步）；TunerServiceImpl（statusbar icon hide）；热路径 PM/AM/WM 谨慎 slice。
+
+## 2026-07-23 (cont.53) — ✅✅ FW-SERVICES-6 Layer2 7/7 @131s（IMMS onImeChange bounded 子集）
+
+承 cont.52。a16 IMMS 重构深（`bindingController` 抽象 + Lifecycle + deviceId），全 12 hunk a13 port 需 dedicated 逐 hunk 适配。本批做 **bounded 功能子集**：onImeChange host 通知（host 得知 active IME 切换，供键盘映射）。
+
+**改动**（`InputMethodManagerService.java`，lazy-init BstHostCallManager 模式，同 cont.45/48）：
+- field `mBstHostCallManagerService`（lazy-init，避开重构的构造 init 锚）
+- `setInputMethodLocked`「Changing IME」分支：broadcast 后 lazy-init + `onImeChange(id)`
+
+- apply：`scripts/p2_fw_services6_apply.py`；patch `P2-FW-SERVICES-6.diff`（37 行）。
+- 依赖全验证在位（onImeChange/commonCommand/onTextEditModeChange/isIMEDisabled/HCALL_CC_*）。
+- **m droid rc=0**；**Pack Root `43895325df3f5c53efb4cd330536227b`** @20:30。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 c52f1236）；Data 重置 wipe20260717；**7/7 @131s**。
+- **commit** `<remote>`（+12）。
+
+**权威 Root 更新**：**`43895325`**（FW-SERVICES-6，严格优于 c52f1236）。
+
+**累计**：services/core 9/21 gap（+ IMMS bounded）+ 3 extra peripheral。
+
+**IMMS 剩余（dedicated 续做）**：bstSendSetInputMapperStatusAsync（text-edit-mode/password host 同步，用 mCurAttribute + getSelectedMethodIdLocked→bindingController 适配）+ setBstIME/setBstIMEFromClient + MSG_SET_IME + show/hideCurrentInput call site + auto-show 分支。deps 全在位，需逐 hunk 适配 a16 bindingController。

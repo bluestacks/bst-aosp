@@ -1,0 +1,37 @@
+diff --git a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+index 10aee0eb17c8..401558e22eb5 100644
+--- a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
++++ b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+@@ -192,6 +192,7 @@ import com.android.server.inputmethod.InputMethodSubtypeSwitchingController.ImeS
+ import com.android.server.pm.UserManagerInternal;
+ import com.android.server.statusbar.StatusBarManagerInternal;
+ import com.android.server.utils.PriorityDump;
++import com.bluestacks.os.BstHostCallManager;
+ import com.android.server.wm.WindowManagerInternal;
+ 
+ import java.io.FileDescriptor;
+@@ -282,6 +283,9 @@ public final class InputMethodManagerService implements IInputMethodManagerImpl.
+     private static final String HANDLER_THREAD_NAME = "android.imms";
+     private static final String PACKAGE_MONITOR_THREAD_NAME = "android.imms2";
+ 
++    // A16DBG:P2:FW-SERVICES-6 BST host IME-change notify (a13; lazy-init BstHostCallManager)
++    private BstHostCallManager mBstHostCallManagerService;
++
+     /**
+      * When set, {@link #startInputUncheckedLocked} will return
+      * {@link InputBindResult#NO_EDITOR} instead of starting an IME connection
+@@ -2944,6 +2948,14 @@ public final class InputMethodManagerService implements IInputMethodManagerImpl.
+                 intent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
+                 intent.putExtra("input_method_id", id);
+                 mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);
++                // A16DBG:P2:FW-SERVICES-6 BST notify host of active IME change (a13)
++                if (mBstHostCallManagerService == null) {
++                    mBstHostCallManagerService = (BstHostCallManager)
++                            mContext.getSystemService(Context.BST_HOST_CALL);
++                }
++                if (mBstHostCallManagerService != null) {
++                    mBstHostCallManagerService.onImeChange(id);
++                }
+             }
+             bindingController.unbindCurrentMethod();
+             unbindCurrentClientLocked(UnbindReason.SWITCH_IME, userId);

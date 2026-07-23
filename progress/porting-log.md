@@ -1763,3 +1763,19 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **累计**：services/core 9/21 + IMMS 两子集 + 4 extra peripheral（SystemVibrator/MediaCodecInfo/TelephonyPermissions/TelephonyManager-operator）。
 
 **TM 剩余（dedicated，低优先）**：createSubInfoInstance + getDeviceId("01") + getNeighboringCellInfo + getNetworkOperatorName(subId) + 其余 ~14 hunk（device-id/IMEI/cell 反检测）。operator 伪装已在位。
+
+## 2026-07-23 (cont.56) — ❌ FW-PERIPH-3b 回退（TM device-id "01" override 破 boot）+ 基线复验 7/7
+
+承 cont.55。续做 TM device-id 反检测子集（getDeviceId/getDeviceSoftwareVersion early-return "01"，复用 BST_TELEPHONY_CHANGES_ENABLED）。
+
+**结果**：Layer2 **3/7 @486s 卡死**（boot_completed 不触发，system_server 未完成 boot）→ **regression**。根因：device-id "01" 无条件 early-return 破坏 boot 期读 device-id 的系统组件（system_server/device-id 依赖服务期望 real/null，常量 "01" 下游失败）。a13 此 hook 可能 conditional 或 boot 路径不同；无条件 override 在 a16 太激进。
+
+**纪律处置**（readback）：
+- kill boot verify。
+- remote `git checkout HEAD -- TelephonyManager.java`（revert PERIPH-3b → 回 PERIPH-3 commit 09ecb823 = e9003acc 态）。
+- win 重部署 e9003acc backup Root.vhd + Data 重置 wipe20260717。
+- **复验 e9003acc → 7/7 @175s** ✓（证实 regression 是 device-id override 代码，非环境/Data 污染）。
+
+**结论**：PERIPH-3b（device-id "01"）**defer**。operator 伪装（PERIPH-3, e9003acc）稳固。device-id spoof 须 conditional/gated（仅特定 caller 或非 boot 期），不可无条件 early-return。
+
+**权威 Root 保持**：**`e9003acc`**（PERIPH-3，7/7 @175s 复验）。

@@ -22,5 +22,6 @@
 
 - **TelephonyManager 余量**（dedicated）：createSubInfoInstance + getDeviceId("01") + cell/IMEI 反检测（operator 伪装已在位）
 - **IMMS 余量**（低优先，aidl）：setBstIME + MSG_SET_IME
+- **PERIPH-3b defer**：TM device-id "01" override 破 boot (cont.56 regression, reverted)；须 conditional/gated
 - defer：WallpaperManager（缺资源）、PointerIcon/InputManager/SettingsProvider（drift）、SystemUI TunerServiceImpl（deps 缺）
 - **Recents orientation** escalate；热路径 PM/AM/WM 谨慎 kill-switch slice；Display rotation 功能验证 `bst.enable_display_rotation=1`

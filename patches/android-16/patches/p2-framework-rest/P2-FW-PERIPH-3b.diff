@@ -1,0 +1,22 @@
+diff --git a/telephony/java/android/telephony/TelephonyManager.java b/telephony/java/android/telephony/TelephonyManager.java
+index 599614151fac..dc5c1646553f 100644
+--- a/telephony/java/android/telephony/TelephonyManager.java
++++ b/telephony/java/android/telephony/TelephonyManager.java
+@@ -2260,6 +2260,8 @@ public class TelephonyManager {
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY)
+     @Nullable
+     public String getDeviceSoftwareVersion(int slotIndex) {
++        // A16DBG:P2:FW-PERIPH-3b BST spoof software version (anti-detection, a13)
++        if (BST_TELEPHONY_CHANGES_ENABLED) return "01";
+         ITelephony telephony = getITelephony();
+         if (telephony == null) return null;
+ 
+@@ -2311,6 +2313,8 @@ public class TelephonyManager {
+     @SuppressAutoDoc // No support for device / profile owner or carrier privileges (b/72967236).
+     @RequiresPermission(android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE)
+     public String getDeviceId() {
++        // A16DBG:P2:FW-PERIPH-3b BST spoof device id (anti-detection, a13)
++        if (BST_TELEPHONY_CHANGES_ENABLED) return "01";
+         try {
+             ITelephony telephony = getITelephony();
+             if (telephony == null)

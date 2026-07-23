@@ -3373,9 +3373,9 @@
       "port_status": "in_progress",
       "host_compat": "unknown",
       "owner": "agent",
-      "notes": "功能对齐进行中：gap≈55 (2026-07-21). cont.25 基线恢复（Root 6f6575a1 + Data wipe20260717 = Layer2 7/7 @124s）。cont.26-27 FW-CORE-APP-1 PORTED（3 文件 app-framework hook）。机械 BatchC/D ≠ 关门。失败 boot 须先 cp wipe20260717→Data 恢复。",
-      "verification": "Baseline: Root dc4d2653 + Data wipe20260717 = Layer2 7/7 (cont.25-30). FW-WM-1 in tree. FW-CORE-APP-1 PORTED: AccessibilityManager/EditText/InputMethodService (c4e34c7f, 7/7 @124s). APP-2 PORTED: View/ApkLiteParseUtils (050e473c, 7/7 @383s). APP-3 PORTED: Instrumentation(bst methods)+ContextImpl(startActivity hook, foundation) (23fe7f0d, 7/7 @534s). 7/22 core/java ported. WM-2/AM-1 reverted+escalate. Open: 15 core/java (ViewRootImpl/Editor/TextView/InputManager/InputDevice/Env/Settings/...) + DisplayContent/AMS/PM/Input/SystemUI (services/core); GRM default-off. NOTE: a16 public BST methods need /** @hide */ (metalava UnflaggedApi).",
-      "checkpoint_ref": "patches/android-16/patches/p2-framework-rest/P2-FW-WM-1-ActivityStarter-ATM.diff + P2-FW-CORE-APP-1.diff + P2-FW-CORE-APP-2.diff + P2-FW-CORE-APP-3.diff",
+      "notes": "22/22 core/java DONE. Root a551d823 Layer2 7/7 @199s (SERVICES-4a Audio+AppOps). services/core 7/21 gap.",
+      "verification": "Root 34b3cd8a + Data wipe20260717 = Layer2 7/7 @131s (cont.51). commit 7c1801fb5818. core/java 22/22 ✅ (+ SystemVibrator/MediaCodecInfo extra peripheral); services/core 8/21 gap (Clipboard/Location/NMS/ComponentResolver/IntentResolver/AccountManager/Audio/AppOps/AccessibilityManagerService).",
+      "checkpoint_ref": "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-4a.diff + P2-FW-CORE-APP-1..17",
       "boot_artifact": null,
       "source_commit": null
     },

@@ -1275,4 +1275,412 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 | APP-2 | View / ApkLiteParseUtils | 050e473c |
 | APP-3 | Instrumentation / ContextImpl (foundation) | 23fe7f0d |
 
-剩 15 core/java（ViewRootImpl/Editor/TextView/InputManager/InputDevice/Environment/Settings/SharedPreferencesImpl/BaseBundle/ResourcesImpl/Display/PaymentRedirectProxyActivity/NativeLibraryHelper/Activity/ActivityThread/Instrumentation-done）+ PM/INPUT/SYSUI 子系统（services/core）。
+剩 13 core/java（Editor/TextView/InputManager/Environment/Settings/SharedPreferencesImpl/BaseBundle/ResourcesImpl/Display/PaymentRedirectProxyActivity/NativeLibraryHelper/Activity/ActivityThread）+ PM/INPUT/SYSUI 子系统（services/core）。
+
+## 2026-07-22 (cont.31) — ✅✅ FW-CORE-APP-4 Layer2 7/7 @597s（ViewRootImpl FreeFireMax + InputDevice 反检测）
+
+承 cont.30（7/22 core/java，Root `dc4d2653`）。Batch 4 = 2 个 app-process hook（非 system_server 热路径）。
+
+**改动**：
+| 文件 | BST hook | ROB/用途 |
+|---|---|---|
+| ViewRootImpl.java | Space/C 键 60ms 自动 release（FreeFireMax 射击）| ROB-16938 |
+| InputDevice.java | getName() 隐藏 BlueStacks/VirtualBox/keyboard/mouse 设备名 | 反模拟器检测 |
+
+- apply：`scripts/p2_fw_coreapp4_apply.py`；patch 存档 `P2-FW-CORE-APP-4.diff`（133 行）。
+- **Layer1 `m droid` rc=0**（18:02，缓存热）；framework.jar dexpreopt ✓。
+- **Pack**：Root.vhd md5 **`4ba4bdd3`**（UUID 54e9ad31 ✓），system.sfs @18:19。
+- **Deploy + Layer2**：win 部署 md5 一致；Data 重置 wipe20260717；**`g1_boot_verify` 7/7 @597s**（dalvik 首启重生，3/7@197s→7/7@597s）。
+- **commit** `51a7e751`（ViewRootImpl +27 / InputDevice +52）。
+
+**结论**：FW-CORE-APP-4 ported。权威 Root 更新 **`4ba4bdd3`**（FW-WM-1 + APP-1/2/3/4）。
+
+**累计 FW-CORE-APP 进度**：**9/22** core/java ported + Layer2 7/7：
+| 批 | 文件 | commit |
+|---|---|---|
+| APP-4 | ViewRootImpl / InputDevice | 51a7e751 |
+
+**下一步**：APP-5（Settings 反检测 + Environment sdcard_emul 外科）；禁 Data_orig（用 `g1_reset_data_wipe.ps1`）。
+
+## 2026-07-22 (cont.32) — ✅✅ FW-CORE-APP-5 Layer2 7/7 @154s（Settings 反检测 + Environment sdcard_emul）
+
+承 cont.31（9/22 core/java，Root `4ba4bdd3`）。Batch 5 = Settings + Environment（app 进程，非 system_server 热路径）。
+
+**改动**：
+| 文件 | BST hook | 用途 |
+|---|---|---|
+| Settings.java | putString 拦截 brightness/timeout；getString 伪造 mock location/adb/webview | Niantic/NetEase/Gundam 反检测 |
+| Environment.java | sdcard_emul 路径重定向 + obb symlink + storage state 映射 | cases 14080/12660, BS4-2783 |
+
+- apply：`scripts/p2_fw_coreapp5_apply.py`；patch 存档 `P2-FW-CORE-APP-5.diff`。
+- **Layer1 `m droid` rc=0**（~19:16，henry 争用导致 ninja 假 stuck，等待完成）。
+- **Pack**：Root.vhd md5 **`98249bf6`**（UUID 54e9ad31 ✓），@20:31。
+- **Deploy + Layer2**：Data 重置 wipe20260717；**`g1_boot_verify` 7/7 @154s**。
+- **commit** `c403968b`（Settings +46 / Environment +71）。
+
+**结论**：FW-CORE-APP-5 ported。权威 Root 更新 **`98249bf6`**。
+
+**累计 FW-CORE-APP 进度**：**11/22** core/java ported + Layer2 7/7：
+| 批 | 文件 | commit |
+|---|---|---|
+| APP-5 | Settings / Environment | c403968b |
+
+剩 9 core/java（InputManager/BaseBundle/ResourcesImpl/Display/…）+ services/core 热路径。
+
+## 2026-07-22 (cont.33) — ✅✅ FW-CORE-APP-6 Layer2 7/7 @216s（Editor cursor + TextView GIAP）
+
+承 cont.32（11/22，Root `98249bf6`）。Batch 6 = Editor + TextView（app 进程）。
+
+**改动**：
+| 文件 | BST hook | 用途 |
+|---|---|---|
+| Editor.java | bstSendCursorLocation → BstHostCallManager.onCursorLocationChanged | text_mode 光标同步 host |
+| TextView.java | performGoogleIAPHack in setText | Google IAP 文本捕获 → BstCommandProcessor |
+
+- apply：`scripts/p2_fw_coreapp6_apply.py`；patch `P2-FW-CORE-APP-6.diff`。
+- **Build 1 失败**：TextView 缺 `import android.os.SystemProperties` → 修 apply + sed 补 import。
+- **Build 2 失败**：重试 bash 未设 OUT_DIR → 用权威 `p2_fw_coreapp6_build_pack.sh` 重跑。
+- **Layer1 `m droid` rc=0**（49:20）；**Pack** Root **`437704b9`** @22:06。
+- **Layer2 7/7 @216s**。
+- **commit** `016957467`（Editor +96 / TextView GIAP）。
+
+**权威 Root 更新**：**`437704b9`**（FW-WM-1 + APP-1..6）。
+
+**累计**：**13/22** core/java ported。
+
+**下一步**：APP-7（InputMethodManager.setBstIME + InputManager 等）。
+
+## 2026-07-22 (cont.34) — ❌ FW-CORE-APP-7 Display 回滚（Layer2 3/7）；绿基线恢复
+
+**目标**：Display.java custom DPI + rotation override + metrics（a13 fork-diff）。
+
+**结果**：
+- apply + Layer1 ✅；Pack Root `b924f830`。
+- **Layer2 3/7 @786s FAIL**（仅 system_mounted/init_second/odsign；boot_completed/activity/ready/hide_boot 未达）。
+- **纪律**：`git checkout HEAD -- Display.java` 回滚；**未 commit**。
+- **repack 陷阱**：同树重 pack 得 Root `ee078762`，Layer2 **3/7**（keystore2 await_boot_completed 超时、UPDATABLE_CRASHING）——**不可作权威 Root**。
+- **绿基线恢复**：Win 还原 `Root.vhd.bak.20260722-2247`（md5 **`437704b9`**）+ Data wipe → **Layer2 7/7 @445s** ✅。
+
+**结论**：Display `getRotation()` hook 为 **warm/hot path**，整批 landing 致 boot 回归；后续须 **分片**（metrics-only 先行，rotation 加 `persist.bst.*` kill-switch）或 escalate。
+
+## 2026-07-22 (cont.35) — FW-CORE-APP-8 进行中（PaymentRedirect IAP + ActivityThread redirect）
+
+**目标**（app 进程 warm path，非 system_server boot 热路径）：
+| 文件 | BST hook |
+|---|---|
+| PaymentRedirectProxyActivity.java | 新文件：Google Play IAP → billing interceptor chooser |
+| ActivityThread.java | EXECUTE_TRANSACTION：ProxyBillingActivity → PaymentRedirectProxyActivity |
+
+- apply：`scripts/p2_fw_coreapp8_apply.py`（a16 用 public `ClientTransaction.getCallbacks()`，无需反射 getCallbacks）。
+- build/pack：`scripts/p2_fw_coreapp8_build_pack.sh`（远程进行中）。
+- **前置**：权威 Root 仍 **`437704b9`**（APP-1..6）；APP-8 须 Layer2 7/7 后才更新权威 Root/commit。
+
+**剩 core/java**：~8 文件（Display 分片、InputManager、ResourcesImpl、SharedPreferencesImpl、Activity、ActivityThread 余量、NativeLibraryHelper、BaseBundle 等）+ services/core。
+
+## 2026-07-23 (cont.35 done) — ✅✅ FW-CORE-APP-8 Layer2 7/7 @274s（PaymentRedirect IAP）
+
+- **Build 1 失败**：`bstRedirectProxyBillingIfNeeded` 误标 `static` → `getSystemContext()` 编译错；修 apply 重跑。
+- **Layer1 `m droid` rc=0**；Pack Root **`89b24cb8`** @01:14。
+- **Layer2 7/7 @274s**（Data wipe + deploy readback）。
+- **commit** `5904acd60698`；patch `P2-FW-CORE-APP-8.diff`（93 行）。
+- **权威 Root 更新**：**`89b24cb8`**（FW-WM-1 + APP-1..8）。
+
+**累计**：**14/22** core/java（+PaymentRedirectProxyActivity；ActivityThread IAP 分片；ActivityThread 余量 UE/profile/StrictMode 仍 open）。
+
+**下一步**：InputManager（ROB-18338 分片，defer bstReloadPointerIcon 直至 IMS 侧）；Display metrics-only；ResourcesImpl/SharedPreferencesImpl。
+
+## 2026-07-23 (cont.36) — ✅✅ FW-CORE-APP-9 Layer2 7/7 @209s（InputManagerGlobal ROB-18338）
+
+**目标**：a13 `InputManager.getInputDeviceIds` nativeMouse 过滤 → a16 下沉至 **`InputManagerGlobal.getInputDeviceIds()`**（a16 架构变更）。
+
+**改动**：
+- `InputManagerGlobal.java`：仅对 `com.netease.yyslshmt` 过滤 vendor 0x1234/product 0x5678 虚拟鼠标（ROB-18338）。
+- **刻意 defer**：`bstReloadPointerIcon()`（a16 无 `IInputManager` IMS hook）。
+
+**Build 1 失败**：误用 `DEBUG` 常量（a16 为 `debug()` 方法）→ 修 apply 重跑。
+- **Layer1 `m droid` rc=0**；Pack Root **`58b51c5a`** @01:50。
+- **Layer2 7/7 @209s**。
+- **commit** `5a148026ec6b`；patch `P2-FW-CORE-APP-9.diff`。
+
+**权威 Root 更新**：**`58b51c5a`**（FW-WM-1 + APP-1..9）。
+
+**累计**：**15/22** core/java。
+
+**下一步**：Display metrics-only 分片；ResourcesImpl / SharedPreferencesImpl；ActivityThread 余量。
+
+## 2026-07-23 (cont.37) — ✅✅ FW-CORE-APP-10 Layer2 7/7 @269s（Display metrics-only）
+
+**背景**：APP-7 整批 Display（含 `getRotation`）Layer2 **3/7** 已回滚；本批仅 landing **metrics 分片**。
+
+**改动**（`Display.java`，**无 getRotation**）：
+- `getCustomDpi()` + `bstApplyCustomDpiToMetrics` / `bstApplyXYDpiOverride`
+- hook：`getDisplayInfo`（logicalDensityDpi）、`getMetrics`、`getRealMetrics`
+- **defer**：rotation override（须 `persist.bst.*` kill-switch 单独批）
+
+- apply：`scripts/p2_fw_coreapp10_apply.py`；patch `P2-FW-CORE-APP-10.diff`。
+- **Layer1 rc=0**；Pack Root **`e605452e`** @02:18。
+- **Layer2 7/7 @269s** ✅（证实 boot 回归来自 rotation hook，非 metrics）。
+- **commit** `602f111899e6`。
+
+**权威 Root 更新**：**`e605452e`**（APP-1..6,8..10）。
+
+**累计**：**16/22** core/java（Display 部分；rotation open）。
+
+**下一步**：ResourcesImpl / SharedPreferencesImpl 外科分片；Display rotation kill-switch 批（escalate 若需 WM 契约）。
+
+## 2026-07-23 (cont.38) — ✅✅ FW-CORE-APP-11 Layer2 7/7 @242s（ResourcesImpl custom DPI + status_bar）
+
+**改动**（`ResourcesImpl.java`，app 进程 warm path）：
+- `getCustomDpi()` + `getDisplayMetrics()` density/xydpi override
+- `getConfiguration()` fake config（custom DPI）
+- `getIdentifier()`：`bst.enable_statusbar=0` 时 `status_bar_height` → `bst_system_bar_height`（0dip）
+
+- apply：`scripts/p2_fw_coreapp11_apply.py`；patch `P2-FW-CORE-APP-11.diff`。
+- **Layer1 rc=0**；Pack Root **`6659c7f6`** @02:49。
+- **Layer2 7/7 @242s**。
+- **commit** `3df5e344d221`。
+
+**权威 Root 更新**：**`6659c7f6`**。
+
+**累计**：**17/22** core/java。
+
+**下一步**：SharedPreferencesImpl；Activity GIAP 分片；Display rotation defer。
+
+## 2026-07-23 (cont.39) — ✅✅ FW-CORE-APP-12 Layer2 7/7 @302s（SharedPreferencesImpl game defaults）
+
+**改动**（`SharedPreferencesImpl.java`，app warm path；gate `sys.boot_completed=1`）：
+- `setBstGameDefaultSetting()` — config.db 注入 SP 默认值（ROB-8737）
+- Martial egame / Dungeon Hunter 补丁（ROB-11560/11613）
+- hook：`getString/getInt/getLong/getFloat/getBoolean/contains`
+
+- apply：`scripts/p2_fw_coreapp12_apply.py`；patch `P2-FW-CORE-APP-12.diff`。
+- **Layer1 rc=0**；Pack Root **`91302526`** @03:19。
+- **Layer2 7/7 @302s**。
+- **commit** `6f25dc7bf8ba`。
+
+**权威 Root 更新**：**`91302526`**。
+
+**累计**：**18/22** core/java。
+
+**下一步**：Activity GIAP 分片；NativeLibraryHelper；BaseBundle；Display rotation defer。
+
+## 2026-07-23 (cont.40) — ✅✅ FW-CORE-APP-13 Layer2 7/7 @126s（Activity GIAP purchase tracking）
+
+**改动**（`Activity.java`，GIAP-only 分片；defer `setVolumeForInstagram`/native-lib AlertDialog）：
+- 常量/字段：`TAG_BST_IAP`、`DEBUG_BST_IAP`、GIAP billing response 常量
+- 方法：`sendPurchaseDataToCommandProcessor`、`performGoogleIAPHack`、`getGIAPResponseDesc`、`getGIAPResponseCodeFromIntent`
+- hook：`internalDispatchActivityResult` 入口（a16 拆分路径；a13 在 `dispatchActivityResult`）
+
+- apply：`scripts/p2_fw_coreapp13_apply.py`；patch `P2-FW-CORE-APP-13.diff`。
+- **Layer1 rc=0**；Pack Root **`fd879d32`** @03:54。
+- **Layer2**：冷启 6/7 @630s（`hide_boot` oracle 漏检——`fUiHideBootProgressBar` 已写入 `Player.log.1` 轮转文件）；warm 复验 **7/7 @126s**。
+- **commit** `a8e3056b58da`。
+
+**权威 Root 更新**：**`fd879d32`**。
+
+**累计**：**19/22** core/java。
+
+**下一步**：NativeLibraryHelper 分片；BaseBundle 分片；Display rotation defer（需 kill-switch）。
+
+## 2026-07-23 (cont.41) — ✅✅ FW-CORE-APP-14 Layer2 7/7 @376s（NativeLibraryHelper BST ABI override）
+
+**改动**（`NativeLibraryHelper.java`，a13 ABI 强制安装 / Unity / il2cpp / ARM marker）：
+- `Handle` 增 `pkgName`/`apkDir`；`getBstAbiOverride` / `findSupportedAbi` wrapper / `copyNativeBinariesForSupportedAbi` wrapper
+- `updateIl2cpp` / `createArmMarker` / `isAppHavingUnityLibs` / `isAppHavingXArmLibs`
+
+- apply：`scripts/p2_fw_coreapp14_apply.py`（a13 切片 + a16 锚点）；patch `P2-FW-CORE-APP-14.diff`。
+- **Layer1 rc=0**；Pack Root **`62b6e6c9`** @05:44。
+- **Layer2 7/7 @376s**（Data wipe 冷启）。
+- **commit** `1f595ce4a8d1`。
+
+**权威 Root 更新**：**`62b6e6c9`**。
+
+**累计**：**20/22** core/java。
+
+**下一步**：BaseBundle affiliate hack；Display rotation defer；ActivityThread 余量。
+
+## 2026-07-23 (cont.42) — ✅✅ FW-CORE-APP-15 Layer2 7/7 @401s（BaseBundle affiliate/referral hack）
+
+**改动**（`BaseBundle.java`，Google Play referral API affiliate）：
+- 静态 maps/paths；`bstAffiliateHack` / `sendOtherReferrerStat` / `bstSendStatToCloud`
+- hook：`getString` / `getLong`（timestamp referrer 字段）
+
+- apply：`scripts/p2_fw_coreapp15_apply.py`（a13 切片）；patch `P2-FW-CORE-APP-15.diff`。
+- **Layer1 rc=0**；Pack Root **`40866955`** @09:51。
+- **Layer2 7/7 @401s**。
+- **commit** `0c32c6272c80`。
+
+**权威 Root 更新**：**`40866955`**。
+
+**累计**：**21/22** core/java。
+
+**下一步**：Display rotation（defer，需 kill-switch）；ActivityThread 余量；services/core 子系统。
+
+## 2026-07-23 (cont.43) — ✅✅ FW-CORE-APP-16 Layer2 7/7 @247s（ActivityThread profile/UE/StrictMode）
+
+**改动**（`ActivityThread.java`，app warm path）：
+- `getDefaultProfile` → 默认 profile 文件 bootstrap
+- `processUEHighFPS` + Unreal/UE4 HighFPS 循环（`bst.enable_high_fps` / `bst.max_fps` gate）
+- StrictMode finally：`com.bluestacks.*` 包豁免（a13）
+
+- apply：`scripts/p2_fw_coreapp16_apply.py`；patch `P2-FW-CORE-APP-16.diff`。
+- **Layer1 rc=0**（Build1 失败：`bfam` 重复定义 → 修 apply）；Pack Root **`20a10972`** @11:11。
+- **Layer2 7/7 @247s**。
+- **commit** `f473449bce8d`。
+
+**权威 Root 更新**：**`20a10972`**（ActivityThread 余量除 APP-8 IAP 外已齐）。
+
+**累计**：**21/22** core/java（Display rotation 仍 open，APP-17 进行中）。
+
+**下一步**：APP-17 Display rotation kill-switch；services/core。
+
+## 2026-07-23 (cont.44) — ✅✅ FW-CORE-APP-17 Layer2 7/7 @421s（Display rotation kill-switch）→ **core/java 22/22 完成**
+
+**改动**（`Display.java`，rotation-only；`bst.enable_display_rotation=0` 默认 off）：
+- 字段：`mLastPkg` / `mModifyDisplayRotation` / `mFixedSurfaceRotation`
+- `getRotation()` hook：`BstFilterAppsService` 查询 + 固定 rotation 覆盖
+- **kill-switch**：property `bst.enable_display_rotation=0`（默认）→ 行为与 APP-10 绿基线一致
+
+- apply：`scripts/p2_fw_coreapp17_apply.py`；patch `P2-FW-CORE-APP-17.diff`。
+- **Layer1 rc=0**；Pack Root **`4bf3f4ad`** @11:46。
+- **Layer2 7/7 @421s**（kill-switch 默认 off 冷启）。
+- **commit** `e71e3ebf0e74`。
+
+**权威 Root 更新**：**`4bf3f4ad`**。
+
+**累计**：**22/22** core/java ✅（FW-CORE-APP 子系统关门）。
+
+**下一步**：**P2-FW-SERVICES-CORE**（system_server 热路径 ~25 文件）；rotation 功能验证需 `bst.enable_display_rotation=1` 单独 Layer2。
+
+## 2026-07-23 (cont.45) — FW-SERVICES-1a ✅ Layer2 7/7 @167s（Clipboard host sync）
+
+**背景**：合并 batch SERVICES-1（Clipboard+Location）Layer2 报 **3/7** → 纪律 revert 源码；根因 **非代码回归**——冷启 ~669s 才 `boot_completed`，oracle 只扫 `Player.log`（轮转后为空），且 600s 超时偏紧。修复 `g1_boot_verify.ps1` 增扫 `Player.log.1`；绿基线 **4bf3f4ad** 复验 **7/7 @462s**。
+
+**改动**（`ClipboardService.java`，lazy-init `BstHostCallManager`）：
+- `setPrimaryClipInternalLocked` → `setClipboardText` host 同步（a13；跳过 label `simpleText`）
+
+- apply：`scripts/p2_fw_services1a_apply.py`；patch `P2-FW-SERVICES-1a.diff`。
+- **Layer1 rc=0**；Pack Root **`eeb4f714`** @13:31。
+- **Layer2 7/7 @167s**（Data wipe + 900s timeout + log.1 scan）。
+- **commit** `2ffca2cd5c5c`。
+
+**权威 Root 更新**：**`eeb4f714`**（FW-SERVICES-1a）。
+
+**累计**：services/core **1/21** gap（+ WM-1 已有 3 文件 = 4/24 a13 BST 文件）。
+
+**下一步**：FW-SERVICES-1b Location GMS popup；余 19 services/core 文件。
+
+## 2026-07-23 (cont.46) — ✅ FW-SERVICES-1b Layer2 7/7 @235s（Location GMS network popup）
+
+**改动**（`LocationManagerService.java` LocalService）：
+- `isProviderEnabledForUser("network")` → GMS 包名前缀检测 + network provider 未启用时返回 false（a13 禁 accuracy popup）
+
+- apply：`scripts/p2_fw_services1b_apply.py`；patch `P2-FW-SERVICES-1b.diff`。
+- **Layer1 rc=0**；Pack Root **`21907055`** @13:58（叠 1a Clipboard）。
+- **Layer2 7/7 @235s**。
+- **commit** `ba68bbbe5fba`。
+
+**结论**：合并 batch SERVICES-1 原 **3/7** 为 oracle 漏读（`Player.log.1`），非 Location/Clipboard 回归。1a+1b 分 batch 均绿。
+
+**权威 Root 更新**：**`21907055`**。
+
+**累计**：services/core **2/21** gap（Clipboard + Location）。
+
+**下一步**：FW-SERVICES-2 下一 surgical batch（IntentResolver / AccountManager / Notification 等 peripheral 优先）。
+
+## 2026-07-23 (cont.47) — ✅ FW-SERVICES-2 Layer2 7/7 @184s（NMS + hide BST resolve）
+
+**背景**：合并 batch SERVICES-2 初报 **3/7 @905s** → bisect：绿基线 **21907055** 复验 **7/7 @225s**；**2b NMS** 单独 **7/7 @386s**；**2a+2b** 复验 **7/7 @184s**。结论：合并 batch 失败为冷启环境 flake（VM 未停/Data 锁），非 2a 代码回归。
+
+**改动**：
+- **2b** `NotificationManagerService.java` — `sendNotificationToHost` → host 通知 JSON（a13）
+- **2a** `IntentResolver.java` — `isBluestacksFilter` hook + `ComponentResolver` override（hideBlueStacksPkg / FilterApps）
+
+- apply：`p2_fw_services2b_apply.py` + `p2_fw_services2a_apply.py`
+- **Layer1 rc=0**；Pack Root **`cf6bf294`** @16:04
+- **Layer2 7/7 @184s**（2a+2b 叠 1a+1b）
+- **commit** `4617ec3a455c`（2b）+ `79c5e53667c8`（2a）
+
+**权威 Root 更新**：**`cf6bf294`**
+
+**累计**：services/core **4/21** gap（Clipboard、Location、NMS、ComponentResolver；IntentResolver 为 plumbing hook）
+
+**下一步**：FW-SERVICES-3 AccountManagerService；余 PM/AM/WM 热路径。
+
+## 2026-07-23 (cont.48) — ✅ FW-SERVICES-3 Layer2 7/7 @169s（AccountManager host 账户回调）
+
+**改动**（`AccountManagerService.java`，lazy-init `BstHostCallManager`）：
+- Google/now.gg 账户 add/remove → `googleAccountListUpdated` / `onNowggAccountRemoved`
+- Google 首次登录 → `bst.bluestacks_account_id` + `onGoogleLoginCompleted`
+- `setGoogleAdId()` → `BstCommandProcessor`（账户变更广播路径）
+
+- apply：`scripts/p2_fw_services3_apply.py`；patch `P2-FW-SERVICES-3.diff`
+- **Layer1 rc=0**；Pack Root **`3d3a7997`** @16:36
+- **Layer2 7/7 @169s**
+- **commit** `e769b6edef84`
+
+**权威 Root 更新**：**`3d3a7997`**
+
+**累计**：services/core **5/21** gap
+
+**下一步**：FW-SERVICES-4 peripheral（AudioService / AppOpsService / RecentsAnimationController）；热路径 AM/PM/WM 谨慎 slice。
+
+## 2026-07-23 (cont.49) — ✅ FW-SERVICES-4a Layer2 7/7 @199s（Audio volume + AppOps devicedetails）
+
+**改动**：
+- `AudioService.java` — `bstSendVolumeToHost(index)` on `STREAM_MUSIC` volume change → `BstHostCallManager.onVolumeChanged`
+- `AppOpsService.java` — `checkPackage` allow `com.bluestacks.devicedetails`（a13 synthetic package）
+
+- apply：`scripts/p2_fw_services4a_apply.py`；patch `P2-FW-SERVICES-4a.diff`
+- **Layer1 rc=0**；Pack Root **`a551d823`** @17:10
+- **Layer2 7/7 @199s**（Data `wipe20260717`）
+- **commit** `41faf7a01ee4`
+
+**RecentsAnimationController**：a16 已 refactor（无 `services/core/.../RecentsAnimationController.java`）；orientation hook 待单独 research batch，**defer**。
+
+**权威 Root 更新**：**`a551d823`**
+
+**累计**：services/core **7/21** gap（+ Audio、AppOps）
+
+**下一步**：FW-SERVICES-5 peripheral（InputMethod / InputManager 等）；Recents orientation escalate；热路径 AM/PM 谨慎 slice。
+
+## 2026-07-23 (cont.50) — ✅ FW-SERVICES-5 Layer2 7/7 @153s（AccessibilityManagerService hide BST a11y）
+
+承 cont.49（services/core 7/21）。FW-SERVICES-5 = AccessibilityManagerService（peripheral，query-time 过滤，非 boot 路径）。
+
+**改动**（`AccessibilityManagerService.java`，2 个 filterHiddenServices hook，同 APP-1 app-side 模式）：
+- `getInstalledAccessibilityServiceList`：mInstalledServices → filterHiddenServices
+- `getEnabledAccessibilityServiceList`：result 去 final + 循环后 filterHiddenServices（隐藏 BST accessibility 服务防 3rd-party 检测）
+
+- apply：`scripts/p2_fw_services5_apply.py`；patch `P2-FW-SERVICES-5.diff`。
+- **m droid rc=0**（vndservicemanager folded）；**Pack Root `661c0d40186b5cb0ba36e894f7b209c3`** @18:29。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 a551d823）；Data 重置 wipe20260717；**7/7 @153s**（冷启快，query-time hook 不影响 boot）。
+- **commit** `89f7d26202ab`（+9/-3）。
+
+**权威 Root 更新**：**`661c0d40`**（FW-SERVICES-5，严格优于 a551d823）。
+
+**累计**：services/core **8/21** gap（+ AccessibilityManagerService）。
+
+**下一步**：InputManagerService（构造函数签名变更，须改 caller，较复杂）/ InputMethodManagerService（100 行 peripheral）/ 余 PM族·AM·WM 热路径。
+
+## 2026-07-23 (cont.51) — ✅✅ FW-PERIPH-1 Layer2 7/7 @131s（SystemVibrator + MediaCodecInfo）
+
+承 cont.50。fresh gap（31 文件）分析后选 2 个干净 peripheral app-framework 文件（非 services/core 热路径）。其他候选 drift/资源缺 defer：WallpaperManager（缺 `default_wallpaper_msi` 资源）、PointerIcon（TYPE_NULL 块 a16 重排）、InputManager（netease 过滤逻辑移 InputManagerGlobal）。
+
+**改动**：
+| 文件 | BST hook | 用途 |
+|---|---|---|
+| SystemVibrator | `hasVibrator() \|\| bst_enable_vibrator`（+field）| 永远报告有振动器（游戏检测）|
+| MediaCodecInfo | ROB-10676 whatsapp 下 `OMX.google.h264.encoder`→`c2.android.avc.encoder` | 绕 whatsapp 编码器限制发视频 |
+
+- apply：`scripts/p2_fw_periph1_apply.py`；patch `P2-FW-PERIPH-1.diff`。
+- **Build1 失败**：SystemVibrator field 插在 `@Override` 与 `hasVibrator()` 之间 → `@Override` 错附 field（annotation not applicable）。**修**：anchor 含 `@Override\n` 保持其附着方法。
+- **m droid rc=0**；**Pack Root `34b3cd8a32c8c284e7eb27bc8b3cd506`** @19:18。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 661c0d40）；Data 重置 wipe20260717；**7/7 @131s**。
+- **commit** `7c1801fb5818`（+11/-1）。
+
+**权威 Root 更新**：**`34b3cd8a`**（FW-PERIPH-1，严格优于 661c0d40）。
+
+**累计**：services/core 8/21 + 2 extra peripheral core/java（SystemVibrator/MediaCodecInfo，原 22 外的新发现）。
+
+**下一步**：SettingsProvider（a11y setting 过滤，补 AccessibilityManagerService）；InputMethodManagerService（100 行 peripheral，新方法）；热路径 PM/AM/WM 谨慎 slice。

@@ -1,0 +1,41 @@
+diff --git a/core/java/android/os/SystemVibrator.java b/core/java/android/os/SystemVibrator.java
+index 881f0b813e7c..9307603651c5 100644
+--- a/core/java/android/os/SystemVibrator.java
++++ b/core/java/android/os/SystemVibrator.java
+@@ -101,6 +101,9 @@ public class SystemVibrator extends Vibrator {
+         }
+     }
+ 
++    // A16DBG:P2:FW-PERIPH BST: always report vibrator present (a13 bst_enable_vibrator)
++    private static final boolean bst_enable_vibrator = true;
++
+     @Override
+     public boolean hasVibrator() {
+         int[] vibratorIds = getVibratorIds();
+@@ -108,7 +111,7 @@ public class SystemVibrator extends Vibrator {
+             Log.w(TAG, "Failed to check if vibrator exists; no vibrator manager.");
+             return false;
+         }
+-        return vibratorIds.length > 0;
++        return vibratorIds.length > 0 || bst_enable_vibrator;
+     }
+ 
+     @Override
+diff --git a/media/java/android/media/MediaCodecInfo.java b/media/java/android/media/MediaCodecInfo.java
+index b1c9e1aee3b2..d8486249e1c2 100644
+--- a/media/java/android/media/MediaCodecInfo.java
++++ b/media/java/android/media/MediaCodecInfo.java
+@@ -119,6 +119,13 @@ public final class MediaCodecInfo {
+      */
+     @NonNull
+     public final String getName() {
++        // A16DBG:P2:FW-PERIPH ROB-10676 swap h264 encoder name for whatsapp (a13)
++        if ("OMX.google.h264.encoder".equals(mName)) {
++            String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
++            if (topPackageName != null && topPackageName.startsWith("com.whatsapp")) {
++                return "c2.android.avc.encoder";
++            }
++        }
+         return mName;
+     }
+ 

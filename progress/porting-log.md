@@ -1869,3 +1869,17 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **权威 Root 更新**：**`848e9737`**。a11y hide 现三层（service-list SERVICES-5 + setting 单读 PERIPH-6 + bulk-read PERIPH-7）。
 
 **累计**：services/core 9/21 + IMMS 两子集 + 8 extra peripheral。PointerIcon(defer,re-arch)、WallpaperManager(defer,resource)、SystemUI TunerServiceImpl(defer,deps) 仍缺；热路径/aidl escalate。
+
+## 2026-07-24 (cont.62) — 终判：机械 peripheral 移植耗尽（SystemUI 截图 re-arch）
+
+核查剩余 SystemUI 截图文件：a16 `SaveImageInBackgroundTask` 完全重构（无 `result.fileName`/`doInBackground`/`mContext`/相关 imports），a14-16 SystemUI 截图管线整体重写。`ScreenshotController` 同族重构。`onScreenshotSaved` dep 虽在 a16 BstHostCallManager(:293)，但 call site 宿主方法不存在 → **re-arch defer**。
+
+**机械可移植 peripheral 移植彻底完成**（cont.50-61，11 verified ports + 1 reverted→fixed）。a11y hide 三层、telephony 反检测齐全、IMMS 键盘映射核心、peripheral app hooks 全在位。
+
+**剩余全部非机械（须 escalate/re-arch/resource，按规则需人类判断或 dedicated）**：
+- **re-arch**：PointerIcon(SYSTEM_ICONS 结构)、SystemUI 截图管线(SaveImageInBackgroundTask/ScreenshotController)、TM subscription(消费者移 SubscriptionManager)
+- **resource**：WallpaperManager(缺 default_wallpaper_msi drawable，须加资产)
+- **deps 缺**：SystemUI TunerServiceImpl(getIconHideList/ICON_HIDE_LIST/icon_black_list)
+- **escalate（规则：热路径/IPC/契约 判断性）**：PM族/AM/WM boot-critical、ActivityManager(aidl 契约)、IMMS setBstIME(aidl)
+
+权威 Root **`848e9737`**（11 ports，7/7 @136s）。机械移植阶段关门；下一步须人类定热路径/契约/re-arch 方向。

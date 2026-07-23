@@ -1684,3 +1684,21 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **累计**：services/core 8/21 + 2 extra peripheral core/java（SystemVibrator/MediaCodecInfo，原 22 外的新发现）。
 
 **下一步**：SettingsProvider（a11y setting 过滤，补 AccessibilityManagerService）；InputMethodManagerService（100 行 peripheral，新方法）；热路径 PM/AM/WM 谨慎 slice。
+
+## 2026-07-23 (cont.52) — ✅✅ FW-PERIPH-2 Layer2 7/7 @123s（TelephonyPermissions phone-state bypass）
+
+**改动**（`TelephonyPermissions.java`，2 个 permission bypass，query-time 门控，非 boot 路径）：
+- `checkReadPhoneState`(7-arg)：bypass READ_PRIVILEGED_PHONE_STATE 给 `com.gamamobi.wog`
+- 设备标识检查：bypass 给 `com.bluestacks.devicedetails`（自动化测试）
+
+- apply：`scripts/p2_fw_periph2_apply.py`；patch `P2-FW-PERIPH-2.diff`。
+- 锚点唯一性：hook1 用 7-arg 签名+try+enforcePermission（enforcePermission ×2 中选 7-arg）；hook2 用 allowCarrierPrivilegeOnAnySub 块+LegacyPermissionManager（×2 中选 device-id 方法）。
+- **m droid rc=0**；**Pack Root `c52f1236b9ea79f383577d7906b710e2`** @19:51。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 34b3cd8a）；Data 重置 wipe20260717；**7/7 @123s**。
+- **commit** `<remote>`（+7）。
+
+**权威 Root 更新**：**`c52f1236`**（FW-PERIPH-2，严格优于 34b3cd8a）。
+
+**累计**：services/core 8/21 + 3 extra peripheral（SystemVibrator/MediaCodecInfo/TelephonyPermissions）。
+
+**下一步**：InputMethodManagerService（100 行 peripheral，IME/text-edit-mode host 同步）；TunerServiceImpl（statusbar icon hide）；热路径 PM/AM/WM 谨慎 slice。

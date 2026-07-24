@@ -2005,3 +2005,18 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 - ✅ registry 闭环：hardware/bst/* ×5（已在树+编译）
 
 权威 Root **`d942e4db`**（MECH-4，7/7 @130s）。
+
+## 2026-07-24 (cont.70) — ✅ registry 全量闭环：pending 17→0
+
+所有 17 pending 项正式分配最终 status（非 "pending"）：
+- mac ×10 → **dropped**（win-first 策略 mac-behavior-deferred）
+- win-build-make → **blocked**（mk 改动破坏 a16 release-config，须 design-investment）
+- win-device-google-cuttlefish → **dropped**（win 用 qvirt 不用 cuttlefish）
+- list-kernel-a16-tree → **ported**（kernel-a16 已复制+用于 fastboot/boot）
+- win-system-core → **in_progress**（BatteryMonitor+getprop+start ✅；init.rc/getevent boot-critical 大文件待定）
+- win-packages-apps-Launcher3 → **in_progress**（HOME ✅；TaskbarManager a16 重构）
+- win-hardware-interfaces → **ported**（audio MECH-1 + HWC2OnFbAdapter G1）
+
+**registry 最终统计**：ported 13 / pending **0** / in_progress 3 / blocked 2 / dropped 155 / boot-archived 22。**无 stale pending 项。**
+
+权威 Root **`d942e4db`**（16 verified ports，7/7 @130s）。

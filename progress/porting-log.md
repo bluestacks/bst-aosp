@@ -2198,3 +2198,7 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **全量扫描遗漏模块 port 最终统计**：8 遗漏模块 → **7 ported**（adb/Connectivity/Settings/av×3/Wifi/system-extras）+ **2 blocked**（opt/telephony/LatinIME）。
 
 **本 session 总成绩：25 verified ports**，root `a551d823`→`f2adeb31`（7/7 @233s）。
+
+## 2026-07-25 (cont.81) — LatinIME reflection 7/7 @167s（26 ports，剩余 1 模块）
+
+LatinIME: reflection 终解 Soong classpath（编译时无 com.bluestacks.os import，运行时 reflection）。Root 35d1a555。

@@ -2064,3 +2064,27 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **权威 Root 更新**：**`abc7a35a`**。累计非 fw/base port：**9 文件 / 6 repo**。
 
 **剩余遗漏模块（5 个）**：frameworks/opt/telephony(18 BST) / frameworks/av(13) / LatinIME(12) / system/extras(5,NEW file) / Wifi(2+)。
+
+## 2026-07-24 (cont.74) — 非 fw/base 机械 port 完成盘点 + 剩余 5 模块阻塞分析
+
+**已完成非 fw/base 机械 port（9 文件 / 6 repo）**：
+| MECH | 文件 | repo | 功能 |
+|---|---|---|---|
+| 1 | audio service.cpp + BatteryMonitor.cpp | hw/interfaces + system/core | threadpool + klog |
+| 2 | Launcher3 AndroidManifest ×2 | packages/apps/Launcher3 | HOME 移除 |
+| 3 | getprop.cpp | system/core/toolbox | BST prop 过滤（反检测）|
+| 4 | start.cpp | system/core/toolbox | BST state reset on stop |
+| 6 | adb.cpp + adb.h + file_sync_service.cpp | packages/modules/adb | 路径访问 + 命令白名单 |
+| 7 | EthernetConfigStore.java | packages/modules/Connectivity | 静态 IP（反检测）|
+| 8 | SettingsActivity.java | packages/apps/Settings | BST_CHANGES_ENABLED gate |
+
+**剩余 5 个遗漏模块（全有明确阻塞，非独立机械 port）**：
+| 模块 | BST 信号 | 阻塞 |
+|---|---|---|
+| frameworks/opt/telephony | 18 | 依赖 TelephonyManager.mBstSubscriptionInfo（deferred fake-SIM 基础）|
+| frameworks/av | 8 | 依赖 `<binder/BstUtilsManager.h>` C++ binder 头（a16 未 port，仅 BstFilterAppsManager.h 在）|
+| LatinIME | 38+ | 复杂键盘映射（InputConnection/extracted text/listener port），非机械 |
+| Wifi | 126 | a16 重构（mActiveModeWarden 替 mWifiStateMachine），非机械 |
+| system/extras | 5 | su/report_daemon.c 是新文件（a16 不存在，须加文件+build config）|
+
+**所有独立可机械 port 的 BST 定制（frameworks/base + 非 fw/base）已全部完成**（20 verified ports）。剩余 5 个有依赖/重构/新文件阻塞，须先解决依赖（port BstUtilsManager.h C++ binder / TelephonyManager fake-SIM 基础）或属 substantial re-arch。

@@ -2104,3 +2104,22 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **权威 Root 更新**：**`30d3e526`**。累计非 fw/base port：**10 文件 / 7 repo**。
 
 **stub unblock 后**：CameraService.cpp + CameraProviderManager.cpp BST hooks 现在可 port（依赖 BstUtilsManager.h + BstFilterAppsManager.h 已解决）。
+
+## 2026-07-25 (cont.76) — ✅✅ MECH-10 Layer2 7/7 @152s（CameraService + CameraProviderManager BST 旋转 — frameworks/av 关门）
+
+**改动**（frameworks/av，2 文件）：
+- `CameraService.cpp`：getCameraInfo 后 BST 旋转 override（`*orientation = bstAngle % 1000 % 360`）
+- `CameraProviderManager.cpp`：sensor metadata 读取后 BST 旋转 override（`info->orientation = bstAngle % 1000 % 360`）
+- 两者用 BstUtilsManager + BstFilterAppsManager stub（fail-open）
+
+- apply `scripts/p2_mech10_apply.py`；patch `P2-MECH-10-camera.diff`。
+- **Build rc=1 但 cameraserver binary 已产出**（objcopy .tmp flake，kill 循环腐蚀 OUT；非编译错）。
+- **Pack Root `0fa56c80545d2a3988aaaf5a594465da`** @23:48。
+- **Deploy + Layer2**：win 部署（备份 30d3e526）；Data 重置；**7/7 @152s**。
+- **commit**（frameworks/av repo）。
+
+**权威 Root 更新**：**`0fa56c80`**。累计非 fw/base port：**12 文件 / 7 repo**。
+
+**frameworks/av 关门** ✅：IMediaSource（MECH-9）+ CameraService + CameraProviderManager（MECH-10）全 ported。BstUtilsManager.h C++ stub unblock 成功。
+
+**剩余遗漏模块（4 个）**：frameworks/opt/telephony(依赖 fake-SIM) / LatinIME(38+行复杂) / Wifi(126行重构) / system/extras(新文件)。

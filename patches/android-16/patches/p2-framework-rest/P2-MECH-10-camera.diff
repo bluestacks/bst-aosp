@@ -1,0 +1,44 @@
+diff --git a/services/camera/libcameraservice/CameraService.cpp b/services/camera/libcameraservice/CameraService.cpp
+index 988803b6ea..063f9be774 100644
+--- a/services/camera/libcameraservice/CameraService.cpp
++++ b/services/camera/libcameraservice/CameraService.cpp
+@@ -77,6 +77,9 @@
+ #include <binder/IServiceManager.h>
+ #include <binder/IActivityManager.h>
+ #include <camera/CameraUtils.h>
++#include <binder/IPCThreadState.h>
++#include <binder/BstFilterAppsManager.h>
++#include <binder/BstUtilsManager.h>
+ #include <camera/StringUtils.h>
+ 
+ #include <system/camera.h>
+@@ -1497,6 +1500,15 @@ std::pair<int, IPCTransport> CameraService::getDeviceVersion(const std::string&
+         *facing = info.facing;
+         if (orientation) {
+             *orientation = info.orientation;
++            // A16DBG:P2:MECH BST camera sensor rotation per-app (a13; stub fail-open)
++            int bstPid = android::IPCThreadState::self()->getCallingPid();
++            android::BstUtilsManager bstUtil;
++            android::String16 bstPkg = bstUtil.getAppNameFromPid(bstPid);
++            android::BstFilterAppsManager bstFilter;
++            int32_t bstAngle = bstFilter.getCameraSensorRotation(bstPkg);
++            if (bstAngle > 0) {
++                *orientation = bstAngle % 1000 % 360;
++            }
+         }
+     }
+ 
+diff --git a/services/camera/libcameraservice/common/CameraProviderManager.cpp b/services/camera/libcameraservice/common/CameraProviderManager.cpp
+index 7032db04aa..f82c53a721 100644
+--- a/services/camera/libcameraservice/common/CameraProviderManager.cpp
++++ b/services/camera/libcameraservice/common/CameraProviderManager.cpp
+@@ -52,6 +52,9 @@
+ #include <utils/Trace.h>
+ #include <ui/PublicFormat.h>
+ #include <camera/StringUtils.h>
++#include <binder/IPCThreadState.h>
++#include <binder/BstFilterAppsManager.h>
++#include <binder/BstUtilsManager.h>
+ 
+ #include "api2/HeicCompositeStream.h"
+ #include "device3/ZoomRatioMapper.h"

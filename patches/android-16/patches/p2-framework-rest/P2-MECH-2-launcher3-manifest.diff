@@ -1,0 +1,24 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 89e21d8949..75e6f7e4ac 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -68,7 +68,6 @@
+                 <category android:name="android.intent.category.MONKEY"/>
+                 <!--
+                 R257 / Henry BS-A16: remove HOME so com.uncube.launcher3 is sole home.
+-                <category android:name="android.intent.category.HOME" />
+                 <category android:name="android.intent.category.LAUNCHER_APP" />
+                 -->
+             </intent-filter>
+diff --git a/quickstep/AndroidManifest-launcher.xml b/quickstep/AndroidManifest-launcher.xml
+index 54dd7b7e72..16a3449e1f 100644
+--- a/quickstep/AndroidManifest-launcher.xml
++++ b/quickstep/AndroidManifest-launcher.xml
+@@ -62,7 +62,6 @@
+                 <category android:name="android.intent.category.MONKEY"/>
+                 <!--
+                 R257 / Henry BS-A16: remove HOME so com.uncube.launcher3 is sole home.
+-                <category android:name="android.intent.category.HOME" />
+                 <category android:name="android.intent.category.LAUNCHER_APP" />
+                 -->
+             </intent-filter>

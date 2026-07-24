@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 权威 Root | **`848e9737`**（11 ports，Layer2 **7/7 @136s**）|
+| 权威 Root | **`59b69b52`**（MECH-1 首个 fw/base 外 port，Layer2 **7/7 @185s**）|
 | commit | MECH-1: hw/interfaces `23fb8db6` + system/core `65a7b230` |
 | core/java | **22/22** ✅ |
 | services/core peripheral | **9/21** + IMMS 键盘映射核心 |

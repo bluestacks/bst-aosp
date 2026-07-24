@@ -1932,3 +1932,15 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 - hardware/interfaces：audio service ✅done；HWC2OnFbAdapter 已port（77信号）
 
 **下一步**：继续机械 port（Launcher3 AndroidManifest/TaskbarManager；system/core getprop/start/Unicode；build/make mk config）。
+
+## 2026-07-24 (cont.65) — ✅✅ MECH-2 Layer2 7/7 @157s（Launcher3 HOME category 移除）
+
+**改动**（packages/apps/Launcher3，2 manifest）：删除 `<category android:name="android.intent.category.HOME" />`（Launcher3 非 HOME，BST launcher 独占 HOME）。
+- a13 注释掉；a16 manifest_merger 拒绝含 `--` 的注释（SAXParseException）→ 改为**直接删行**（同效）。
+- **m droid rc=0**；**Pack Root `20fb05b1ccdb9e080d92a6539630e5e8`** @14:15。
+- **Deploy + Layer2**：win 部署（备份 59b69b52）；Data 重置；**7/7 @157s**（BST launcher 正确 boot 为 HOME）。
+- **commit**（Launcher3 repo）。
+
+**权威 Root 更新**：**`20fb05b1`**（MECH-2）。第 2 个 frameworks/base 外 port。
+
+**累计非 frameworks/base 机械 port**：MECH-1(audio+BatteryMonitor) + MECH-2(Launcher3 HOME) = 3 文件。

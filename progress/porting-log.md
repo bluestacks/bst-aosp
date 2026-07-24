@@ -1988,3 +1988,20 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **裁定**：build/make mk config **defer**（PRODUCT_PACKAGES 改动破坏 a16 release-config，须先理解 a16 release-config 如何映射 trunk_staging）。
 
 **权威 Root 保持 `d942e4db`**（MECH-4，基线绿，win 部署态）。
+
+## 2026-07-24 (cont.69) — registry 清理：device/generic false positive + hardware/bst 闭环
+
+**device/generic/{common,x86_64} survey**：
+- x86_64（239行）：diff 全是 **license boilerplate**（`package`+`license` block + copyright 2014→2023）—— 非真实 BST 定制，registry 误报（diff 非空但内容是上游 boilerplate 噪声）。
+- common（15120行）：含大量二进制 alsa `.state` 资产 + boilerplate。同理非机械 BST port。
+- **裁定**：device/generic win P1 项标 **dropped**（license boilerplate false positive，G1 的 device/bst/qvirt 已覆盖设备层）。
+
+**hardware/bst/* 闭环**：audio/camera/lights/memtrack/power 5 HAL 已在 a16 树 + 编译进 image（G1 g1_hal_fixes，vendor/bin/hw 有 HAL 服务）。registry `pending` → **ported**（stale 闭环）。
+
+**本 session 非 frameworks/base 机械 port 最终统计**：
+- ✅ ported 5 文件 / 3 repo（MECH-1~4）：audio service + BatteryMonitor + Launcher3 HOME + getprop + start
+- ❌ defer：build/make mk（破坏 a16 release-config）
+- ❌ dropped：device/generic（license boilerplate false positive）
+- ✅ registry 闭环：hardware/bst/* ×5（已在树+编译）
+
+权威 Root **`d942e4db`**（MECH-4，7/7 @130s）。

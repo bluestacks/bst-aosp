@@ -1944,3 +1944,16 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **权威 Root 更新**：**`20fb05b1`**（MECH-2）。第 2 个 frameworks/base 外 port。
 
 **累计非 frameworks/base 机械 port**：MECH-1(audio+BatteryMonitor) + MECH-2(Launcher3 HOME) = 3 文件。
+
+## 2026-07-24 (cont.66) — ✅✅ MECH-3 Layer2 7/7 @161s（getprop BST prop 过滤 — 反检测）
+
+**改动**（system/core/toolbox/getprop.cpp）：PrintProperty 首加 filter — `bst.*` 前缀 + 12-name `bst_prop_list` 跳过打印，除非 `bst.debug.show_prop=1`。a16 PrintProperty 为插入点（a13 在迭代 loop 过滤）。
+
+- apply `scripts/p2_mech3_apply.py`；patch `P2-MECH-3-getprop.diff`（44 行）。
+- **m droid rc=0**（3 variant: toolbox.recovery/vendor/toolbox 全过）；**Pack Root `b91655d4d59ef77f5ff401d665c0a848`** @15:10。
+- **Deploy + Layer2**：win 部署（备份 20fb05b1）；Data 重置；**7/7 @161s**。
+- **commit**（system/core repo）。
+
+**权威 Root 更新**：**`b91655d4`**（MECH-3）。**累计非 frameworks/base 机械 port：4 文件**（audio+BatteryMonitor+Launcher3-HOME+getprop），跨 hardware/interfaces、system/core、packages/apps/Launcher3 三 repo。
+
+**下一步机械候选**：system/core（toolbox/start.cpp 9行 a16重构需查 / libutils/Unicode.cpp 2行 a16重构需查）、build/make（handheld_system.mk，security keys 二进制）。

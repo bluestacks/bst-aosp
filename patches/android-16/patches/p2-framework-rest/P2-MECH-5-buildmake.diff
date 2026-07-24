@@ -1,0 +1,55 @@
+diff --git a/target/product/handheld_system.mk b/target/product/handheld_system.mk
+index 9d5c9d9747..71cb2fc233 100644
+--- a/target/product/handheld_system.mk
++++ b/target/product/handheld_system.mk
+@@ -35,11 +35,11 @@ $(call inherit-product-if-exists, frameworks/webview/chromium/chromium.mk)
+ 
+ PRODUCT_PACKAGES += \
+     android.software.window_magnification.prebuilt.xml \
+-    BasicDreams \
++    # A16DBG:P2:MECH BST removed BasicDreams (a13)
+     BlockedNumberProvider \
+-    BluetoothMidiService \
++    # A16DBG:P2:MECH BST removed BluetoothMidiService (a13)
+     BookmarkProvider \
+-    BuiltInPrintService \
++    # A16DBG:P2:MECH BST removed BuiltInPrintService (a13)
+     CalendarProvider \
+     cameraserver \
+     CameraExtensionsProxy \
+@@ -56,8 +56,8 @@ PRODUCT_PACKAGES += \
+     InputDevices \
+     KeyChain \
+     librs_jni \
+-    ManagedProvisioning \
+-    MmsService \
++    # A16DBG:P2:MECH BST removed ManagedProvisioning (a13)
++    # A16DBG:P2:MECH BST removed MmsService (a13)
+     MtpService \
+     MusicFX \
+     PacProcessor \
+diff --git a/target/product/runtime_libart.mk b/target/product/runtime_libart.mk
+index 71138ac560..987aa2b563 100644
+--- a/target/product/runtime_libart.mk
++++ b/target/product/runtime_libart.mk
+@@ -46,6 +46,8 @@ PRODUCT_PACKAGES += com.android.runtime
+ # (listed in ART_APEX_JARS), which should no longer be added directly to
+ # PRODUCT_PACKAGES.
+ 
++# A16DBG:P2:MECH BST: disable ART debug build (slim image, a13)
++PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD := false
+ art_target_include_debug_build := $(PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD)
+ ifneq (false,$(art_target_include_debug_build))
+   ifneq (,$(filter eng,$(TARGET_BUILD_VARIANT)))
+diff --git a/target/product/telephony_system_ext.mk b/target/product/telephony_system_ext.mk
+index 12b618deca..febb799f5b 100644
+--- a/target/product/telephony_system_ext.mk
++++ b/target/product/telephony_system_ext.mk
+@@ -20,7 +20,6 @@
+ # /system_ext packages
+ PRODUCT_PACKAGES += \
+     CarrierConfig \
+-    EmergencyInfo \
+ 
+ PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34 += \
+     # BlueStacks: on /system via system_image_defaults

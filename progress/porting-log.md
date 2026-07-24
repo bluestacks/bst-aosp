@@ -1976,3 +1976,15 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 | 2 | Launcher3 AndroidManifest ×2 | packages/apps/Launcher3 | HOME 移除 |
 | 3 | getprop.cpp | system/core/toolbox | BST prop 过滤（反检测）|
 | 4 | start.cpp | system/core/toolbox | BST state reset on stop |
+
+## 2026-07-24 (cont.68) — ❌ MECH-5 build/make defer（mk 改动破坏 a16 release-config）
+
+**尝试**（build/make 3 mk 文件）：runtime_libart(`PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD:=false`) + telephony_system_ext(删 EmergencyInfo) + handheld_system(注释删 5 apps: BasicDreams/BluetoothMidiService/BuiltInPrintService/ManagedProvisioning/MmsService)。
+
+**结果**：**Build dumpvars 失败 3s**：`release_config.mk:151: No release config set for target; release is one of: .`（空列表）。Revert runtime_libart → 仍失败。**Revert 全部 build/make → clean rebuild rc=0**（基线绿）。
+
+**根因**：a16 release-config 框架（`build/make/core/release_config.mk`）对 product-definition mk 文件改动**敏感**——PRODUCT_PACKAGES 增删触发 release config 重新求值，dumpvars 找不到 release mapping。**非机械**（a16 构建系统 fragile，须 careful 调查 release-config 机制）。
+
+**裁定**：build/make mk config **defer**（PRODUCT_PACKAGES 改动破坏 a16 release-config，须先理解 a16 release-config 如何映射 trunk_staging）。
+
+**权威 Root 保持 `d942e4db`**（MECH-4，基线绿，win 部署态）。

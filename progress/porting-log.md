@@ -2207,3 +2207,28 @@ LatinIME: reflection 终解 Soong classpath（编译时无 com.bluestacks.os imp
 
 frameworks/opt/telephony: PhoneSubInfoController.getDeviceIdForPhone returns bst.imei_id when BST_TELEPHONY_CHANGES_ENABLED.
 Root a6114a52. 27 verified ports total. SubscriptionController restructured in a16 (class gone) — only portable hook was PhoneSubInfoController.
+
+## 2026-07-25 (cont.83) — ✅✅ MECH-15 Layer2 7/7 @207s（UiccProfile SIM READY + GsmCdmaPhone fake IMEI — 全量遗漏模块关门）
+
+**改动**（frameworks/opt/telephony，2 文件）：
+- UiccProfile: BST_TELEPHONY enabled 时 force SIM state = READY（a13；BST 无真实 SIM，应用看到 READY）
+- GsmCdmaPhone: getImei() return bst.imei_id when BST enabled（a13；fake IMEI 反检测）
+
+- **m droid rc=0**；**Pack Root `ad3332fd9263b103eba6b85a19fd8913`** @05:00。
+- **Deploy + Layer2**：win 部署（备份 a6114a52）；Data 重置；**7/7 @207s**。
+
+**权威 Root 更新**：**`ad3332fd`**。累计：**29 verified ports** / 11 repo。
+
+**全量扫描遗漏 8 模块最终统计**：
+| 模块 | 状态 | MECH |
+|---|---|---|
+| packages/modules/adb | ✅ ported | MECH-6 |
+| packages/modules/Connectivity | ✅ ported | MECH-7 |
+| packages/apps/Settings | ✅ ported | MECH-8 |
+| frameworks/av (3 files) | ✅ ported | MECH-9/10 |
+| packages/modules/Wifi | ✅ ported | MECH-11 |
+| packages/inputmethods/LatinIME | ✅ ported | MECH-12 |
+| system/extras | ✅ ported | MECH-13 |
+| frameworks/opt/telephony | ✅ ported (3/4 files; SubscriptionController restructured) | MECH-14/15 |
+
+**全量扫描遗漏模块关门 ✅**。8 遗漏模块全 ported。frameworks/base 内剩余 hot-path/re-arch 项仍 deferred（cont.63 挂账）。

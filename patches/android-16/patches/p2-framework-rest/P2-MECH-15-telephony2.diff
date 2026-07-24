@@ -1,0 +1,63 @@
+diff --git a/src/java/com/android/internal/telephony/GsmCdmaPhone.java b/src/java/com/android/internal/telephony/GsmCdmaPhone.java
+index e3dcf92258..8b2b31f882 100644
+--- a/src/java/com/android/internal/telephony/GsmCdmaPhone.java
++++ b/src/java/com/android/internal/telephony/GsmCdmaPhone.java
+@@ -72,6 +72,7 @@ import android.telephony.Annotation.DataActivityType;
+ import android.telephony.Annotation.RadioPowerState;
+ import android.telephony.BarringInfo;
+ import android.telephony.CarrierConfigManager;
++import android.os.SystemProperties;
+ import android.telephony.CellBroadcastIdRange;
+ import android.telephony.CellIdentity;
+ import android.telephony.CellularIdentifierDisclosure;
+@@ -223,6 +224,8 @@ public class GsmCdmaPhone extends Phone {
+     private DialArgs mDialArgs = null;
+     private final RegistrantList mEmergencyDomainSelectedRegistrants = new RegistrantList();
+     private String mImei;
++    // A16DBG:P2:MECH BST fake IMEI (a13)
++    private static final boolean BST_TELEPHONY_CHANGES_ENABLED = SystemProperties.getBoolean("bst.config.enable_telephony", true);
+     private String mImeiSv;
+     private String mVmNumber;
+     private int mImeiType = IMEI_TYPE_UNKNOWN;
+@@ -1791,6 +1794,8 @@ public class GsmCdmaPhone extends Phone {
+ 
+     @Override
+     public String getImei() {
++        // A16DBG:P2:MECH BST: fake IMEI (a13; anti-detection)
++        if (BST_TELEPHONY_CHANGES_ENABLED) return SystemProperties.get("bst.imei_id", mImei);
+         return mImei;
+     }
+ 
+diff --git a/src/java/com/android/internal/telephony/uicc/UiccProfile.java b/src/java/com/android/internal/telephony/uicc/UiccProfile.java
+index 1206ce7b2f..f84c934065 100644
+--- a/src/java/com/android/internal/telephony/uicc/UiccProfile.java
++++ b/src/java/com/android/internal/telephony/uicc/UiccProfile.java
+@@ -63,6 +63,7 @@ import com.android.internal.telephony.CarrierPrivilegesTracker;
+ import com.android.internal.telephony.CommandsInterface;
+ import com.android.internal.telephony.IccCard;
+ import com.android.internal.telephony.IccCardConstants;
++import android.os.SystemProperties;
+ import com.android.internal.telephony.MccTable;
+ import com.android.internal.telephony.Phone;
+ import com.android.internal.telephony.PhoneConstants;
+@@ -162,6 +163,8 @@ public class UiccProfile extends IccCard {
+     private UiccCardApplication mUiccApplication = null;
+     private IccRecords mIccRecords = null;
+     private IccCardConstants.State mExternalState = IccCardConstants.State.UNKNOWN;
++    // A16DBG:P2:MECH BST: always READY (a13)
++    private static final boolean BST_TELEPHONY_CHANGES_ENABLED = SystemProperties.getBoolean("bst.config.enable_telephony", true);
+ 
+     // The number of UiccApplications modem reported. It's different from mUiccApplications.length
+     // which is always CARD_MAX_APPS, and only updated when modem sends an update, and NOT updated
+@@ -644,6 +647,11 @@ public class UiccProfile extends IccCard {
+ 
+         // Check if SIM is locked
+         boolean cardLocked = false;
++        // A16DBG:P2:MECH BST: force SIM READY (a13)
++        if (BST_TELEPHONY_CHANGES_ENABLED) {
++            setExternalState(IccCardConstants.State.READY);
++            return;
++        }
+         IccCardConstants.State lockedState = null;
+         IccCardApplicationStatus.AppState appState = mUiccApplication.getState();
+ 

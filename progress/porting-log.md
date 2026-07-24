@@ -2202,3 +2202,8 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 ## 2026-07-25 (cont.81) — LatinIME reflection 7/7 @167s（26 ports，剩余 1 模块）
 
 LatinIME: reflection 终解 Soong classpath（编译时无 com.bluestacks.os import，运行时 reflection）。Root 35d1a555。
+
+## 2026-07-25 (cont.82) — MECH-14 PhoneSubInfoController BST device-id — 7/7 @134s
+
+frameworks/opt/telephony: PhoneSubInfoController.getDeviceIdForPhone returns bst.imei_id when BST_TELEPHONY_CHANGES_ENABLED.
+Root a6114a52. 27 verified ports total. SubscriptionController restructured in a16 (class gone) — only portable hook was PhoneSubInfoController.

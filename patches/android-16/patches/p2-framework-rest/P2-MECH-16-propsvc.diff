@@ -1,0 +1,20 @@
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 558ca7d667..9395548d13 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -850,6 +850,15 @@ static void load_override_properties() {
+     if (ALLOW_LOCAL_PROP_OVERRIDE) {
+         std::map<std::string, std::string> properties;
+         load_properties_from_file("/data/local.prop", nullptr, &properties);
++        // A16DBG:P2:MECH BST: load BST prop files (a13)
++        if (access("/data/.bluestacks.prop", F_OK) == 0) {
++            load_properties_from_file("/data/.bluestacks.prop", nullptr, &properties);
++            LOG(INFO) << "A16DBG:P2:MECH loaded /data/.bluestacks.prop";
++        }
++        if (access("/data/.bstconf.prop", F_OK) == 0) {
++            load_properties_from_file("/data/.bstconf.prop", nullptr, &properties);
++            LOG(INFO) << "A16DBG:P2:MECH loaded /data/.bstconf.prop";
++        }
+         for (const auto& [name, value] : properties) {
+             std::string error;
+             if (PropertySetNoSocket(name, value, &error) != PROP_SUCCESS) {

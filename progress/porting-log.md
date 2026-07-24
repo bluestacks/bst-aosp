@@ -2232,3 +2232,12 @@ Root a6114a52. 27 verified ports total. SubscriptionController restructured in a
 | frameworks/opt/telephony | ✅ ported (3/4 files; SubscriptionController restructured) | MECH-14/15 |
 
 **全量扫描遗漏模块关门 ✅**。8 遗漏模块全 ported。frameworks/base 内剩余 hot-path/re-arch 项仍 deferred（cont.63 挂账）。
+
+## 2026-07-25 (cont.84) — ✅✅ MECH-16 property_service BST prop loading — 7/7 @126s
+
+**改动**（system/core/init/property_service.cpp）：`load_override_properties` 加载 `/data/.bluestacks.prop` + `/data/.bstconf.prop`（additive，access() check = no-op 如果文件不存在）。a13 侵入性改动（注释掉 partition loading）跳过——只 port additive 部分。
+
+- **m droid rc=0**；**Pack Root `f37dddb2259a6f865e3f21cd78862d14`** @05:36。
+- **Deploy + Layer2**：win 部署（备份 ad3332fd）；Data 重置；**7/7 @126s**。
+
+**权威 Root 更新**：**`f37dddb2`**。累计：**30 verified ports** / 11 repo。

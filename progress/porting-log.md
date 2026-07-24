@@ -1957,3 +1957,22 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **权威 Root 更新**：**`b91655d4`**（MECH-3）。**累计非 frameworks/base 机械 port：4 文件**（audio+BatteryMonitor+Launcher3-HOME+getprop），跨 hardware/interfaces、system/core、packages/apps/Launcher3 三 repo。
 
 **下一步机械候选**：system/core（toolbox/start.cpp 9行 a16重构需查 / libutils/Unicode.cpp 2行 a16重构需查）、build/make（handheld_system.mk，security keys 二进制）。
+
+## 2026-07-24 (cont.67) — ✅✅ MECH-4 Layer2 7/7 @130s（start.cpp BST state reset on stop）
+
+**改动**（system/core/toolbox/start.cpp）：`ControlDefaultServices` stop 分支末加：`ctl.stop appstatsd` + 重置 `bst.config.{boot_completed,pm_ready,screen_enabled,top_package_name,top_activity_name}`（shutdown 清理）。
+
+- apply `scripts/p2_mech4_apply.py`；patch `P2-MECH-4-start.diff`（18 行）。
+- **m droid rc=0**（3 variant 全过）；**Pack Root `d942e4db5b93331d11067e9227bf330b`** @15:49。
+- **Deploy + Layer2**：win 部署（备份 b91655d4）；Data 重置；**7/7 @130s**。
+- **commit**（system/core repo `???`）。
+
+**权威 Root 更新**：**`d942e4db`**（MECH-4）。
+
+**累计 frameworks/base 外机械 port（cont.64-67）**：5 文件 / 3 repo：
+| MECH | 文件 | repo | 功能 |
+|---|---|---|---|
+| 1 | audio service.cpp + BatteryMonitor.cpp | hardware/interfaces + system/core | threadpool + klog |
+| 2 | Launcher3 AndroidManifest ×2 | packages/apps/Launcher3 | HOME 移除 |
+| 3 | getprop.cpp | system/core/toolbox | BST prop 过滤（反检测）|
+| 4 | start.cpp | system/core/toolbox | BST state reset on stop |

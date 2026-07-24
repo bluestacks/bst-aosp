@@ -2038,3 +2038,16 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **权威 Root 更新**：**`1906df04`**（MECH-6）。累计非 fw/base port：7 文件 / 4 repo。
 
 **剩余遗漏模块（7 个，待 port）**：frameworks/opt/telephony(18 BST) / packages/apps/Settings(16) / frameworks/av(13) / LatinIME(12) / system/extras(5) / Connectivity(4) / Wifi(2)。
+
+## 2026-07-24 (cont.72) — ✅✅ MECH-7 Layer2 7/7 @135s（Connectivity Ethernet BST static IP — 第 2 个全量扫描发现的遗漏模块）
+
+**改动**（packages/modules/Connectivity）：`EthernetConfigStore.bstLoadStaticConfig()` — 从 BST properties 创建静态 IP 配置（ip_guest_addr/gateway/dns_server），gated by `bst.config.modify_network`。反检测网络一致性。
+
+- apply `scripts/p2_mech7_apply.py`；patch `P2-MECH-7-ethernet.diff`（52 行）。
+- **m droid rc=0**；**Pack Root `14bca86e2c6ffa9490685062598cd9e7`** @18:26。
+- **Deploy + Layer2**：win 部署（备份 1906df04）；Data 重置；**7/7 @135s**。
+- **commit**（Connectivity repo）。
+
+**权威 Root 更新**：**`14bca86e`**。累计非 fw/base port：8 文件 / 5 repo。
+
+**剩余遗漏模块（6 个，待 port）**：frameworks/opt/telephony(18 BST) / packages/apps/Settings(16) / frameworks/av(13) / LatinIME(12) / system/extras(5, NEW file) / Wifi(2)。

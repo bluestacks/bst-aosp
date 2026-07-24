@@ -1,0 +1,52 @@
+diff --git a/service-t/src/com/android/server/ethernet/EthernetConfigStore.java b/service-t/src/com/android/server/ethernet/EthernetConfigStore.java
+index 156b52631d..8661b11770 100644
+--- a/service-t/src/com/android/server/ethernet/EthernetConfigStore.java
++++ b/service-t/src/com/android/server/ethernet/EthernetConfigStore.java
+@@ -20,6 +20,12 @@ import static com.android.net.module.util.DeviceConfigUtils.TETHERING_MODULE_NAM
+ 
+ import android.content.ApexEnvironment;
+ import android.net.IpConfiguration;
++import android.net.IpConfiguration.IpAssignment;
++import android.net.IpConfiguration.ProxySettings;
++import android.net.LinkAddress;
++import android.net.NetworkUtils;
++import android.net.StaticIpConfiguration;
++import android.os.SystemProperties;
+ import android.os.Environment;
+ import android.util.ArrayMap;
+ import android.util.AtomicFile;
+@@ -81,12 +87,34 @@ public class EthernetConfigStore {
+         }
+     }
+ 
++    // A16DBG:P2:MECH BST: load static IP from properties (anti-detection, a13)
++    private void bstLoadStaticConfig() {
++        StaticIpConfiguration staticIp = new StaticIpConfiguration();
++        staticIp.ipAddress = new LinkAddress(
++                NetworkUtils.numericToInetAddress(
++                        SystemProperties.get("bst.status.ip_guest_addr", "10.0.2.15")),
++                SystemProperties.getInt("bst.status.ip_addr_prefix_len", 24));
++        staticIp.gateway = NetworkUtils.numericToInetAddress(
++                SystemProperties.get("bst.status.ip_gateway_addr", "10.0.2.2"));
++        staticIp.dnsServers.add(NetworkUtils.numericToInetAddress(
++                SystemProperties.get("bst.dns_server", "8.8.8.8")));
++        staticIp.dnsServers.add(NetworkUtils.numericToInetAddress(
++                SystemProperties.get("bst.dns_server2", "10.0.2.3")));
++        mIpConfigurations.put("0", new IpConfiguration(
++                IpAssignment.STATIC, ProxySettings.NONE, staticIp, null));
++    }
++
+     public void read() {
+         read(APEX_IP_CONFIG_FILE_PATH, LEGACY_IP_CONFIG_FILE_PATH, CONFIG_FILE);
+     }
+ 
+     @VisibleForTesting
+     void read(final String newFilePath, final String oldFilePath, final String filename) {
++        // A16DBG:P2:MECH BST static network config (a13; gated)
++        if (SystemProperties.getInt("bst.config.modify_network", 1) > 0) {
++            bstLoadStaticConfig();
++            return;
++        }
+         synchronized (mSync) {
+             // Attempt to read the IP configuration from apex file path first.
+             if (doesConfigFileExist(newFilePath + filename)) {

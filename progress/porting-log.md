@@ -2177,3 +2177,24 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 | system/extras su/ | 全模块替换（15+ 文件）| 系统安全相关 |
 
 **Total: 24 verified ports, root `8ad58127` (7/7 @159s)**。
+
+## 2026-07-25 (cont.80) — ✅✅ MECH-13 Layer2 7/7 @233s（system/extras su/report_daemon — 第 7 个遗漏模块 port）
+
+**改动**（system/extras/su/，新文件 + Android.bp）：
+- `report_daemon.c`（267行，BST 云遥测 daemon）+ `su_utils.c`（222行，file/string/base64 工具）+ `su_utils.h` + `report_daemon.rc` 从 a13 复制
+- `Android.bp`：新增 `cc_binary report_daemon`（libcurl static + libz/ssl/crypto/cutils/log shared）
+- Build fix：libz 缺失（libcurl 依赖 zlib inflate → undefined symbol inflateInit_）
+
+- **m droid rc=0**；**Pack Root `f2adeb314bee06bf452262c61e920a8c`** @03:25。
+- **Deploy + Layer2**：win 部署（备份 8ad58127）；Data 重置；**7/7 @233s**。
+- **commit**（system/extras repo）。
+
+**权威 Root 更新**：**`f2adeb31`**。累计非 fw/base port：**14 文件 / 9 repo**。
+
+**剩余 2 模块（blocked）**：
+1. frameworks/opt/telephony — 依赖 TelephonyManager.mBstSubscriptionInfo（fake-SIM deferred）
+2. LatinIME — Soong API 分区约束（com.bluestacks.os.* 不可见，须 build-system engineering）
+
+**全量扫描遗漏模块 port 最终统计**：8 遗漏模块 → **7 ported**（adb/Connectivity/Settings/av×3/Wifi/system-extras）+ **2 blocked**（opt/telephony/LatinIME）。
+
+**本 session 总成绩：25 verified ports**，root `a551d823`→`f2adeb31`（7/7 @233s）。

@@ -2088,3 +2088,19 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 | system/extras | 5 | su/report_daemon.c 是新文件（a16 不存在，须加文件+build config）|
 
 **所有独立可机械 port 的 BST 定制（frameworks/base + 非 fw/base）已全部完成**（20 verified ports）。剩余 5 个有依赖/重构/新文件阻塞，须先解决依赖（port BstUtilsManager.h C++ binder / TelephonyManager fake-SIM 基础）或属 substantial re-arch。
+
+## 2026-07-24 (cont.75) — ✅✅ MECH-9 Layer2 7/7 @131s（IMediaSource + BstUtilsManager.h C++ stub unblock）
+
+**关键突破**：创建 **BstUtilsManager.h C++ stub**（fail-open，同 BstFilterAppsManager.h 模式）→ unblock frameworks/av 编译（之前 BstUtilsManager.h 缺失导致 av 全部 BST hooks 无法编译）。
+
+**改动**：
+1. **frameworks/native**: 新增 `BstUtilsManager.h` stub（getAppNameFromPid→空 String16, setProperty/setServiceComponentState→false）+ BstFilterAppsManager.h 加 `getCameraSensorRotation`
+2. **frameworks/av**: `IMediaSource.cpp` supportReadMultiple() — 特定游戏(com.papegames.lysk.en)禁多读
+
+- **m droid rc=0**（stub 编译通过，cameraserver install 见 log）；**Pack Root `30d3e5266763273943db5121bd6957ba`** @22:52。
+- **Deploy + Layer2**：win 部署（备份 abc7a35a）；Data 重置；**7/7 @131s**。
+- **commit**：frameworks/av + frameworks/native。
+
+**权威 Root 更新**：**`30d3e526`**。累计非 fw/base port：**10 文件 / 7 repo**。
+
+**stub unblock 后**：CameraService.cpp + CameraProviderManager.cpp BST hooks 现在可 port（依赖 BstUtilsManager.h + BstFilterAppsManager.h 已解决）。

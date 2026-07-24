@@ -1,0 +1,25 @@
+diff --git a/media/libmedia/IMediaSource.cpp b/media/libmedia/IMediaSource.cpp
+index 36cd73be0e..fffe5b5a4a 100644
+--- a/media/libmedia/IMediaSource.cpp
++++ b/media/libmedia/IMediaSource.cpp
+@@ -28,6 +28,7 @@
+ #include <media/stagefright/MediaBufferGroup.h>
+ #include <media/stagefright/MediaSource.h>
+ #include <media/stagefright/MetaData.h>
++#include <binder/BstUtilsManager.h>
+ 
+ namespace android {
+ 
+@@ -195,6 +196,12 @@ public:
+ 
+     // Binder proxy adds readMultiple support.
+     virtual bool supportReadMultiple() {
++        // A16DBG:P2:MECH BST disable multi-read for lysk.en (a13; stub fail-open)
++        BstUtilsManager butilmanager;
++        String16 pkgname = butilmanager.getAppNameFromPid(getpid());
++        if (pkgname == String16("com.papegames.lysk.en")) {
++            return false;
++        }
+         return true;
+     }
+ 

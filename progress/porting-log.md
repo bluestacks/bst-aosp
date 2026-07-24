@@ -2157,3 +2157,23 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 - 剩余 3 模块 blocked（须 build config/fake-SIM/全模块替换）
 
 权威 Root **`8ad58127`**（7/7 @159s，24 verified ports）。
+
+## 2026-07-25 (cont.79) — LatinIME 终态：Soong build-system API 分区约束（须 build-system engineering）
+
+**LatinIME 尝试（3 轮 build config 修复全失败）**：
+1. `common/Android.bp` `sdk_version: "21"` → `platform_apis: true`：LatinIME(java/)仍 sdk_version:current → Soong API mismatch error
+2. `java/Android.bp` 同改 platform_apis + 删 sdk_version → Soong: "sdk_version must have a value when module is at vendor or product"
+3. 结论：**Soong build-system API 分区模型深层约束**——product-partition app 须有 sdk_version + platform_apis 同时存在，但 com.bluestacks.os.* 不在 SDK stubs（core_platform/system_current 不含 BST 框架新增类）。须理解 a16 Soong 如何暴露 frameworks/base 的内部类给 product-partition apps——**非机械 build config 变更，是 build-system engineering**。
+
+**LatinIME 最终阻塞**：com.bluestacks.os.BstUtilsManager（frameworks/base BST 新增类）对 LatinIME（product-partition app）不可见。a13 用 Android.mk（无 SDK 限制），a16 Soong 强制 SDK 分区。
+
+**已 revert**（common/Android.bp + java/Android.bp + LatinIME.java 全回 HEAD）。
+
+**剩余 3 模块最终终态**（全 blocked）：
+| 模块 | 阻塞 | 性质 |
+|---|---|---|
+| frameworks/opt/telephony | TelephonyManager.mBstSubscriptionInfo | fake-SIM 基础依赖 |
+| LatinIME | Soong API 分区约束 | build-system engineering |
+| system/extras su/ | 全模块替换（15+ 文件）| 系统安全相关 |
+
+**Total: 24 verified ports, root `8ad58127` (7/7 @159s)**。

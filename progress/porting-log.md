@@ -2135,3 +2135,25 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **权威 Root 更新**：**`8ad58127`**。累计非 fw/base port：**13 文件 / 8 repo**。
 
 **剩余遗漏模块（3 个）**：frameworks/opt/telephony(依赖 fake-SIM) / LatinIME(38+行复杂键盘映射) / system/extras(su/report_daemon 新文件)。
+
+## 2026-07-25 (cont.78) — 剩余 3 模块最终阻塞分析（全量扫描遗漏模块 port 收尾）
+
+**LatinIME 尝试**（MECH-12）：onCreate BstUtilsManager init apply 成功 → **编译失败**：`package com.bluestacks.os does not exist`。LatinIME APK build 看不到 framework 的 `com.bluestacks.os.BstUtilsManager`（a16 Soong build classpath 不含 framework 内部 BST 类）。须改 build config（`common/Android.bp` 加 `platform_apis: true` 或 dependency）—— 非机械。已 revert。
+
+**3 个剩余模块最终阻塞**：
+| 模块 | 阻塞 | 修复方向 |
+|---|---|---|
+| frameworks/opt/telephony | `TelephonyManager.mBstSubscriptionInfo`（fake-SIM 基础 deferred）| port fake-SIM |
+| packages/inputmethods/LatinIME | build classpath 不含 `com.bluestacks.os.*`（须改 `common/Android.bp` platform_apis）| build config 变更 |
+| system/extras su/ | 完整 BST su 模块替换（15+ 文件：su.c+report_daemon+crypto+whitelist+hcall_wrapper...）| 全模块替换 |
+
+**全量扫描遗漏模块 port 收尾统计**：8 遗漏模块 → **5 ported**（adb/Connectivity/Settings/av×3/Wifi）+ **3 blocked**（opt/telephony/LatinIME/system-extras）。
+
+**本 session 全量总成绩**：
+- frameworks/base: 11 ports（cont.50-62）
+- 非 frameworks/base: **13 ports / 8 repo**（cont.64-77: MECH-1~11）
+- frameworks/native: BstUtilsManager.h C++ stub（unblock av）
+- **Total: 24 verified ports**, root `a551d823`→`8ad58127`（7/7 @159s）
+- 剩余 3 模块 blocked（须 build config/fake-SIM/全模块替换）
+
+权威 Root **`8ad58127`**（7/7 @159s，24 verified ports）。

@@ -2020,3 +2020,21 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **registry 最终统计**：ported 13 / pending **0** / in_progress 3 / blocked 2 / dropped 155 / boot-archived 22。**无 stale pending 项。**
 
 权威 Root **`d942e4db`**（16 verified ports，7/7 @130s）。
+
+## 2026-07-24 (cont.71) — ✅✅ MECH-6 Layer2 7/7 @132s（packages/modules/adb — 全量扫描发现的遗漏模块）
+
+**背景**：用户指出"framework/base外的patch都没提到"→ 全量扫描发现 registry triage 遗漏了 8 个有真实 BST 定制的模块。adb 是其中之一。
+
+**改动**（packages/modules/adb，3 文件）：
+- `daemon/file_sync_service.cpp`：路径访问扩展 `/sdcard/` + `/mnt/windows/`（BST 共享文件夹通过 ADB 可访问）
+- `adb.cpp`：`_bst_allow_adb_cmd`（命令白名单，读 `/data/downloads/.adbcmd`）
+- `adb.h`：声明
+
+- 3 轮修复：函数插函数体内（C++ 不允许嵌套定义）→ Python `\r\n` 转义 mangle → `printf+sed r` 保真换行。
+- **m droid rc=0**；**Pack Root `1906df045cfefc1f4227da4202abb59a`** @17:54。
+- **Deploy + Layer2**：win 部署（备份 d942e4db）；Data 重置；**7/7 @132s**。
+- **commit**（adb repo）。
+
+**权威 Root 更新**：**`1906df04`**（MECH-6）。累计非 fw/base port：7 文件 / 4 repo。
+
+**剩余遗漏模块（7 个，待 port）**：frameworks/opt/telephony(18 BST) / packages/apps/Settings(16) / frameworks/av(13) / LatinIME(12) / system/extras(5) / Connectivity(4) / Wifi(2)。

@@ -1,0 +1,55 @@
+diff --git a/adb.cpp b/adb.cpp
+index ae57b006..fcd79f9d 100644
+--- a/adb.cpp
++++ b/adb.cpp
+@@ -81,6 +81,24 @@ using namespace std::chrono_literals;
+ 
+ #if !ADB_HOST && defined(__ANDROID__)
+ #include "daemon/watchdog.h"
++// A16DBG:P2:MECH BST ADB command whitelist (a13)
++#if !ADB_HOST
++#include <cstdio>
++#include <cstring>
++#define BST_ADBCMD_FILE "/data/downloads/.adbcmd"
++int _bst_allow_adb_cmd(const char* cmd) {
++    FILE* fp = fopen(BST_ADBCMD_FILE, "r");
++    if (fp == nullptr) return 1;
++    char line[256];
++    while (fgets(line, sizeof(line), fp)) {
++        line[strlen(line)-1] = 0;
++        if (strstr(cmd, line) != nullptr) { fclose(fp); return 1; }
++    }
++    fclose(fp);
++    return 0;
++}
++#endif
++
+ 
+ static std::atomic<int> active_connections = 0;
+ 
+diff --git a/adb.h b/adb.h
+index 5fc3f208..3e5c256c 100644
+--- a/adb.h
++++ b/adb.h
+@@ -253,3 +253,5 @@ void adb_set_reject_kill_server(bool reject);
+ #endif
+ 
+ void usb_init();
++// A16DBG:P2:MECH BST ADB command whitelist (a13)
++int _bst_allow_adb_cmd(const char* cmd);
+diff --git a/daemon/file_sync_service.cpp b/daemon/file_sync_service.cpp
+index 8dc1407b..1f6dc642 100644
+--- a/daemon/file_sync_service.cpp
++++ b/daemon/file_sync_service.cpp
+@@ -79,7 +79,10 @@ static bool should_use_fs_config([[maybe_unused]] const std::string& path) {
+     // updated as well.
+ #if defined(__ANDROID__)
+     if (android_get_device_api_level() < __ANDROID_API_V__) {
+-        return !android::base::StartsWith(path, "/data/");
++        // A16DBG:P2:MECH BST: allow /data/ + /sdcard/ + /mnt/windows/ (a13)
++        return !android::base::StartsWith(path, "/data/") &&
++               !android::base::StartsWith(path, "/sdcard/") &&
++               !android::base::StartsWith(path, "/mnt/windows/");
+     }
+ #endif
+     return true;

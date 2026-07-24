@@ -2241,3 +2241,12 @@ Root a6114a52. 27 verified ports total. SubscriptionController restructured in a
 - **Deploy + Layer2**：win 部署（备份 ad3332fd）；Data 重置；**7/7 @126s**。
 
 **权威 Root 更新**：**`f37dddb2`**。累计：**30 verified ports** / 11 repo。
+
+## 2026-07-25 (cont.85) — ✅✅ MECH-17 init.rc BST triggers — 7/7 @134s
+
+**改动**（system/core/rootdir/init.rc）：添加 `install_studio_zip` + `bst_getevents_logger` 服务定义 + 对应 property triggers（additive，inert 无 host）。
+
+- **m droid rc=0**；**Pack Root `8dbed160aefa82beeb2add29b3b5d687`** @06:09。
+- **Deploy + Layer2**：win 部署（备份 f37dddb2）；Data 重置；**7/7 @134s**。
+
+**权威 Root 更新**：**`8dbed160`**。累计：**31 verified ports** / 11 repo。init.rc BST 内容 100% ported。

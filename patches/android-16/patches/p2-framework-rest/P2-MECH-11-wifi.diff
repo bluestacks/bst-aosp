@@ -1,0 +1,14 @@
+diff --git a/service/java/com/android/server/wifi/WifiServiceImpl.java b/service/java/com/android/server/wifi/WifiServiceImpl.java
+index 47bdb7c847..461e3ecf70 100644
+--- a/service/java/com/android/server/wifi/WifiServiceImpl.java
++++ b/service/java/com/android/server/wifi/WifiServiceImpl.java
+@@ -1942,7 +1942,8 @@ public class WifiServiceImpl extends IWifiManager.Stub {
+             mLog.info("getWifiEnabledState uid=% state=%").c(Binder.getCallingUid()).c(
+                     state).flush();
+         }
+-        return state;
++        // A16DBG:P2:MECH BST fake WiFi enabled state (anti-detection, a13)
++        return WifiManager.WIFI_STATE_ENABLED;
+     }
+ 
+     /**

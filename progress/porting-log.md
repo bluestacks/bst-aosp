@@ -2123,3 +2123,15 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **frameworks/av 关门** ✅：IMediaSource（MECH-9）+ CameraService + CameraProviderManager（MECH-10）全 ported。BstUtilsManager.h C++ stub unblock 成功。
 
 **剩余遗漏模块（4 个）**：frameworks/opt/telephony(依赖 fake-SIM) / LatinIME(38+行复杂) / Wifi(126行重构) / system/extras(新文件)。
+
+## 2026-07-25 (cont.77) — ✅✅ MECH-11 Layer2 7/7 @159s（Wifi fake WiFi state — 第 6 个遗漏模块 port）
+
+**改动**（packages/modules/Wifi）：`getWifiEnabledState()` return 改为 `WifiManager.WIFI_STATE_ENABLED`（fake WiFi 连接，反检测）。a16 用 `getWifiEnabledState`（a13 是 `getWifiState`）；a16 mActiveModeWarden delegation 保留（state 计算但 return 覆盖）。
+
+- **m droid rc=0**；**Pack Root `8ad58127efb999f39923bcc46b5f2a50`** @01:14。
+- **Deploy + Layer2**：win 部署（备份 0fa56c80）；Data 重置；**7/7 @159s**。
+- **commit**（Wifi repo）。
+
+**权威 Root 更新**：**`8ad58127`**。累计非 fw/base port：**13 文件 / 8 repo**。
+
+**剩余遗漏模块（3 个）**：frameworks/opt/telephony(依赖 fake-SIM) / LatinIME(38+行复杂键盘映射) / system/extras(su/report_daemon 新文件)。

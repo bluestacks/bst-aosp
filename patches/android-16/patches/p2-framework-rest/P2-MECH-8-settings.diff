@@ -1,0 +1,28 @@
+diff --git a/src/com/android/settings/SettingsActivity.java b/src/com/android/settings/SettingsActivity.java
+index c8325aafc58..42e2fe38153 100644
+--- a/src/com/android/settings/SettingsActivity.java
++++ b/src/com/android/settings/SettingsActivity.java
+@@ -392,9 +392,15 @@ public class SettingsActivity extends SettingsBaseActivity
+         }
+     }
+ 
++    // A16DBG:P2:MECH BST settings gate (a13)
++    private static final boolean BST_CHANGES_ENABLED =
++            (android.os.SystemProperties.getInt("bst.config.modify_settings", 1) > 0);
++
+     private void setActionBarStatus() {
+         final boolean isActionBarButtonEnabled = isActionBarButtonEnabled(getIntent());
+ 
++        // A16DBG:P2:MECH BST: skip actionBar customization when BST enabled (a13)
++        if (!BST_CHANGES_ENABLED) {
+         final ActionBar actionBar = getActionBar();
+         if (actionBar != null) {
+             actionBar.setDisplayHomeAsUpEnabled(isActionBarButtonEnabled);
+@@ -404,6 +410,7 @@ public class SettingsActivity extends SettingsBaseActivity
+             }
+             actionBar.setDisplayShowTitleEnabled(true);
+         }
++        } // end BST_CHANGES_ENABLED gate
+     }
+ 
+     private boolean isActionBarButtonEnabled(Intent intent) {

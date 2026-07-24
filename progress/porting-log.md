@@ -2051,3 +2051,16 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 **权威 Root 更新**：**`14bca86e`**。累计非 fw/base port：8 文件 / 5 repo。
 
 **剩余遗漏模块（6 个，待 port）**：frameworks/opt/telephony(18 BST) / packages/apps/Settings(16) / frameworks/av(13) / LatinIME(12) / system/extras(5, NEW file) / Wifi(2)。
+
+## 2026-07-24 (cont.73) — ✅✅ MECH-8 Layer2 7/7 @128s（Settings BST_CHANGES_ENABLED gate — 第 3 个遗漏模块 port）
+
+**改动**（packages/apps/Settings）：SettingsActivity 加 `BST_CHANGES_ENABLED`（gated by `bst.config.modify_settings` 默认 on）→ enabled 时跳过 actionBar 定制（BST 自有 Settings UI 行为）。
+
+- apply `scripts/p2_mech8_apply.py`；patch `P2-MECH-8-settings.diff`（28 行）。
+- **m droid rc=0**；**Pack Root `abc7a35a5fb6c68382f1881b9c603afb`** @21:35。
+- **Deploy + Layer2**：win 部署（备份 14bca86e）；Data 重置；**7/7 @128s**。
+- **commit**（Settings repo）。
+
+**权威 Root 更新**：**`abc7a35a`**。累计非 fw/base port：**9 文件 / 6 repo**。
+
+**剩余遗漏模块（5 个）**：frameworks/opt/telephony(18 BST) / frameworks/av(13) / LatinIME(12) / system/extras(5,NEW file) / Wifi(2+)。

@@ -1,0 +1,13 @@
+diff --git a/audio/common/all-versions/default/service/service.cpp b/audio/common/all-versions/default/service/service.cpp
+index 1557a9505d..e92c0339b8 100644
+--- a/audio/common/all-versions/default/service/service.cpp
++++ b/audio/common/all-versions/default/service/service.cpp
+@@ -80,7 +80,7 @@ int main(int /* argc */, char* /* argv */ []) {
+         ::android::ProcessState::self()->startThreadPool();
+     }
+ 
+-    ABinderProcess_setThreadPoolMaxThreadCount(1);
++    //ABinderProcess_setThreadPoolMaxThreadCount(1);  // A16DBG:P2:MECH BST audio: no threadpool limit (a13)
+     ABinderProcess_startThreadPool();
+ 
+     const int32_t defaultValue = -1;

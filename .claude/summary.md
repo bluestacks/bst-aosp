@@ -5,7 +5,7 @@
 | 项 | 值 |
 |---|---|
 | 权威 Root | **`848e9737`**（11 ports，Layer2 **7/7 @136s**）|
-| commit | `776749bcfac3` |
+| commit | MECH-1: hw/interfaces `23fb8db6` + system/core `65a7b230` |
 | core/java | **22/22** ✅ |
 | services/core peripheral | **9/21** + IMMS 键盘映射核心 |
 | extra peripheral | **8**（a11y 三层 / telephony 反检测齐全 / vibrator / codec / telephony-perms）|

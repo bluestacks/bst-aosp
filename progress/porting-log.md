@@ -1907,3 +1907,28 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 | F 已定 | external/selinux | **blocked**(intentional permissive) | 对齐 a13；禁 enabled.c→0 |
 
 权威 Root 保持 **`848e9737`**（11 ports，7/7 @136s）。机械+安全移植阶段正式关门；剩余 design-investment 项显式挂账，后续按优先级/资产/契约评审逐项启动。
+
+## 2026-07-24 (cont.64) — ✅✅ MECH-1 Layer2 7/7 @185s（首个 frameworks/base 外机械 port：audio + BatteryMonitor）
+
+承用户指出：移植计划不完整，**frameworks/base 外的 patch 全程被忽略**（hardware/interfaces、system/core、build/make、packages/apps/Launcher3 等 registry pending 项）。转向非 frameworks/base 机械 port。
+
+**MECH-1（2 文件，跨 2 repo，小机械低风险）**：
+| 文件 | repo | 改动 |
+|---|---|---|
+| hardware/interfaces/.../audio/.../service.cpp | hardware/interfaces | 注释 `ABinderProcess_setThreadPoolMaxThreadCount(1)`（BST audio 无线程池限制）|
+| system/core/healthd/BatteryMonitor.cpp | system/core | gate dmesg KLOG_WARNING spam (`if(false)`) + `klog_set_level(3)` |
+
+- apply `scripts/p2_mech1_apply.py`；patch `P2-MECH-1-{audio,battery}.diff`。
+- **m droid rc=0**（BatteryMonitor 预存 line 132 note 无关）；**Pack Root `59b69b529aa6d706fbf03aa0aa05abe6`** @12:43。
+- **Deploy + Layer2**：win 部署 md5 一致（备份 848e9737）；Data 重置 wipe20260717；**7/7 @185s**。
+- **commit**：hardware/interfaces `23fb8db6` + system/core `65a7b230`。
+
+**权威 Root 更新**：**`59b69b52`**（MECH-1，严格优于 848e9737）。**首个 frameworks/base 外 port 验证通过。**
+
+**剩余非 frameworks/base 机械清单（survey 后，按规模）**：
+- system/core（714行）：init.rc(163)/getevent(319)/init.cpp/property_service 等多为 boot（部分已 port）；机械小项 = getprop(42)/start(9)/Unicode(2)/fs_config(2 已port)/healthd(✅done)
+- build/make（336行）：mk config + security keys（二进制）
+- packages/apps/Launcher3（50行）：AndroidManifest(HOME移除)+TaskbarManager+RecentsActivity+TaskView（OverviewComponentObserver 已port）
+- hardware/interfaces：audio service ✅done；HWC2OnFbAdapter 已port（77信号）
+
+**下一步**：继续机械 port（Launcher3 AndroidManifest/TaskbarManager；system/core getprop/start/Unicode；build/make mk config）。

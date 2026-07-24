@@ -2250,3 +2250,14 @@ Root a6114a52. 27 verified ports total. SubscriptionController restructured in a
 - **Deploy + Layer2**：win 部署（备份 f37dddb2）；Data 重置；**7/7 @134s**。
 
 **权威 Root 更新**：**`8dbed160`**。累计：**31 verified ports** / 11 repo。init.rc BST 内容 100% ported。
+
+## 2026-07-25 (cont.86) — ✅✅ MECH-18 property_service serialno + ueventd.rc bstvmsg — 7/7 @155s
+
+**改动**（system/core）：
+- `init/property_service.cpp`：`BstReadSerialno()` 在 PropertyLoadBootDefaults 首调用，从 `bst.serialno` 设 `ro.serialno` + `ro.boot.serialno`（a13；身份一致性）
+- `rootdir/ueventd.rc`：加 `/dev/bstvmsg 0666 root root`（BST IPC 设备权限，a16 缺此条）
+
+- **m droid rc=0**；**Pack Root `87394bbd7a1e63d2a88deac0ef4aab17`** @06:55。
+- **Deploy + Layer2**：win 部署（备份 8dbed160）；Data 重置；**7/7 @155s**。
+
+**权威 Root 更新**：**`87394bbd`**。累计：**32 verified ports** / 11 repo。

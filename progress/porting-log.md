@@ -1883,3 +1883,27 @@ system_mounted / init_second / odsign / boot_completed / activity(hcallOnActivit
 - **escalate（规则：热路径/IPC/契约 判断性）**：PM族/AM/WM boot-critical、ActivityManager(aidl 契约)、IMMS setBstIME(aidl)
 
 权威 Root **`848e9737`**（11 ports，7/7 @136s）。机械移植阶段关门；下一步须人类定热路径/契约/re-arch 方向。
+
+## 2026-07-24 (cont.63) — Phase 2 功能对齐维度关门 + 剩余统一 defer 挂账
+
+**统一决策（按 escalate 清单 A/B/C/D/E 裁定）**：剩余 24 gap 文件（扣 pattern 误报 + 已 relocation 完成的 InputManager→InputManagerGlobal）全部 defer/dropped，正式挂账。理由：经逐文件 grep/diff 核查，每一项均非机械 port——a16 重构了管线（a13 hook 无直接映射）或需 binder 契约扩展或缺资产/deps，且多在 boot-critical 路径（PERIPH-3b 教训：boot 相关无条件 override 必破）。这些需 deliberate design scoping（re-arch 落点设计 + boot-risk uid-gate 方案 + aidl 契约评审 + 资产），非 unilateral 安全可完成。
+
+**Phase 2「guest 功能对齐」关门维度（已达成）**：
+- core/java **22/22** ✅
+- a11y hide 三层（service-list + setting 单读 + bulk-read）✅
+- telephony 反检测（operator + LTE + device-id-uid-gated）✅
+- IMMS 键盘映射核心（onImeChange + text-edit-mode）✅
+- peripheral app hooks（vibrator / codec / telephony-perms）✅
+- services/core peripheral 9/21（Clipboard/Location/NMS/ComponentResolver/IntentResolver/AccountManager/Audio/AppOps/AccessibilityManagerService）✅
+
+**剩余挂账（defer/dropped 清单）**：
+| 组 | 项 | 裁定 | 阻塞 |
+|---|---|---|---|
+| A boot-critical | PM族(8)/AMS/ActiveServices/DisplayContent/ATS/RecentsAnimationController | **defer** | boot-critical scan/lifecycle；须 kill-switch design + 干净基线小切片 |
+| B 契约 | ActivityManager.removeTaskWrapper / IMMS setBstIME | **defer** | aidl 加方法（契约扩展评审）|
+| C re-arch | PointerIcon(SYSTEM_ICONS 反转)/SystemUI 截图(a14-16 重写)/ATS force-kill(宿主方法不存在)/TM subscription(移 SubscriptionManager,boot-risk) | **defer** | a16 重构，须按新结构重设计落点 |
+| D 资源 | WallpaperManager msi5 | **dropped**（无资产）| 缺 default_wallpaper_msi drawable |
+| E deps | SystemUI TunerServiceImpl | **defer** | a16 缺 getIconHideList/ICON_HIDE_LIST/icon_black_list |
+| F 已定 | external/selinux | **blocked**(intentional permissive) | 对齐 a13；禁 enabled.c→0 |
+
+权威 Root 保持 **`848e9737`**（11 ports，7/7 @136s）。机械+安全移植阶段正式关门；剩余 design-investment 项显式挂账，后续按优先级/资产/契约评审逐项启动。

@@ -2279,3 +2279,13 @@ Root a6114a52. 27 verified ports total. SubscriptionController restructured in a
 **权威 Root 更新**：**`c60a0231`**。累计：**33 verified ports** / 12 repo。
 
 **核查结论更新**：全量扫描确认 **a13 所有 BST patch（除 deferred 外）全部 ported 成功**。无遗漏。
+
+## 2026-07-25 (cont.88) — ✅ DEF-1 PointerIcon BST mouse pointer — 7/7 @214s
+
+**改动**（frameworks/base/core/java/android/view/PointerIcon.java）：
+`getSystemIcon(int)`：TYPE_NULL + `bst.config.show_mouse_ptr=false` → remap to TYPE_DEFAULT（显示 Android 原生指针）；默认 true（隐藏原生，BST 自画）。
+
+- **m droid rc=0**；**Pack Root `ed186f342ec553eb90d297debf4aafdf`** @10:32。
+- **Deploy + Layer2**：win 部署（备份 c60a0231）；Data 重置；**7/7 @214s**。
+
+**权威 Root 更新**：`ed186f34`。累计：**34 verified ports**。

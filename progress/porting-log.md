@@ -2333,3 +2333,11 @@ IMMS: BroadcastReceiver for `bst.intent.SET_IME` → setInputMethodEnabledLocked
 ## 2026-07-25 (cont.93) — ✅ DEF-5 build/make app removal via device layer — 7/7 @171s
 
 D6 解封：用 `PRODUCT_PACKAGES -=` 在 `device/bst/qvirt/bst_x86_64.mk`（device 层接缝）替代改 `build/make`（破坏 release-config）。Root `c5666d81`。累计 **38 verified ports**。5/9 deferred ported。
+
+## 2026-07-25 (cont.94) — ActiveServices 尝试失败（编译错，reverted）+ /loop 取消
+
+**ActiveServices 尝试**：在 `getServicesLocked` 方法入口插入 BST filter（`Binder.getCallingUid` + `BstUtils.getAppNameFromPid`）→ 编译错 `cannot find symbol`（lines 877-878）。a13 BST filter 在循环内检查每个 `sr`（ServiceRecord），非方法入口——须更深入读方法体找正确插入点。已 revert。
+
+**/loop 取消**：所有剩余 BLOCKED 项（D3 截图管线不存在 + D8 类重构 + D9 binder 3670行 + D1其余 PMS/AM/ActiveServices 拆分重构）全为 re-arch，loop 循环只重复核查已确认 BLOCKED。
+
+**最终统计**：**38 verified ports** / 12 repo / root `c5666d81` (7/7 @171s)。5/9 deferred ported（D1 ATS force-kill + D2 PointerIcon + D5 IMMS setBstIME + D6 build/make device-layer + D7 SF max_fps）。4/9 BLOCKED（D3 截图管线迁移 + D8 类重构 @RequiresPermission + D9 binder protocol + ActiveServices 循环内 filter 需更深入 surgical）。

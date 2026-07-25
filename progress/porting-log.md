@@ -2289,3 +2289,8 @@ Root a6114a52. 27 verified ports total. SubscriptionController restructured in a
 - **Deploy + Layer2**：win 部署（备份 c60a0231）；Data 重置；**7/7 @214s**。
 
 **权威 Root 更新**：`ed186f34`。累计：**34 verified ports**。
+
+## 2026-07-25 (cont.89) — ✅ DEF-2 ATS BST force-kill — 7/7 @250s
+
+ATS removeTask(6-arg): BstFilterAppsManager.isForceKillApp(pkg) → override killProcess=true.
+无需改 aidl（a16 removeTask 已有 killProcess 参数）。Root `5f64094d`。累计 **35 verified ports**。

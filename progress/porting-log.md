@@ -2341,3 +2341,8 @@ D6 解封：用 `PRODUCT_PACKAGES -=` 在 `device/bst/qvirt/bst_x86_64.mk`（dev
 **/loop 取消**：所有剩余 BLOCKED 项（D3 截图管线不存在 + D8 类重构 + D9 binder 3670行 + D1其余 PMS/AM/ActiveServices 拆分重构）全为 re-arch，loop 循环只重复核查已确认 BLOCKED。
 
 **最终统计**：**38 verified ports** / 12 repo / root `c5666d81` (7/7 @171s)。5/9 deferred ported（D1 ATS force-kill + D2 PointerIcon + D5 IMMS setBstIME + D6 build/make device-layer + D7 SF max_fps）。4/9 BLOCKED（D3 截图管线迁移 + D8 类重构 @RequiresPermission + D9 binder protocol + ActiveServices 循环内 filter 需更深入 surgical）。
+
+## 2026-07-25 (cont.95) — ✅ DEF-6 ActiveServices BST service hiding — 7/7 @155s
+
+ActiveServices getServicesLocked: 返回过滤副本（排除 com.bluestacks.* service）对第三方 caller。
+Root `6cbb275f`。累计 **39 verified ports**。6/9 deferred ported。

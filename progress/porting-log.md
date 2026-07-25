@@ -2307,3 +2307,25 @@ IMMS: BroadcastReceiver for `bst.intent.SET_IME` → setInputMethodEnabledLocked
 
 **Deferred 项 ported 统计**：4/9 done（D1 ATS force-kill + D2 PointerIcon + D5 IMMS setBstIME + D7 SF max_fps）。
 剩余 5 deferred（D3 SystemUI截图重构 + D6 build/make release-config + D8 TM subscription 类不存在 + D9 binder C++ 3670行）——全为 re-arch/build-system/protocol migration，非机械。
+
+## 2026-07-25 (cont.92) — D3 SystemUI 截图确认 BLOCKED + 最终状态
+
+**D3 终判**：a16 `packages/SystemUI/src/com/android/systemui/screenshot/` 目录**完全不存在**（grep + find 全树无截图文件）。a14-16 截图管线从 SystemUI 移除/重写到其他位置。SaveImageInBackgroundTask + ScreenshotController 在 a16 不存在。**BLOCKED**（非重构适配，是管线迁移到未知位置）。
+
+**最终 deferred 状态（5/9 BLOCKED）**：
+| # | 项 | 状态 | 原因 |
+|---|---|---|---|
+| D1 | ATS force-kill | ✅ PORTED | removeTask 注入 isForceKillApp |
+| D2 | PointerIcon | ✅ PORTED | getSystemIcon TYPE_NULL remap |
+| D3 | SystemUI 截图 | BLOCKED | 截图管线文件在 a16 不存在 |
+| D5 | IMMS setBstIME | ✅ PORTED | BroadcastReceiver 替代 aidl |
+| D6 | build/make | BLOCKED | release-config 框架破坏 |
+| D7 | SF max_fps | ✅ PORTED | setVsyncConfig 替代 setVsyncPeriod |
+| D8 | TM subscription | BLOCKED | SubscriptionController 类不存在 + @RequiresPermission |
+| D9 | binder C++ 3670行 | BLOCKED | binderndk 协议变更 |
+| (D1其余) | PM/AM/ActiveServices | BLOCKED | PMS 拆分 + AM lifecycle 重构 |
+
+**全量最终统计**：**37 verified ports** / 12 repo / root `c897491a` (7/7 @180s)。
+- frameworks/base: 15 ports（11 peripheral + 4 deferred D1/D2/D5/D7）
+- 非 frameworks/base: 22 ports / 11 repo
+- 5 deferred BLOCKED（D3 管线迁移 + D6 release-config + D8 类不存在 + D9 binder protocol + D1其余 PMS/AM 重构）

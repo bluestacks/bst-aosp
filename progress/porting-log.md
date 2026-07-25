@@ -2294,3 +2294,8 @@ Root a6114a52. 27 verified ports total. SubscriptionController restructured in a
 
 ATS removeTask(6-arg): BstFilterAppsManager.isForceKillApp(pkg) → override killProcess=true.
 无需改 aidl（a16 removeTask 已有 killProcess 参数）。Root `5f64094d`。累计 **35 verified ports**。
+
+## 2026-07-25 (cont.90) — ✅ DEF-3 SF Scheduler bst.max_fps — 7/7 @171s
+
+SF resyncToHardwareVsyncLocked: bst.max_fps property → setVsyncConfig(Fps(bstFps).getPeriod()).
+Root `7f0ef9e8`. 累计 **36 verified ports**。3 个 deferred 项 ported（D1 ATS force-kill + D2 PointerIcon + D7 SF max_fps）。

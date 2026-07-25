@@ -2299,3 +2299,11 @@ ATS removeTask(6-arg): BstFilterAppsManager.isForceKillApp(pkg) → override kil
 
 SF resyncToHardwareVsyncLocked: bst.max_fps property → setVsyncConfig(Fps(bstFps).getPeriod()).
 Root `7f0ef9e8`. 累计 **36 verified ports**。3 个 deferred 项 ported（D1 ATS force-kill + D2 PointerIcon + D7 SF max_fps）。
+
+## 2026-07-25 (cont.91) — ✅ DEF-4 IMMS setBstIME broadcast — 7/7 @180s
+
+IMMS: BroadcastReceiver for `bst.intent.SET_IME` → setInputMethodEnabledLocked + setInputMethodLocked.
+替代 aidl setBstIMEFromClient（避免契约扩展）。Root `c897491a`。累计 **37 verified ports**。
+
+**Deferred 项 ported 统计**：4/9 done（D1 ATS force-kill + D2 PointerIcon + D5 IMMS setBstIME + D7 SF max_fps）。
+剩余 5 deferred（D3 SystemUI截图重构 + D6 build/make release-config + D8 TM subscription 类不存在 + D9 binder C++ 3670行）——全为 re-arch/build-system/protocol migration，非机械。

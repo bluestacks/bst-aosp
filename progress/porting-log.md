@@ -2329,3 +2329,7 @@ IMMS: BroadcastReceiver for `bst.intent.SET_IME` → setInputMethodEnabledLocked
 - frameworks/base: 15 ports（11 peripheral + 4 deferred D1/D2/D5/D7）
 - 非 frameworks/base: 22 ports / 11 repo
 - 5 deferred BLOCKED（D3 管线迁移 + D6 release-config + D8 类不存在 + D9 binder protocol + D1其余 PMS/AM 重构）
+
+## 2026-07-25 (cont.93) — ✅ DEF-5 build/make app removal via device layer — 7/7 @171s
+
+D6 解封：用 `PRODUCT_PACKAGES -=` 在 `device/bst/qvirt/bst_x86_64.mk`（device 层接缝）替代改 `build/make`（破坏 release-config）。Root `c5666d81`。累计 **38 verified ports**。5/9 deferred ported。

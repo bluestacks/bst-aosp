@@ -2261,3 +2261,21 @@ Root a6114a52. 27 verified ports total. SubscriptionController restructured in a
 - **Deploy + Layer2**：win 部署（备份 8dbed160）；Data 重置；**7/7 @155s**。
 
 **权威 Root 更新**：**`87394bbd`**。累计：**32 verified ports** / 11 repo。
+
+## 2026-07-25 (cont.87) — ✅✅ MECH-19 bionic system_property_set BST 反检测 — 7/7 @171s
+
+**改动**（bionic/libc/bionic/system_property_set.cpp，467 行）：
+- `bst_hack_system_property_set(key, value)`：拦截 `__system_property_set`，过滤 BST 特定属性的 SET
+- `bst_hack_system_property(name, value)`：拦截属性 READ，对第三方 app 返回假值（ro.secure=1, ro.debuggable=0, ro.crypto.state=encrypted, ro.crypto.type=block, wifi.interface=wlan0 等）
+- `bst_check_if_third_party_app(pid, uid)`：读 /proc/PID/cmdline 判断第三方（反转 bluestacks 前缀对比）
+- BS4-9670 Puzzle & Dragon error 70 fix：反转包名前缀
+- cpu.abi override for arm translation apps（china app compat）
+- ro.csc.sales_code / ro.product.store 对非授权 app 隐藏
+- ro.product.* / ro.build.* 读 bst.<prop> 覆盖值
+
+- **m droid rc=0**（libc_bionic clang++ 4 variant 全过）；**Pack Root `c60a02312fd69137694542505de333ee`** @09:22。
+- **Deploy + Layer2**：win 部署（备份 87394bbd）；Data 重置；**7/7 @171s**。
+
+**权威 Root 更新**：**`c60a0231`**。累计：**33 verified ports** / 12 repo。
+
+**核查结论更新**：全量扫描确认 **a13 所有 BST patch（除 deferred 外）全部 ported 成功**。无遗漏。

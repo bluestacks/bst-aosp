@@ -51,6 +51,8 @@ index 38c72b8b3..1b71f5874 100644
  android
 +com\.bluestacks\.os
 +com\.bluestacks\.os\..*
++com\.bluestacks\.internal
++com\.bluestacks\.internal\..*
  
  ###################################################
  # apache-xml.jar

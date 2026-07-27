@@ -41,7 +41,10 @@
 
 ## 当前阶段
 
-**Phase 1 — 完成（G1 ported，2026-07-17）。** 统一板 `device/bst/qvirt` / `bst_x86_64` boot 到 launcher（host boot oracle 全绿，readback 证实，porting-log cont.4；Root.vhd `2a7a497a`）。修复链：packaging(create_vdi 分区+UUID) → hwservicemanager(PRODUCT_PACKAGES) → bs_bootlog(fastboot KDIR) → gralloc=bst → BST launcher 预装。**当前 Phase 2**：temp_debt 收口 + G2-G10 有序移植。详见 [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md) · [G1 checkpoint](patches/android-16/checkpoints/G1.md)。
+**Phase 2 — guest 全量功能对齐（唯一活跃阶段；不规划 host/Phase 3）。**  
+绿基线：FW-SERVICES-4a Root **`a551d823`** Layer2 **7/7 @199s**。**22/22** core/java ✅；services/core **7/21** gap 进行中。  
+SELinux：**对齐 a13 强制 permissive**。Shell Transitions：已补 **`performance_hint`** HAL，r262 **removed**。  
+详见 [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md) · [phase2-port-plan](progress/phase2-port-plan.md) · [porting-log](progress/porting-log.md)。
 
 ## Build / test / verify（远程形态）
 
@@ -71,7 +74,6 @@ ssh <host> 'cd <remote-root> && bash -lc "source build/envsetup.sh && lunch <tar
 - **host-guest 契约**：guest 升级绝不静默破坏 host。见 [.claude/rules/host-guest-contract.md](.claude/rules/host-guest-contract.md)。
 - **远程长任务必须后台化 + log 落盘**。见 [.claude/rules/remote-build.md](.claude/rules/remote-build.md)。
 - **文档/规则随改随同步**。见 [.claude/rules/rule-maintenance.md](.claude/rules/rule-maintenance.md)。
-- **改动合规(5 条硬要求)**：远程 commit + 正式/temp_debt 标注 + 关键打点(A16DBG)+ BST 可溯源 + 与本地 patch 一致(干净 AOSP 可恢复)。后续所有移植遵守。见 [.claude/rules/change-compliance.md](.claude/rules/change-compliance.md)。
 
 ## Commands
 

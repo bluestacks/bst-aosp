@@ -17,6 +17,10 @@ guest 变更后，host（mac `qvm` / win `app-player`+`vbox`）是否仍兼容�
 
 | 日期 | patch-id / 变更 | 契约面 | win smoke (app-player-dev) | mac smoke (qvm) | 结果 | 备注 |
 |---|---|---|---|---|---|---|
-| _（Phase 2 起记录）_ | | | | | | |
+| 2026-07-21 | cont.20 BstUtils+BatchC WMS hostcalls | hd HostCall / orientation | Layer2 7/7 Root `d2e35648`（Tiramisu64） | deferred | ok | host 见 `hcallSetAppConfigDbParamsClbk`；mac 不跑 |
+| 2026-07-21 | cont.21 DisplayRotation + selinux enabled.c | 图形旋转 / sepolicy | enabled.c → netbpfload-missing（3/7）；已 revert；DisplayRotation 重验中 | deferred | broken→pending | 禁 port `is_selinux_enabled=0` |
+| 2026-07-21 | P2-MAC-ARM64 `bst_arm64` | 镜像/板 | lunch only | deferred | ok | 无 mac Layer2；不改 win 契约 |
+| 2026-07-23 | FW-SERVICES-1a Clipboard host sync | hd HostCall / clipboard | Layer2 7/7 Root `eeb4f714` | deferred | ok | `BstHostCallManager` lazy-init |
+| 2026-07-23 | FW-SERVICES-4a Audio volume + AppOps devicedetails | hd HostCall / volume | Layer2 7/7 Root **`a551d823`** | deferred | ok | `onVolumeChanged`；AppOps synthetic pkg |
 
 强约束：guest 升级**绝不静默破坏** host；任何 patch 集 Phase 完成前此处必有一行 ok 或显式 escalate。

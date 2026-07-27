@@ -1,0 +1,5 @@
+libnativebridge/libnativebridge.map.txt
+libnativebridge/native_bridge.cc
+libnativeloader/native_loader_namespace.cpp
+runtime/jni/jni_internal.cc
+runtime/oat_quick_method_header.cc

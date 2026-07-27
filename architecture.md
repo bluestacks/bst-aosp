@@ -1,6 +1,6 @@
 # 架构决策记录（ADR）—— bst-aosp Android 13→16 Guest 升级
 
-> 状态：活跃。M1（android-16 win boot）已完成（2026-07-14）；Phase 1 完成（G1 统一板 ported，2026-07-17 boot 到 launcher，host oracle 全绿）；当前阶段 = Phase 2（temp_debt 收口 + G2-G10 有序移植）。
+> 状态：活跃。M1（android-16 win boot）已完成（2026-07-14）；当前阶段 = Phase 1 清单融合移植。
 
 ## 1. 升级目标
 

@@ -1,6 +1,6 @@
 # Phase 1 — 融合最小 boot 集移植计划
 
-> 状态：**G1 ✅ 完成（Phase 1，2026-07-17 boot 到 launcher）**。目标：把 M1 临时 boot 形态**转正**为结构化最小 BST 定制，并迁移到统一板 `device/bst/qvirt`。
+> 状态：**G1 进行中**（2026-07-15）。目标：把 M1 临时 boot 形态**转正**为结构化最小 BST 定制，并迁移到统一板 `device/bst/qvirt`。  
 > 权威 registry：[`patches/registry.json`](../patches/registry.json) v2 · schema [`registry.schema.md`](../patches/registry.schema.md)  
 > Boot 证据：[`patches/android-16/RESTORE.md`](../patches/android-16/RESTORE.md) · [`progress/android-16-boot-guide.md`](android-16-boot-guide.md)
 
@@ -33,11 +33,11 @@ flowchart TD
 
 ---
 
-## G1 — 统一板 `device/bst/qvirt`（x86_64 + arm64） · **✅ 完成（Phase 1，2026-07-17）**
+## G1 — 统一板 `device/bst/qvirt`（x86_64 + arm64） · **进行中**
 
 | 项 | 内容 |
 |---|---|
-| **状态** | ✅ Layer1 ✅ + Layer2 ✅（boot 到 launcher，host oracle 全绿，Root.vhd `2a7a497a`，porting-log cont.4） |
+| **状态** | 🔄 Layer1 ✅；Layer2 打包进行中 |
 | 源 | mac `device/bst/qvirt`（`bst_arm64`）+ M1 `device/generic/common` + `device/generic/x86_64` |
 | boot 映射 | `boot-device-generic-common` / `boot-device-generic-x86_64` / `list-device-bst-qvirt-mac` |
 | 动作 | 把 generic overlay（init/ueventd/manifest/idc/bst_bins/nativebridge…）**并入 qvirt**；新增 `bst_x86_64` product；arch 差异下沉 BoardConfig |
@@ -56,10 +56,10 @@ flowchart TD
 - [x] 配置等价预检（`g1_equiv_check.sh` → EQUIVALENT）
 - [x] HAL A16 编译修复 + 存档（`g1_hal_fixes.tar.gz`）
 - [x] Stage system（`g1_stage_system.sh`，`ro.product.system.device=qvirt`）
-- [x] 与 M1 generic 产物 diff（image md5 不同，预期；配置级等价已验证）
+- [ ] 与 M1 generic 产物 diff（image md5 不同，预期；配置级等价已验证）
 - [x] Stage system + Root.vhd 打包 + win 部署
-- [x] Layer2 boot 回归 oracle — **✅ boot 到 launcher**（host oracle 全绿；修复链见 porting-log cont.1~cont.4 + G1.md）
-- [x] 存 patch + registry `ported` + 更新 RESTORE（G1-RESTORE §1 Build 填实）
+- [ ] Layer2 boot 回归 oracle — **❌ blocked**（vendor HAL 崩溃，见 `G1-layer2-failure.md`）
+- [ ] 存 patch + registry `ported` + 更新 RESTORE
 
 **G1 安全网序（降风险，P5）**：不要一步替换掉已 boot 的 generic。
 1. 先在 qvirt 上**新增** `bst_x86_64` product/BoardConfig，与现有 `android_x86_64` **并存**（不删 generic）。
@@ -175,7 +175,7 @@ flowchart TD
 2. 研究填 `purpose`/`quality`/`impact`
 3. rebase + `A16DBG:` 埋点
 4. Layer1 remote build readback
-5. （并入 boot 时）Layer2 oracle：M1 `RESTORE.md` §7 / `G1-RESTORE.md` §6
+5. （并入 boot 时）Layer2 oracle：RESTORE §7
 6. 存 patch + `checkpoint_ref` + `port_status=ported`
 7. `/save-summary` + `/review`
 

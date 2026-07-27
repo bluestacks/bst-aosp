@@ -1,0 +1,96 @@
+diff --git a/android_icu4j/libcore_bridge/src/java/com/android/i18n/timezone/ZoneInfoData.java b/android_icu4j/libcore_bridge/src/java/com/android/i18n/timezone/ZoneInfoData.java
+old mode 100644
+new mode 100755
+index 0d419a9ea..b2de887c9
+--- a/android_icu4j/libcore_bridge/src/java/com/android/i18n/timezone/ZoneInfoData.java
++++ b/android_icu4j/libcore_bridge/src/java/com/android/i18n/timezone/ZoneInfoData.java
+@@ -331,6 +331,35 @@ public final class ZoneInfoData {
+             // for any locale. (The RI doesn't do any better than us here either.)
+             it.skip(1);
+         }
++
++        if (id.equals("Asia/Tehran")) {
++            /**
++             * ROB-14898: Incorrect TimeZone of Iran
++             *
++             * On 21 September 2022, Iran abolished DST and now observes standard time year-round.
++             * However, the timezone data file in early Android system were not updated in time, so daylight saving time was still used.
++             *
++             * Unix timestamp 1663788600 sec is 2022-09-22 03:30:00 (GMT+3:30).
++             */
++            int index = -1;
++            for (int i = 0; i < transitions64.length; i++) {
++                if (transitions64[i] >= 1663788600L) {
++                    index = i;
++                    break;
++                }
++            }
++
++            if (index >= 0) {
++                long[] transitions64_new = new long[index + 1];
++                System.arraycopy(transitions64, 0, transitions64_new, 0, index + 1);
++                transitions64 = transitions64_new;
++
++                byte[] types_new = new byte[index + 1];
++                System.arraycopy(types, 0, types_new, 0, index + 1);
++                types = types_new;
++            }
++        }
++
+         return new ZoneInfoData(id, transitions64, types, gmtOffsets, isDsts);
+     }
+ 
+diff --git a/android_icu4j/src/main/java/android/icu/impl/OlsonTimeZone.java b/android_icu4j/src/main/java/android/icu/impl/OlsonTimeZone.java
+old mode 100644
+new mode 100755
+index 1d200a966..b1f5ffba9
+--- a/android_icu4j/src/main/java/android/icu/impl/OlsonTimeZone.java
++++ b/android_icu4j/src/main/java/android/icu/impl/OlsonTimeZone.java
+@@ -586,6 +586,40 @@ public class OlsonTimeZone extends BasicTimeZone {
+ 
+         String ruleID = null;
+         try {
++            if (getID().equals("Asia/Tehran")) {
++
++                if (transitionCount > 0) {
++                    /**
++                     * ROB-14898: Incorrect TimeZone of Iran
++                     *
++                     * On 21 September 2022, Iran abolished DST and now observes standard time year-round.
++                     * However, the timezone data file in early Android system were not updated in time, so daylight saving time was still used.
++                     *
++                     * Unix timestamp 1663788600 sec is 2022-09-22 03:30:00 (GMT+3:30).
++                     */
++                    int index = -1;
++                    for (int i = 0; i < transitionTimes64.length; i++) {
++                        if (transitionTimes64[i] >= 1663788600L) {
++                            index = i;
++                            break;
++                        }
++                    }
++
++                    if (index >= 0) {
++                        long[] transitionTimes64_new = new long[index + 1];
++                        System.arraycopy(transitionTimes64, 0, transitionTimes64_new, 0, index + 1);
++                        transitionTimes64 = transitionTimes64_new;
++
++                        byte[] typeMapData_new = new byte[index + 1];
++                        System.arraycopy(typeMapData, 0, typeMapData_new, 0, index + 1);
++                        typeMapData = typeMapData_new;
++
++                        transitionCount = index + 1;
++                    }
++                }
++                return;
++            }
++
+             ruleID = res.getString("finalRule");
+ 
+             r = res.get("finalRaw");
+@@ -1298,4 +1332,4 @@ public class OlsonTimeZone extends BasicTimeZone {
+         tz.isFrozen = false;
+         return tz;
+     }
+-}
+\ No newline at end of file
++}

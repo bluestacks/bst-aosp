@@ -1,29 +1,32 @@
-# Plan — Phase 2 guest 全量功能对齐（2026-07-22 cont.25 — 基线 7/7 恢复）
+# Plan — Phase 2 FW-SERVICES（2026-07-23 cont.49）
 
-> 唯一活跃阶段；host / Phase 3 **暂不规划**。权威：`progress/phase2-port-plan.md` · `progress/porting-log.md`。
+## 已完成
 
-## 目标
-按 `patch-porting.md` 把 a13 定制 **功能对齐**到 a16（非机械子集关门）。win Layer1+Layer2；mac 同码不独立验。
+1. **FW-CORE-APP**：22/22 core/java ✅（APP-1~17；Root `4bf3f4ad` → APP-17 `437704b9`）
+2. **FW-SERVICES 1a~4a**：services/core **7/21** gap ✅
+   - 1a Clipboard / 1b Location / 2b NMS / 2a ComponentResolver / 3 AccountManager / 4a Audio+AppOps
+3. Layer2 工具：`g1_boot_verify.ps1` 增扫 `Player.log.1`；Data `wipe20260717` 纪律
 
-## 已完成（证据）
-1. **Shell Transitions / r262**：补 `android.hardware.power-service.example` + 恢复 HintManager；Root **`840137ca`** Layer2 7/7；registry r262 → `removed`。
-2. **SELinux**：对齐 a13 permissive；`enabled.c→0` **blocked**。
-3. **FW-WM-1**：ActivityStarter `hideBlueStacksPkg` + ATM `getGlVersion`；patch 存档；树内保留；曾 Layer2 7/7（Root `4571efb3`）。
-4. **P3 prebuilts**：dropped。
+## 进行中
 
-## 阻断 / 进行中
-1. ~~Win Data 污染~~：**已解** — Root `eb309e6c` + Data `wipe20260717` → **Layer2 7/7 @118s**（cont.25）。热路径回归是 Data 污染，非 WM-1 代码。
-2. **frameworks**：`win-frameworks-base` = `in_progress`；gap≈55（core/java 22 / services/core 25 含 PM 族 8 / SystemUI·SettingsProvider·telephony·accessibility·core/jni 共 8）。FW-WM-2 / FW-AM-1 **revert + escalate**。
+- services/core 余 **14 gap**（InputMethod/InputManager → PM 族 → AM/WM 热路径）
+- FW-WM-2 / FW-AM-1：revert + escalate（热路径）
 
-## 下一步（基线已恢复，开始 port）
-1. **FW-CORE-APP**：core/java 22 文件 app 框架 BST hooks（Activity/ActivityThread/ContextImpl/View/ViewRootImpl/TextView/Editor/InputManager/Environment/Settings/NativeLibraryHelper…）。a13 fork-diff（base `android-13.0.0_r49`）→ surgical apply a16 → Layer1 `m framework` → 灌 systemimage → Layer2 7/7。
-2. 每次失败 boot **先 cp `wipe20260717`→Data.vhdx 恢复**再继续（Data 污染是已知陷阱）。
-3. 热路径（FW-AM/FW-WM-2/GRM/PM 族）基线稳固后带 persist.bst.* kill-switch 小切片重做。
+## 下一批（FW-SERVICES-5）
 
-## 权威 Root（md5 前缀）
-| md5 | 备注 |
+- InputMethodManagerService：IME 切换 host 通知、password input、keyboard mapper
+- InputManagerService：pan enable/disable、`bstReloadPointerIcon`
+
+## defer / escalate
+
+- RecentsAnimationController：a16 refactor，orientation hook 待 research
+- Display rotation 功能验证：`bst.enable_display_rotation=1` 单独 Layer2
+
+## 权威 Root
+
+| md5 | 内容 |
 |---|---|
-| `840137ca` | cont.22b 绿 |
-| `4571efb3` | FW-WM-1 曾绿（后被 Data 掩盖） |
-| `eb309e6c` | 当前权威（WM-1 only） |
-| `4e144a82` / `2d2a3f80` | 坏（勿用） |
+| **`a551d823`** | SERVICES 1a/1b/2a/2b/3/4a（当前绿基线）|
+| `3d3a7997` | SERVICES-3 AccountManager |
+| `4bf3f4ad` | APP-17 完成 core/java 22/22 |
+| `840137ca` | performance_hint / Shell Transitions |

@@ -123,6 +123,7 @@ powershell -File scripts\g1_boot_verify.ps1 -TimeoutSec 600
 | 项 | 值 |
 |---|---|
 | Root.vhd（G1 final，cont.4） | `2a7a497afd48a595758bba026faf55ae` |
+| Root.vhd（Phase2 DIAG 收口，cont.10，manager@1.2） | `503235fc18bcb0f6ca9a32568de889e0` |
 | system.sfs（stage fold） | `5e151f429b2677b895b2464a8b7f6a57` |
 | system.img（m droid） | `fd910a81595badb92b0de83072a82ee1` |
 | Root.vhd UUID | `54e9ad31-a169-4d5b-a0e0-705d62e96e71` |
@@ -133,7 +134,9 @@ powershell -File scripts\g1_boot_verify.ps1 -TimeoutSec 600
 | 项 | 说明 |
 |---|---|
 | P2-PACK-148 | 148 M1 vendor/system_ext 文件 → 非 temp_debt；BlueStacks 单镜像打包模型（M1 相同）。Phase 2 从 fold 迁到正式 buildscripts 打包集成 |
-| P2-TEMP-BLAST | r262 shell transitions 禁用 → 需 goldfish BLAST 修复后再开启 |
+| P2-TEMP-BLAST | r262 shell transitions 禁用 → 需 goldfish BLAST 修复后再开启（2026-07-20：quick research 未找到可机械落地的 presentFence/commit 修 → **保持 temp_debt / escalate 专案**） |
+| P0 gralloc bake | ✅ cont.12：`PRODUCT_PROPERTY_OVERRIDES` 烘入；Root.vhd `85f5a862`；Layer2 7/7；append 仅安全网 |
 | P2-APKS-DATAFS | launcher apk + GMS → buildscripts apks 目标恢复 |
 | P2-TEMP-SEPOLICY | SELinux permissive → BST sepolicy 定义后改 enforcing |
+| ~~service.cpp DIAG~~ | **✅ 已收口（2026-07-20）**：`hidl.manager` VINTF `1.0`→`1.2`；Root.vhd `503235fc` Layer2 7/7；无 DIAG |
 | bs_bootlog-feedback | bs_bootlog.sh kmsg↔logcat 反馈环 → 已修（grep -v A16DBG:），待测 |

@@ -1,0 +1,62 @@
+diff --git a/services/core/java/com/android/server/appop/AppOpsService.java b/services/core/java/com/android/server/appop/AppOpsService.java
+index 481f57d3dad7..f114605bda41 100644
+--- a/services/core/java/com/android/server/appop/AppOpsService.java
++++ b/services/core/java/com/android/server/appop/AppOpsService.java
+@@ -3192,7 +3192,9 @@ public class AppOpsService extends IAppOpsService.Stub {
+             // one (e.g., "root") which isn't actually existed.
+             if (resolveNonAppUid(packageName) == uid
+                     || (isPackageExisted(packageName)
+-                            && !filterAppAccessUnlocked(packageName, UserHandle.getUserId(uid)))) {
++                            && !filterAppAccessUnlocked(packageName, UserHandle.getUserId(uid)))
++                    // A16DBG:P2:FW-SERVICES-4a synthetic package for device details (a13)
++                    || packageName.equals("com.bluestacks.devicedetails")) {
+                 return AppOpsManager.MODE_ALLOWED;
+             }
+             return AppOpsManager.MODE_ERRORED;
+diff --git a/services/core/java/com/android/server/audio/AudioService.java b/services/core/java/com/android/server/audio/AudioService.java
+index e97c1149cd76..2b62b281c03f 100644
+--- a/services/core/java/com/android/server/audio/AudioService.java
++++ b/services/core/java/com/android/server/audio/AudioService.java
+@@ -317,6 +317,8 @@ import java.util.function.BooleanSupplier;
+ import java.util.stream.Collector;
+ import java.util.stream.Collectors;
+ 
++import com.bluestacks.os.BstHostCallManager;
++
+ /**
+  * The implementation of the audio service for volume, audio focus, device management...
+  * <p>
+@@ -5914,9 +5916,33 @@ public class AudioService extends IAudioService.Stub
+         if (streamType == AudioSystem.STREAM_MUSIC && isFullVolumeDevice(device)) {
+             flags &= ~AudioManager.FLAG_SHOW_UI;
+         }
++        // A16DBG:P2:FW-SERVICES-4a notify host on STREAM_MUSIC volume change
++        if (streamType == AudioSystem.STREAM_MUSIC) {
++            bstSendVolumeToHost(index);
++        }
+         mVolumeController.postVolumeChanged(streamType, flags);
+     }
+ 
++
++    // A16DBG:P2:FW-SERVICES-4a volume host sync (a13 bstSendVolumeToHost)
++    private void bstSendVolumeToHost(int index) {
++        int volume = index / 10;
++        VolumeStreamState musicState = mStreamStates.get(AudioSystem.STREAM_MUSIC);
++        boolean mute = musicState != null && musicState.mIsMuted;
++
++        Log.d(TAG, "bstSendVolumeToHost: currentVolume = " + volume + " mute = " + mute);
++
++        BstHostCallManager bstHostCallManagerSvc =
++                (BstHostCallManager) mContext.getSystemService(Context.BST_HOST_CALL);
++        if (bstHostCallManagerSvc == null) {
++            return;
++        }
++        int rval = bstHostCallManagerSvc.onVolumeChanged(mute, volume);
++        if (rval != 0) {
++            Log.w(TAG, "ERROR in sending volume data request, rval = " + rval);
++        }
++    }
++
+     // Don't show volume UI when:
+     //  - Hdmi-CEC system audio mode is on and we are a TV panel
+     private int updateFlagsForTvPlatform(int flags) {

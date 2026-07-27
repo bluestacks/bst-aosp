@@ -6,30 +6,14 @@ index 61a42a0..40ba01c 100644
          -->
          <version>1.0</version>
      </hal>
-+    <hal format="hidl" max-level="8">
-+        <name>android.hidl.manager</name>
-+        <transport>hwbinder</transport>
-+        <version>1.0</version>
-+        <interface>
-+            <name>IServiceManager</name>
-+            <instance>default</instance>
-+        </interface>
-+    </hal>
++    <!-- manager+token live in system/hwservicemanager/hwservicemanager.xml (system_ext);
++         declaring them here too conflicts under PRODUCT_ENFORCE_VINTF_MANIFEST=true. -->
 +    <hal format="hidl" max-level="8">
 +        <name>android.hidl.allocator</name>
 +        <transport>hwbinder</transport>
 +        <version>1.0</version>
 +        <interface>
 +            <name>IAllocator</name>
-+            <instance>default</instance>
-+        </interface>
-+    </hal>
-+    <hal format="hidl" max-level="8">
-+        <name>android.hidl.token</name>
-+        <transport>hwbinder</transport>
-+        <version>1.0</version>
-+        <interface>
-+            <name>ITokenManager</name>
 +            <instance>default</instance>
 +        </interface>
 +    </hal>

@@ -1,0 +1,51 @@
+diff --git a/telephony/java/android/telephony/SubscriptionManager.java b/telephony/java/android/telephony/SubscriptionManager.java
+index 8b926fadb456..ba77dabbeaeb 100644
+--- a/telephony/java/android/telephony/SubscriptionManager.java
++++ b/telephony/java/android/telephony/SubscriptionManager.java
+@@ -51,6 +51,10 @@ import android.net.NetworkCapabilities;
+ import android.net.NetworkPolicyManager;
+ import android.net.Uri;
+ import android.os.Binder;
++import android.os.SystemProperties;
++import android.graphics.Bitmap;
++import android.graphics.BitmapFactory;
++import android.util.BstUtils;
+ import android.os.Build;
+ import android.os.Bundle;
+ import android.os.Handler;
+@@ -2061,6 +2065,24 @@ public class SubscriptionManager {
+      *         {@link PackageManager#FEATURE_TELEPHONY_SUBSCRIPTION}.
+      */
+     @RequiresPermission(android.Manifest.permission.READ_PHONE_STATE)
++
++    // A16DBG:P2:FW-PERIPH-8 BST fake-SIM for anti-detection (a13 createSubInfoInstance relocated;
++    // uid-gated 3rd-party only -> boot-safe). operator props consistent with PERIPH-3.
++    private SubscriptionInfo createBstSubscriptionInfo() {
++        String iccId = null;
++        try { iccId = BstUtils.getBstSimSerialNumber(); } catch (Exception ex) { iccId = null; }
++        String operatorAlpha = android.os.SystemProperties.get("gsm.operator.alpha", "T-Mobile");
++        String operatorNumeric = android.os.SystemProperties.get("gsm.operator.numeric", "310260");
++        String mcc = operatorNumeric.length() >= 3 ? operatorNumeric.substring(0, 3) : "310";
++        String mnc = operatorNumeric.length() > 3 ? operatorNumeric.substring(3) : "260";
++        android.graphics.Bitmap icon = android.graphics.BitmapFactory.decodeResource(
++                mContext.getResources(), com.android.internal.R.drawable.ic_sim_card_multi_24px_clr);
++        return new SubscriptionInfo(
++                1, iccId, 0, "SIM 1", operatorAlpha,
++                0, -16777216, null, 0, icon, mcc, mnc, "us",
++                false, null, null, 0, false, null, false,
++                0, 0, 0, null, null, true);
++    }
+     public @Nullable List<SubscriptionInfo> getActiveSubscriptionInfoList() {
+         List<SubscriptionInfo> activeList = null;
+ 
+@@ -2080,6 +2102,10 @@ public class SubscriptionManager {
+         } else {
+             activeList = Collections.emptyList();
+         }
++        // A16DBG:P2:FW-PERIPH-8 BST fake-SIM for 3rd-party callers (anti-detection, a13)
++        if (Binder.getCallingUid() >= android.os.Process.FIRST_APPLICATION_UID) {
++            return Collections.singletonList(createBstSubscriptionInfo());
++        }
+         return activeList;
+     }
+ 

@@ -1,0 +1,32 @@
+diff --git a/selftest/Android.bp b/selftest/Android.bp
+index 013a128d..3f952560 100644
+--- a/selftest/Android.bp
++++ b/selftest/Android.bp
+@@ -61,5 +61,5 @@ cc_binary {
+     defaults: ["boringssl_self_test_defaults"],
+     stem: "boringssl_self_test",
+     vendor: true,
+-    init_rc: ["boringssl_self_test.rc"],
++    // init_rc: ["boringssl_self_test.rc"],
+ }
+diff --git a/src/crypto/fipsmodule/rsa/padding.c b/src/crypto/fipsmodule/rsa/padding.c
+index 605647a8..b1cb6a84 100644
+--- a/src/crypto/fipsmodule/rsa/padding.c
++++ b/src/crypto/fipsmodule/rsa/padding.c
+@@ -484,6 +484,16 @@ decoding_err:
+   return 0;
+ }
+ 
++int RSA_padding_add_PKCS1_PSS(const RSA *rsa, uint8_t *EM, const uint8_t *mHash,
++                              const EVP_MD *Hash, int sLen) {
++  return RSA_padding_add_PKCS1_PSS_mgf1(rsa, EM, mHash, Hash, NULL, sLen);
++}
++
++int RSA_verify_PKCS1_PSS(const RSA *rsa, const uint8_t *mHash, const EVP_MD *Hash,
++                         const uint8_t *EM, int sLen) {
++  return RSA_verify_PKCS1_PSS_mgf1(rsa, mHash, Hash, NULL, EM, sLen);
++}
++
+ static const uint8_t kPSSZeroes[] = {0, 0, 0, 0, 0, 0, 0, 0};
+ 
+ int RSA_verify_PKCS1_PSS_mgf1(const RSA *rsa, const uint8_t *mHash,

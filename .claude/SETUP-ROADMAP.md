@@ -22,7 +22,7 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 
 ---
 
-## 当前阶段：清单融合移植（Phase 1 → Phase 2）
+## 当前阶段：Phase 2 — guest 全量功能对齐（host/Phase3 暂不规划）
 
 ```mermaid
 flowchart TD
@@ -34,37 +34,40 @@ flowchart TD
     p2v --> macf["mac: 基于同份代码开发(不做验证)"]
 ```
 
-### Phase 1 — 完成（G1 ported，2026-07-17 boot 到 launcher）
+### Phase 1 — 融合最小 boot 集（**完成 · 2026-07-17 cont.4**）
 
 目标：把「能 boot 的最小集」从临时形态**转正为结构化的最小 BST 定制集**，并迁移到统一板 `device/bst/qvirt`（x86_64/arm64 各自定制）。
 
 - [x] 双端定制清单重生成（`-a13`/`-mac` vs 上游 android-13）→ registry v2（196 条；review-fix 2026-07-15）。
 - [x] boot 存量映射进 registry（真定制 vs `temp_debt`）。
 - [x] Phase 1 / Phase 2 计划成文（`progress/phase1-port-plan.md` / `phase2-port-plan.md`）。
-- [x] **G1** 统一板 `device/bst/qvirt` / `bst_x86_64`（脚手架 ✅；Layer1 ✅ `m droid` rc=0；Layer2 ✅ boot 到 launcher，host oracle 全绿，Root.vhd `2a7a497a`，porting-log cont.4）→ [G1 checkpoint](../patches/android-16/checkpoints/G1.md)。
-- [ ] Phase 1 patch-group G2–G10 移植（见 [patches/registry.md](../patches/registry.md)）。
-- [ ] 每组：文档（源/用途/质量/影响）→ Layer 1 →（并入 boot 镜像时）Layer 2 回归 → 存 patch → checkpoint。
+- [x] **G1** 统一板 `device/bst/qvirt` / `bst_x86_64`：Layer1 ✅；Layer2 host oracle 全绿（boot 到 launcher 可见）→ [G1-RESTORE](../patches/android-16/checkpoints/G1-RESTORE.md) · [porting-log cont.4](../progress/porting-log.md)。
+- [x] G2–G10 最小 boot 集已并入可 boot 镜像（部分 temp_debt 挂 Phase 2）。
 - 规则：`.claude/rules/dual-platform-customization.md`、`patch-porting.md`、`platform-win-first-mac-reuse.md`、`instrumentation-and-tests.md`。
 
-**Gate→P2**：win 上 G1–G10 融合完成 + Layer 2 boot 回归全绿 + 临时债登记完整；检查点可从 `RESTORE` 机制恢复。
+**Gate→P2**：✅ win G1 boot 到 launcher + 临时债登记完整（见 G1-RESTORE §8）。
 
-**Phase 1 Gate ✅ 达成（2026-07-17）**：win G1 boot 到 launcher + host oracle 全绿 + 临时债登记完整；检查点可从 `G1-RESTORE.md` 恢复。**当前 = Phase 2**（temp_debt 收口 + G2-G10 余项有序移植）。
+### Phase 2 — 其余定制 + **全量功能对齐**（**当前 · 唯一活跃阶段**）
 
-### Phase 2 — 其余定制 + 临时债收口
+> **人类决策 2026-07-21**：Phase 2 **必须完成** a13→a16 功能对齐（含 frameworks 全量子系统）；**不规划** host / Phase 3 任务；构建机争用不作问题、不处理。移植一律遵守 `.claude/rules/patch-porting.md` 等规则。
 
-- [ ] registry 中非 P1 项按优先级 + 关联分组移植。
-- [ ] 临时债真实修复：BST sepolicy、BLAST/SF commit callback（撤销 `r262`）、fstab/vold。
-- [ ] 功能对齐 android-13 baseline。
-- [ ] **mac**：基于同一份代码（统一源 + arm64 平台差异）开发；**不做独立验证**。
+- [x] **P0 temp_debt**：`service.cpp` DIAG — ✅ VINTF formal（allocator in framework；manager@1.2 in system_ext）。
+- [x] P0：gralloc `PRODUCT_PROPERTY_OVERRIDES` bake ✅。
+- [x] **权威打包**：`m droid` + `g1_build_libs` + OUT-fold stage + r228（**禁**仅 `systemimage` / mount system.img）。
+- [x] registry win P2 机械子集：**ported** art/bionic/icu/boringssl/fw-base(BatchC+D+BstUtils)/fw-native；external noise dropped。Root **`d2e35648`** Layer2 **7/7 @252s**。
+- [x] **mac**：`bst_arm64` + BoardConfig arch 分派（lunch `TARGET_ARCH=arm64`）；**不做独立验证**。
+- [x] **SELinux**：对齐 a13 —— **强制 permissive**（`IsEnforcing→false` 等）；**禁止** port `enabled.c→0`（cont.21 实测炸 boot）。非「设计 enforcing sepolicy」专案。
+- [x] **Shell Transitions / r262**：`android.hardware.power-service.example` + 恢复 `HintManagerService`（解开 R248 HALSkip）+ `ENABLE_SHELL_TRANSITIONS=true`；Root **`840137ca`** Layer2 **7/7**；本 boot 无 `aidl/performance_hint` missing（cont.22/22b）。
+- [ ] **P2-FRAMEWORK-REST**：**22/22 core/java** ✅；services/core **7/21** gap ✅；Root **`a551d823`** Layer2 **7/7 @199s**（FW-SERVICES-4a）。
+- [x] P2-TEMP-FSTAB：obsolete（无 `/vdc` skip）。
 
-**Gate→P3**：功能对齐通过；临时债清零或显式 escalate；mac 代码就位。
+**下一步**：① **FW-SERVICES-5**（InputMethod / InputManager peripheral）；② Recents orientation research（escalate）；③ 热路径 AM/PM 谨慎 slice。详见 `phase2-port-plan.md` · `porting-log.md` cont.49。
 
-### Phase 3 — host 适配收尾 / CI
+**Gate（Phase 2 完成）**：a13 功能对齐通过（含 frameworks）；r262/`performance_hint` 已收口；SELinux permissive；mac 同码。**不设** host/Phase 3 gate。
 
-- [ ] host 适配（hd/图形/虚拟化按需）。
-- [ ] CI 化回归；deny 收紧；create-pr；复盘剪枝。
+### Phase 3 — host / CI（**暂不规划**）
 
-**Gate**：进入内部 dogfooding。
+> 人类决策：当前阶段**移除** host 端任务与排期。guest Phase 2 完成前不启 host 适配 / CI 专项。
 
 ---
 

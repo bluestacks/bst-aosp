@@ -16,7 +16,8 @@ echo "A16DBG:G1: copy_bst_apks (force priv-app pre-install) start $(date -Is)"
 # NOTE: init.sh init_hal_gralloc() was tried as the formal fix but PROVEN INEFFECTIVE (2026-07-20):
 # init.sh runs AFTER hwcomposer inits -> gralloc unset at hwcomposer init -> hwcomposer SIGSEGV ×830.
 # build.prop is loaded by init VERY early (before HALs) -> append here is reliable.
-# FORMAL fix (Phase 2, needs rebuild to bake): PRODUCT_PROPERTY_OVERRIDES += ro.hardware.gralloc=bst
+# FORMAL fix DONE (2026-07-20 cont.12): PRODUCT_PROPERTY_OVERRIDES in bst_x86_64.mk bakes into OUT build.prop.
+# Append below is idempotent safety-net only (skip if already present from bake).
 # in device/bst/qvirt/bst_x86_64.mk (bakes into build.prop at build time). Until that rebuild,
 # this post-stage append is the working mechanism.
 PROP="$OUT/build.prop"

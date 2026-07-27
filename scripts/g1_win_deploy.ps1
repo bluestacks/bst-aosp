@@ -14,7 +14,8 @@ Remove-Item Root.vhd.new -Force -ErrorAction SilentlyContinue
 & scp "${CloudHost}:${RemotePkg}/Root.vhd" "Root.vhd.new"
 if (-not (Test-Path "Root.vhd.new")) { throw "scp Root.vhd failed" }
 $sz = (Get-Item "Root.vhd.new").Length
-if ($sz -lt 1GB) { throw "Root.vhd.new too small: $sz" }
+# cont.21+: packed Root can be ~998MiB (still valid VHD); keep floor below historical ~1.0GiB
+if ($sz -lt 800MB) { throw "Root.vhd.new too small: $sz" }
 $ts = Get-Date -Format "yyyyMMdd-HHmm"
 Copy-Item Root.vhd "Root.vhd.bak.$ts" -Force -ErrorAction SilentlyContinue
 Move-Item Root.vhd.new Root.vhd -Force

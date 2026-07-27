@@ -25,5 +25,13 @@ PRODUCT_MANUFACTURER := bst
 # trigger a build for the Make systemimage path, so it never compiled -> all HIDL vendor HALs
 # (keymaster/configstore/health/drm/hwcomposer) SIGABRT on register. Formal product-config install.
 PRODUCT_PACKAGES += hwservicemanager
-PRODUCT_SHIPPING_API_LEVEL := 34  # G9/Phase2: claim VINTF level U=8 so build keeps target-level=8 (not legacy); hidl.manager max-level=8 active -> hwsm survives w/o DIAG
+# P2-TEMP-SHELL-TRANSITIONS (2026-07-21): ADPF / PerformanceHintManager needs AIDL IPower
+# with PowerHintSession. Stock treble.mk only ships HIDL power@1.0 → PerfHintController.onInit
+# can block wmshell.main (createHintSession waits on missing HAL). Example stub provides sessions.
+# A16DBG:G1: performance_hint via android.hardware.power-service.example
+PRODUCT_PACKAGES += android.hardware.power-service.example
+# Phase2: ENFORCE=true makes assemble_vintf keep source target-level=8 (else forced legacy).
+# 2026-07-20 readback: target-level=8 ALONE insufficient to clear getTransport EMPTY / DIAG.
+# Next formal candidate: device-side android.hidl.manager in DEVICE manifest.
+PRODUCT_ENFORCE_VINTF_MANIFEST := true
 PRODUCT_PROPERTY_OVERRIDES += ro.hardware.gralloc=bst ro.hardware.egl=emulation  # Phase2 formal: bake into build.prop (replaces g1_copy_bst_apks append temp_debt)

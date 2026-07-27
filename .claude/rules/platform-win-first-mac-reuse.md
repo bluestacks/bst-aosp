@@ -27,7 +27,7 @@
 
 「同码」不等于「同行为」——mac 是 **arm64 + qvm**，win 是 **x86_64 + vbox**：
 - arm64 NDK 翻译层、goldfish arm64 GLES、qvm 设备模型可能与 x86 路径分歧，**win 验证不覆盖这些**。
-- 因此 mac 差异（`platform=mac` / arm64 BoardConfig / arch HAL）虽不设 gate，但**必须显式登记**为 `mac-behavior-deferred`，并在 Phase 3 host 阶段集中验证——**不可默认「win 过了 mac 就过」**。
+- 因此 mac 差异（`platform=mac` / arm64 BoardConfig / arch HAL）虽不设 gate，但**必须显式登记**为 `mac-behavior-deferred`。host 验证**暂不规划**——**不可默认「win 过了 mac 就过」**；mac 行为债显式挂账即可。
 - 触及 host-guest 契约（图形/虚拟化/通道）的改动，即使 win 过，也要在 registry `host_compat` 标 `pending` 直到 mac/host 侧确认。
 
 ## 接缝

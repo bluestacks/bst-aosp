@@ -40,13 +40,11 @@ commit 级 cherry-pick **仅**用于「单一小定制、需保留作者/message
    - Layer 1 强制（`/remote-build`，readback exit + 产物）。
    - Layer 2：本组改动并入 boot 镜像时跑 boot 回归 oracle；相关组可批量并入后一次 Layer 2（保留每组 Layer 1 证据）。
 7. **文档**：在 `progress/porting-log.md` + registry 字段写完整说明（模板见下）。
-8. **存 patch + checkpoint + 合规 commit**（见 [change-compliance.md](change-compliance.md)）：
-   - **远程各 project git commit**（合规 message：source/temp_debt/A16DBG/verification/可恢复），清 `.bak` 噪音。
-   - **重生成本地 patch** 从 `git diff <base>..HEAD` → `patches/android-16/patches/aosp16__<project>.patch`；untracked scaffold 进 `untracked-src/`。
-   - **验证一致**：远程 commit diff == 本地 patch（字节级，干净 aosp16 git apply 可恢复）。
+8. **存 patch + checkpoint**：
+   - `scp` 远程 diff → `patches/android-16/patches/`（或 group 子目录）；untracked 进 `untracked-src/`。
    - 更新 `RESTORE.md` 式说明或 group 的 `CHECKPOINT.md`，使**仅凭存档可恢复到本组验证通过态**。
-   - registry：`port_status=ported`、`verification`、`checkpoint_ref`、`host_compat`、`temp_debt`、`boot_artifact`。
-9. **完成循环**：validate → checkpoint（`/save-summary`）→ `/review`（对每条改动跑 [change-compliance.md](change-compliance.md) 5 条清单）→ report。
+   - registry：`port_status=ported`、`verification`、`checkpoint_ref`、`host_compat`。
+9. **完成循环**：validate → checkpoint（`/save-summary`）→ `/review` → report。
 
 ## 每组文档模板（必填）
 

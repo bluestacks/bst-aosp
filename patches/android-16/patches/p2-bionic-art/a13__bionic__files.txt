@@ -1,0 +1,16 @@
+libc/SYSCALLS.TXT
+libc/arch-x86/syscalls/ioperm.S
+libc/arch-x86/syscalls/iopl.S
+libc/arch-x86_64/syscalls/ioperm.S
+libc/arch-x86_64/syscalls/iopl.S
+libc/bionic/fortify.cpp
+libc/bionic/open.cpp
+libc/bionic/poll.cpp
+libc/bionic/system_property_set.cpp
+libc/dns/net/getaddrinfo.c
+libc/libc.map.txt
+libc/private/bionic_fortify.h
+libc/system_properties/obs_str.hpp
+libc/system_properties/system_properties.cpp
+libc/tzcode/localtime.c
+linker/linker.cpp

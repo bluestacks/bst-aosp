@@ -30,9 +30,8 @@ $patterns = @(
     @{ id="odsign"; rx="odsign.key.done" },
     @{ id="boot_completed"; rx="processing action \(sys\.boot_completed=1\)" },
     @{ id="activity"; rx="hcallOnActivityDisplayed" },
-    # 2026-07-17 修正：HD-Player 的 ready 标记是行内状态 tag `[Ready]`（如 `Tiramisu64 [Ready]`），
-    # 不是 `Player state: ready` 短语（永不命中，导致成功 boot 也被判 FAIL）。
-    @{ id="ready"; rx="\[Ready\]" },
+    # Host ready mark: newer builds log tag [Ready]; older paths used "Player state: ready"
+    @{ id="ready"; rx="Player state: ready|\[Ready\]" },
     @{ id="hide_boot"; rx="fUiHideBootProgressBar" }
 )
 $found = @{}
@@ -40,7 +39,8 @@ $deadline = (Get-Date).AddSeconds($TimeoutSec)
 while ((Get-Date) -lt $deadline) {
     Start-Sleep -Seconds 15
     $logs = @()
-    foreach ($name in @("Player.log","BstkCore.log")) {
+    # Player.log rotates to .1 on cold start; scan both or slow boots miss oracles.
+    foreach ($name in @("Player.log","Player.log.1","BstkCore.log")) {
         $logs += Get-LogLinesSince -Path (Join-Path $LogDir $name) -Since $before
     }
     foreach ($pat in $patterns) {

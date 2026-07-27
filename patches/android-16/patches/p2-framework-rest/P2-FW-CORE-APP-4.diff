@@ -1,0 +1,132 @@
+diff --git a/core/java/android/view/InputDevice.java b/core/java/android/view/InputDevice.java
+index e3d2ad528201..c2df19f9680e 100644
+--- a/core/java/android/view/InputDevice.java
++++ b/core/java/android/view/InputDevice.java
+@@ -35,13 +35,20 @@ import android.hardware.input.InputManager;
+ import android.hardware.input.InputManagerGlobal;
+ import android.hardware.lights.LightsManager;
+ import android.icu.util.ULocale;
++import android.os.Binder;
+ import android.os.Build;
++import android.os.Process;
++import android.os.ServiceManager;
+ import android.os.NullVibrator;
+ import android.os.Parcel;
+ import android.os.Parcelable;
+ import android.os.Vibrator;
+ import android.os.VibratorManager;
+ import android.text.TextUtils;
++import android.util.BstUtils;
++import android.util.Slog;
++
++import com.bluestacks.os.IBstFilterAppsService;
+ 
+ import com.android.internal.annotations.GuardedBy;
+ import com.android.internal.annotations.VisibleForTesting;
+@@ -67,6 +74,7 @@ import java.util.List;
+  * </p>
+  */
+ public final class InputDevice implements Parcelable {
++    private static final String TAG = "InputDevice";
+     private final int mId;
+     private final int mGeneration;
+     private final int mControllerNumber;
+@@ -1014,6 +1022,45 @@ public final class InputDevice implements Parcelable {
+      * @return The input device name.
+      */
+     public String getName() {
++
++        // A16DBG:P2:FW-CORE-APP-4 hide BST/VirtualBox input device names from apps (a13)
++        int pid = Binder.getCallingPid();
++        String callingApp = BstUtils.getAppNameFromPid(pid);
++        String modifiedDeviceName = "Synaptics";
++        boolean exposeInputDevices = false;
++        IBstFilterAppsService mBstFilter = IBstFilterAppsService.Stub.asInterface(
++                ServiceManager.getService(Context.BST_FILTER_APPS));
++        try {
++            if (callingApp != null) {
++                exposeInputDevices = mBstFilter.areInputDevicesExposed(callingApp);
++            }
++        } catch (Exception ex) {
++            Slog.d(TAG, ex.getMessage());
++        }
++        if ((mName.toLowerCase().startsWith("bluestacks")
++                || mName.toLowerCase().startsWith("virtualbox")
++                || mName.toLowerCase().contains("keyboard")
++                || mName.toLowerCase().contains("mouse"))
++                && (Binder.getCallingUid() != Process.SYSTEM_UID)
++                && (Binder.getCallingUid() >= 10000)
++                && callingApp != null
++                && !callingApp.startsWith("com.bluestacks")
++                && !callingApp.startsWith("com.uncube")) {
++            if (exposeInputDevices) {
++                if (mName.startsWith("BlueStacks") || mName.startsWith("VirtualBox")) {
++                    if (mName.toLowerCase().contains("keyboard")) {
++                        return modifiedDeviceName + " keyboard";
++                    } else if (mName.toLowerCase().contains("mouse")) {
++                        return modifiedDeviceName + " mouse";
++                    } else {
++                        return modifiedDeviceName + "-" + mId;
++                    }
++                }
++            } else {
++                return modifiedDeviceName + "-" + mId;
++            }
++        }
++
+         return mName;
+     }
+ 
+@@ -1658,7 +1705,7 @@ public final class InputDevice implements Parcelable {
+     @Override
+     public String toString() {
+         StringBuilder description = new StringBuilder();
+-        description.append("Input Device ").append(mId).append(": ").append(mName).append("\n");
++        description.append("Input Device ").append(mId).append(": ").append(getName()).append("\n");
+         description.append("  Descriptor: ").append(mDescriptor).append("\n");
+         description.append("  Generation: ").append(mGeneration).append("\n");
+         description.append("  Location: ").append(mIsExternal ? "external" : "built-in").append(
+diff --git a/core/java/android/view/ViewRootImpl.java b/core/java/android/view/ViewRootImpl.java
+index fa1c190eb4e2..55ae10b501ee 100644
+--- a/core/java/android/view/ViewRootImpl.java
++++ b/core/java/android/view/ViewRootImpl.java
+@@ -224,6 +224,7 @@ import android.sysprop.DisplayProperties;
+ import android.sysprop.ViewProperties;
+ import android.text.TextUtils;
+ import android.util.AndroidRuntimeException;
++import android.util.BstUtils;
+ import android.util.DisplayMetrics;
+ import android.util.EventLog;
+ import android.util.IndentingPrintWriter;
+@@ -7900,6 +7901,31 @@ public final class ViewRootImpl implements ViewParent,
+ 
+         private int processKeyEvent(QueuedInputEvent q) {
+             final KeyEvent event = (KeyEvent)q.mEvent;
++
++            // A16DBG:P2:FW-CORE-APP-4 ROB-16938 FreeFireMax Space/C key release (a13)
++            int keyCode = event.getKeyCode();
++            int repeatCount = event.getRepeatCount();
++            int keyAction = event.getAction();
++            if ((keyCode == KeyEvent.KEYCODE_C || keyCode == KeyEvent.KEYCODE_SPACE)
++                    && keyAction == KeyEvent.ACTION_DOWN) {
++                int uid = Binder.getCallingUid();
++                if (uid >= 10000) {
++                    String packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++                    if (packageName != null && packageName.equals("com.dts.freefiremax")) {
++                        if (repeatCount == 0) {
++                            mView.postDelayed(() -> {
++                                KeyEvent eventUp = KeyEvent.changeAction(event, KeyEvent.ACTION_UP);
++                                eventUp = KeyEvent.changeTimeRepeat(
++                                        eventUp, eventUp.getEventTime() + 60, eventUp.getRepeatCount());
++                                enqueueInputEvent(eventUp);
++                            }, 60);
++                        } else {
++                            return FINISH_HANDLED;
++                        }
++                    }
++                }
++            }
++
+             if (mView.dispatchKeyEventPreIme(event)) {
+                 return FINISH_HANDLED;
+             } else if (q.forPreImeOnly()) {

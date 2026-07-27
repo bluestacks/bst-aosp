@@ -23,11 +23,11 @@ guest 是基于 android-16.0.0_r4 的完整 AOSP 树；把 `-a13`/`-mac` 定制 
 
 | 里程碑 | 状态 |
 |---|---|
-| M1 android-16 win boot | **完成**（2026-07-14；存档 `patches/android-16/`） |
-| Phase 1 清单融合 + qvirt 迁移 | **完成**（G1 ported，2026-07-17 boot 到 launcher，Root.vhd `2a7a497a`） |
-| Phase 2 其余定制 + 临时债收口 + mac 同码 | **当前** |
-| Phase 3 host/CI | 后 |
+| M1 android-16 win boot | **完成** |
+| Phase 1 清单融合 + qvirt | **完成** |
+| Phase 2 guest **全量功能对齐**（含 frameworks；SELinux=a13 permissive；Shell←`performance_hint` ✅） | **当前 · 唯一活跃** |
+| Phase 3 host/CI | **暂不规划** |
 
-工作单元 = **patch-group**（关联一起移植）→ 全验证回环 → 存 patch → checkpoint 可恢复。
+当前要点：FW-CORE-APP **9/22** ✅；权威 Root `4ba4bdd3` Layer2 7/7 @597s。工作单元 = **patch-group**。
 
-详情：[architecture.md](architecture.md) · [SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md) · [phase1-port-plan.md](progress/phase1-port-plan.md)。
+详情：[architecture.md](architecture.md) · [SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md) · [phase2-port-plan.md](progress/phase2-port-plan.md) · [summary](.claude/summary.md)。

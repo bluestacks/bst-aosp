@@ -1,0 +1,713 @@
+diff --git a/libnativebridge/libnativebridge.map.txt b/libnativebridge/libnativebridge.map.txt
+index 8b51ab893a..13a33bc5ad 100644
+--- a/libnativebridge/libnativebridge.map.txt
++++ b/libnativebridge/libnativebridge.map.txt
+@@ -26,6 +26,7 @@ LIBNATIVEBRIDGE_1 {
+     PreInitializeNativeBridge;
+     NativeBridgeAvailable;
+     NeedsNativeBridge;
++    bst_nbpname;
+   local:
+     *;
+ };
+diff --git a/libnativebridge/native_bridge.cc b/libnativebridge/native_bridge.cc
+old mode 100644
+new mode 100755
+index fb13d62be0..7cb2026988
+--- a/libnativebridge/native_bridge.cc
++++ b/libnativebridge/native_bridge.cc
+@@ -22,6 +22,7 @@
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <sys/mount.h>
+ #include <sys/stat.h>
+ #include <unistd.h>
+@@ -300,6 +301,7 @@ bool NeedsNativeBridge(const char* instruction_set) {
+ 
+ #ifndef __APPLE__
+ static bool MountCpuinfo(const char* cpuinfo_path) {
++  bool ret = true;
+   // If the file does not exist, the mount command will fail,
+   // so we save the extra file existence check.
+   if (TEMP_FAILURE_RETRY(mount(cpuinfo_path,        // Source.
+@@ -308,9 +310,19 @@ static bool MountCpuinfo(const char* cpuinfo_path) {
+                                MS_BIND,             // Mount flags: bind mount.
+                                nullptr)) == -1) {   // "Data."
+     ALOGW("Failed to bind-mount %s as /proc/cpuinfo: %s", cpuinfo_path, strerror(errno));
+-    return false;
++    ret = false;
+   }
+-  return true;
++
++  if (TEMP_FAILURE_RETRY(mount(cpuinfo_path,        // Source.
++                               "/etc/cpuinfo",     // Target.
++                               nullptr,             // FS type.
++                               MS_BIND,             // Mount flags: bind mount.
++                               nullptr)) == -1) {   // "Data."
++    ALOGW("Failed to bind-mount %s as /etc/cpuinfo: %s", cpuinfo_path, strerror(errno));
++    ret = false;
++  }
++
++  return ret;
+ }
+ #endif
+ 
+@@ -337,26 +349,51 @@ static void MountCpuinfoForInstructionSet(const char* instruction_set) {
+   MountCpuinfo("./cpuinfo");
+ 
+ #else  // __ANDROID__
+-  char cpuinfo_path[1024];
++  char cpuinfo_path[512];
++  char cpuinfo_path_backup[512];
+ 
+-  // Bind-mount /system/etc/cpuinfo.<isa>.txt to /proc/cpuinfo.
+-  snprintf(cpuinfo_path, sizeof(cpuinfo_path), "/system/etc/cpuinfo.%s.txt", instruction_set);
++  snprintf(cpuinfo_path, sizeof(cpuinfo_path), "/data/downloads/.oh/cpuinfo/%s/cpuinfo", instruction_set);
+   if (MountCpuinfo(cpuinfo_path)) {
+     return;
+   }
+ 
++  // Bind-mount /system/etc/cpuinfo.<isa>.txt to /proc/cpuinfo.
++  snprintf(cpuinfo_path_backup, sizeof(cpuinfo_path_backup), "/system/etc/cpuinfo.%s.txt", instruction_set);
++  if (MountCpuinfo(cpuinfo_path_backup)) {
++    return;
++  }
++
+   // Bind-mount /system/lib{,64}/<isa>/cpuinfo to /proc/cpuinfo.
+   // TODO(b/179753190): remove when all implementations migrate to system/etc!
+ #ifdef __LP64__
+-  snprintf(cpuinfo_path, sizeof(cpuinfo_path), "/system/lib64/%s/cpuinfo", instruction_set);
++  snprintf(cpuinfo_path_backup, sizeof(cpuinfo_path_backup), "/system/lib64/%s/cpuinfo", instruction_set);
+ #else
+-  snprintf(cpuinfo_path, sizeof(cpuinfo_path), "/system/lib/%s/cpuinfo", instruction_set);
++  snprintf(cpuinfo_path_backup, sizeof(cpuinfo_path_backup), "/system/lib/%s/cpuinfo", instruction_set);
+ #endif  // __LP64__
+-  MountCpuinfo(cpuinfo_path);
++  MountCpuinfo(cpuinfo_path_backup);
+ 
+ #endif
+ }
+ 
++static char g_pkgname[256];
++
++// For Houdini use.
++extern "C" const char* bst_nbpname() { return g_pkgname; }
++
++static inline void init_pkgname(const char* app_data_dir_in)
++{
++  g_pkgname[0] = 0;
++  if (app_data_dir_in == nullptr) return;
++
++  const char* str = strrchr(app_data_dir_in, '/');
++  if (str == nullptr) return;
++
++  size_t len = strlen(++str);
++  if (len >= sizeof(g_pkgname)) len = sizeof(g_pkgname) - 1;
++  memcpy(g_pkgname, str, len);
++  g_pkgname[len] = 0;
++}
++
+ bool PreInitializeNativeBridge(const char* app_data_dir_in, const char* instruction_set) {
+   if (state != NativeBridgeState::kOpened) {
+     ALOGE("Invalid state: native bridge is expected to be opened.");
+@@ -365,6 +402,7 @@ bool PreInitializeNativeBridge(const char* app_data_dir_in, const char* instruct
+   }
+ 
+   if (app_data_dir_in != nullptr) {
++    init_pkgname(app_data_dir_in);
+     // Create the path to the application code cache directory.
+     // The memory will be release after Initialization or when the native bridge is closed.
+     const size_t len = strlen(app_data_dir_in) + strlen(kCodeCacheDir) + 2;  // '\0' + '/'
+@@ -394,6 +432,68 @@ void PreZygoteForkNativeBridge() {
+   }
+ }
+ 
++// BST: Function to modify BUILD.SUPPORTED_*_ABIS list for arm apps running with native bridge
++// and having entry of 'abilist' in config db.
++static void SetCpuAbiList(JNIEnv* env, jclass build_class) {
++#if __LP64__
++  const char *abiprop[] = {"SUPPORTED_ABIS", "SUPPORTED_64_BIT_ABIS", "SUPPORTED_32_BIT_ABIS"};
++  const char *val[] = {"arm64-v8a", "armeabi-v7a", "armeabi"};
++  const char *val64[] = {"arm64-v8a"};
++#else
++  const char *abiprop[] = {"SUPPORTED_ABIS", "SUPPORTED_32_BIT_ABIS"};
++#endif
++  const char *val32[] = {"armeabi-v7a", "armeabi"};
++  const char **temp = nullptr;
++  int val_len = 0;
++
++  for (unsigned long i = 0; i < (sizeof(abiprop)/sizeof(abiprop[0])); i++) {
++    jfieldID field_id = env->GetStaticFieldID(build_class, abiprop[i], "[Ljava/lang/String;");
++    if (field_id == nullptr) {
++      env->ExceptionClear();
++      ALOGW("Could not find %s field.", abiprop[i]);
++      return;
++    }
++
++#if __LP64__
++    // Directly using array index itself as it is inline with abiprop array, any error and we simply return.
++    if (i == 0) {
++      // SUPPORTED_ABIS list
++      temp = val;
++      val_len = 3;
++    } else if (i == 1) {
++      // SUPPORTED_64_BIT_ABIS list
++      temp = val64;
++      val_len = 1;
++    } else {
++      temp = val32;
++      val_len = 2;
++    }
++#else
++    temp = val32;
++    val_len = 2;
++#endif
++    // Create abi array.
++    jobjectArray abi = env->NewObjectArray(val_len, env->FindClass("java/lang/String"), nullptr);
++    if (abi == nullptr) {
++      env->ExceptionClear();
++      ALOGW("Could not create array.");
++      return;
++    }
++
++    // Fill abi array.
++    for (int32_t j = 0; j < val_len ; j++) {
++      jstring str = env->NewStringUTF((temp[j]));
++      if (str == nullptr) {
++        env->ExceptionClear();
++        ALOGW("Could not create string %s.", (temp[j]));
++        return;
++      }
++      env->SetObjectArrayElement(abi, j, str);
++    }
++    env->SetStaticObjectField(build_class, field_id, abi);
++  }
++}
++
+ static void SetCpuAbi(JNIEnv* env, jclass build_class, const char* field, const char* value) {
+   if (value != nullptr) {
+     jfieldID field_id = env->GetStaticFieldID(build_class, field, "Ljava/lang/String;");
+@@ -414,6 +514,38 @@ static void SetCpuAbi(JNIEnv* env, jclass build_class, const char* field, const
+   }
+ }
+ 
++#if defined(__ANDROID__)
++int match_uid_helper(const char *path, uid_t val, int buff_length) {
++#define MAX_UID_LENGTH     10
++
++  int debug = 0;
++  char buff[buff_length];
++  unsigned long present_uid = -1;
++
++  FILE* fp = fopen(path, "r");
++  if (fp == NULL) {
++    if (debug) ALOGW("match_uid_helper error opening file [%s] for myuid = %u\n", path, val);
++    return 0;
++  }
++
++  // now we open the marker file and iterate through the file to get the uid entries, and match it with our required value.
++  while (fgets(buff, buff_length, fp)) {
++    char *p;
++    present_uid = strtoul(buff, &p, MAX_UID_LENGTH);
++    if (val == present_uid) {
++      if (debug) ALOGW("Found matching entry of %lu\n", present_uid);
++      // we have a match, return here itself.
++      fclose(fp);
++      return 1;
++    }
++  }
++
++  // we reached here means we have parsed the file and did not get a match, returning 0.
++  fclose(fp);
++  return 0;
++}
++#endif
++
+ // Set up the environment for the bridged app.
+ static void SetupEnvironment(const NativeBridgeCallbacks* cbs, JNIEnv* env, const char* isa) {
+   // Need a JNIEnv* to do anything.
+@@ -437,17 +569,38 @@ static void SetupEnvironment(const NativeBridgeCallbacks* cbs, JNIEnv* env, cons
+     return;
+   }
+ 
+-  // Reset CPU_ABI & CPU_ABI2 to values required by the apps running with native bridge.
+-  if (env_values->cpu_abi != nullptr || env_values->cpu_abi2 != nullptr ||
+-      env_values->abi_count >= 0) {
+-    jclass bclass_id = env->FindClass("android/os/Build");
+-    if (bclass_id != nullptr) {
+-      SetCpuAbi(env, bclass_id, "CPU_ABI", env_values->cpu_abi);
+-      SetCpuAbi(env, bclass_id, "CPU_ABI2", env_values->cpu_abi2);
+-    } else {
+-      // For example in a host test environment.
+-      env->ExceptionClear();
+-      ALOGW("Could not find Build class.");
++#if defined(__ANDROID__)
++#define APP_WITH_XARCH                     "/data/downloads/.tmp/.bstXarchApps"
++#define MAX_BUFF_LENGTH                    64
++  // We have ;xarch entry for those apps running with native bridge for which we do NOT want
++  // to reset CPU_ABI, CPU_ABI2 and os.arch values at runtime.
++  if (!match_uid_helper(APP_WITH_XARCH, getuid(), MAX_BUFF_LENGTH))
++#endif
++  {
++    // Reset CPU_ABI & CPU_ABI2 to values required by the apps running with native bridge.
++    if (env_values->cpu_abi != nullptr || env_values->cpu_abi2 != nullptr ||
++        env_values->abi_count >= 0) {
++      jclass bclass_id = env->FindClass("android/os/Build");
++      if (bclass_id != nullptr) {
++        SetCpuAbi(env, bclass_id, "CPU_ABI", env_values->cpu_abi);
++        SetCpuAbi(env, bclass_id, "CPU_ABI2", env_values->cpu_abi2);
++
++        // Case BS4-5738 Modifying SUPPORTED_ABIS* List for apps having 'abilist' entry in config and running with native bridge to
++        // show only arm abi values. This fixes in-app sdk initialization which fails for x86 abi, if determined via abiList.
++        // Changing behaviour for 32 bit and 64 bit install.
++#if defined(__ANDROID__)
++#define APP_WITH_ABILIST                   "/data/downloads/.tmp/.bstAbilistApps"
++#define MAX_BUFF_LENGTH                    64
++        if (match_uid_helper(APP_WITH_ABILIST, getuid(), MAX_BUFF_LENGTH))
++#endif
++        {
++          SetCpuAbiList(env, bclass_id);
++        }
++      } else {
++        // For example in a host test environment.
++        env->ExceptionClear();
++        ALOGW("Could not find Build class.");
++      }
+     }
+   }
+ 
+@@ -699,10 +852,170 @@ native_bridge_namespace_t* NativeBridgeGetExportedNamespace(const char* name) {
+   return nullptr;
+ }
+ 
++#if defined(__LP64__) && defined(__ANDROID__)
++class ArmHandle {
++  void* m_handle = nullptr;
++public:
++  ArmHandle(void* handle) : m_handle(handle)  {}
++  ~ArmHandle() { if (m_handle) NativeBridgeUnloadLibrary(m_handle); }
++};
++
++#define BST_MAX_SMALL_FILE_SIZE (1024 * 1024)
++/** Allocate a buffer to read a small regular file. */
++char* _bst_read_small_file(const char* file_path, loff_t* file_size)
++{
++    FILE *fp;
++    struct stat st;
++    char *buf = NULL;
++    loff_t f_size = 0;
++    ssize_t bytes = 0;
++
++    fp = fopen(file_path, "r");
++    if (!fp) {
++        // ALOGE("Error in fopen file %s\n", file_path);
++        goto out;
++    }
++
++    if (fstat(fileno(fp), &st) && !S_ISREG(st.st_mode)) {
++        ALOGE("Error in fstat file %s\n", file_path);
++        goto out;
++    }
++
++    /* file is opened successfully, read it in a buffer */
++    f_size = st.st_size;
++    if (f_size <= 0) {
++        ALOGE("Error in getting size of file %s\n", file_path);
++        goto out;
++    }
++
++    if (f_size > BST_MAX_SMALL_FILE_SIZE) {
++        ALOGE("The size of the file %s is too large\n", file_path);
++        goto out;
++    }
++
++    /* The file content is expected as a string, so allocate one more byte.*/
++    buf = (char *)malloc(f_size + 1);
++    if (!buf) {
++        ALOGE("Error in allocating buffer for file %s\n", file_path);
++        goto out;
++    }
++
++    memset(buf, 0, sizeof(buf));
++    bytes = fread(buf, f_size, 1, fp);
++    if (bytes < 0) {
++        ALOGE("Error in reading file %s\n", file_path);
++        free(buf);
++        buf = NULL;
++        goto out;
++    }
++
++    *file_size = f_size;
++    // ALOGE("File %s read successfully\n", file_path);
++
++out:
++    if (fp != NULL)
++        fclose(fp);
++
++    return buf;
++}
++
++bool bst_is_pmf_app(const char *calling_pkg)
++{
++#define PMF_FILE_PATH "/data/downloads/.tmp/.pmf"
++    char *file_buf, *temp, *token;
++    loff_t file_size  = 0;
++    bool ret = false;
++
++    file_buf = _bst_read_small_file(PMF_FILE_PATH, &file_size);
++    if (!file_buf || !calling_pkg)
++        goto out;
++
++    // Read app name line by line
++    temp = file_buf;
++    while ((token = strsep(&temp, ";")) != NULL && strlen(token) > 0) {
++        if (strcmp(token, calling_pkg) == 0) {
++            ret = true;
++            break;
++        }
++    }
++
++out:
++    if (file_buf)
++        free(file_buf);
++
++    return ret;
++}
++
++static inline void* load_arm_lib(native_bridge_namespace_t* ns)
++{
++  if (!bst_is_pmf_app(g_pkgname)) return nullptr;
++  const char* lib = "/data/downloads/libpmf.so";
++  return callbacks->loadLibraryExt(lib, RTLD_NOW, ns);
++}
++#endif
++
++class  __attribute__((visibility("hidden"))) HotFix {
++  typedef void Func(const char* libpath);
++  typedef bool bstIsHotFixApp(const char* callingPackage);
++  void*  m_handle = nullptr;
++  Func*  m_func_a = nullptr;
++  Func*  m_func_b = nullptr;
++
++public:
++  HotFix(const char* pkgname, const char* libpath = nullptr) __attribute__((always_inline)) {
++   if (pkgname == nullptr || *pkgname == 0) return;
++#if defined(__ANDROID__)
++    bool need_patch = false;
++    const char* libBinder = "libbinder.so";
++    void* handleBinder = OpenSystemLibrary(libBinder, RTLD_NOW);
++    if (handleBinder == nullptr) return;
++    bstIsHotFixApp* func_isHotFixApp = reinterpret_cast<bstIsHotFixApp*>(dlsym(handleBinder, "bstIsHotFixApp"));
++    if(func_isHotFixApp){
++       need_patch = func_isHotFixApp(pkgname);
++    }
++    dlclose(handleBinder);
++#else
++    bool need_patch = false;
++#endif
++    if (!need_patch) return;
++ const char* lib = sizeof(void*) == 8 ? "/data/downloads/.hpp/libhpp64.so" : "/data/downloads/.hpp/libhpp32.so";
++    void* handle = OpenSystemLibrary(lib, RTLD_NOW);
++    if (handle == nullptr) return;
++
++    Func* func_a = reinterpret_cast<Func*>(dlsym(handle, "hppa"));
++    Func* func_b = reinterpret_cast<Func*>(dlsym(handle, "hppb"));
++
++    if (func_a && func_b) {
++      m_handle  = handle;
++      m_func_a  = func_a;
++      m_func_b  = func_b;
++      if (libpath) patch_before_loading_lib(libpath);
++      return;
++    }
++    dlclose(handle);
++  }
++
++  ~HotFix() { if (m_handle) dlclose(m_handle); }
++
++  void patch_before_loading_lib(const char* libpath) const {
++    if (m_func_b) m_func_b(libpath);
++  }
++
++  void patch_after_loading_lib(const char* libpath) const {
++    if (m_func_a) m_func_a(libpath);
++  }
++};
++
+ void* NativeBridgeLoadLibraryExt(const char* libpath, int flag, native_bridge_namespace_t* ns) {
+   if (NativeBridgeInitialized()) {
+     if (isCompatibleWith(NAMESPACE_VERSION)) {
+-      return callbacks->loadLibraryExt(libpath, flag, ns);
++#if defined(__LP64__) && defined(__ANDROID__)
++      static ArmHandle ah(load_arm_lib(ns));
++#endif
++      static const HotFix hotfix(g_pkgname, libpath);
++      auto ret = callbacks->loadLibraryExt(libpath, flag, ns);
++      if (ret) hotfix.patch_after_loading_lib(libpath);
++      return ret;
+     } else {
+       ALOGE("not compatible with version %d, cannot load library in namespace", NAMESPACE_VERSION);
+     }
+diff --git a/libnativeloader/native_loader_namespace.cpp b/libnativeloader/native_loader_namespace.cpp
+index 669fa74dc2..4ac33dd036 100644
+--- a/libnativeloader/native_loader_namespace.cpp
++++ b/libnativeloader/native_loader_namespace.cpp
+@@ -27,6 +27,7 @@
+ #include <android-base/strings.h>
+ #include <log/log.h>
+ #include <nativebridge/native_bridge.h>
++#include <sys/system_properties.h>
+ 
+ #include "nativeloader/dlext_namespaces.h"
+ 
+@@ -159,8 +160,145 @@ Result<void> NativeLoaderNamespace::Link(const NativeLoaderNamespace* target,
+   return Error() << GetLinkerError(IsBridged());
+ }
+ 
++void* OpenSystemLibrary(const char* path, int flags) {
++#ifdef ART_TARGET_ANDROID
++  // The system namespace is called "default" for binaries in /system and
++  // "system" for those in the Runtime APEX. Try "system" first since
++  // "default" always exists.
++  // TODO(b/185587109): Get rid of this error prone logic.
++  android_namespace_t* system_ns = android_get_exported_namespace("system");
++  if (system_ns == nullptr) {
++    system_ns = android_get_exported_namespace("default");
++    LOG_ALWAYS_FATAL_IF(system_ns == nullptr,
++                        "Failed to get system namespace for loading %s", path);
++  }
++  const android_dlextinfo dlextinfo = {
++      .flags = ANDROID_DLEXT_USE_NAMESPACE,
++      .library_namespace = system_ns,
++  };
++  return android_dlopen_ext(path, flags, &dlextinfo);
++#else
++  return dlopen(path, flags);
++#endif
++}
++
++static inline bool bst_enable_high_fps()
++{
++    char buf[PROP_VALUE_MAX];
++    buf[0] = 0;
++    __system_property_get("bst.enable_high_fps", buf);
++    return buf[0] == '1' && buf[1] == 0;
++}
++
++static const char* g_progname = getprogname();
++
++static inline int bst_getXPerfMode(int uid, bool check_pkg = false)
++{
++    if (uid < 10000) return 0;
++    if (check_pkg && g_progname && strcmp(g_progname, "chrome_zygote") == 0) return 0;
++    void* handle = OpenSystemLibrary("libbinder.so", RTLD_NOLOAD);
++    if (handle == nullptr) return 0;
++    typedef int Func(int);
++    const auto func = reinterpret_cast<Func*>(dlsym(handle, "bst_getXPerfMode"));
++    const int ret = func ? func(uid) : 0;
++    dlclose(handle);
++    return ret;
++}
++
++template<bool use_native_bridge>
++class MyLib {
++    void* m_handle = nullptr;
++public:
++    MyLib(const MyLib&)            = delete;
++    MyLib& operator=(const MyLib&) = delete;
++
++    MyLib(const NativeLoaderNamespace& ns) {
++        const bool enabled = (bst_enable_high_fps() && (bst_getXPerfMode(getuid(), !use_native_bridge) == 1)) || (bst_getXPerfMode(getuid(), !use_native_bridge) == 2);
++        if (!enabled) return;
++#define MY_LIB_PREFIX   "/data/downloads/.xp"
++#define MY_LIB_FILENAME "libstagefright_httpcommon.so"
++        constexpr const char* lib_arm = sizeof(void*) == 8 ? MY_LIB_PREFIX "/lib64/arm64/" MY_LIB_FILENAME :
++                                                             MY_LIB_PREFIX "/lib/arm/"     MY_LIB_FILENAME;
++        constexpr const char* lib_x86 = sizeof(void*) == 8 ? MY_LIB_PREFIX "/lib64/"       MY_LIB_FILENAME:
++                                                             MY_LIB_PREFIX "/lib/"         MY_LIB_FILENAME;
++#undef MY_LIB_PREFIX
++#undef MY_LIB_FILENAME
++        constexpr const char* lib = use_native_bridge ? lib_arm : lib_x86;
++        if (access(lib, F_OK) != 0) return;
++        if (use_native_bridge) m_handle = NativeBridgeLoadLibraryExt(lib, RTLD_NOW, ns.ToRawNativeBridgeNamespace());
++        else {
++            android_dlextinfo extinfo;
++            extinfo.flags             = ANDROID_DLEXT_USE_NAMESPACE;
++            extinfo.library_namespace = ns.ToRawAndroidNamespace();
++            m_handle = android_dlopen_ext(lib, RTLD_NOW, &extinfo);
++        }
++    }
++
++    ~MyLib() {
++        if (m_handle) {
++            if (use_native_bridge) NativeBridgeUnloadLibrary(m_handle);
++            else        dlclose(m_handle);
++        }
++    }
++
++};
++
++static inline bool bst_isHotFixApp(int uid)
++{
++    if (uid < 10000) return false;
++    if (g_progname && strcmp(g_progname, "chrome_zygote") == 0) return false;
++    void* handle = OpenSystemLibrary("libbinder.so", RTLD_NOLOAD);
++    if (handle == nullptr) return false;
++
++    typedef bool Func(const int32_t uid);
++    const auto func = reinterpret_cast<Func*>(dlsym(handle, "bstIsHotFixAppByUid"));
++    const bool ret = func ? func(uid) : false;
++    dlclose(handle);
++    return ret;
++}
++
++class HotfixLib {
++    void* m_handle = nullptr;
++public:
++    HotfixLib(const HotfixLib&)            = delete;
++    HotfixLib& operator=(const HotfixLib&) = delete;
++
++    HotfixLib(const NativeLoaderNamespace& ns) {
++        const bool enabled = bst_isHotFixApp(getuid());
++        if (!enabled) return;
++#define MY_LIB_PREFIX   "/data/downloads/.hpp/libhpp"
++
++     constexpr const char* lib = sizeof(void*) == 8 ? MY_LIB_PREFIX "64.so":
++                                                             MY_LIB_PREFIX "32.so";
++#undef MY_LIB_PREFIX
++        if (access(lib, F_OK) != 0) return;
++
++        android_dlextinfo extinfo;
++        extinfo.flags             = ANDROID_DLEXT_USE_NAMESPACE;
++        extinfo.library_namespace = ns.ToRawAndroidNamespace();
++        m_handle = android_dlopen_ext(lib, RTLD_NOW, &extinfo);
++
++        if (m_handle) {
++          typedef void Func();
++          Func* func = reinterpret_cast<Func*>(dlsym(m_handle, "hook_x86App"));
++          if (func) {
++             func();
++          }
++        }
++    }
++
++    ~HotfixLib() {
++        if (m_handle) {
++          dlclose(m_handle);
++        }
++    }
++
++};
++
+ Result<void*> NativeLoaderNamespace::Load(const char* lib_name) const {
+   if (!IsBridged()) {
++    static MyLib<false> mylib(*this);
++    static HotfixLib hotfixlib(*this);
+     android_dlextinfo extinfo;
+     extinfo.flags = ANDROID_DLEXT_USE_NAMESPACE;
+     extinfo.library_namespace = this->ToRawAndroidNamespace();
+@@ -169,6 +307,8 @@ Result<void*> NativeLoaderNamespace::Load(const char* lib_name) const {
+       return handle;
+     }
+   } else {
++    static MyLib<true> mylib(*this);
++
+     void* handle =
+         NativeBridgeLoadLibraryExt(lib_name, RTLD_NOW, this->ToRawNativeBridgeNamespace());
+     if (handle != nullptr) {
+diff --git a/runtime/jni/jni_internal.cc b/runtime/jni/jni_internal.cc
+old mode 100644
+new mode 100755
+index e3153fdace..645575bc3c
+--- a/runtime/jni/jni_internal.cc
++++ b/runtime/jni/jni_internal.cc
+@@ -2553,6 +2553,38 @@ class JNI {
+                                                                      buf);
+   }
+ 
++  static jbyteArray hooked_ssNative(JNIEnv* env, jobject jo ATTRIBUTE_UNUSED, jlong handle ATTRIBUTE_UNUSED, jobjectArray arr ATTRIBUTE_UNUSED) {
++    return env->NewByteArray(0);
++  }
++
++  static jbyteArray hooked_ssNative2(JNIEnv* env, jobject jo ATTRIBUTE_UNUSED, jlong handle ATTRIBUTE_UNUSED, jobjectArray arr ATTRIBUTE_UNUSED, jobject bundle ATTRIBUTE_UNUSED) {
++    return env->NewByteArray(0);
++  }
++
++  /**
++  * check if droidguard hook is disabled.
++  */
++  static jboolean bst_is_dhdg(JNIEnv* env, jint uid) {
++    jclass bst_cls_manager = env->FindClass("com/bluestacks/os/BstFilterAppsManager");
++    if (bst_cls_manager == nullptr) {
++      return false;
++    }
++    jmethodID bst_method_get_instance = env->GetStaticMethodID(bst_cls_manager, "getInstance", "()Lcom/bluestacks/os/BstFilterAppsManager;");
++    if (bst_method_get_instance == nullptr) {
++      return false;
++    }
++    jobject bst_instance = env->CallStaticObjectMethod(bst_cls_manager, bst_method_get_instance);
++    if (bst_instance == nullptr) {
++      return false;
++    }
++
++    jmethodID bst_method_is_dhdg = env->GetMethodID(bst_cls_manager, "isDhdg", "(I)Z");
++    if (bst_method_is_dhdg == nullptr) {
++      return false;
++    }
++    return env->CallBooleanMethod(bst_instance, bst_method_is_dhdg, uid);
++  }
++
+   static jint RegisterNatives(JNIEnv* env,
+                               jclass java_class,
+                               const JNINativeMethod* methods,
+@@ -2573,6 +2605,7 @@ class JNI {
+       return JNI_OK;
+     }
+     CHECK_NON_NULL_ARGUMENT_FN_NAME("RegisterNatives", methods, JNI_ERR);
++    const uid_t uid = getuid();
+     for (jint i = 0; i < method_count; ++i) {
+       const char* name = methods[i].name;
+       const char* sig = methods[i].signature;
+@@ -2680,6 +2713,25 @@ class JNI {
+         // TODO: make this a hard register error in the future.
+       }
+ 
++      if (uid >= 10000 && !strncmp(name, "ssNative", strlen("ssNative"))) {
++        // ROB-8705: hook com.google.ccc.abuse.droidguard.DroidGuard.ssNative() and return an empty byte array
++        // to temporary fix device incompatible error .
++        constexpr const char pat[] = "byte[] com.google.ccc.abuse.droidguard.DroidGuard.ssNative(long, java.lang.String[])";
++        constexpr const char pat2[] = "byte[] com.google.ccc.abuse.droidguard.DroidGuard.ssNative(long, java.lang.String[], android.os.Bundle)";
++        constexpr auto patlen = sizeof(pat) - 1;
++        constexpr auto patlen2 = sizeof(pat2) - 1;
++
++        const auto& str = m->PrettyMethod();
++        const bool is_equal = str.size() == patlen && memcmp(str.data(), pat, patlen) == 0;
++        const bool is_equal2 = str.size() == patlen2 && memcmp(str.data(), pat2, patlen2) == 0;
++        if (is_equal || is_equal2) {
++          static bool enable_hook = !bst_is_dhdg(env, getuid());
++          if (enable_hook) {
++            if (is_equal) fnPtr = (const void*)hooked_ssNative;
++            if (is_equal2) fnPtr = (const void*)hooked_ssNative2;
++          }
++        }
++      }
+       const void* final_function_ptr = class_linker->RegisterNative(soa.Self(), m, fnPtr);
+       UNUSED(final_function_ptr);
+     }
+diff --git a/runtime/oat_quick_method_header.cc b/runtime/oat_quick_method_header.cc
+index 8fbf02abea..3612b052aa 100644
+--- a/runtime/oat_quick_method_header.cc
++++ b/runtime/oat_quick_method_header.cc
+@@ -46,7 +46,9 @@ uint32_t OatQuickMethodHeader::ToDexPc(ArtMethod** frame,
+     }
+   }
+   if (abort_on_failure) {
+-    LOG(FATAL) << "Failed to find Dex offset for PC offset "
++    // Do not abort even if abort_on_failure log is enabled as we are facing
++    // boot failure related issues in 64-bit related builds.
++    LOG(ERROR) << "Failed to find Dex offset for PC offset "
+            << reinterpret_cast<void*>(sought_offset)
+            << "(PC " << reinterpret_cast<void*>(pc) << ", entry_point=" << entry_point
+            << " current entry_point=" << method->GetEntryPointFromQuickCompiledCode()

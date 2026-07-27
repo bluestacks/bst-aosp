@@ -1,0 +1,3898 @@
+diff --git a/libs/binder/Android.bp b/libs/binder/Android.bp
+index ab97db7179..c83070822e 100644
+--- a/libs/binder/Android.bp
++++ b/libs/binder/Android.bp
+@@ -253,6 +253,10 @@ cc_defaults {
+ 
+     srcs: [
+         "Binder.cpp",
++        "BstFilterAppsManager.cpp",
++        "BstUtilsManager.cpp",
++        "IBstFilterAppsService.cpp",
++        "IBstUtilsService.cpp",
+         "BpBinder.cpp",
+         "Debug.cpp",
+         "FdTrigger.cpp",
+diff --git a/libs/binder/BstFilterAppsManager.cpp b/libs/binder/BstFilterAppsManager.cpp
+new file mode 100755
+index 0000000000..e8ff3b630c
+--- /dev/null
++++ b/libs/binder/BstFilterAppsManager.cpp
+@@ -0,0 +1,686 @@
++#define LOG_TAG "BstFilterAppsManager"
++
++#include <binder/BstFilterAppsManager.h>
++#include <binder/Binder.h>
++#include <binder/IServiceManager.h>
++
++#include <utils/Log.h>
++#include <utils/SystemClock.h>
++
++#ifndef __ANDROID_VNDK__  // A16DBG:P2:D9 PermissionController not visible to vendor variant
++#include <binder/PermissionController.h>
++#endif
++
++namespace android {
++
++    BstFilterAppsManager::BstFilterAppsManager()
++    {
++    }
++
++    sp<IBstFilterAppsService> BstFilterAppsManager::getService()
++    {
++        //int64_t startTime = uptimeMillis();
++        mLock.lock();
++        sp<IBstFilterAppsService> service = mService;
++        if (service == NULL || !(IInterface::asBinder(service)->isBinderAlive())) {
++            sp<IBinder> binder = defaultServiceManager()->checkService(String16("bstfilterapps"));
++            if (binder == NULL) {
++                /*
++                // Wait for the bstfilterapps service to come back...
++                ALOGI("Waiting for bstfilterapps service");
++                if ((uptimeMillis()-startTime) > 10000) {
++                ALOGW("Waiting too long for bstfilterapps service, giving up");
++                return NULL;
++                }
++                sleep(1);
++                */
++                ALOGW("Waited too long for bstfilterapps service, giving up");
++            } else {
++                service = interface_cast<IBstFilterAppsService>(binder);
++                mService = service;
++            }
++        }
++        mLock.unlock();
++        return service;
++    }
++
++    bool BstFilterAppsManager::isSmallScreenApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isSmallScreenApp(callingPackage) : false;
++    }
++
++    bool BstFilterAppsManager::forceArmInstall(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->forceArmInstall(callingPackage) : false;
++    }
++
++    bool BstFilterAppsManager::forceX86Install(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->forceX86Install(callingPackage) : false;
++    }
++
++    bool BstFilterAppsManager::isWhiteListed(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isWhiteListed(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isBlackListed(const String16& callingPackage, const String16& version)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isBlackListed(callingPackage, version): false;
++    }
++
++    bool BstFilterAppsManager::isSoftKeyboardRequired(const String16& callingPackage, const String16& activity)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isSoftKeyboardRequired(callingPackage, activity): false;
++    }
++
++    const String16 BstFilterAppsManager::getSoftKeyboardModifier(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("soft");
++        return service != NULL ? service->getSoftKeyboardModifier(callingPackage): default_return;
++    }
++
++    bool BstFilterAppsManager::isMarketRequired(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isMarketRequired(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isGlv1notimpApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isGlv1notimpApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isPvrtcApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isPvrtcApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isS3tcApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isS3tcApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isXarchApp(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isXarchApp(uid): false;
++    }
++
++    bool BstFilterAppsManager::isHeadsetRequired(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isHeadsetRequired(callingPackage) : false;
++    }
++
++    bool BstFilterAppsManager::isPortraitDisabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isPortraitDisabled(callingPackage): false;
++    }
++
++    const String16 BstFilterAppsManager::getCustomDpi(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getCustomDpi(callingPackage): default_return;
++    }
++
++    bool BstFilterAppsManager::isClearInstallApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isClearInstallApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isScreenOrientationFixed(const String16& callingPackage,const String16& currentPkgName)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isScreenOrientationFixed(callingPackage,currentPkgName): false;
++    }
++
++    int BstFilterAppsManager::isCameraRotationRequired(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isCameraRotationRequired(callingPackage) : 0;
++    }
++
++    bool BstFilterAppsManager::forceLandscapeOrientationIfUnspecified(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->forceLandscapeOrientationIfUnspecified(callingPackage): false;
++    }
++
++    const String16 BstFilterAppsManager::getGlRenderer(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getGlRenderer(callingPackage) : default_return ;
++    }
++
++    const String16 BstFilterAppsManager::getGlVendor(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getGlVendor(callingPackage) : default_return;
++    }
++
++    bool BstFilterAppsManager::isGL3App(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isGL3App(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isXArmApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isXArmApp(callingPackage): false;
++    }
++
++    const String16 BstFilterAppsManager::isLoadLibHackReqd(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->isLoadLibHackReqd(uid) : default_return;
++    }
++
++    bool BstFilterAppsManager::isGL3Disabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isGL3Disabled(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isZeroMappedPageReqd(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isZeroMappedPageReqd(uid): false;
++    }
++
++    bool BstFilterAppsManager::isModifysdPathReqd(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isModifysdPathReqd(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isAGAGL3Disabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isAGAGL3Disabled(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isPGAGL3Disabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isPGAGL3Disabled(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isShowOrigCpuinfoArmApp(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isShowOrigCpuinfoArmApp(uid): false;
++    }
++
++    bool BstFilterAppsManager::isAstcApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isAstcApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isPatchRelocApp(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isPatchRelocApp(uid): false;
++    }
++
++    const String16 BstFilterAppsManager::getPgaGlVersion(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getPgaGlVersion(callingPackage) : default_return;
++    }
++
++    const String16 BstFilterAppsManager::getAgaGlVersion(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getAgaGlVersion(callingPackage) : default_return;
++    }
++
++    bool BstFilterAppsManager::isHardwareAstcDisabledApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isHardwareAstcDisabledApp(callingPackage): false;
++    }
++
++    const String16 BstFilterAppsManager::getMemorySize(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getMemorySize(uid) : default_return;
++    }
++
++    bool BstFilterAppsManager::isAppUsingOldHoudini(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isAppUsingOldHoudini(uid): false;
++    }
++
++    const String16 BstFilterAppsManager::getAdditionalGlExtensions(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getAdditionalGlExtensions(callingPackage): default_return;
++    }
++
++    bool BstFilterAppsManager::areInputDevicesExposed(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->areInputDevicesExposed(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isShowArmAbiListApp(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isShowArmAbiListApp(uid): false;
++    }
++
++    bool BstFilterAppsManager::isIgnoreLargeHeapApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isIgnoreLargeHeapApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isClearCodeCacheApp(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isClearCodeCacheApp(uid): false;
++    }
++
++    bool BstFilterAppsManager::isImageDetectionEnabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isImageDetectionEnabled(callingPackage): false;
++    }
++
++    int BstFilterAppsManager::getHeapGrowthLimitSize(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->getHeapGrowthLimitSize(callingPackage): -1;
++    }
++
++    bool BstFilterAppsManager::isHideProcMapsApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isHideProcMapsApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isEnableNativeGamePad(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isEnableNativeGamePad(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isPreloadBstHookLibraryApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isPreloadBstHookLibraryApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isIl2cppApp(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isIl2cppApp(uid): false;
++    }
++
++    void BstFilterAppsManager::updateIl2cppPkgs(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        service->updateIl2cppPkgs(callingPackage);
++        return;
++    }
++
++    bool BstFilterAppsManager::isSuppressedNotificationApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isSuppressedNotificationApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isMacrosDisabledApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isMacrosDisabledApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::showFeedbackPopup(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->showFeedbackPopup(callingPackage): false;
++    }
++
++    float BstFilterAppsManager::ffmpegConfidenceForApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->ffmpegConfidenceForApp(callingPackage): 0.0f;
++    }
++
++    bool BstFilterAppsManager::isAppUsingSwappy(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isAppUsingSwappy(uid): false;
++    }
++
++    int BstFilterAppsManager::getCameraSensorRotation(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->getCameraSensorRotation(callingPackage) : 0;
++    }
++
++    int BstFilterAppsManager::getCameraInitRotation(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->getCameraInitRotation(callingPackage) : 0;
++    }
++
++    bool BstFilterAppsManager::isUE4GLFlushApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isUE4GLFlushApp(callingPackage): false;
++    }
++
++    const String16 BstFilterAppsManager::isVulkanRequired(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->isVulkanRequired(callingPackage) : default_return;
++    }
++
++    bool BstFilterAppsManager::isForceKillApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isForceKillApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isFixedDisplayRotationApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isFixedDisplayRotationApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isHppEnabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isHppEnabled(callingPackage): true;
++    }
++
++    bool BstFilterAppsManager::isHotFixApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isHotFixApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isGLInvalidateFramebufferFilterApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isGLInvalidateFramebufferFilterApp(callingPackage): false;
++    }
++
++    int BstFilterAppsManager::getUnityFlickerPatchRequired(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->getUnityFlickerPatchRequired(callingPackage) : 0;
++    }
++
++    int BstFilterAppsManager::getXperfMode(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->getXperfMode(uid): 0;
++    }
++
++    bool BstFilterAppsManager::isIntelGLDispatchComputeFlushApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isIntelGLDispatchComputeFlushApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isDhdg(const int32_t uid)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isDhdg(uid): false;
++    }
++
++    bool BstFilterAppsManager::isGlNativeSyncDisabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isGlNativeSyncDisabled(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isAngleDisabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isAngleDisabled(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isHotFixAppByUid(const int32_t uid)
++    {
++        (void)uid;  // A16DBG:P2:D9 silence -Wunused-parameter in vendor variant (uid only used in system path)
++#ifndef __ANDROID_VNDK__  // A16DBG:P2:D9 PermissionController system-only; vendor fail-open
++        Vector<String16> packages;
++        PermissionController pc;
++        pc.getPackagesForUid(uid, packages);
++        if (packages.size() > 0) {
++            return isHotFixApp(packages[0]);
++        }
++#endif
++        return false;
++    }
++
++    bool BstFilterAppsManager::isFbScreenLockApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isFbScreenLockApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isOneStorePay(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isOneStorePay(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isGLProgramBinaryApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isGLProgramBinaryApp(callingPackage): true;
++    }
++
++    bool BstFilterAppsManager::isGLUnmapBufferPerfApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isGLUnmapBufferPerfApp(callingPackage): true;
++    }
++
++    const String16 BstFilterAppsManager::getGLShaderWorkaround(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getGLShaderWorkaround(callingPackage) : default_return;
++    }
++
++    bool BstFilterAppsManager::isDrmEnabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isDrmEnabled(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isEtherNetType(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isEtherNetType(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isTexTargetCheckDisabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isTexTargetCheckDisabled(callingPackage): true;
++    }
++
++    int BstFilterAppsManager::getFixedSurfaceRotationRequired(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->getFixedSurfaceRotationRequired(callingPackage) : -1;
++    }
++
++    const String16 BstFilterAppsManager::getIapSetting(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getIapSetting(callingPackage) : default_return;
++    }
++
++    bool BstFilterAppsManager::isGlMapBufferRangeHost(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isGlMapBufferRangeHost(callingPackage): true;
++    }
++
++    bool BstFilterAppsManager::isIgnoreSyncTimeout(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isIgnoreSyncTimeout(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isGLVBOCacheDisableApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isGLVBOCacheDisableApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isBlockEditWhenComposing(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isBlockEditWhenComposing(callingPackage): false;
++    }
++
++    const String16 BstFilterAppsManager::getGLHostInfo(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getGLHostInfo(callingPackage) : default_return;
++    }
++
++    const String16 BstFilterAppsManager::getGLExtensionsIgnore(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getGLExtensionsIgnore(callingPackage) : default_return;
++    }
++
++    const String16 BstFilterAppsManager::getVkHostInfo(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getVkHostInfo(callingPackage) : default_return;
++    }
++
++    const String16 BstFilterAppsManager::getVKDeviceExtIgnore(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getVKDeviceExtIgnore(callingPackage) : default_return;
++    }
++
++    bool BstFilterAppsManager::isEGLSurfaceIgnore(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isEGLSurfaceIgnore(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isHardKeyBoard(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isHardKeyBoard(callingPackage): false;
++    }
++
++     bool BstFilterAppsManager::isIntelAutoGLFlushApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isIntelAutoGLFlushApp(callingPackage): true;
++    }
++
++    bool BstFilterAppsManager::isRotateDisabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isRotateDisabled(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isUnreal5App(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isUnreal5App(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isUE5PBDisabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isUE5PBDisabled(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isBptcApp(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isBptcApp(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isExtractNativeLibs(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isExtractNativeLibs(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isDefaultXYDpi(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isDefaultXYDpi(callingPackage): false;
++    }
++
++    int BstFilterAppsManager::getPScoreAbove(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->getPScoreAbove(callingPackage) : 0;
++    }
++
++    bool BstFilterAppsManager::isMapBufRangeReadOnceEnabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isMapBufRangeReadOnceEnabled(callingPackage): false;
++    }
++
++    bool BstFilterAppsManager::isFbCompleteCheckDisabled(const String16& callingPackage)
++    {
++        sp<IBstFilterAppsService> service = getService();
++        return service != NULL ? service->isFbCompleteCheckDisabled(callingPackage): false;
++    }
++} // namespace android
++
++extern "C" bool bstIsHotFixApp(const char* callingPackage)
++{
++    return android::BstFilterAppsManager().isHotFixApp(android::String16(callingPackage));
++}
++
++extern "C" int bst_getXPerfMode(const int32_t uid)
++{
++    return android::BstFilterAppsManager().getXperfMode(uid);
++}
++
++extern "C" bool bstIsHotFixAppByUid(const int32_t uid)
++{
++    return android::BstFilterAppsManager().isHotFixAppByUid(uid);
++}
+diff --git a/libs/binder/BstUtilsManager.cpp b/libs/binder/BstUtilsManager.cpp
+new file mode 100755
+index 0000000000..1b9a1bdacf
+--- /dev/null
++++ b/libs/binder/BstUtilsManager.cpp
+@@ -0,0 +1,56 @@
++#define LOG_TAG "BstUtilsManager"
++
++#include <binder/BstUtilsManager.h>
++#include <binder/Binder.h>
++#include <binder/IServiceManager.h>
++
++#include <utils/Log.h>
++#include <utils/SystemClock.h>
++
++namespace android {
++
++    BstUtilsManager::BstUtilsManager()
++    {
++    }
++
++    sp<IBstUtilsService> BstUtilsManager::getService()
++    {
++        //int64_t startTime = uptimeMillis();
++        mLock.lock();
++        sp<IBstUtilsService> service = mService;
++        if (service == NULL || !(IInterface::asBinder(service)->isBinderAlive())) {
++            sp<IBinder> binder = defaultServiceManager()->checkService(String16("bstutils"));
++            if (binder == NULL) {
++                ALOGW("Waited too long for bstutils service, giving up");
++            } else {
++                service = interface_cast<IBstUtilsService>(binder);
++                mService = service;
++            }
++        }
++        mLock.unlock();
++        return service;
++    }
++
++    bool BstUtilsManager::setProperty(const String16& key, const String16& value)
++    {
++        sp<IBstUtilsService> service = getService();
++        return service != NULL ? service->setProperty(key, value): false;
++    }
++
++    const String16 BstUtilsManager::getAppNameFromPid(const int32_t pid)
++    {
++        sp<IBstUtilsService> service = getService();
++        String16 default_return("");
++        return service != NULL ? service->getAppNameFromPid(pid): default_return;
++    }
++
++    bool BstUtilsManager::setServiceComponentState(const String16& serviceName, const bool enabled)
++    {
++        sp<IBstUtilsService> service = getService();
++        if (service != NULL) {
++            service->setServiceComponentState(serviceName, enabled);
++            return true;
++        }
++        return false;
++    }
++} // namespace android
+diff --git a/libs/binder/IBstFilterAppsService.cpp b/libs/binder/IBstFilterAppsService.cpp
+new file mode 100755
+index 0000000000..6a8639bfc5
+--- /dev/null
++++ b/libs/binder/IBstFilterAppsService.cpp
+@@ -0,0 +1,2498 @@
++#define LOG_TAG "BstFilterAppsService"
++
++#include <binder/IBstFilterAppsService.h>
++
++#include <utils/Debug.h>
++#include <utils/Log.h>
++#include <binder/Parcel.h>
++#include <utils/String8.h>
++#include <utils/String16.h>
++
++#include <Static.h>
++
++namespace android {
++
++// ----------------------------------------------------------------------
++
++class BpBstFilterAppsService : public BpInterface<IBstFilterAppsService>
++{
++public:
++    explicit BpBstFilterAppsService(const sp<IBinder>& impl)
++        : BpInterface<IBstFilterAppsService>(impl)
++    {
++    }
++
++    virtual bool isSmallScreenApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isSmallScreenApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool forceArmInstall(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_forceArmInstall, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++
++    }
++
++    virtual bool forceX86Install(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_forceX86Install, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isWhiteListed(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isWhiteListed, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isBlackListed(const String16& packageName, const String16& version) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        data.writeString16(version);
++        remote()->transact(T_isBlackListed, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isSoftKeyboardRequired(const String16& packageName, const String16& activity) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        data.writeString16(activity);
++        remote()->transact(T_isSoftKeyboardRequired, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 getSoftKeyboardModifier(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getSoftKeyboardModifier, data, &reply);
++        // fail on exception
++        String16 default_return("soft");
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isMarketRequired(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isMarketRequired, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isHeadsetRequired(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isHeadsetRequired, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++
++    }
++
++    virtual bool isPortraitDisabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isPortraitDisabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0)
++        {
++            return false;
++        }
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++
++    }
++
++    virtual const String16 getCustomDpi(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getCustomDpi, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isGlv1notimpApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGlv1notimpApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isPvrtcApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isPvrtcApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isS3tcApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isS3tcApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isXarchApp(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isXarchApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isClearInstallApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isClearInstallApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isScreenOrientationFixed(const String16& callingPkgName,const String16& currentPkgName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(callingPkgName);
++        data.writeString16(currentPkgName);
++        remote()->transact(T_isScreenOrientationFixed, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual int isCameraRotationRequired(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isCameraRotationRequired, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return 0;
++        int32_t res = reply.readInt32();
++        return res;
++    }
++
++    virtual bool forceLandscapeOrientationIfUnspecified(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_forceLandscapeOrientationIfUnspecified, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 getGlRenderer(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getGlRenderer, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual const String16 getGlVendor(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getGlVendor, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isXArmApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isXArmApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isGL3App(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGL3App, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 isLoadLibHackReqd(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isLoadLibHackReqd, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isGL3Disabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGL3Disabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isZeroMappedPageReqd(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isZeroMappedPageReqd, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isModifysdPathReqd(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isModifysdPathReqd, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isAGAGL3Disabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isAGAGL3Disabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isPGAGL3Disabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isPGAGL3Disabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isShowOrigCpuinfoArmApp(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isShowOrigCpuinfoArmApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isAstcApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isAstcApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isPatchRelocApp(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isPatchRelocApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 getPgaGlVersion(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getPgaGlVersion, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual const String16 getAgaGlVersion(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getAgaGlVersion, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isHardwareAstcDisabledApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isHardwareAstcDisabledApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 getMemorySize(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_getMemorySize, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isAppUsingOldHoudini(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isAppUsingOldHoudini, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 getAdditionalGlExtensions(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getAdditionalGlExtensions, data, &reply);
++        String16 default_return("");
++        //fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool areInputDevicesExposed(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_areInputDevicesExposed, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isShowArmAbiListApp(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isShowArmAbiListApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isIgnoreLargeHeapApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isIgnoreLargeHeapApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isClearCodeCacheApp(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isClearCodeCacheApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isImageDetectionEnabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isImageDetectionEnabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual int getHeapGrowthLimitSize(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getHeapGrowthLimitSize, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return -1;
++        int32_t res = reply.readInt32();
++        return res;
++    }
++
++    virtual bool isHideProcMapsApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isHideProcMapsApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isEnableNativeGamePad(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isEnableNativeGamePad, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isPreloadBstHookLibraryApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isPreloadBstHookLibraryApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isIl2cppApp(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isIl2cppApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    void updateIl2cppPkgs(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_updateIl2cppPkgs, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return;
++
++        return;
++    }
++
++    virtual bool isSuppressedNotificationApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isSuppressedNotificationApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isMacrosDisabledApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isMacrosDisabledApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool showFeedbackPopup(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_showFeedbackPopup, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual float ffmpegConfidenceForApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_ffmpegConfidenceForApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return 0.0f;
++        float res = reply.readFloat();
++        return res;
++    }
++
++    virtual bool isAppUsingSwappy(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isAppUsingSwappy, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 getMouseCursorStyle(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getMouseCursorStyle, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual int getCameraSensorRotation(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getCameraSensorRotation, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return 0;
++        int32_t res = reply.readInt32();
++        return res;
++    }
++
++    virtual int getCameraInitRotation(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getCameraInitRotation, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return 0;
++        int32_t res = reply.readInt32();
++        return res;
++    }
++
++    virtual bool isUE4GLFlushApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isUE4GLFlushApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isGetNowggAccountsListApp(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isGetNowggAccountsListApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isGoogleSignInRequired(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGoogleSignInRequired, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 isVulkanRequired(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isVulkanRequired, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++
++    virtual bool isForceKillApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isForceKillApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isFixedDisplayRotationApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isFixedDisplayRotationApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++
++    virtual const String16 getGameDefaultSetting(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getGameDefaultSetting, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isHppEnabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isHppEnabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return true;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isHotFixApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isHotFixApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isGLInvalidateFramebufferFilterApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGLInvalidateFramebufferFilterApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual int getUnityFlickerPatchRequired(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getUnityFlickerPatchRequired, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return 0;
++        int32_t res = reply.readInt32();
++        return res;
++    }
++    virtual const String16 getDefaultProfile(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getDefaultProfile, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual int getXperfMode(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_getXperfMode, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return 0;
++        int32_t res = reply.readInt32();
++        return res;
++    }
++
++    virtual bool isIntelGLDispatchComputeFlushApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isIntelGLDispatchComputeFlushApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isDhdg(const int32_t uid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeInt32(uid);
++        remote()->transact(T_isDhdg, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isGlNativeSyncDisabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGlNativeSyncDisabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isAngleDisabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isAngleDisabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isFbScreenLockApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isFbScreenLockApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isOneStorePay(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isOneStorePay, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isGLProgramBinaryApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGLProgramBinaryApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return true;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isGLUnmapBufferPerfApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGLUnmapBufferPerfApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return true;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 getGLShaderWorkaround(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getGLShaderWorkaround, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isDrmEnabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isDrmEnabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isEtherNetType(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isEtherNetType, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isTexTargetCheckDisabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isTexTargetCheckDisabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return true;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isIgnoreSyncTimeout(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isIgnoreSyncTimeout, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual int getFixedSurfaceRotationRequired(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getFixedSurfaceRotationRequired, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return -1;
++        int32_t res = reply.readInt32();
++        return res;
++    }
++
++    virtual const String16 getIapSetting(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getIapSetting, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isGlMapBufferRangeHost(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGlMapBufferRangeHost, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return true;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isGLVBOCacheDisableApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isGLVBOCacheDisableApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isBlockEditWhenComposing(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isBlockEditWhenComposing, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 getGLHostInfo(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getGLHostInfo, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual const String16 getGLExtensionsIgnore(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getGLExtensionsIgnore, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual const String16 getVkHostInfo(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getVkHostInfo, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual const String16 getVKDeviceExtIgnore(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getVKDeviceExtIgnore, data, &reply);
++        String16 default_return("");
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool isEGLSurfaceIgnore(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isEGLSurfaceIgnore, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isHardKeyBoard(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isHardKeyBoard, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isIntelAutoGLFlushApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isIntelAutoGLFlushApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return true;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isRotateDisabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isRotateDisabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isUnreal5App(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isUnreal5App, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isUE5PBDisabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isUE5PBDisabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isBptcApp(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isBptcApp, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isExtractNativeLibs(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isExtractNativeLibs, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isDefaultXYDpi(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isDefaultXYDpi, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++        return res;
++    }
++
++    virtual int getPScoreAbove(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_getPScoreAbove, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        return res;
++    }
++
++    virtual bool isMapBufRangeReadOnceEnabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isMapBufRangeReadOnceEnabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual bool isFbCompleteCheckDisabled(const String16& packageName) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstFilterAppsService::getInterfaceDescriptor());
++        data.writeString16(packageName);
++        remote()->transact(T_isFbCompleteCheckDisabled, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++};
++
++// ----------------------------------------------------------------------
++
++IMPLEMENT_META_INTERFACE(BstFilterAppsService, "com.bluestacks.os.IBstFilterAppsService")
++
++// ----------------------------------------------------------------------
++
++// NOLINTNEXTLINE(google-default-arguments)
++status_t BnBstFilterAppsService::onTransact(
++    uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
++{
++    //printf("BstFilterAppsService received: "); data.print();
++    switch(code) {
++        case T_isSmallScreenApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isSmallScreenApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_forceArmInstall: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = forceArmInstall(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_forceX86Install: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = forceX86Install(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isWhiteListed: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isWhiteListed(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isBlackListed: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 version = data.readString16();
++            bool res = isBlackListed(packageName, version);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isSoftKeyboardRequired: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 activity = data.readString16();
++            bool res = isSoftKeyboardRequired(packageName, activity);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_getSoftKeyboardModifier: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getSoftKeyboardModifier(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_isMarketRequired: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isMarketRequired(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isHeadsetRequired: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isHeadsetRequired(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isPortraitDisabled: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isPortraitDisabled(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_getCustomDpi: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getCustomDpi(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_isGlv1notimpApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isGlv1notimpApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isPvrtcApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isPvrtcApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isS3tcApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isS3tcApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isXarchApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isXarchApp(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isClearInstallApp : {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isClearInstallApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isScreenOrientationFixed: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 callingPkgName = data.readString16();
++            String16 currentPkgName = data.readString16();
++            bool res = isScreenOrientationFixed(callingPkgName,currentPkgName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isCameraRotationRequired: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            int res = isCameraRotationRequired(packageName);
++            reply->writeNoException();
++            reply->writeInt32(res);
++            return NO_ERROR;
++        } break;
++        case T_forceLandscapeOrientationIfUnspecified: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = forceLandscapeOrientationIfUnspecified(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_getGlRenderer: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getGlRenderer(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_getGlVendor: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getGlVendor(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_isGL3App: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isGL3App(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isLoadLibHackReqd: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            String16 res = isLoadLibHackReqd(uid);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_isGL3Disabled: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isGL3Disabled(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isZeroMappedPageReqd: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isZeroMappedPageReqd(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isModifysdPathReqd: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isModifysdPathReqd(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isAGAGL3Disabled: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isAGAGL3Disabled(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isPGAGL3Disabled: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isPGAGL3Disabled(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isShowOrigCpuinfoArmApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isShowOrigCpuinfoArmApp(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isAstcApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isAstcApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isPatchRelocApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isPatchRelocApp(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_getPgaGlVersion: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getPgaGlVersion(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_getAgaGlVersion : {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getAgaGlVersion(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_isHardwareAstcDisabledApp : {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isHardwareAstcDisabledApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isXArmApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isXArmApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_getMemorySize:  {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            String16 res = getMemorySize(uid);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_isAppUsingOldHoudini: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isAppUsingOldHoudini(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_getAdditionalGlExtensions: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getAdditionalGlExtensions(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_areInputDevicesExposed: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = areInputDevicesExposed(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isShowArmAbiListApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isShowArmAbiListApp(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isIgnoreLargeHeapApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isIgnoreLargeHeapApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isClearCodeCacheApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isClearCodeCacheApp(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isImageDetectionEnabled: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isImageDetectionEnabled(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_getHeapGrowthLimitSize: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            int res = getHeapGrowthLimitSize(packageName);
++            reply->writeNoException();
++            reply->writeInt32(res);
++            return NO_ERROR;
++        } break;
++        case T_isHideProcMapsApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isHideProcMapsApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isEnableNativeGamePad: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isEnableNativeGamePad(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isPreloadBstHookLibraryApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isPreloadBstHookLibraryApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_isIl2cppApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isIl2cppApp(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_updateIl2cppPkgs: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            updateIl2cppPkgs(packageName);
++            reply->writeNoException();
++            return NO_ERROR;
++        } break;
++
++        case T_isSuppressedNotificationApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isSuppressedNotificationApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_isMacrosDisabledApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isMacrosDisabledApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_showFeedbackPopup: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = showFeedbackPopup(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_ffmpegConfidenceForApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            float res = ffmpegConfidenceForApp(packageName);
++            reply->writeNoException();
++            reply->writeFloat(res);
++            return NO_ERROR;
++        } break;
++
++        case T_isAppUsingSwappy: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isAppUsingSwappy(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_getMouseCursorStyle: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getMouseCursorStyle(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++
++        case T_getCameraSensorRotation: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            int res = getCameraSensorRotation(packageName);
++            reply->writeNoException();
++            reply->writeInt32(res);
++            return NO_ERROR;
++        } break;
++
++        case T_getCameraInitRotation: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            int res = getCameraInitRotation(packageName);
++            reply->writeNoException();
++            reply->writeInt32(res);
++            return NO_ERROR;
++        } break;
++
++        case T_isUE4GLFlushApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isUE4GLFlushApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_isGetNowggAccountsListApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            bool res = isGetNowggAccountsListApp(uid);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_isGoogleSignInRequired: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isGoogleSignInRequired(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_isVulkanRequired: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                String16 res = isVulkanRequired(packageName);
++                reply->writeNoException();
++                reply->writeString16(res);
++                return NO_ERROR;
++            } break;
++
++        case T_isForceKillApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isForceKillApp(packageName);
++            reply->writeNoException();
++            reply->writeInt32(res ? 1 : 0);
++            return NO_ERROR;
++        } break;
++
++        case T_isFixedDisplayRotationApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isFixedDisplayRotationApp(packageName);
++            reply->writeNoException();
++            reply->writeInt32(res ? 1 : 0);
++            return NO_ERROR;
++        } break;
++
++        case T_getGameDefaultSetting: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getGameDefaultSetting(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++
++        case T_isHppEnabled: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isHppEnabled(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_isHotFixApp: {
++             CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isHotFixApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_isGLInvalidateFramebufferFilterApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isGLInvalidateFramebufferFilterApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++
++        case T_getUnityFlickerPatchRequired: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            int res = getUnityFlickerPatchRequired(packageName);
++            reply->writeNoException();
++            reply->writeInt32(res);
++            return NO_ERROR;
++        } break;
++        case T_getDefaultProfile: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            String16 res = getDefaultProfile(packageName);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_getXperfMode: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            int32_t uid = data.readInt32();
++            int res = getXperfMode(uid);
++            reply->writeNoException();
++            reply->writeInt32(res);
++            return NO_ERROR;
++        } break;
++        case T_isIntelGLDispatchComputeFlushApp: {
++            CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++            String16 packageName = data.readString16();
++            bool res = isIntelGLDispatchComputeFlushApp(packageName);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++            case T_isDhdg: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                int32_t uid = data.readInt32();
++                bool res = isDhdg(uid);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isGlNativeSyncDisabled: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isGlNativeSyncDisabled(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isAngleDisabled: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isAngleDisabled(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isFbScreenLockApp: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isFbScreenLockApp(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isOneStorePay: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isOneStorePay(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isGLProgramBinaryApp: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isGLProgramBinaryApp(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isGLUnmapBufferPerfApp: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isGLUnmapBufferPerfApp(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_getGLShaderWorkaround: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                String16 res = getGLShaderWorkaround(packageName);
++                reply->writeNoException();
++                reply->writeString16(res);
++                return NO_ERROR;
++            } break;
++            case T_isDrmEnabled: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isDrmEnabled(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isTexTargetCheckDisabled: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isTexTargetCheckDisabled(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_getFixedSurfaceRotationRequired: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                int res = getFixedSurfaceRotationRequired(packageName);
++                reply->writeNoException();
++                reply->writeInt32(res);
++                return NO_ERROR;
++            } break;
++            case T_getIapSetting: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                String16 res = getIapSetting(packageName);
++                reply->writeNoException();
++                reply->writeString16(res);
++                return NO_ERROR;
++            } break;
++            case T_isGlMapBufferRangeHost: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isGlMapBufferRangeHost(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isIgnoreSyncTimeout: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isIgnoreSyncTimeout(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isGLVBOCacheDisableApp: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isGLVBOCacheDisableApp(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isBlockEditWhenComposing: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isBlockEditWhenComposing(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_getGLHostInfo: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                String16 res = getGLHostInfo(packageName);
++                reply->writeNoException();
++                reply->writeString16(res);
++                return NO_ERROR;
++            } break;
++            case T_getGLExtensionsIgnore: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                String16 res = getGLExtensionsIgnore(packageName);
++                reply->writeNoException();
++                reply->writeString16(res);
++                return NO_ERROR;
++            } break;
++            case T_getVkHostInfo: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                String16 res = getVkHostInfo(packageName);
++                reply->writeNoException();
++                reply->writeString16(res);
++                return NO_ERROR;
++            } break;
++            case T_getVKDeviceExtIgnore: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                String16 res = getVKDeviceExtIgnore(packageName);
++                reply->writeNoException();
++                reply->writeString16(res);
++                return NO_ERROR;
++            } break;
++            case T_isEGLSurfaceIgnore: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isEGLSurfaceIgnore(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isHardKeyBoard: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isHardKeyBoard(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isIntelAutoGLFlushApp: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isIntelAutoGLFlushApp(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isRotateDisabled: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isRotateDisabled(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isUnreal5App: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isUnreal5App(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isUE5PBDisabled: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isUE5PBDisabled(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isBptcApp: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isBptcApp(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isExtractNativeLibs: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isExtractNativeLibs(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isEtherNetType: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isEtherNetType(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isDefaultXYDpi: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isDefaultXYDpi(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_getPScoreAbove: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                int res = getPScoreAbove(packageName);
++                reply->writeNoException();
++                reply->writeInt32(res);
++                return NO_ERROR;
++            } break;
++            case T_isMapBufRangeReadOnceEnabled: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isMapBufRangeReadOnceEnabled(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++            case T_isFbCompleteCheckDisabled: {
++                CHECK_INTERFACE(IBstFilterAppsService, data, reply);
++                String16 packageName = data.readString16();
++                bool res = isFbCompleteCheckDisabled(packageName);
++                reply->writeNoException();
++                if (res == true)
++                    reply->writeInt32(1);
++                else
++                    reply->writeInt32(0);
++                return NO_ERROR;
++            } break;
++      default:
++            return BBinder::onTransact(code, data, reply, flags);
++    }
++}
++
++// ----------------------------------------------------------------------
++
++} // namespace android
+diff --git a/libs/binder/IBstUtilsService.cpp b/libs/binder/IBstUtilsService.cpp
+new file mode 100755
+index 0000000000..0db59faeb2
+--- /dev/null
++++ b/libs/binder/IBstUtilsService.cpp
+@@ -0,0 +1,109 @@
++#define LOG_TAG "BstUtilsService"
++
++#include <binder/IBstUtilsService.h>
++
++#include <utils/Debug.h>
++#include <utils/Log.h>
++#include <binder/Parcel.h>
++#include <utils/String8.h>
++#include <utils/String16.h>
++#include <Static.h>
++
++namespace android {
++
++// ----------------------------------------------------------------------
++
++class BpBstUtilsService : public BpInterface<IBstUtilsService>
++{
++public:
++    explicit BpBstUtilsService(const sp<IBinder>& impl)
++        : BpInterface<IBstUtilsService>(impl)
++    {
++    }
++
++    virtual bool setProperty(const String16& key, const String16& value) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstUtilsService::getInterfaceDescriptor());
++        data.writeString16(key);
++        data.writeString16(value);
++        remote()->transact(T_setProperty, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        int32_t res = reply.readInt32();
++        if (res == 1)
++            return true;
++        else
++            return false;
++    }
++
++    virtual const String16 getAppNameFromPid(const int32_t pid) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstUtilsService::getInterfaceDescriptor());
++        data.writeInt32(pid);
++        remote()->transact(T_getAppNameFromPid, data, &reply);
++        // fail on exception
++        String16 default_return("");
++        if (reply.readExceptionCode() != 0)
++            return default_return;
++        return reply.readString16();
++    }
++
++    virtual bool setServiceComponentState(const String16& service, const bool enabled) {
++        Parcel data, reply;
++        data.writeInterfaceToken(IBstUtilsService::getInterfaceDescriptor());
++        data.writeString16(service);
++        data.writeInt32((enabled ? 1 : 0));
++        remote()->transact(T_setServiceComponentState, data, &reply);
++        // fail on exception
++        if (reply.readExceptionCode() != 0) return false;
++        return true;
++    }
++};
++
++IMPLEMENT_META_INTERFACE(BstUtilsService, "com.bluestacks.os.IBstUtilsService")
++
++// ----------------------------------------------------------------------
++
++// NOLINTNEXTLINE(google-default-arguments)
++status_t BnBstUtilsService::onTransact(
++        uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
++{
++   // printf("BstUtilsService!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! received: "); data.print();
++    switch(code) {
++        case T_setProperty: {
++            CHECK_INTERFACE(IBstUtilsService, data, reply);
++            String16 key = data.readString16();
++            String16 value = data.readString16();
++            bool res = setProperty(key, value);
++            reply->writeNoException();
++            if (res == true)
++                reply->writeInt32(1);
++            else
++                reply->writeInt32(0);
++            return NO_ERROR;
++        } break;
++        case T_getAppNameFromPid: {
++            CHECK_INTERFACE(IBstUtilsService, data, reply);
++            int32_t pid = data.readInt32();
++            String16 res = getAppNameFromPid(pid);
++            reply->writeNoException();
++            reply->writeString16(res);
++            return NO_ERROR;
++        } break;
++        case T_setServiceComponentState: {
++            CHECK_INTERFACE(IBstUtilsService, data, reply);
++            String16 service = data.readString16();
++            bool enabled = (data.readInt32() ? true : false);
++            setServiceComponentState(service, enabled);
++            reply->writeNoException();
++            return NO_ERROR;
++        } break;
++
++        default:
++            return BBinder::onTransact(code, data, reply, flags);
++    }
++}
++
++//----------------------------------------------------------------------
++
++} // namespace android
+diff --git a/libs/binder/include/binder/BstFilterAppsManager.h b/libs/binder/include/binder/BstFilterAppsManager.h
+new file mode 100755
+index 0000000000..3c065059bd
+--- /dev/null
++++ b/libs/binder/include/binder/BstFilterAppsManager.h
+@@ -0,0 +1,125 @@
++#include <binder/Common.h>
++#include <binder/IBstFilterAppsService.h>
++#include <utils/threads.h>
++
++// ---------------------------------------------------------------------------
++namespace android {
++
++    class LIBBINDER_EXPORTED BstFilterAppsManager
++    {
++        public:
++            BstFilterAppsManager();
++            bool isImmersiveEnabledApp(const String16& callingPackage);
++            bool isSmallScreenApp(const String16& callingPackage);
++            bool forceArmInstall(const String16& callingPackage);
++            bool forceX86Install(const String16& callingPackage);
++            bool isWhiteListed(const String16& callingPackage);
++            bool isBlackListed(const String16& callingPackage, const String16& version);
++            bool isSoftKeyboardRequired(const String16& callingPackage, const String16& activity);
++            const String16 getSoftKeyboardModifier(const String16& callingPackage);
++            bool isMarketRequired(const String16& callingPackage);
++            bool isHeadsetRequired(const String16& callingPackage);
++            bool isPortraitDisabled(const String16& callingPackage);
++            const String16 getCustomDpi(const String16& callingPackage);
++            bool isPvrtcApp(const String16& callingPackage);
++            bool isS3tcApp(const String16& callingPackage);
++            bool isGlv1notimpApp(const String16& callingPackage);
++            bool isXarchApp(const int32_t uid);
++            bool isClearInstallApp(const String16& callingPackage);
++            bool isScreenOrientationFixed(const String16& callingPackage,const String16& currentPkgName);
++            int isCameraRotationRequired(const String16& callingPackage);
++            bool forceLandscapeOrientationIfUnspecified(const String16& callingPackage);
++            const String16 getGlRenderer(const String16& callingPackage);
++            const String16 getGlVendor(const String16& callingPackage);
++            bool isGL3App(const String16& callingPackage);
++            const String16 isLoadLibHackReqd(const int32_t uid);
++            bool isGL3Disabled(const String16& callingPackage);
++            bool isZeroMappedPageReqd(const int32_t uid);
++            bool isModifysdPathReqd(const String16& callingPackage);
++            bool isAGAGL3Disabled(const String16& callingPackage);
++            bool isPGAGL3Disabled(const String16& callingPackage);
++            bool isShowOrigCpuinfoArmApp(const int32_t uid);
++            bool isAstcApp(const String16& callingPackage);
++            bool isPatchRelocApp(const int32_t uid);
++            const String16 getPgaGlVersion(const String16& callingPackage);
++            const String16 getAgaGlVersion(const String16& callingPackage);
++            bool isHardwareAstcDisabledApp(const String16& callingPackage);
++            bool isXArmApp(const String16& callingPackage);
++            const String16 getMemorySize(const int32_t uid);
++            bool isAppUsingOldHoudini(const int32_t uid);
++            const String16 getAdditionalGlExtensions(const String16& callingPackage);
++            bool areInputDevicesExposed(const String16& callingPackage);
++            bool isShowArmAbiListApp(const int32_t uid);
++            bool isIgnoreLargeHeapApp(const String16& callingPackage);
++            bool isClearCodeCacheApp(const int32_t uid);
++            bool isImageDetectionEnabled(const String16& callingPackage);
++            int getHeapGrowthLimitSize(const String16& callingPackage);
++            bool isHideProcMapsApp(const String16& callingPackage);
++            bool isEnableNativeGamePad(const String16& callingPackage);
++            bool isPreloadBstHookLibraryApp(const String16& callingPackage);
++            bool isIl2cppApp(const int32_t uid);
++            void updateIl2cppPkgs(const String16& callingPackage);
++            bool isSuppressedNotificationApp(const String16& callingPackage);
++            bool isMacrosDisabledApp(const String16& callingPackage);
++            bool showFeedbackPopup(const String16& callingPackage);
++            float ffmpegConfidenceForApp(const String16& callingPackage);
++            bool isAppUsingSwappy(const int32_t uid);
++            const String16 getMouseCursorStyle(const String16& callingPackage);
++            int getCameraSensorRotation(const String16& callingPackage);
++            int getCameraInitRotation(const String16& callingPackage);
++            bool isUE4GLFlushApp(const String16& callingPackage);
++            bool isGetNowggAccountsListApp(const int32_t uid);
++            bool isGoogleSignInRequired(const String16& callingPackage);
++            const String16 isVulkanRequired(const String16& callingPackage);
++            bool isForceKillApp(const String16& callingPackage);
++            bool isFixedDisplayRotationApp(const String16& callingPackage);
++            const String16 getGameDefaultSetting(const String16&  pkgName);
++            bool isHppEnabled(const String16& callingPackage);
++            bool isHotFixApp(const String16& callingPackage);
++            bool isGLInvalidateFramebufferFilterApp(const String16& callingPackage);
++            int getUnityFlickerPatchRequired(const String16& callingPackage);
++            const String16 getDefaultProfile(const String16&  pkgName);
++            int getXperfMode(const int32_t uid);
++            bool isIntelGLDispatchComputeFlushApp(const String16& callingPackage);
++            bool isDhdg(const int32_t uid);
++            bool isGlNativeSyncDisabled(const String16& callingPackage);
++            bool isAngleDisabled(const String16& callingPackage);
++            bool isHotFixAppByUid(const int32_t uid);
++            bool isFbScreenLockApp(const String16& callingPackage);
++            bool isOneStorePay(const String16& callingPackage);
++            bool isGLProgramBinaryApp(const String16& callingPackage);
++            bool isGLUnmapBufferPerfApp(const String16& callingPackage);
++            const String16 getGLShaderWorkaround(const String16& callingPackage);
++            bool isDrmEnabled(const String16& callingPackage);
++            bool isEtherNetType(const String16& callingPackage);
++            bool isTexTargetCheckDisabled(const String16& callingPackage);
++            int getFixedSurfaceRotationRequired(const String16& callingPackage);
++            const String16 getIapSetting(const String16&  pkgName);
++            bool isGlMapBufferRangeHost(const String16& callingPackage);
++            bool isIgnoreSyncTimeout(const String16& callingPackage);
++            bool isGLVBOCacheDisableApp(const String16& callingPackage);
++            bool isBlockEditWhenComposing(const String16& callingPackage);
++            const String16 getGLHostInfo(const String16& callingPackage);
++            const String16 getGLExtensionsIgnore(const String16& callingPackage);
++            const String16 getVkHostInfo(const String16& callingPackage);
++            const String16 getVKDeviceExtIgnore(const String16& callingPackage);
++            bool isEGLSurfaceIgnore(const String16& callingPackage);
++            bool isHardKeyBoard(const String16& callingPackage);
++            bool isIntelAutoGLFlushApp(const String16& callingPackage);
++            bool isRotateDisabled(const String16& callingPackage);
++            bool isUnreal5App(const String16& callingPackage);
++            bool isUE5PBDisabled(const String16& callingPackage);
++            bool isBptcApp(const String16& callingPackage);
++            bool isExtractNativeLibs(const String16& callingPackage);
++            bool isDefaultXYDpi(const String16& callingPackage);
++            int getPScoreAbove(const String16& callingPackage);
++            bool isMapBufRangeReadOnceEnabled(const String16& callingPackage);
++            bool isFbCompleteCheckDisabled(const String16& callingPackage);
++
++        private:
++            Mutex mLock;
++            sp<IBstFilterAppsService> mService;
++            sp<IBstFilterAppsService> getService();
++    }; // namespace android
++    // ---------------------------------------------------------------------------
++}
+diff --git a/libs/binder/include/binder/BstUtilsManager.h b/libs/binder/include/binder/BstUtilsManager.h
+new file mode 100755
+index 0000000000..85bc35fd79
+--- /dev/null
++++ b/libs/binder/include/binder/BstUtilsManager.h
+@@ -0,0 +1,22 @@
++#include <binder/Common.h>
++#include <binder/IBstUtilsService.h>
++#include <utils/threads.h>
++
++// ---------------------------------------------------------------------------
++namespace android {
++
++    class LIBBINDER_EXPORTED BstUtilsManager
++    {
++        public:
++            BstUtilsManager();
++            bool setProperty(const String16& key, const String16& value);
++            const String16 getAppNameFromPid(const int32_t pid);
++            bool setServiceComponentState(const String16& service, const bool enabled);
++
++        private:
++            Mutex mLock;
++            sp<IBstUtilsService> mService;
++            sp<IBstUtilsService> getService();
++    }; // namespace android
++    // ---------------------------------------------------------------------------
++}
+diff --git a/libs/binder/include/binder/IBstFilterAppsService.h b/libs/binder/include/binder/IBstFilterAppsService.h
+new file mode 100755
+index 0000000000..f8474e88ea
+--- /dev/null
++++ b/libs/binder/include/binder/IBstFilterAppsService.h
+@@ -0,0 +1,266 @@
++#pragma once
++
++#include <binder/Common.h>
++#include <binder/IInterface.h>
++#include <utils/String16.h>
++
++namespace android {
++
++    // ----------------------------------------------------------------------
++
++    class LIBBINDER_EXPORTED IBstFilterAppsService : public IInterface
++    {
++        public:
++            DECLARE_META_INTERFACE(BstFilterAppsService)
++
++            virtual bool isSmallScreenApp(const String16& packageName) = 0;
++            virtual bool forceArmInstall(const String16& packageName) = 0;
++            virtual bool forceX86Install(const String16& packageName) = 0;
++            virtual bool isWhiteListed(const String16& packageName) = 0;
++            virtual bool isBlackListed(const String16& packageName, const String16& version) = 0;
++            virtual bool isSoftKeyboardRequired(const String16& packageName, const String16& activity) = 0;
++            virtual const String16 getSoftKeyboardModifier(const String16& packageName) = 0;
++            virtual bool isMarketRequired(const String16& packageName) = 0;
++            virtual bool isHeadsetRequired(const String16& packageName) = 0;
++            virtual bool isPortraitDisabled(const String16& packageName) = 0;
++            virtual const String16 getCustomDpi(const String16& packageName) = 0;
++            virtual bool isGlv1notimpApp(const String16& packageName) = 0;
++            virtual bool isPvrtcApp(const String16& packageName) = 0;
++            virtual bool isXarchApp(const int32_t uid) = 0;
++            virtual bool isS3tcApp(const String16& packageName) = 0;
++            virtual bool isClearInstallApp(const String16& packageName) = 0;
++            virtual bool isScreenOrientationFixed(const String16& callingPkgName,const String16& currentPkgName) = 0;
++            virtual int  isCameraRotationRequired(const String16& packageName) = 0;
++            virtual bool forceLandscapeOrientationIfUnspecified(const String16& callingPkgName) = 0;
++            virtual const String16 getGlRenderer(const String16& packageName) = 0;
++            virtual const String16 getGlVendor(const String16& packageName) = 0;
++            virtual bool isGL3App(const String16& packageName) = 0;
++            virtual const String16 isLoadLibHackReqd(const int32_t uid) = 0;
++            virtual bool isGL3Disabled(const String16& packageName) = 0;
++            virtual bool isZeroMappedPageReqd(const int32_t uid) = 0;
++            virtual bool isModifysdPathReqd(const String16& packageName) = 0;
++            virtual bool isAGAGL3Disabled(const String16& packageName) = 0;
++            virtual bool isPGAGL3Disabled(const String16& packageName) = 0;
++            virtual bool isShowOrigCpuinfoArmApp(const int32_t uid) = 0;
++            virtual bool isAstcApp(const String16& packageName) = 0;
++            virtual bool isPatchRelocApp(const int32_t uid) = 0;
++            virtual const String16 getPgaGlVersion(const String16& packageName) = 0;
++            virtual const String16 getAgaGlVersion(const String16& packageName) = 0;
++            virtual bool isHardwareAstcDisabledApp(const String16& packageName) = 0;
++            virtual bool isXArmApp(const String16& packageName) = 0;
++            virtual const String16 getMemorySize(const int32_t uid) = 0;
++            virtual bool isAppUsingOldHoudini(const int32_t uid) = 0;
++            virtual const String16 getAdditionalGlExtensions(const String16& packageName) = 0;
++            virtual bool areInputDevicesExposed(const String16& packageName) = 0;
++            virtual bool isShowArmAbiListApp(const int32_t uid) = 0;
++            virtual bool isIgnoreLargeHeapApp(const String16& packageName) = 0;
++            virtual bool isClearCodeCacheApp(const int32_t uid) = 0;
++            virtual bool isImageDetectionEnabled(const String16& packageName) = 0;
++            virtual int  getHeapGrowthLimitSize(const String16& packageName) = 0;
++            virtual bool isHideProcMapsApp(const String16& packageName) = 0;
++            virtual bool isEnableNativeGamePad(const String16& packageName) = 0;
++            virtual bool isPreloadBstHookLibraryApp(const String16& packageName) = 0;
++            virtual bool isIl2cppApp(const int32_t uid) = 0;
++            virtual void updateIl2cppPkgs(const String16& packageName) = 0;
++            virtual bool isSuppressedNotificationApp(const String16& packageName) = 0;
++            virtual bool isMacrosDisabledApp(const String16& packageName) = 0;
++            virtual bool showFeedbackPopup(const String16& packageName) = 0;
++            virtual float ffmpegConfidenceForApp(const String16& packageName) = 0;
++            virtual bool isAppUsingSwappy(const int32_t uid) = 0;
++            virtual const String16 getMouseCursorStyle(const String16& packageName) = 0;
++            virtual int  getCameraSensorRotation(const String16& packageName) = 0;
++            virtual int  getCameraInitRotation(const String16& packageName) = 0;
++            virtual bool isUE4GLFlushApp(const String16& packageName) = 0;
++            virtual bool isGetNowggAccountsListApp(const int32_t uid) = 0;
++            virtual bool isGoogleSignInRequired(const String16& packageName) = 0;
++            virtual const String16 isVulkanRequired(const String16& packageName) = 0;
++            virtual bool isForceKillApp(const String16& packageName) = 0;
++            virtual bool isFixedDisplayRotationApp(const String16& packageName) = 0;
++            virtual const String16 getGameDefaultSetting(const String16& packageName) = 0;
++            virtual bool isHppEnabled(const String16& packageName) = 0;
++            virtual bool isHotFixApp(const String16& packageName) = 0;
++            virtual bool isGLInvalidateFramebufferFilterApp(const String16& packageName) = 0;
++            virtual int  getUnityFlickerPatchRequired(const String16& packageName) = 0;
++            virtual const String16 getDefaultProfile(const String16& packageName) = 0;
++            virtual int getXperfMode(const int32_t uid) = 0;
++            virtual bool isIntelGLDispatchComputeFlushApp(const String16& packageName) = 0;
++            virtual bool isDhdg(const int32_t uid) = 0;
++            virtual bool isGlNativeSyncDisabled(const String16& packageName) = 0;
++            virtual bool isAngleDisabled(const String16& packageName) = 0;
++            virtual bool isFbScreenLockApp(const String16& packageName) = 0;
++            virtual bool isOneStorePay(const String16& packageName) = 0;
++            virtual bool isGLProgramBinaryApp(const String16& packageName) = 0;
++            virtual bool isGLUnmapBufferPerfApp(const String16& packageName) = 0;
++            virtual const String16 getGLShaderWorkaround(const String16& packageName) = 0;
++            virtual bool isDrmEnabled(const String16& packageName) = 0;
++            virtual bool isEtherNetType(const String16& packageName) = 0;
++            virtual bool isTexTargetCheckDisabled(const String16& packageName) = 0;
++            virtual int  getFixedSurfaceRotationRequired(const String16& packageName) = 0;
++            virtual const String16 getIapSetting(const String16& packageName) = 0;
++            virtual bool isGlMapBufferRangeHost(const String16& packageName) = 0;
++            virtual bool isIgnoreSyncTimeout(const String16& packageName) = 0;
++            virtual bool isGLVBOCacheDisableApp(const String16& packageName) = 0;
++            virtual bool isBlockEditWhenComposing(const String16& packageName) = 0;
++            virtual const String16 getGLHostInfo(const String16& packageName) = 0;
++            virtual const String16 getGLExtensionsIgnore(const String16& packageName) = 0;
++            virtual const String16 getVkHostInfo(const String16& packageName) = 0;
++            virtual const String16 getVKDeviceExtIgnore(const String16& packageName) = 0;
++            virtual bool isEGLSurfaceIgnore(const String16& packageName) = 0;
++            virtual bool isHardKeyBoard(const String16& packageName) = 0;
++            virtual bool isIntelAutoGLFlushApp(const String16& packageName) = 0;
++            virtual bool isRotateDisabled(const String16& packageName) = 0;
++            virtual bool isUnreal5App(const String16& packageName) = 0;
++            virtual bool isUE5PBDisabled(const String16& packageName) = 0;
++            virtual bool isBptcApp(const String16& packageName) = 0;
++            virtual bool isExtractNativeLibs(const String16& packageName) = 0;
++            virtual bool isDefaultXYDpi(const String16& packageName) = 0;
++            virtual int getPScoreAbove(const String16& packageName) = 0;
++            virtual bool isMapBufRangeReadOnceEnabled(const String16& pkgName) = 0;
++            virtual bool isFbCompleteCheckDisabled(const String16& packageName) = 0;
++
++            /**
++             * These should be in sync with the ordering in services's Aidl.
++             * Here, it directly relates with IBstFilterAppsServices.aidl.
++             * If not in sync, these remote calls may call different functions than intended.
++             */
++            enum {
++
++                T_isSmallScreenApp = IBinder::FIRST_CALL_TRANSACTION + 0,
++                T_forceArmInstall = IBinder::FIRST_CALL_TRANSACTION + 1,
++                T_forceX86Install = IBinder::FIRST_CALL_TRANSACTION + 2,
++                T_isWhiteListed = IBinder::FIRST_CALL_TRANSACTION + 3,
++                T_isBlackListed = IBinder::FIRST_CALL_TRANSACTION + 4,
++                T_isSoftKeyboardRequired = IBinder::FIRST_CALL_TRANSACTION + 5,
++                T_getSoftKeyboardModifier = IBinder::FIRST_CALL_TRANSACTION + 6,
++                T_isMarketRequired = IBinder::FIRST_CALL_TRANSACTION + 7,
++                T_isHeadsetRequired = IBinder::FIRST_CALL_TRANSACTION + 8,
++                T_isPortraitDisabled = IBinder::FIRST_CALL_TRANSACTION + 9,
++                T_getCustomDpi = IBinder::FIRST_CALL_TRANSACTION + 10,
++                T_isGlv1notimpApp = IBinder::FIRST_CALL_TRANSACTION + 11,
++                T_isPvrtcApp = IBinder::FIRST_CALL_TRANSACTION + 12,
++                T_isXarchApp = IBinder::FIRST_CALL_TRANSACTION + 13,
++                T_isS3tcApp = IBinder::FIRST_CALL_TRANSACTION + 14,
++                T_isClearInstallApp = IBinder::FIRST_CALL_TRANSACTION + 15,
++                T_isScreenOrientationFixed = IBinder::FIRST_CALL_TRANSACTION + 16,
++                T_isCameraRotationRequired = IBinder::FIRST_CALL_TRANSACTION + 17,
++                T_forceLandscapeOrientationIfUnspecified = IBinder::FIRST_CALL_TRANSACTION + 18,
++                T_getGlRenderer = IBinder::FIRST_CALL_TRANSACTION + 19,
++                T_getGlVendor = IBinder::FIRST_CALL_TRANSACTION + 20,
++                T_isGL3App = IBinder::FIRST_CALL_TRANSACTION + 21,
++                T_isLoadLibHackReqd = IBinder::FIRST_CALL_TRANSACTION + 22,
++                T_isGL3Disabled = IBinder::FIRST_CALL_TRANSACTION + 23,
++                T_isZeroMappedPageReqd = IBinder::FIRST_CALL_TRANSACTION + 24,
++                T_isModifysdPathReqd = IBinder::FIRST_CALL_TRANSACTION + 25,
++                T_isAGAGL3Disabled = IBinder::FIRST_CALL_TRANSACTION + 26,
++                T_isPGAGL3Disabled = IBinder::FIRST_CALL_TRANSACTION + 27,
++                T_isShowOrigCpuinfoArmApp = IBinder::FIRST_CALL_TRANSACTION + 28,
++                T_isAstcApp = IBinder::FIRST_CALL_TRANSACTION + 29,
++                T_isPatchRelocApp = IBinder::FIRST_CALL_TRANSACTION + 30,
++                T_getPgaGlVersion = IBinder::FIRST_CALL_TRANSACTION + 31,
++                T_getAgaGlVersion = IBinder::FIRST_CALL_TRANSACTION + 32,
++                T_isHardwareAstcDisabledApp = IBinder::FIRST_CALL_TRANSACTION + 33,
++                T_isXArmApp = IBinder::FIRST_CALL_TRANSACTION + 34,
++                T_getMemorySize = IBinder::FIRST_CALL_TRANSACTION + 35,
++                T_isIMEDisabled = IBinder::FIRST_CALL_TRANSACTION + 36,
++                T_isForceVibrate = IBinder::FIRST_CALL_TRANSACTION + 37,
++                T_isHideBstActivityInfo = IBinder::FIRST_CALL_TRANSACTION + 38,
++                T_isArmApp = IBinder::FIRST_CALL_TRANSACTION + 39,
++                T_isXCpuAbi = IBinder::FIRST_CALL_TRANSACTION + 40,
++                T_isModifyDisplayRotationApp = IBinder::FIRST_CALL_TRANSACTION + 41,
++                T_isBluestacksPartnerApp = IBinder::FIRST_CALL_TRANSACTION + 42,
++                T_getAccelerometerSetting = IBinder::FIRST_CALL_TRANSACTION + 43,
++                T_getAccelerometerList = IBinder::FIRST_CALL_TRANSACTION + 44,
++                T_getHeadSetList = IBinder::FIRST_CALL_TRANSACTION + 45,
++                T_getInstallerPkg = IBinder::FIRST_CALL_TRANSACTION + 46,
++                T_getBrowserUrl = IBinder::FIRST_CALL_TRANSACTION + 47,
++                T_updateAbiEntry = IBinder::FIRST_CALL_TRANSACTION + 48,
++                T_getConfigInfoForPackage = IBinder::FIRST_CALL_TRANSACTION + 49,
++                T_getBlackListAction = IBinder::FIRST_CALL_TRANSACTION + 50,
++                T_getForceAbiInstallMode = IBinder::FIRST_CALL_TRANSACTION + 51,
++                T_isForcedDexoptWithInstallFlag = IBinder::FIRST_CALL_TRANSACTION + 52,
++                T_isAppUsingOldHoudini = IBinder::FIRST_CALL_TRANSACTION + 53,
++                T_getAdditionalGlExtensions = IBinder::FIRST_CALL_TRANSACTION + 54,
++                T_areInputDevicesExposed = IBinder::FIRST_CALL_TRANSACTION + 55,
++                T_isShowArmAbiListApp = IBinder::FIRST_CALL_TRANSACTION + 56,
++                T_isIgnoreLargeHeapApp = IBinder::FIRST_CALL_TRANSACTION + 57,
++                T_isClearCodeCacheApp = IBinder::FIRST_CALL_TRANSACTION + 58,
++                T_isForcedInputDisabledApp = IBinder::FIRST_CALL_TRANSACTION + 59,
++                T_isImageDetectionEnabled = IBinder::FIRST_CALL_TRANSACTION + 60,
++                T_getHeapGrowthLimitSize = IBinder::FIRST_CALL_TRANSACTION + 61,
++                T_isHideProcMapsApp = IBinder::FIRST_CALL_TRANSACTION + 62,
++                T_isEnableNativeGamePad = IBinder::FIRST_CALL_TRANSACTION + 63,
++                T_isPreloadBstHookLibraryApp = IBinder::FIRST_CALL_TRANSACTION + 64,
++                T_isIl2cppApp = IBinder::FIRST_CALL_TRANSACTION + 65,
++                T_updateIl2cppPkgs = IBinder::FIRST_CALL_TRANSACTION + 66,
++                T_isSuppressedNotificationApp = IBinder::FIRST_CALL_TRANSACTION + 67,
++                T_isMacrosDisabledApp = IBinder::FIRST_CALL_TRANSACTION + 68,
++                T_showFeedbackPopup = IBinder::FIRST_CALL_TRANSACTION + 69,
++                T_ffmpegConfidenceForApp = IBinder::FIRST_CALL_TRANSACTION + 70,
++                T_isAppUsingSwappy = IBinder::FIRST_CALL_TRANSACTION + 71,
++                T_getMouseCursorStyle = IBinder::FIRST_CALL_TRANSACTION + 72,
++                T_getCameraSensorRotation = IBinder::FIRST_CALL_TRANSACTION + 73,
++                T_isUE4GLFlushApp = IBinder::FIRST_CALL_TRANSACTION + 74,
++                T_isGetNowggAccountsListApp = IBinder::FIRST_CALL_TRANSACTION + 75,
++                T_isGoogleSignInRequired = IBinder::FIRST_CALL_TRANSACTION + 76,
++                T_getMouseAction = IBinder::FIRST_CALL_TRANSACTION + 77,
++                T_isVulkanRequired = IBinder::FIRST_CALL_TRANSACTION + 78,
++                T_isForceKillApp = IBinder::FIRST_CALL_TRANSACTION + 79,
++                T_isFixedDisplayRotationApp = IBinder::FIRST_CALL_TRANSACTION + 80,
++                T_getGameDefaultSetting = IBinder::FIRST_CALL_TRANSACTION + 81,
++                T_isHppEnabled = IBinder::FIRST_CALL_TRANSACTION + 82,
++                T_isHotFixApp = IBinder::FIRST_CALL_TRANSACTION + 83,
++                T_isGLInvalidateFramebufferFilterApp = IBinder::FIRST_CALL_TRANSACTION + 84,
++                T_getUnityFlickerPatchRequired = IBinder::FIRST_CALL_TRANSACTION + 85,
++                T_getDefaultProfile = IBinder::FIRST_CALL_TRANSACTION + 86,
++                T_getXperfMode = IBinder::FIRST_CALL_TRANSACTION + 87,
++                T_isIntelGLDispatchComputeFlushApp = IBinder::FIRST_CALL_TRANSACTION + 88,
++                T_getCameraInitRotation = IBinder::FIRST_CALL_TRANSACTION + 89,
++                T_isDhdg = IBinder::FIRST_CALL_TRANSACTION + 90,
++                T_isGlNativeSyncDisabled = IBinder::FIRST_CALL_TRANSACTION + 91,
++                T_isAngleDisabled = IBinder::FIRST_CALL_TRANSACTION + 92,
++                T_isFbScreenLockApp = IBinder::FIRST_CALL_TRANSACTION + 93,
++                T_isOneStorePay = IBinder::FIRST_CALL_TRANSACTION + 94,
++                T_isGLProgramBinaryApp = IBinder::FIRST_CALL_TRANSACTION + 95,
++                T_isGLUnmapBufferPerfApp = IBinder::FIRST_CALL_TRANSACTION + 96,
++                T_getGLShaderWorkaround = IBinder::FIRST_CALL_TRANSACTION + 97,
++                T_isDrmEnabled = IBinder::FIRST_CALL_TRANSACTION + 98,
++                T_isTexTargetCheckDisabled = IBinder::FIRST_CALL_TRANSACTION + 99,
++                T_getFixedSurfaceRotationRequired = IBinder::FIRST_CALL_TRANSACTION + 100,
++                T_getIapSetting = IBinder::FIRST_CALL_TRANSACTION + 101,
++                T_isGlMapBufferRangeHost = IBinder::FIRST_CALL_TRANSACTION + 102,
++                T_isIgnoreSyncTimeout = IBinder::FIRST_CALL_TRANSACTION + 103,
++                T_isGLVBOCacheDisableApp = IBinder::FIRST_CALL_TRANSACTION + 104,
++                T_isBlockEditWhenComposing = IBinder::FIRST_CALL_TRANSACTION + 105,
++                T_getGLHostInfo = IBinder::FIRST_CALL_TRANSACTION + 106,
++                T_getGLExtensionsIgnore = IBinder::FIRST_CALL_TRANSACTION + 107,
++                T_isEGLSurfaceIgnore = IBinder::FIRST_CALL_TRANSACTION + 108,
++                T_isHardKeyBoard = IBinder::FIRST_CALL_TRANSACTION + 109,
++                T_isIntelAutoGLFlushApp = IBinder::FIRST_CALL_TRANSACTION + 110,
++                T_isRotateDisabled = IBinder::FIRST_CALL_TRANSACTION + 111,
++                T_isUnreal5App = IBinder::FIRST_CALL_TRANSACTION + 112,
++                T_isUE5PBDisabled = IBinder::FIRST_CALL_TRANSACTION + 113,
++                T_isBptcApp = IBinder::FIRST_CALL_TRANSACTION + 114,
++                T_isExtractNativeLibs = IBinder::FIRST_CALL_TRANSACTION + 115,
++                T_isEtherNetType = IBinder::FIRST_CALL_TRANSACTION + 116,
++                T_getVkHostInfo = IBinder::FIRST_CALL_TRANSACTION + 117,
++                T_getVKDeviceExtIgnore = IBinder::FIRST_CALL_TRANSACTION + 118,
++                T_isDefaultXYDpi = IBinder::FIRST_CALL_TRANSACTION + 119,
++                T_getPScoreAbove = IBinder::FIRST_CALL_TRANSACTION + 120,
++                T_isMapBufRangeReadOnceEnabled = IBinder::FIRST_CALL_TRANSACTION + 121,
++                T_isFbCompleteCheckDisabled = IBinder::FIRST_CALL_TRANSACTION + 122,
++            };
++    };
++
++    // ----------------------------------------------------------------------
++    class BnBstFilterAppsService : public BnInterface<IBstFilterAppsService>
++    {
++    public:
++        // NOLINTNEXTLINE(google-default-arguments)
++        virtual status_t    onTransact( uint32_t code,
++                                        const Parcel& data,
++                                        Parcel* reply,
++                                        uint32_t flags = 0);
++    };
++
++} // namespace android
++
+diff --git a/libs/binder/include/binder/IBstUtilsService.h b/libs/binder/include/binder/IBstUtilsService.h
+new file mode 100755
+index 0000000000..2ddd9dd9f5
+--- /dev/null
++++ b/libs/binder/include/binder/IBstUtilsService.h
+@@ -0,0 +1,51 @@
++#pragma once
++
++#include <binder/Common.h>
++#include <binder/IInterface.h>
++#include <utils/String16.h>
++
++namespace android {
++
++    // ----------------------------------------------------------------------
++
++    class LIBBINDER_EXPORTED IBstUtilsService : public IInterface
++    {
++        public:
++            DECLARE_META_INTERFACE(BstUtilsService)
++
++            virtual bool setProperty(const String16& key, const String16& value) = 0;
++            virtual const String16 getAppNameFromPid(const int32_t pid) = 0;
++            virtual bool setServiceComponentState(const String16& service, const bool enabled) = 0;
++
++            /**
++             * These should be in sync with the ordering in services's Aidl.
++             * Here, it directly relates with IBstUtilsService.aidl.
++             * If not in sync, these remote calls may call different functions than intended.
++             */
++            enum {
++                T_setProperty = IBinder::FIRST_CALL_TRANSACTION + 0,
++                T_getAppNameFromPid = IBinder::FIRST_CALL_TRANSACTION + 1,
++                T_setServiceComponentState = IBinder::FIRST_CALL_TRANSACTION + 2,
++                T_isBstSoftKeyboardEnabled = IBinder::FIRST_CALL_TRANSACTION + 3,
++                T_setBstSoftKeyboardStatus = IBinder::FIRST_CALL_TRANSACTION + 4,
++                T_setBstProposedRotation = IBinder::FIRST_CALL_TRANSACTION + 5,
++                T_getApkDownloadSource = IBinder::FIRST_CALL_TRANSACTION + 6,
++                T_launchAppStore = IBinder::FIRST_CALL_TRANSACTION + 7,
++                T_getSessionToken = IBinder::FIRST_CALL_TRANSACTION + 8,
++            };
++    };
++
++    // ----------------------------------------------------------------------
++    class BnBstUtilsService : public BnInterface<IBstUtilsService>
++    {
++    public:
++        // NOLINTNEXTLINE(google-default-arguments)
++        virtual status_t    onTransact( uint32_t code,
++                                        const Parcel& data,
++                                        Parcel* reply,
++                                        uint32_t flags = 0);
++    };
++
++
++} // namespace android
++
+diff --git a/libs/binder/include/binder/IInterface.h b/libs/binder/include/binder/IInterface.h
+index f7c6ce6b8d..f567391abe 100644
+--- a/libs/binder/include/binder/IInterface.h
++++ b/libs/binder/include/binder/IInterface.h
+@@ -218,6 +218,7 @@ inline IBinder* BpInterface<INTERFACE>::onAsBinder()
+ 
+ namespace internal {
+ constexpr const char* const kManualInterfaces[] = {
++        "RTVboxMM",  // BS-A16: BlueStacks manual binder interface (goldfish RTVboxGuest)
+         "android.app.IActivityManager",
+         "android.app.IUidObserver",
+         "android.gfx.tests.ICallback",
+@@ -274,6 +275,9 @@ constexpr const char* const kManualInterfaces[] = {
+ 
+ constexpr const char* const kDownstreamManualInterfaces[] = {
+   // Add downstream interfaces here.
++  // A16DBG:P2:D9 BlueStacks manual binder interfaces (a13 port; allowlist per b/64223827)
++  "com.bluestacks.os.IBstUtilsService",
++  "com.bluestacks.os.IBstFilterAppsService",
+   nullptr,
+ };
+ 

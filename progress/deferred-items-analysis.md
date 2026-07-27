@@ -317,3 +317,30 @@ a13→a16 binder 协议变更（a16 用 binderndk / ABinder 新协议）。3670 
 | D6 build/make mk | **低**（镜像不够精简） | 可暂不做 |
 | D7 SF bst.max_fps | **低**（性能优化） | 可暂不做 |
 | D1 其余（PM/AM/ActiveServices） | **低**（analytics/反检测） | 可暂不做 |
+
+---
+
+## 状态更新 (2026-07-26 cont.101) — D8/D9 已 PORTED，D3 已设计
+
+| 项 | 状态 | commit / 产物 | 验证 |
+|---|---|---|---|
+| **D8** TM subscription | ✅ **PORTED** | `00274255beb7` frameworks/base telephony (getActiveSubscriptionInfoCount→1 when enable_telephony) | Layer2 7/7 @161s, system.img a878d3c8 |
+| **D9** binder C++ | ✅ **PORTED** | `c581b1bae8` frameworks/native/libs/binder (3670行真实现替换 stub，6 机械修) | Layer2 7/7 @161s |
+| **D3** 截图共享 | 📐 **DESIGN ONLY** | `progress/d3-redesign.md`（注入点 ScreenshotController.kt:508；三块 A/B/C；hostcall/挂载待决策） | 未实施（待用户决策） |
+| pagefusion (bonus) | ✅ PORTED | `2cf8a0cf64c5` frameworks/base cmds/pagefusion (PAGE_SIZE 本地 define) | Layer2 7/7 @161s |
+
+**D8 解阻塞**：原 BLOCKED 因 `getActiveSubscriptionInfoList` drop `@RequiresPermission` → check_current_api fail。新方案用 `getActiveSubscriptionInfoCount`（int 返回、无注解）返回 1，绕过。
+**D9 解阻塞**：原 BLOCKED 因「a16 binder protocol」。实测 libbinder C++ API 仍在（binderndk 是并行非替代）；6 机械修闭环（详见 porting-log cont.97-99）。camera/SF 等 C++ BST hooks 现 runtime 连真 Java BST service。
+**patch（本地）**：`aosp16__frameworks_native_libs_binder.patch` + `aosp16__frameworks_base__d8-subscription.patch` + `aosp16__frameworks_base__pagefusion.patch`（patches/android-16/patches/）。
+
+**⚠️ 附带发现（escalation）**：frameworks/base 16 个 BST 文件（ActivityStarter/ATMS/WMS/SystemServer/Transitions/BstUtils/dimens 等）在 verified root 6cbb275f 里但**源码从未 commit**（pre-existing source-vs-commit drift）。本次只选择性 commit 了 D8+pagefusion（我的工作）。需各自 owner 收口。
+
+---
+
+## D3 决策（2026-07-26 cont.102）：**DEFER 到虚拟化 port 阶段**
+
+用户决策：D3（SystemUI 截图→Windows 共享文件夹）**延迟**到虚拟化 port 阶段再做。
+- 理由：D3 的块 C（`/mnt/windows/BstSharedFolder` 挂载点）依赖 host 虚拟化（win `vbox`/mac `qvm`）暴露给 guest 的共享文件夹，当前 Phase 2 不含虚拟化 port（[[host-guest-contract]]：vbox/qvm 暂不纳入）。
+- 现在做 guest 侧（块 A+B）= 门控默认关的 no-op 代码（host 挂载未就绪前 copy 必失败、catch 吞异常），价值低。
+- 设计文档 `progress/d3-redesign.md` 保留，待虚拟化 port 阶段直接落地块 A+B（property 门控开启即生效）。
+- registry 标 `port_status: deferred`、`host_compat: pending`（虚拟化侧）。

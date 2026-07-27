@@ -1,0 +1,97 @@
+id	project	intent	commits	summary
+win-external-angle	external/angle	packaging-noise	1	34fee3e7a [A13] deinit some third party repos
+win-external-auto	external/auto	packaging-noise	1	0be2ff0b [A13] Removing .github workflows
+win-external-bcc	external/bcc	packaging-noise	1	98495b1a [A13] Removing .github workflows
+win-external-boringssl	external/boringssl	functional	4	2350d55e Merge remote-tracking branch 'remotes/origin/bst-v5.22.0-A13-BootTimeOpt' into bst-v5.22.0
+9fd2a153 ROB-13448: Remove two SSL test services to improve boot time (#2)
+06c2c
+win-external-bpftool	external/bpftool	packaging-noise	1	2c228fc [A13] Removing .github workflows
+win-external-brotli	external/brotli	packaging-noise	1	c0c0cc9 [A13] Removing .github workflows
+win-external-capstone	external/capstone	packaging-noise	1	50ca5a21 [A13] Removing .github workflows
+win-external-cpu_features	external/cpu_features	packaging-noise	1	69a6a92 [A13] Removing .github workflows
+win-external-dagger2	external/dagger2	packaging-noise	1	01bf65cd [A13] Removing .github workflows
+win-external-deqp-deps-glslang	external/deqp-deps/glslang	packaging-noise	1	763e3bf1 [A13] Removing .github workflows
+win-external-deqp-deps-SPIRV-Headers	external/deqp-deps/SPIRV-Headers	packaging-noise	1	a747db7 [A13] Removing .github workflows
+win-external-deqp-deps-SPIRV-Tools	external/deqp-deps/SPIRV-Tools	packaging-noise	1	b7bedb24 [A13] Removing .github workflows
+win-external-deqp	external/deqp	cts-optional	7	70230f02d Adding android - cts -master: part 4
+ce67e6b29 Adding android - cts -master: part 3
+a96d28c08 Adding android - cts -master: part 2
+053130d04 Adding android - cts -master
+
+win-external-flac	external/flac	packaging-noise	1	bdd97a2c [A13] Removing .github workflows
+win-external-fmtlib	external/fmtlib	packaging-noise	1	e1c8c672 [A13] Removing .github workflows
+win-external-fonttools	external/fonttools	packaging-noise	1	713ffe6 [A13] Removing .github workflows
+win-external-freetype	external/freetype	cts-optional	1	b1517c5ef removing submodule subprojects/dlg
+win-external-fsverity-utils	external/fsverity-utils	packaging-noise	1	2dc01fa [A13] Removing .github workflows
+win-external-go-cmp	external/go-cmp	packaging-noise	1	f8ab072 [A13] Removing .github workflows
+win-external-golang-protobuf	external/golang-protobuf	packaging-noise	1	60b1c001 [A13] Removing .github workflows
+win-external-google-java-format	external/google-java-format	packaging-noise	1	9cda7f5 [A13] Removing .github workflows
+win-external-harfbuzz_ng	external/harfbuzz_ng	packaging-noise	1	df08481cf [A13] Removing .github workflows
+win-external-rust-crates-coset	external/rust/crates/coset	packaging-noise	1	724c9e1 [A13] Removing .github workflows
+win-external-rust-crates-termcolor	external/rust/crates/termcolor	packaging-noise	1	9d7a76a [A13] Removing .github workflows
+win-external-zstd	external/zstd	packaging-noise	1	543f0bb0 [A13] Removing .github workflows
+win-external-google-benchmark	external/google-benchmark	packaging-noise	1	321be73 [A13] Removing .github workflows
+win-external-icu	external/icu	functional	13	dc5bf31f5 Merge remote-tracking branch 'remotes/origin/bst-v5.22.75-ROB16419' into bst-v5.22.100
+fa7bda7e5 Merge remote-tracking branch 'remotes/origin/bst-v5.22.70-ROB16419' into 
+win-external-jazzer-api	external/jazzer-api	packaging-noise	1	49dd106 [A13] Removing .github workflows
+win-external-nanopb-c	external/nanopb-c	packaging-noise	1	7c36c60 [A13] Removing .github workflows
+win-external-nullaway	external/nullaway	packaging-noise	1	5af3fc4 [A13] Removing .github workflows
+win-external-oss-fuzz	external/oss-fuzz	packaging-noise	1	3446ec5f [A13] Removing .github workflows
+win-external-python-asn1crypto	external/python/asn1crypto	packaging-noise	1	ec1b4e9 [A13] Removing .github workflows
+win-external-python-google-api-python-client	external/python/google-api-python-client	packaging-noise	1	891b6860 [A13] Removing .github workflows
+win-external-python-jinja	external/python/jinja	packaging-noise	1	d0aaf44 [A13] Removing .github workflows
+win-external-python-markupsafe	external/python/markupsafe	packaging-noise	1	beba3f3 [A13] Removing .github workflows
+win-external-python-mobly	external/python/mobly	packaging-noise	1	cf7fe43 [A13] Removing .github workflows
+win-external-python-portpicker	external/python/portpicker	packaging-noise	1	d84a3d9 [A13] Removing .github workflows
+win-external-python-pybind11	external/python/pybind11	packaging-noise	1	c23640e [A13] Removing .github workflows
+win-external-python-pyopenssl	external/python/pyopenssl	packaging-noise	1	8dcec26 [A13] Removing .github workflows
+win-external-python-pyyaml	external/python/pyyaml	packaging-noise	1	f829ce0 [A13] Removing .github workflows
+win-external-python-typing	external/python/typing	packaging-noise	1	02f4b79 [A13] Removing .github workflows
+win-external-robolectric	external/robolectric	review	1	5b3edde42 [A13] Removing .githug workflows
+win-external-rust-crates-aho-corasick	external/rust/crates/aho-corasick	packaging-noise	1	60f2240 [A13] Removing .github workflows
+win-external-rust-crates-anyhow	external/rust/crates/anyhow	packaging-noise	1	111aca9 [A13] Removing .github workflows
+win-external-rust-crates-bitflags	external/rust/crates/bitflags	packaging-noise	1	4ce2cbe [A13] Removing .github workflows
+win-external-rust-crates-byteorder	external/rust/crates/byteorder	packaging-noise	1	fb90ba8 [A13] Removing .github workflows
+win-external-rust-crates-bytes	external/rust/crates/bytes	packaging-noise	1	5bed7ad [A13] Removing .github workflows
+win-external-rust-crates-cast	external/rust/crates/cast	packaging-noise	1	6429794 [A13] Removing .github workflows
+win-external-rust-crates-cfg-if	external/rust/crates/cfg-if	packaging-noise	1	b29ac46 [A13] Removing .github workflows
+win-external-rust-crates-clang-sys	external/rust/crates/clang-sys	packaging-noise	1	9b61ac1 [A13] Removing .github workflows
+win-external-rust-crates-combine	external/rust/crates/combine	packaging-noise	1	54b3b1a [A13] Removing .github workflows
+win-external-rust-crates-command-fds	external/rust/crates/command-fds	packaging-noise	1	819ee8f [A13] Removing .github workflows
+win-external-rust-crates-criterion	external/rust/crates/criterion	packaging-noise	1	69ab0f8 [A13] Removing .github workflows
+win-external-rust-crates-flate2	external/rust/crates/flate2	packaging-noise	1	4bd948f [A13] Removing .github workflows
+win-external-rust-crates-gdbstub	external/rust/crates/gdbstub	packaging-noise	1	bb9aa1f [A13] Removing .github workflows
+win-external-rust-crates-grpcio	external/rust/crates/grpcio	packaging-noise	1	a92b6e1 [A13] Removing .github workflows
+win-external-rust-crates-intrusive-collections	external/rust/crates/intrusive-collections	packaging-noise	1	276d725 [A13] Removing .github workflows
+win-external-rust-crates-itertools	external/rust/crates/itertools	packaging-noise	1	a258d2f [A13] Removing .github workflows
+win-external-rust-crates-itoa	external/rust/crates/itoa	packaging-noise	1	14c8554 [A13] Removing .github workflows
+win-external-rust-crates-libfuzzer-sys	external/rust/crates/libfuzzer-sys	packaging-noise	1	4414ea1 [A13] Removing .github workflows
+win-external-rust-crates-libloading	external/rust/crates/libloading	packaging-noise	1	719d407 [A13] Removing .github workflows
+win-external-rust-crates-log	external/rust/crates/log	packaging-noise	1	b117aaf [A13] Removing .github workflows
+win-external-rust-crates-memoffset	external/rust/crates/memoffset	packaging-noise	1	8756d5f [A13] Removing .github workflows
+win-external-rust-crates-minimal-lexical	external/rust/crates/minimal-lexical	packaging-noise	1	8092595 [A13] Removing .github workflows
+win-external-rust-crates-num_cpus	external/rust/crates/num_cpus	packaging-noise	1	7a12ffd [A13] Removing .github workflows
+win-external-rust-crates-once_cell	external/rust/crates/once_cell	packaging-noise	1	1291ef7 [A13] Removing .github workflows
+win-external-rust-crates-plotters	external/rust/crates/plotters	packaging-noise	1	718ce25 [A13] Removing .github workflows
+win-external-rust-crates-proc-macro2	external/rust/crates/proc-macro2	packaging-noise	1	fb1051d [A13] Removing .github workflows
+win-external-rust-crates-quickcheck	external/rust/crates/quickcheck	packaging-noise	1	b4aa192 [A13] Removing .github workflows
+win-external-rust-crates-regex-automata	external/rust/crates/regex-automata	packaging-noise	1	8c7026e [A13] Removing .github workflows
+win-external-rust-crates-remain	external/rust/crates/remain	packaging-noise	1	2019f98 [A13] Removing .github workflows
+win-external-rust-crates-ryu	external/rust/crates/ryu	packaging-noise	1	5331ed0 [A13] Removing .github workflows
+win-external-rust-crates-smallvec	external/rust/crates/smallvec	packaging-noise	1	5310f1f [A13] Removing .github workflows
+win-external-rust-crates-spin	external/rust/crates/spin	packaging-noise	1	e94682b [A13] Removing .github workflows
+win-external-rust-crates-thiserror	external/rust/crates/thiserror	packaging-noise	1	0438101 [A13] Removing .github workflows
+win-external-rust-crates-tinyvec	external/rust/crates/tinyvec	packaging-noise	1	32cc553 [A13] Removing .github workflows
+win-external-rust-crates-vsock	external/rust/crates/vsock	packaging-noise	1	c64334b [A13] Removing .github workflows
+win-external-rust-crates-walkdir	external/rust/crates/walkdir	packaging-noise	1	3a2cd93 [A13] Removing .github workflows
+win-external-rust-crates-weak-table	external/rust/crates/weak-table	packaging-noise	1	b7213fe [A13] Removing .github workflows
+win-external-rust-crates-which	external/rust/crates/which	packaging-noise	1	900c7ea [A13] Removing .github workflows
+win-external-selinux	external/selinux	selinux-temp	2	d13ccd05 [A13] Removing .github workflows
+d42add96 [A13] Disabling selinux
+win-external-swiftshader	external/swiftshader	packaging-noise	4	347d4ce1e [A13] deinit third_party/llvm-project
+9545e8ab1 Using LFS to track big objects
+9c8b7237d Remove some large files
+04c4656a7 Sync to aosp-android-13.0.0_r49
+win-external-toybox	external/toybox	packaging-noise	1	8c26f58a [A13] Removing .github workflows
+win-external-turbine	external/turbine	packaging-noise	1	0669cd1 [A13] Removing .github workflows
+win-external-volley	external/volley	packaging-noise	1	88c9f1f [A13] Removing .github workflows

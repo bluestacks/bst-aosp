@@ -1,0 +1,39 @@
+commit 00274255beb78ccd939b5ca119a96fea1769d61c
+Author: mark-bst <zeqing.xu@bluestacks.com>
+Date:   Sun Jul 26 05:02:58 2026 +0800
+
+    BlueStacks android-16 (aosp16) port: frameworks/base telephony SubscriptionManager (D8 fake-SIM count)
+    
+    Source: BST -a13 fork (TelephonyManager.createSubInfoInstance -> a16 SubscriptionManager).
+    formal.
+    Key change: getActiveSubscriptionInfoCount() returns 1 when bst.config.enable_telephony=true (anti-detection fake-SIM). Sidesteps a13 blocker (getActiveSubscriptionInfoList @RequiresPermission drop fails check_current_api on a16).
+    A16DBG: yes (A16DBG:P2:DEF in getActiveSubscriptionInfoCount).
+    Verification: Layer1 m droid rc=0 (system.img a878d3c8); Layer2 boot 7/7 @161s (clean Data wipe20260717).
+    Restorable via bst-aosp/patches/android-16/patches/aosp16__frameworks_base.patch.
+    
+    Co-Authored-By: Claude <noreply@anthropic.com>
+    Change-Id: I5a2c9968f591921d242095aab62bdc32bfed8157
+
+diff --git a/telephony/java/android/telephony/SubscriptionManager.java b/telephony/java/android/telephony/SubscriptionManager.java
+index 8b926fadb456..27bd86a0172b 100644
+--- a/telephony/java/android/telephony/SubscriptionManager.java
++++ b/telephony/java/android/telephony/SubscriptionManager.java
+@@ -59,6 +59,7 @@ import android.os.ParcelUuid;
+ import android.os.Process;
+ import android.os.RemoteException;
+ import android.os.UserHandle;
++import android.os.SystemProperties;
+ import android.provider.Telephony.SimInfo;
+ import android.telephony.euicc.EuiccManager;
+ import android.telephony.ims.ImsMmTelManager;
+@@ -2321,6 +2322,10 @@ public class SubscriptionManager {
+      */
+     @RequiresPermission(android.Manifest.permission.READ_PHONE_STATE)
+     public int getActiveSubscriptionInfoCount() {
++        // A16DBG:P2:DEF BST fake subscription count (a13; anti-detection)
++        if (SystemProperties.getBoolean("bst.config.enable_telephony", true)) {
++            return 1;
++        }
+         int result = 0;
+ 
+         try {

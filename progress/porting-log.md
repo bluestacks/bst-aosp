@@ -2346,3 +2346,90 @@ D6 解封：用 `PRODUCT_PACKAGES -=` 在 `device/bst/qvirt/bst_x86_64.mk`（dev
 
 ActiveServices getServicesLocked: 返回过滤副本（排除 com.bluestacks.* service）对第三方 caller。
 Root `6cbb275f`。累计 **39 verified ports**。6/9 deferred ported。
+
+## 2026-07-25 (cont.96) — D8/D9 移植中 + D3 重设计完成 (build 进行中, 跨会话)
+
+用户指令：「D8->D9先做 D3还需要重新设计方案」。此前 4/9 BLOCKED 中的 D8/D9 重新设计为可做方案：
+
+**D8 — TM subscription fake-SIM（原 BLOCKED @RequiresPermission，新方案可做）**：
+- 改 `frameworks/base/telephony/java/android/telephony/SubscriptionManager.java` `getActiveSubscriptionInfoCount()` (line 2324)：`bst.config.enable_telephony=true` 时返回 1。
+- 绕过原 PERIPH-8 阻塞：用 int 返回的 `getActiveSubscriptionInfoCount`（无 @RequiresPermission 注解）而非 `getActiveSubscriptionInfoList`（drop 注解触发 check_current_api fail）。
+- 改动在树（未 commit），随全量 build。
+
+**D9 — frameworks/native binder C++ 实现（原 BLOCKED binder protocol，已实测可编译）**：
+- 6 文件从 a13 copy + 2 stub 头换真实现：`frameworks/native/libs/binder/{BstFilterAppsManager,BstUtilsManager,IBstFilterAppsService,IBstUtilsService}.cpp` + `include/binder/{IBstFilterAppsService,IBstUtilsService,BstFilterAppsManager,BstUtilsManager}.h`，加 Android.bp srcs（Binder.cpp 后）。
+- **两机械修（已 apply）**：(1) 删 `#ifndef __ANDROID_VNDK__/#error` 守卫（libbinder vendor variant 触发 #error）；(2) 加 `#include <utils/String16.h>`（a16 IInterface.h 不再传递引入）。
+- 修后**无 binder 编译错误**（独立 libbinder 编译确认）。3670 行真实现替换 MECH-9/10 stub（fail-open → 真 binder client）。
+- ⚠️ 未验证风险：IBstFilterAppsService.cpp 2498 行生成的 proxy/stub 可能有 a13→a16 Parcel API drift；待全量 build 到 libbinder 编译步确认。若深层 drift → revert 回 stub（D9 分析「可以暂不做」）。
+- 改动在树（未 commit），随全量 build。
+
+**D3 — SystemUI 截图共享文件夹（重设计完成，DESIGN ONLY）**：
+- 设计文档：`progress/d3-redesign.md`。a16 注入点 = `ScreenshotController.kt:508 saveScreenshotInBackground()` 的 `future.addListener`（`result.uri`/`result.fileName` 可用）。
+- 三块设计：A guest 截图复制（property 门控默认关）+ B host 通知（推荐 broadcast，非 binder hostcall）+ C `/mnt/windows` 挂载（host/虚拟化侧，Phase 2 外，host_compat pending）。
+- 待用户决策：现做 guest 侧 A+B 还是 defer 到虚拟化 port 阶段。
+
+**⚠️ Build 状态（跨会话）**：全量 `m droid` 进行中（`~/p2_def9_fullbuild.log`，nohup PID 949249，~12h ETA 174306 步）。
+- **起因**：cont.96 早段 `pkill -9 soong_ui` 中断活动 build → 腐蚀 `out_nxt_Baklava64/soong` ninja 图 + **`.intermediates/` 丢失** → 必须全量重编（数小时）。教训已存 [[a16-phase2-fw-iteration-mechanics]]：**build 一旦发起绝不 pkill -9**。
+- henry python3 (18d, 98.3% CPU) 争用致 load 66、ETA 偏长。
+- 监控：session-only cron `3d706f37`（每 30min）轮询；build 完成后自动跑 D8+D9 completion loop（pack/deploy/Layer2/commit）。
+- **下一会话恢复**：`ssh markxu@172.16.6.191 'pgrep -f soong_ui && echo RUNNING; grep DONE ~/p2_def9_fullbuild.log | tail -1'` 看是否完成；完成则 pack+verify+commit D8(telephony)+D9(libbinder)。
+
+## 2026-07-25 (cont.97) — ✅ D9 binder C++ 编译通过（3 机械修）+ build 重启（~9-10h）
+
+**D9 3670 行 binder C++ 全部编译通过**（4 个 .o 产物确认：BstUtilsManager/BstFilterAppsManager/IBstUtilsService/IBstFilterAppsService，无 error）。跨 a13→a16 共 **3 个机械修**：
+
+1. **header vendor 守卫 + String16**（`IBstUtilsService.h`/`IBstFilterAppsService.h`）：删 `#ifndef __ANDROID_VNDK__/#error`（libbinder vendor variant 触发 #error）+ 加 `#include <utils/String16.h>`（a16 IInterface.h 不再传递引入）。
+2. **manual interface allowlist**（`frameworks/native/libs/binder/include/binder/IInterface.h`）：a16 b/64223827 `static_assert(internal::allowedManualInterface(NAME))` 禁手写 binder 接口。解 = 把两个 BST 接口 FQN 加进 `kDownstreamManualInterfaces`（该列表注释明示 "Add downstream interfaces here"，是 sanctioned 机制非 hack）：`"com.bluestacks.os.IBstUtilsService"` + `"com.bluestacks.os.IBstFilterAppsService"`。
+3. **exit-time destructor**（`BstUtilsManager.cpp`/`BstFilterAppsManager.cpp`）：a16 `-Werror,-Wexit-time-destructors`。全局/静态 `String16 _bstXxx("...")` 有 dtor → 触发。解 = 删全局声明，在唯一 call-site `checkService(...)` 内联构造临时 `String16("bstutils")`/`String16("bstfilterapps")`（非热路径）。
+
+**build 重启**（`~/p2_def9_fullbuild3.log`，nohup）：因 `IInterface.h` 是基础 header（几乎所有 binder C++ 包含它），改它使大量已编译产物失效 → 即使 `.intermediates` 完好仍需 ~9-10h 大规模重编（非全量但仍很大）。监控 cron `bbe315ee`（每 30min @ :09/:39，指向 fullbuild3.log）。build DONE rc=0 后自动跑 D8+D9 completion loop。
+
+**残留风险（低）**：libbinder.so 链接 + 下游 consumer（camera/SF 等 C++ BST hooks）——编译已过，链接/下游概率低。D8 SubscriptionManager 随同 build。
+
+## 2026-07-25 (cont.98) — ✅ D9 binder 链接通过（fix #4 visibility export）+ build 续跑
+
+libmedia.so 链接报 `undefined symbol: BstUtilsManager::BstUtilsManager()` / `getAppNameFromPid(int)`。根因：libbinder 编译用 `-fvisibility=hidden`，BST 类缺 export 标记 → 方法被 `--gc-sections` 从 libbinder.so 丢弃（libbinder.map 虽 `global:*` 但 hidden visibility 在编译期已定，map 无法再导出）。
+
+**fix #4**：给 4 个 BST 类加 `LIBBINDER_EXPORTED`（=`__attribute__((__visibility__("default")))`，libbinder 自己 BBinder 等用的同宏，定义在 `Common.h:43`）+ include `<binder/Common.h>`：`BstUtilsManager`/`BstFilterAppsManager`（`*Manager.h`）+ `IBstUtilsService`/`IBstFilterAppsService`（`IBst*Service.h`）。class 级 visibility attribute → 所有成员方法导出。
+
+**验证**（readback）：`nm libbinder.so` 现 `T _ZN7android15BstUtilsManager17getAppNameFromPidEi` + `T ...BstUtilsManagerC1Ev` + `T ...BstFilterAppsManagerC1Ev`（导出），`BpBstUtilsService::getAppNameFromPid` 为 `t`（local，vtable 内部引用，OK）。**无链接错误**，build 过 libmedia 链接步续跑（2%，~8h44m）。
+
+**D9 至此 4 个机械修全闭环**：①header(VNDK+String16) ②allowlist(IInterface.h) ③exit-time-dtor(*Manager.cpp) ④visibility-export(*Manager.h+IBst*Service.h)。3670 行 binder C++ 编译+链接通过。build（`~/p2_def9_fullbuild3.log`）续跑 ~8h，cron `8a909b12` 监控。残留低风险：其他 C++ BST consumer（camera/SF BstFilterAppsManager）链接步——已 export，预期过。
+
+## 2026-07-26 (cont.99) — ✅ D9 fix #5 vendor-variant PermissionController + build 增量续跑
+
+build 在 68% 因 **vendor variant** libbinder 编译 BstFilterAppsManager.cpp 失败：`PermissionController.h` 有 `#ifndef __ANDROID_VNDK__/#error "not visible to vendors"` 守卫（同 IBst*Service.h 早期问题），vendor variant（libbinder `vendor_available:true`）触发。唯一用法 = `isHotFixAppByUid(uid)`（PermissionController::getPackagesForUid → isHotFixApp）。
+
+**fix #5**：`#include <binder/PermissionController.h>` + `isHotFixAppByUid` 方法体用 `#ifndef __ANDROID_VNDK__` 守卫 → system variant 全功能，vendor variant fail-open `return false`（同 stub fail-open 哲学）。
+
+**build 增量续跑**（`~/p2_def9_fullbuild3.log`）：fix 后 relaunch，ninja `combined-bst_x86_64.ninja` 仅 **50240 步**（vs 全量 153993，0-68% 已缓存），ETA ~1h5m。vendor-guard 验证：无 PermissionController/vendor 错误，ninja 干净推进。**D9 至此 5 个机械修全闭环**（①header ②allowlist ③exit-time-dtor ④visibility-export ⑤vendor-guard）。cron `8a909b12` 监控，DONE rc=0 后自动 completion loop（pack/deploy/Layer2/commit D8+D9）。
+
+**fix #6（fix #5 follow-on）**：vendor variant 因 `isHotFixAppByUid` 的 PermissionController 块被 `#ifndef __ANDROID_VNDK__` 排除 → `uid` 参数未用 → `-Werror,-Wunused-parameter`。修 = 方法入口加 `(void)uid;`（system path 已用 uid 时无害，vendor path 消警告）。验证：vendor variant 干净编译，build 增量推进（48793 步，~1h ETA），无错误。**D9 至此 6 个机械修全闭环**。
+
+## 2026-07-26 (cont.100) — ⚠️ pagefusion PAGE_SIZE 修复（非 D8/D9，阻塞 image 的 latent gap）
+
+D8+D9 build 到 48% 卡在 **pagefusion**（`frameworks/base/cmds/pagefusion/PageFusion.cpp`，BST vbox page-fusion 模块，`??` 未跟踪）：`use of undeclared identifier 'PAGE_SIZE'/'PAGE_MASK'`。
+
+**根因（非 D8/D9 引入）**：a16 bionic 对**所有**模块编译加 `-D__BIONIC_NO_PAGE_SIZE_MACRO`，**有意禁用** PAGE_SIZE 宏（它非真编译期常量）。pagefusion 源码用作编译期常量。此前**从未暴露**——因 pagefusion.o 自早期某次 build 起一直被缓存，本会话 `pkill -9` 致 `.intermediates` 丢失后全量重编才首次真编译它，暴露此 latent gap（Jul 21 的 system/bin/pagefusion 是旧缓存产物）。
+
+**修**：PageFusion.cpp 加本地 `#define PAGE_SIZE 4096` + `#define PAGE_MASK (~(PAGE_SIZE-1))`（x86_64 guest=4KB 页，同 a13）。注：第一次试 `#include <bits/page_size.h>` 无效（该宏被 `-D__BIONIC_NO_PAGE_SIZE_MACRO` 守卫跳过，即使 include 也不定义）。
+
+验证：pagefusion 干净编译，build 增量推进（24920 步，~14m ETA）。**这是 D8/D9 之外的发现项**，为解锁 image 而修。可能还有其他 PAGE_SIZE 类 latent gap（其他 BST 模块），按出现处理。
+
+## 2026-07-26 (cont.101) — ✅✅ D8 + D9 PORTED + COMMITTED (Layer2 7/7 @161s)
+
+**D8 + D9 completion loop 全闭环**（build → pack → deploy → Layer2 → commit → patch）：
+
+- **Build**: `m droid` rc=0，新 system.img md5 **a878d3c8**（含 D8+D9+pagefusion），goldfish mmm done。
+- **Pack**: g1_stage_system.sh (fold: vendor473/system_ext70/product114) → g1_copy_bst_apks.sh (launcher3+gralloc=bst) → r228-pack-root.sh (Root.vhd uuid **54e9ad31**, md5 02690d1182ff507faedb1c5e438806f4, R228_ROOT_PACK_DONE)。
+- **Deploy**: g1_win_deploy.ps1 → Root.vhd 到 Tiramisu64（MD5 readback 匹配）。
+- **Layer2**: g1_boot_verify.ps1 + 干净 Data(wipe20260717) → **7/7 @161s**（system_mounted/init_second/odsign/boot_completed/activity/ready/hide_boot 全绿）。
+- **Commit (remote, 合规 message)**：
+  - D9 `c581b1bae8` frameworks/native/libs/binder（10 文件，6 机械修）。
+  - D8 `00274255beb7` frameworks/base telephony/SubscriptionManager.java（getActiveSubscriptionInfoCount→1）。
+  - pagefusion `2cf8a0cf64c5` frameworks/base cmds/pagefusion（PAGE_SIZE 本地 define）。
+- **Patch (本地 regen, compliance #5)**：`aosp16__frameworks_native_libs_binder.patch`(3898行,base=fcbde2bcff,字节校验一致) + `aosp16__frameworks_base__d8-subscription.patch`(39行) + `aosp16__frameworks_base__pagefusion.patch`(3041行)，base=45034f06（同现有 r262 patch base）。
+
+**D9 总结**：3670 行 binder C++ 真实现替换 stub，6 个 a13→a16 机械修全闭环（header VNDK+String16 / allowlist b/64223827 / exit-time-dtor / LIBBINDER_EXPORTED visibility / vendor PermissionController guard / (void)uid）。camera/SF 等 C++ BST hooks 现 runtime 连真 Java BST service（非 no-op）。
+
+**⚠️ 发现的 pre-existing 合规缺口（escalation）**：frameworks/base 有 **16 个 BST 文件未 commit**（ActivityStarter/ATMS/WMS/SystemServer/Transitions/BstUtils/dimens 等 M + Features.java/com.bluestacks/internal 未跟踪）——它们在 verified root 6cbb275f 里但源码从未 commit（ActivityStarter 等仅上游 AOSP commit 史）。我**只选择性 commit 了 D8+pagefusion（我的工作）**，未扫入他人的在途工作。这 16 文件的 source-vs-commit drift 需各自 patch-group owner commit（restorability 缺口）。

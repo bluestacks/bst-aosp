@@ -58,10 +58,10 @@ flowchart TD
 - [x] **mac**：`bst_arm64` + BoardConfig arch 分派（lunch `TARGET_ARCH=arm64`）；**不做独立验证**。
 - [x] **SELinux**：对齐 a13 —— **强制 permissive**（`IsEnforcing→false` 等）；**禁止** port `enabled.c→0`（cont.21 实测炸 boot）。非「设计 enforcing sepolicy」专案。
 - [x] **Shell Transitions / r262**：`android.hardware.power-service.example` + 恢复 `HintManagerService`（解开 R248 HALSkip）+ `ENABLE_SHELL_TRANSITIONS=true`；Root **`840137ca`** Layer2 **7/7**；本 boot 无 `aidl/performance_hint` missing（cont.22/22b）。
-- [ ] **P2-FRAMEWORK-REST**：**22/22 core/java** ✅；services/core **7/21** gap ✅；Root **`a551d823`** Layer2 **7/7 @199s**（FW-SERVICES-4a）。
+- [x] **P2-FRAMEWORK-REST**：**22/22 core/java** ✅；services/core gap 持续收口；**deferred 8/9 done**（D1/D2/D5/D6/D7/D8/D9 + ActiveServices；仅 D3 截图 defer 到虚拟化 port）；Root.vhd **`02690d11`** / system.img `a878d3c8` Layer2 **7/7 @161s**（cont.101）。frameworks/base source-vs-commit drift 清零（全 commit）。
 - [x] P2-TEMP-FSTAB：obsolete（无 `/vdc` skip）。
 
-**下一步**：① **FW-SERVICES-5**（InputMethod / InputManager peripheral）；② Recents orientation research（escalate）；③ 热路径 AM/PM 谨慎 slice。详见 `phase2-port-plan.md` · `porting-log.md` cont.49。
+**下一步**：① D3 截图共享（已 defer 到虚拟化 port 阶段，design 见 `progress/d3-redesign.md`）；② mac `bst_arm64` 同码收口；③ Phase 2 gate 收尾（a13 功能对齐）。详见 `phase2-port-plan.md` · `porting-log.md` cont.101。
 
 **Gate（Phase 2 完成）**：a13 功能对齐通过（含 frameworks）；r262/`performance_hint` 已收口；SELinux permissive；mac 同码。**不设** host/Phase 3 gate。
 

@@ -42,7 +42,7 @@
 ## 当前阶段
 
 **Phase 2 — guest 全量功能对齐（唯一活跃阶段；不规划 host/Phase 3）。**  
-绿基线：FW-SERVICES-4a Root **`a551d823`** Layer2 **7/7 @199s**。**22/22** core/java ✅；services/core **7/21** gap 进行中。  
+绿基线：D8+D9 Root.vhd **`02690d11`**（system.img `a878d3c8`）Layer2 **7/7 @161s**（cont.101）。**22/22** core/java ✅；services/core gap 持续收口；**deferred 8/9 done**（D1/D2/D5/D6/D7/D8/D9 + ActiveServices；仅 D3 截图 defer 到虚拟化 port 阶段）。frameworks/base source-vs-commit drift 已清零（全 commit）。  
 SELinux：**对齐 a13 强制 permissive**。Shell Transitions：已补 **`performance_hint`** HAL，r262 **removed**。  
 详见 [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md) · [phase2-port-plan](progress/phase2-port-plan.md) · [porting-log](progress/porting-log.md)。
 

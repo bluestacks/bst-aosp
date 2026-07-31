@@ -1,0 +1,3069 @@
+{
+  "schema_version": 1,
+  "generated_from": "patches/android-16",
+  "artifacts": [
+    {
+      "artifact": "patches/android-16/patches/aosp16__art.patch",
+      "name": "aosp16__art.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "9bf72daf4bccb697886d5341ee4ccf8a82db8ef50db4057f5be7cbd431f60b06",
+      "bytes": 789,
+      "lines": 16,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 5,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "runtime/jit/jit.cc"
+      ],
+      "registry": [
+        {
+          "id": "boot-art",
+          "project_path": "art",
+          "phase": "P1",
+          "related_group": "G9",
+          "port_status": "boot-archived",
+          "purpose": "ART 构建/运行小改（相对完整源码路径后规模小）",
+          "quality": "勿再走 staging ABI 绕路",
+          "impact": "zygote/boot.art",
+          "verification": "odrefresh rc=80",
+          "host_compat": "unknown",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__build_make.patch",
+      "name": "aosp16__build_make.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "8fa4e15f67288d91f2bf1d68c6da17e44f96f78a919c5d7c47406310262b9a16",
+      "bytes": 6676,
+      "lines": 148,
+      "files_changed": 7,
+      "hunks": 10,
+      "additions": 32,
+      "deletions": 12,
+      "contains_binary_patch": false,
+      "files": [
+        "core/Makefile",
+        "core/binary.mk",
+        "core/config.mk",
+        "target/product/base_system.mk",
+        "target/product/base_system_ext.mk",
+        "target/product/generic/Android.bp",
+        "target/product/telephony_system_ext.mk"
+      ],
+      "registry": [
+        {
+          "id": "boot-build-make",
+          "project_path": "build/make",
+          "phase": "P1",
+          "related_group": "G9",
+          "port_status": "boot-archived",
+          "purpose": "BOARD_KERNEL override、BUILD_EMULATOR=false、ENFORCE_VINTF 调整、hwservicemanager 包路径",
+          "quality": "必要构建定制；部分 bringup 可收敛到 BoardConfig",
+          "impact": "全树构建门禁",
+          "verification": "BUILD_EXIT=0 system.img",
+          "host_compat": "unknown",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "target/product/telephony_system_ext.mk": [
+          "patches/android-16/patches/aosp16__build_make.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-5-buildmake.diff"
+        ]
+      },
+      "overlap_groups": [
+        "target/product/telephony_system_ext.mk"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__build_soong.patch",
+      "name": "aosp16__build_soong.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "98e6220628048675c02c6431fb9ebbdc2a9242d5c2a7bf09a59b016c2239a336",
+      "bytes": 4509,
+      "lines": 106,
+      "files_changed": 6,
+      "hunks": 6,
+      "additions": 40,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "files": [
+        "bin/mm",
+        "bin/mmm",
+        "cmd/soong_ui/main.go",
+        "scripts/check_boot_jars/package_allowed_list.txt",
+        "ui/build/androidmk_denylist.go",
+        "ui/build/finder.go"
+      ],
+      "registry": [
+        {
+          "id": "boot-build-soong",
+          "project_path": "build/soong",
+          "phase": "P1",
+          "related_group": "G9",
+          "port_status": "boot-archived",
+          "purpose": "soong 侧 artifact 冲突修复（如 hwservicemanager）",
+          "quality": "构建接缝",
+          "impact": "bootstrap",
+          "verification": "soong bootstrap OK",
+          "host_compat": "unknown",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__device_generic_common.patch",
+      "name": "aosp16__device_generic_common.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "ff0fddf7f6d969341a1b6a97813c9bc8efab14f20872b5506d605ba4e14a0799",
+      "bytes": 392246,
+      "lines": 16408,
+      "files_changed": 170,
+      "hunks": 76,
+      "additions": 15568,
+      "deletions": 1,
+      "contains_binary_patch": true,
+      "files": [
+        "BoardConfig.mk",
+        "LICENSE",
+        "alsa/bytcrrt5640.state",
+        "alsa/chtcx2072x.state",
+        "alsa/chtnau8824.state",
+        "alsa/chtrt5645.state",
+        "apksigner/apksigner",
+        "apksigner/bluestacks-market.keystore",
+        "apksigner/lib/apksigner.jar",
+        "app/Android.mk",
+        "app/README",
+        "app/com.bluestacks.bsxlauncher.apk",
+        "app/com.bluestacks.filemanager.apk",
+        "app/com.bluestacks.gamecenter.apk",
+        "app/com.bluestacks.home.apk",
+        "app/com.bluestacks.nowgg.apk",
+        "app/com.bluestacks.piggy.apk",
+        "app/com.location.provider.apk",
+        "app/gg.now.ads.service.apk",
+        "bluetooth/bdroid_buildcfg.h",
+        "bst_bins/airplane_mode",
+        "bst_bins/bindmount",
+        "bst_bins/proper_shutdown",
+        "bst_etc/cpuinfo",
+        "bst_etc/filesystems",
+        "bst_etc/possible",
+        "bst_etc/selinux_enforce",
+        "bst_etc/unix",
+        "bst_etc/xcpuinfo",
+        "bst_etc/xmeminfo",
+        "build-error.patch",
+        "build/tasks/kernel.mk",
+        "build/tasks/system.mk",
+        "busybox",
+        "device.mk",
+        "excluded-input-devices.xml",
+        "fstab.x86",
+        "google.xml",
+        "idc/3M_3M_MicroTouch_USB_controller.idc",
+        "idc/AlpsPS_2_ALPS_DualPoint_TouchPad.idc",
+        "idc/AlpsPS_2_ALPS_GlidePoint.idc",
+        "idc/BlueStacks_Virtual_Touch.idc",
+        "idc/ETPS_2_Elantech_Touchpad.idc",
+        "idc/IDEACOM__IDC_6680.idc",
+        "idc/Microsoft_Surface_Type_Cover_UNKNOWN.idc",
+        "idc/N-Trig_MultiTouch.idc",
+        "idc/QEMU_QEMU_USB_Tablet.idc",
+        "idc/QEMU_Virtio_Tablet.idc",
+        "idc/SynPS_2_Synaptics_TouchPad.idc",
+        "idc/Vendor_04f3_Product_261a_Version_0100.idc",
+        "idc/VirtualBox_USB_Tablet.idc",
+        "init.sh",
+        "init.x86.rc",
+        "libndk_baklava64/bin/arm64/app_process64",
+        "libndk_baklava64/bin/arm64/linker64",
+        "libndk_baklava64/etc/cpuinfo.arm64.txt",
+        "libndk_baklava64/etc/ld.config.arm64.txt",
+        "libndk_baklava64/lib64/arm64/android.hardware.renderscript@1.0.so",
+        "libndk_baklava64/lib64/arm64/ld-android.so",
+        "libndk_baklava64/lib64/arm64/libEGL.so",
+        "libndk_baklava64/lib64/arm64/libGLESv1_CM.so",
+        "libndk_baklava64/lib64/arm64/libGLESv2.so",
+        "libndk_baklava64/lib64/arm64/libGLESv3.so",
+        "libndk_baklava64/lib64/arm64/libOpenMAXAL.so",
+        "libndk_baklava64/lib64/arm64/libOpenSLES.so",
+        "libndk_baklava64/lib64/arm64/libRS.so",
+        "libndk_baklava64/lib64/arm64/libRSCpuRef.so",
+        "libndk_baklava64/lib64/arm64/libRSDriver.so",
+        "libndk_baklava64/lib64/arm64/libRSSupport.so",
+        "libndk_baklava64/lib64/arm64/libRS_internal.so",
+        "libndk_baklava64/lib64/arm64/libaaudio.so",
+        "libndk_baklava64/lib64/arm64/libamidi.so",
+        "libndk_baklava64/lib64/arm64/libandroid.so",
+        "libndk_baklava64/lib64/arm64/libandroid_runtime.so",
+        "libndk_baklava64/lib64/arm64/libandroidicu.so",
+        "libndk_baklava64/lib64/arm64/libbacktrace.so",
+        "libndk_baklava64/lib64/arm64/libbase.so",
+        "libndk_baklava64/lib64/arm64/libbcinfo.so",
+        "libndk_baklava64/lib64/arm64/libbinder_ndk.so",
+        "libndk_baklava64/lib64/arm64/libblas.so",
+        "libndk_baklava64/lib64/arm64/libc++.so",
+        "libndk_baklava64/lib64/arm64/libc.so",
+        "libndk_baklava64/lib64/arm64/libcamera2ndk.so",
+        "libndk_baklava64/lib64/arm64/libcgrouprc.so",
+        "libndk_baklava64/lib64/arm64/libcompiler_rt.so",
+        "libndk_baklava64/lib64/arm64/libcrypto.so",
+        "libndk_baklava64/lib64/arm64/libcutils.so",
+        "libndk_baklava64/lib64/arm64/libdl.so",
+        "libndk_baklava64/lib64/arm64/libdl_android.so",
+        "libndk_baklava64/lib64/arm64/libft2.so",
+        "libndk_baklava64/lib64/arm64/libhidlbase.so",
+        "libndk_baklava64/lib64/arm64/libicu.so",
+        "libndk_baklava64/lib64/arm64/libicui18n.so",
+        "libndk_baklava64/lib64/arm64/libicuuc.so",
+        "libndk_baklava64/lib64/arm64/libjnigraphics.so",
+        "libndk_baklava64/lib64/arm64/liblog.so",
+        "libndk_baklava64/lib64/arm64/liblzma.so",
+        "libndk_baklava64/lib64/arm64/libm.so",
+        "libndk_baklava64/lib64/arm64/libmediandk.so",
+        "libndk_baklava64/lib64/arm64/libnative_bridge_vdso.so",
+        "libndk_baklava64/lib64/arm64/libnativehelper.so",
+        "libndk_baklava64/lib64/arm64/libnativewindow.so",
+        "libndk_baklava64/lib64/arm64/libneuralnetworks.so",
+        "libndk_baklava64/lib64/arm64/libpng.so",
+        "libndk_baklava64/lib64/arm64/libprocessgroup.so",
+        "libndk_baklava64/lib64/arm64/libsqlite.so",
+        "libndk_baklava64/lib64/arm64/libssl.so",
+        "libndk_baklava64/lib64/arm64/libstdc++.so",
+        "libndk_baklava64/lib64/arm64/libsync.so",
+        "libndk_baklava64/lib64/arm64/libunwindstack.so",
+        "libndk_baklava64/lib64/arm64/libutils.so",
+        "libndk_baklava64/lib64/arm64/libutilscallstack.so",
+        "libndk_baklava64/lib64/arm64/libvndksupport.so",
+        "libndk_baklava64/lib64/arm64/libvulkan.so",
+        "libndk_baklava64/lib64/arm64/libwebviewchromium_plat_support.so",
+        "libndk_baklava64/lib64/arm64/libz.so",
+        "libndk_baklava64/lib64/libndk_translation.so",
+        "libndk_baklava64/lib64/libndk_translation_exec_region.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libEGL.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libGLESv1_CM.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libGLESv2.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libGLESv3.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libOpenMAXAL.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libOpenSLES.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libaaudio.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libamidi.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libandroid.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libandroid_runtime.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libbinder_ndk.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libc.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libcamera2ndk.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libjnigraphics.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libmediandk.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libnativehelper.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libnativewindow.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libneuralnetworks.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libvulkan.so",
+        "libndk_baklava64/lib64/libndk_translation_proxy_libwebviewchromium_plat_support.so",
+        "manifest.xml",
+        "manifest/android.hardware.graphics.allocator@2.0.xml",
+        "manifest/android.hardware.graphics.composer@2.1.xml",
+        "manifest/android.hardware.graphics.mapper@2.1.xml",
+        "media_codecs.xml",
+        "media_profiles.xml",
+        "modules.blocklist",
+        "nativebridge/Android.mk",
+        "nativebridge/OEMBlackList",
+        "nativebridge/OEMWhiteList",
+        "nativebridge/ThirdPartySO",
+        "nativebridge/libnb.cpp",
+        "nativebridge/nativebridge.mk",
+        "nativebridge/nativebridge/Android.mk",
+        "nativebridge/nativebridge/OEMBlackList",
+        "nativebridge/nativebridge/OEMWhiteList",
+        "nativebridge/nativebridge/ThirdPartySO",
+        "nativebridge/nativebridge/libnb.cpp",
+        "nativebridge/nativebridge/nativebridge.mk",
+        "overlay/frameworks/base/core/res/res/values/config.xml",
+        "overlay/frameworks/base/core/res/res/xml/storage_list.xml",
+        "overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml",
+        "packages.mk",
+        "ppp/ip-down",
+        "ppp/ip-up",
+        "ppp/peers/gprs",
+        "treble.mk",
+        "ueventd.x86.rc",
+        "wpa_supplicant.conf",
+        "wpa_supplicant_overlay.conf",
+        "x86.mk",
+        "x86_64.mk"
+      ],
+      "registry": [
+        {
+          "id": "boot-device-generic-common",
+          "project_path": "device/generic/common",
+          "phase": "P1",
+          "related_group": "G1",
+          "port_status": "boot-archived",
+          "purpose": "M1 boot 板配置主体：init.x86.rc、ueventd、manifest/VINTF、nativebridge、bst_bins/etc、media codecs",
+          "quality": "真 BST device overlay；应并入 device/bst/qvirt，不宜长期停在 generic",
+          "impact": "lunch/product、HAL 发现、输入设备、打包；G1 迁移核心",
+          "verification": "M1 boot Layer2 全绿；见 RESTORE.md §7",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "BoardConfig.mk": [
+          "patches/android-16/patches/aosp16__device_generic_common.patch",
+          "patches/android-16/patches/aosp16__device_generic_x86_64.patch"
+        ],
+        "app/Android.mk": [
+          "patches/android-16/patches/aosp16__device_generic_common.patch",
+          "patches/android-16/untracked-src/aosp16__device_generic_common/build-error.patch"
+        ],
+        "build/tasks/kernel.mk": [
+          "patches/android-16/patches/aosp16__device_generic_common.patch",
+          "patches/android-16/untracked-src/aosp16__device_generic_common/build-error.patch"
+        ]
+      },
+      "overlap_groups": [
+        "BoardConfig.mk",
+        "app/Android.mk",
+        "build/tasks/kernel.mk"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__device_generic_goldfish.patch",
+      "name": "aosp16__device_generic_goldfish.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "5a1968205750ca9dc65f1d2e2d384980c78572260986c407e807678dbd841420",
+      "bytes": 1175,
+      "lines": 26,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 3,
+      "deletions": 5,
+      "contains_binary_patch": false,
+      "files": [
+        "product/generic.mk"
+      ],
+      "registry": [
+        {
+          "id": "boot-device-generic-goldfish",
+          "project_path": "device/generic/goldfish",
+          "phase": "P1",
+          "related_group": "G3",
+          "port_status": "boot-archived",
+          "purpose": "goldfish 设备侧配合 guest 图形",
+          "quality": "与 goldfish-opengl-pie 关联",
+          "impact": "图形栈；G3",
+          "verification": "M1 graphics up + bootanim",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__device_generic_x86_64.patch",
+      "name": "aosp16__device_generic_x86_64.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "3ecfe90784171d287cd12d48e424264fa3c60cded46931f9b2ebe8a7ae945822",
+      "bytes": 3190,
+      "lines": 93,
+      "files_changed": 3,
+      "hunks": 4,
+      "additions": 36,
+      "deletions": 17,
+      "contains_binary_patch": false,
+      "files": [
+        "AndroidProducts.mk",
+        "BoardConfig.mk",
+        "android_x86_64.mk"
+      ],
+      "registry": [
+        {
+          "id": "boot-device-generic-x86_64",
+          "project_path": "device/generic/x86_64",
+          "phase": "P1",
+          "related_group": "G1",
+          "port_status": "boot-archived",
+          "purpose": "x86_64 product 入口（android_x86_64），承接 common overlay",
+          "quality": "薄 product mk；迁 qvirt 后由 bst_x86_64.mk 取代",
+          "impact": "lunch target 名；与 Makefile ANDROIDOUT 路径耦合",
+          "verification": "M1 lunch android_x86_64-trunk_staging-eng",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "BoardConfig.mk": [
+          "patches/android-16/patches/aosp16__device_generic_common.patch",
+          "patches/android-16/patches/aosp16__device_generic_x86_64.patch"
+        ]
+      },
+      "overlap_groups": [
+        "BoardConfig.mk"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__external_boringssl.patch",
+      "name": "aosp16__external_boringssl.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "ffaabaa230206adaacfde98d26b92e367e7fb2054c07f11c84942192774c236f",
+      "bytes": 751,
+      "lines": 20,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 4,
+      "deletions": 5,
+      "contains_binary_patch": false,
+      "files": [
+        "selftest/Android.bp"
+      ],
+      "registry": [
+        {
+          "id": "boot-external-boringssl",
+          "project_path": "external/boringssl",
+          "phase": "P1",
+          "related_group": "G9",
+          "port_status": "boot-archived",
+          "purpose": "boringssl self-test rc 等 bringup 适配",
+          "quality": "可能可收敛为 init rc noop",
+          "impact": "早期 init",
+          "verification": "boringssl-rc disabled",
+          "host_compat": "unknown",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "selftest/Android.bp": [
+          "patches/android-16/patches/aosp16__external_boringssl.patch",
+          "patches/android-16/patches/p2-external/a13__boringssl__bst.patch"
+        ]
+      },
+      "overlap_groups": [
+        "selftest/Android.bp"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__frameworks_base.patch",
+      "name": "aosp16__frameworks_base.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "38f4b50f95746f33f9449830446b988fd440ec9a3f0db5cd39631aab876cd9d3",
+      "bytes": 958973,
+      "lines": 22924,
+      "files_changed": 97,
+      "hunks": 253,
+      "additions": 20668,
+      "deletions": 88,
+      "contains_binary_patch": false,
+      "files": [
+        "cmds/bootanimation/BootAnimationUtil.cpp",
+        "cmds/pagefusion/Android.bp",
+        "cmds/pagefusion/PageFusion.cpp",
+        "cmds/pagefusion/RTVboxGuest.cpp",
+        "cmds/pagefusion/RTVboxGuest.h",
+        "cmds/pagefusion/list.h",
+        "cmds/pagefusion/util.cpp",
+        "cmds/pagefusion/util.h",
+        "core/java/Android.bp",
+        "core/java/android/app/Activity.java",
+        "core/java/android/app/ActivityManagerInternal.java",
+        "core/java/android/app/ActivityThread.java",
+        "core/java/android/app/ContextImpl.java",
+        "core/java/android/app/Instrumentation.java",
+        "core/java/android/app/SharedPreferencesImpl.java",
+        "core/java/android/app/SystemServiceRegistry.java",
+        "core/java/android/content/Context.java",
+        "core/java/android/content/Intent.java",
+        "core/java/android/content/pm/PackageParser.java",
+        "core/java/android/content/pm/parsing/ApkLiteParseUtils.java",
+        "core/java/android/content/res/ResourcesImpl.java",
+        "core/java/android/hardware/Sensor.java",
+        "core/java/android/hardware/input/InputManagerGlobal.java",
+        "core/java/android/inputmethodservice/InputMethodService.java",
+        "core/java/android/os/BaseBundle.java",
+        "core/java/android/os/Environment.java",
+        "core/java/android/os/SystemVibrator.java",
+        "core/java/android/permission/ILegacyPermissionManager.aidl",
+        "core/java/android/permission/LegacyPermissionManager.java",
+        "core/java/android/provider/Settings.java",
+        "core/java/android/util/BstUtils.java",
+        "core/java/android/util/Features.java",
+        "core/java/android/view/Display.java",
+        "core/java/android/view/InputDevice.java",
+        "core/java/android/view/View.java",
+        "core/java/android/view/ViewRootImpl.java",
+        "core/java/android/view/accessibility/AccessibilityManager.java",
+        "core/java/android/widget/EditText.java",
+        "core/java/android/widget/Editor.java",
+        "core/java/android/widget/TextView.java",
+        "core/java/com/android/internal/app/PaymentRedirectProxyActivity.java",
+        "core/java/com/android/internal/content/NativeLibraryHelper.java",
+        "core/java/com/android/internal/widget/LockPatternUtils.java",
+        "core/java/com/bluestacks/internal/Sdk23.java",
+        "core/java/com/bluestacks/os/BstFilterAppsManager.java",
+        "core/java/com/bluestacks/os/BstHostCallCcCodes.java",
+        "core/java/com/bluestacks/os/BstHostCallManager.java",
+        "core/java/com/bluestacks/os/BstUtilsManager.java",
+        "core/java/com/bluestacks/os/IBstFilterAppsService.aidl",
+        "core/java/com/bluestacks/os/IBstHostCallService.aidl",
+        "core/java/com/bluestacks/os/IBstUtilsService.aidl",
+        "core/jni/android_os_Debug.cpp",
+        "core/res/res/values/dimens.xml",
+        "core/res/res/xml/config_webview_packages.xml",
+        "data/etc/hiddenapi-package-whitelist.xml",
+        "data/keyboards/Virtual.kcm",
+        "libs/WindowManager/Shell/src/com/android/wm/shell/transition/Transitions.java",
+        "media/java/android/media/MediaCodecInfo.java",
+        "packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java",
+        "packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java",
+        "packages/SystemUI/src/com/android/systemui/biometrics/AuthController.java",
+        "services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java",
+        "services/core/java/com/android/server/IntentResolver.java",
+        "services/core/java/com/android/server/accounts/AccountManagerService.java",
+        "services/core/java/com/android/server/am/ActivityManagerService.java",
+        "services/core/java/com/android/server/appop/AppOpsService.java",
+        "services/core/java/com/android/server/audio/AudioService.java",
+        "services/core/java/com/android/server/clipboard/ClipboardService.java",
+        "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java",
+        "services/core/java/com/android/server/location/LocationManagerService.java",
+        "services/core/java/com/android/server/notification/NotificationManagerService.java",
+        "services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java",
+        "services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java",
+        "services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java",
+        "services/core/java/com/android/server/pm/resolution/ComponentResolver.java",
+        "services/core/java/com/android/server/policy/PhoneWindowManager.java",
+        "services/core/java/com/android/server/policy/WindowManagerPolicy.java",
+        "services/core/java/com/android/server/power/stats/BatteryStatsImpl.java",
+        "services/core/java/com/android/server/security/authenticationpolicy/SecureLockDeviceService.java",
+        "services/core/java/com/android/server/wm/ActivityRecord.java",
+        "services/core/java/com/android/server/wm/ActivityStarter.java",
+        "services/core/java/com/android/server/wm/ActivityTaskManagerDebugConfig.java",
+        "services/core/java/com/android/server/wm/ActivityTaskManagerService.java",
+        "services/core/java/com/android/server/wm/DisplayContent.java",
+        "services/core/java/com/android/server/wm/DisplayRotation.java",
+        "services/core/java/com/android/server/wm/WindowManagerDebugConfig.java",
+        "services/core/java/com/android/server/wm/WindowManagerService.java",
+        "services/java/com/android/server/SystemServer.java",
+        "services/java/com/bluestacks/server/BstFilterAppsService.java",
+        "services/java/com/bluestacks/server/BstHostCallService.java",
+        "services/java/com/bluestacks/server/BstUtilsService.java",
+        "services/java/com/bluestacks/server/native/Android.mk",
+        "services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp",
+        "telephony/common/com/android/internal/telephony/TelephonyPermissions.java",
+        "telephony/java/android/telephony/ServiceState.java",
+        "telephony/java/android/telephony/SubscriptionManager.java",
+        "telephony/java/android/telephony/TelephonyManager.java"
+      ],
+      "registry": [
+        {
+          "id": "boot-frameworks-base",
+          "project_path": "frameworks/base",
+          "phase": "P1",
+          "related_group": "G5",
+          "port_status": "boot-archived",
+          "purpose": "WMS ActivityDisplayed、SystemServer 跳过、锁屏、auth 恢复、Bst* Java/AIDL/JNI",
+          "quality": "真 BST + 部分 NPE 防护；与 TEMP r262 分离",
+          "impact": "Player ready 门控、Settings、SystemUI 稳定",
+          "verification": "hcallOnActivityDisplayed + Player ready",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "cmds/pagefusion/Android.bp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/PageFusion.cpp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/RTVboxGuest.cpp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/RTVboxGuest.h": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/list.h": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/util.cpp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/util.h": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "core/java/android/app/Activity.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-13.diff"
+        ],
+        "core/java/android/app/ActivityThread.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-16.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-8.diff"
+        ],
+        "core/java/android/app/ContextImpl.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-3.diff"
+        ],
+        "core/java/android/app/Instrumentation.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-3.diff"
+        ],
+        "core/java/android/app/SharedPreferencesImpl.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-12.diff"
+        ],
+        "core/java/android/content/pm/parsing/ApkLiteParseUtils.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-2.diff"
+        ],
+        "core/java/android/content/res/ResourcesImpl.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-11.diff"
+        ],
+        "core/java/android/hardware/input/InputManagerGlobal.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-9.diff"
+        ],
+        "core/java/android/inputmethodservice/InputMethodService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-1.diff"
+        ],
+        "core/java/android/os/BaseBundle.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-15.diff"
+        ],
+        "core/java/android/os/Environment.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-5.diff"
+        ],
+        "core/java/android/os/SystemVibrator.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-1.diff"
+        ],
+        "core/java/android/provider/Settings.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-5.diff"
+        ],
+        "core/java/android/util/BstUtils.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchA-applied.diff",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_upgrade.patch"
+        ],
+        "core/java/android/view/Display.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-10.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-17.diff"
+        ],
+        "core/java/android/view/InputDevice.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-4.diff"
+        ],
+        "core/java/android/view/View.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-2.diff"
+        ],
+        "core/java/android/view/ViewRootImpl.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-4.diff"
+        ],
+        "core/java/android/view/accessibility/AccessibilityManager.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-1.diff"
+        ],
+        "core/java/android/widget/EditText.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-1.diff"
+        ],
+        "core/java/android/widget/Editor.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-6.diff"
+        ],
+        "core/java/android/widget/TextView.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-6.diff"
+        ],
+        "core/java/com/android/internal/content/NativeLibraryHelper.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-14.diff"
+        ],
+        "core/java/com/bluestacks/internal/Sdk23.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "libs/WindowManager/Shell/src/com/android/wm/shell/transition/Transitions.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch"
+        ],
+        "media/java/android/media/MediaCodecInfo.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-1.diff"
+        ],
+        "packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-6.diff"
+        ],
+        "packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-7.diff"
+        ],
+        "services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-5.diff"
+        ],
+        "services/core/java/com/android/server/appop/AppOpsService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-4a.diff"
+        ],
+        "services/core/java/com/android/server/audio/AudioService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-4a.diff"
+        ],
+        "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6b.diff"
+        ],
+        "services/core/java/com/android/server/wm/ActivityStarter.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchB-surgical.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-WM-1-ActivityStarter-ATM.diff"
+        ],
+        "services/core/java/com/android/server/wm/ActivityTaskManagerService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-WM-1-ActivityStarter-ATM.diff"
+        ],
+        "services/core/java/com/android/server/wm/WindowManagerService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchB-surgical.diff"
+        ],
+        "telephony/common/com/android/internal/telephony/TelephonyPermissions.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-2.diff"
+        ],
+        "telephony/java/android/telephony/ServiceState.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-4.diff"
+        ],
+        "telephony/java/android/telephony/SubscriptionManager.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__d8-subscription.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-8.diff"
+        ],
+        "telephony/java/android/telephony/TelephonyManager.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3b.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-5.diff"
+        ]
+      },
+      "overlap_groups": [
+        "cmds/pagefusion/Android.bp",
+        "cmds/pagefusion/PageFusion.cpp",
+        "cmds/pagefusion/RTVboxGuest.cpp",
+        "cmds/pagefusion/RTVboxGuest.h",
+        "cmds/pagefusion/list.h",
+        "cmds/pagefusion/util.cpp",
+        "cmds/pagefusion/util.h",
+        "core/java/android",
+        "core/java/com",
+        "libs/WindowManager/Shell",
+        "media/java/android/media/MediaCodecInfo.java",
+        "packages/SettingsProvider/src",
+        "services/accessibility/java",
+        "services/core/java",
+        "telephony/common/com",
+        "telephony/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__frameworks_base__d8-subscription.patch",
+      "name": "aosp16__frameworks_base__d8-subscription.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "1f6aaeff944bbd520e4f45237a6a86200fe0181a71d75310fcb7eeac931ff0f0",
+      "bytes": 2001,
+      "lines": 39,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 5,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "telephony/java/android/telephony/SubscriptionManager.java"
+      ],
+      "registry": [
+        {
+          "id": "p2-d8-telephony-subscription",
+          "project_path": "frameworks/base",
+          "phase": "P2",
+          "related_group": "P2-DEF",
+          "port_status": "ported",
+          "purpose": "D8 fake-SIM subscription count anti-detection: SubscriptionManager.getActiveSubscriptionInfoCount() returns 1 when bst.config.enable_telephony=true. Sidesteps a13 blocker (getActiveSubscriptionInfoList @RequiresPermission drop fails check_current_api).",
+          "quality": "clean; property-gated; no aidl change",
+          "impact": "anti-detection (7th telephony layer); boot-safe",
+          "verification": "Layer2 7/7 @161s system.img a878d3c8; commit 00274255beb7 frameworks/base",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "telephony/java/android/telephony/SubscriptionManager.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__d8-subscription.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-8.diff"
+        ]
+      },
+      "overlap_groups": [
+        "telephony/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+      "name": "aosp16__frameworks_base__pagefusion.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "d1c3af66d284637697b2efe38251192e013ed93824cafa0654d5f2e26c5676b6",
+      "bytes": 95132,
+      "lines": 3041,
+      "files_changed": 7,
+      "hunks": 7,
+      "additions": 2983,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "cmds/pagefusion/Android.bp",
+        "cmds/pagefusion/PageFusion.cpp",
+        "cmds/pagefusion/RTVboxGuest.cpp",
+        "cmds/pagefusion/RTVboxGuest.h",
+        "cmds/pagefusion/list.h",
+        "cmds/pagefusion/util.cpp",
+        "cmds/pagefusion/util.h"
+      ],
+      "registry": [
+        {
+          "id": "win-frameworks-base-pagefusion",
+          "project_path": "frameworks/base",
+          "phase": "P2",
+          "related_group": "P2-DEF",
+          "port_status": "ported",
+          "purpose": "BST vbox page-fusion module (cmds/pagefusion). a16 fix: local #define PAGE_SIZE 4096 + PAGE_MASK (bionic -D__BIONIC_NO_PAGE_SIZE_MACRO disables the macro globally).",
+          "quality": "clean; mechanical a16 bionic gap",
+          "impact": "runtime page-fusion (vbox); boot-safe",
+          "verification": "Layer2 7/7 @161s system.img a878d3c8; commit 2cf8a0cf64c5",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "cmds/pagefusion/Android.bp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/PageFusion.cpp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/RTVboxGuest.cpp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/RTVboxGuest.h": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/list.h": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/util.cpp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/util.h": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ]
+      },
+      "overlap_groups": [
+        "cmds/pagefusion/Android.bp",
+        "cmds/pagefusion/PageFusion.cpp",
+        "cmds/pagefusion/RTVboxGuest.cpp",
+        "cmds/pagefusion/RTVboxGuest.h",
+        "cmds/pagefusion/list.h",
+        "cmds/pagefusion/util.cpp",
+        "cmds/pagefusion/util.h"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch",
+      "name": "aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "176f9b22a9680e3f5e5c08777fa67aa6ac57bc2920587559b9f3a7a097a179e9",
+      "bytes": 1960,
+      "lines": 38,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 12,
+      "deletions": 8,
+      "contains_binary_patch": false,
+      "files": [
+        "libs/WindowManager/Shell/src/com/android/wm/shell/transition/Transitions.java"
+      ],
+      "registry": [
+        {
+          "id": "boot-frameworks-base-r262-temp",
+          "project_path": "frameworks/base",
+          "phase": "P2",
+          "related_group": "TEMP",
+          "port_status": "removed",
+          "purpose": "TEMP：关闭 Shell Transitions。根因：缺 performance_hint（IPower + HintManagerService）→ PerfHintController.onInit 阻塞 wmshell.main",
+          "quality": "cont.22 已收口：power-service.example + 恢复 HintManager + ENABLE_SHELL_TRANSITIONS=true",
+          "impact": "Settings/Shell Transitions",
+          "verification": "cont.22b Root md5 840137ca… Layer2 7/7；本 boot 无 aidl/performance_hint missing",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "libs/WindowManager/Shell/src/com/android/wm/shell/transition/Transitions.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch"
+        ]
+      },
+      "overlap_groups": [
+        "libs/WindowManager/Shell"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__frameworks_native.patch",
+      "name": "aosp16__frameworks_native.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "8424f1e91d0daea449391c418dfb0a5c162c81d60f48e156339898192cb907f7",
+      "bytes": 5399,
+      "lines": 126,
+      "files_changed": 3,
+      "hunks": 3,
+      "additions": 50,
+      "deletions": 53,
+      "contains_binary_patch": false,
+      "files": [
+        "libs/binder/include/binder/BstFilterAppsManager.h",
+        "libs/binder/include/binder/IInterface.h",
+        "vulkan/nulldrv/Android.bp"
+      ],
+      "registry": [
+        {
+          "id": "boot-frameworks-native",
+          "project_path": "frameworks/native",
+          "phase": "P1",
+          "related_group": "G5",
+          "port_status": "boot-archived",
+          "purpose": "binder allowlist / BstFilterAppsManager.h stub 等 native 侧支撑",
+          "quality": "接缝偏向 libs/binder",
+          "impact": "goldfish/binder 编译与运行",
+          "verification": "M1 Layer1+2",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "libs/binder/include/binder/BstFilterAppsManager.h": [
+          "patches/android-16/patches/aosp16__frameworks_native.patch",
+          "patches/android-16/patches/aosp16__frameworks_native_libs_binder.patch"
+        ],
+        "libs/binder/include/binder/IInterface.h": [
+          "patches/android-16/patches/aosp16__frameworks_native.patch",
+          "patches/android-16/patches/aosp16__frameworks_native_libs_binder.patch"
+        ]
+      },
+      "overlap_groups": [
+        "libs/binder/include"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__frameworks_native_libs_binder.patch",
+      "name": "aosp16__frameworks_native_libs_binder.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "2cc247d014bf73d6c5255d7e9f7d977ab22df14f651c551d408260fc06df608e",
+      "bytes": 163624,
+      "lines": 3898,
+      "files_changed": 10,
+      "hunks": 11,
+      "additions": 3821,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "libs/binder/Android.bp",
+        "libs/binder/BstFilterAppsManager.cpp",
+        "libs/binder/BstUtilsManager.cpp",
+        "libs/binder/IBstFilterAppsService.cpp",
+        "libs/binder/IBstUtilsService.cpp",
+        "libs/binder/include/binder/BstFilterAppsManager.h",
+        "libs/binder/include/binder/BstUtilsManager.h",
+        "libs/binder/include/binder/IBstFilterAppsService.h",
+        "libs/binder/include/binder/IBstUtilsService.h",
+        "libs/binder/include/binder/IInterface.h"
+      ],
+      "registry": [
+        {
+          "id": "win-frameworks-native",
+          "project_path": "frameworks/native",
+          "phase": "P2",
+          "related_group": "P2-FRAMEWORK-REST",
+          "port_status": "ported",
+          "purpose": "frameworks/native BST 定制（binder allowlist 等）",
+          "quality": "高置信",
+          "impact": "binder/goldfish",
+          "verification": "Root a878d3c8 Layer2 7/7 @161s. D9 binder C++ REAL impl now ported (was fail-open stub): 3670 lines BstUtilsManager/BstFilterAppsManager/IBstUtilsService/IBstFilterAppsService in libbinder, 6 a13->a16 fixes (VNDK guard+String16, allowlist b/64223827, exit-time-dtor, LIBBINDER_EXPORTED visibility, vendor PermissionController guard, (void)uid). commit c581b1bae8. Prior: installd globals/utils, ServiceManager.cpp, EventHub.cpp (Root 00c31065).",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "libs/binder/include/binder/BstFilterAppsManager.h": [
+          "patches/android-16/patches/aosp16__frameworks_native.patch",
+          "patches/android-16/patches/aosp16__frameworks_native_libs_binder.patch"
+        ],
+        "libs/binder/include/binder/IInterface.h": [
+          "patches/android-16/patches/aosp16__frameworks_native.patch",
+          "patches/android-16/patches/aosp16__frameworks_native_libs_binder.patch"
+        ]
+      },
+      "overlap_groups": [
+        "libs/binder/include"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__hardware_google_aemu.patch",
+      "name": "aosp16__hardware_google_aemu.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "bf339482528d15a26c048c82fd59d132360397955685aa2cde4cadacd8b78bc1",
+      "bytes": 1009,
+      "lines": 35,
+      "files_changed": 2,
+      "hunks": 3,
+      "additions": 3,
+      "deletions": 3,
+      "contains_binary_patch": false,
+      "files": [
+        "base/Android.bp",
+        "host-common/Android.bp"
+      ],
+      "registry": [
+        {
+          "id": "boot-hardware-google-aemu",
+          "project_path": "hardware/google/aemu",
+          "phase": "P1",
+          "related_group": "G3",
+          "port_status": "boot-archived",
+          "purpose": "aemu 适配 / 与 gfxstream disable 配合",
+          "quality": "构建接缝",
+          "impact": "图形构建",
+          "verification": "Layer1",
+          "host_compat": "unknown",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__hardware_interfaces.patch",
+      "name": "aosp16__hardware_interfaces.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "1ea416b4e906e3238d79a65954f5e7b5f4681a1113d3485554fae908062c2355",
+      "bytes": 808,
+      "lines": 24,
+      "files_changed": 2,
+      "hunks": 2,
+      "additions": 2,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "gnss/1.0/default/Android.bp",
+        "memtrack/1.0/default/Android.bp"
+      ],
+      "registry": [
+        {
+          "id": "boot-hardware-interfaces",
+          "project_path": "hardware/interfaces",
+          "phase": "P1",
+          "related_group": "G8",
+          "port_status": "boot-archived",
+          "purpose": "HAL 接口 / VINTF 相关适配",
+          "quality": "与 manifest audio 条目关联",
+          "impact": "audioserver / FactoryHal",
+          "verification": "audioserver 无 SIGSEGV",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__hardware_libhardware.patch",
+      "name": "aosp16__hardware_libhardware.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "1e000280b3595535813f99f34488418f0fd8953fd285702a00f7970ad8b1acf3",
+      "bytes": 3238,
+      "lines": 98,
+      "files_changed": 2,
+      "hunks": 2,
+      "additions": 0,
+      "deletions": 86,
+      "contains_binary_patch": false,
+      "files": [
+        "modules/gralloc/Android.bp",
+        "modules/hwcomposer/Android.bp"
+      ],
+      "registry": [
+        {
+          "id": "boot-hardware-libhardware",
+          "project_path": "hardware/libhardware",
+          "phase": "P1",
+          "related_group": "G8",
+          "port_status": "boot-archived",
+          "purpose": "libhardware 模块适配（含禁用冲突模块）",
+          "quality": "含 .disabled Android.bp",
+          "impact": "与 goldfish/hwc 共存",
+          "verification": "Layer1+hwc",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__packages_apps_Launcher3.patch",
+      "name": "aosp16__packages_apps_Launcher3.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "05a8557df5dc532a8596db997d448833ab99483b8d3e7220bfd9a7b30292c6e9",
+      "bytes": 5322,
+      "lines": 93,
+      "files_changed": 4,
+      "hunks": 5,
+      "additions": 27,
+      "deletions": 5,
+      "contains_binary_patch": false,
+      "files": [
+        "AndroidManifest.xml",
+        "quickstep/AndroidManifest-launcher.xml",
+        "quickstep/src/com/android/quickstep/OverviewComponentObserver.java",
+        "src/com/android/launcher3/widget/WidgetManagerHelper.java"
+      ],
+      "registry": [
+        {
+          "id": "boot-packages-launcher3",
+          "project_path": "packages/apps/Launcher3",
+          "phase": "P1",
+          "related_group": "G6",
+          "port_status": "boot-archived",
+          "purpose": "去 HOME 抢占、widget NPE、配合 uncube launcher",
+          "quality": "真产品定制",
+          "impact": "host ready 依赖 uncube ActivityDisplayed",
+          "verification": "uncube RESUMED + Player ready",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "AndroidManifest.xml": [
+          "patches/android-16/patches/aosp16__packages_apps_Launcher3.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-2-launcher3-manifest.diff"
+        ],
+        "quickstep/AndroidManifest-launcher.xml": [
+          "patches/android-16/patches/aosp16__packages_apps_Launcher3.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-2-launcher3-manifest.diff"
+        ]
+      },
+      "overlap_groups": [
+        "AndroidManifest.xml",
+        "quickstep/AndroidManifest-launcher.xml"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__system_core.patch",
+      "name": "aosp16__system_core.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "f2d51165446d1e4da2a7a19cba570a62836f1a13945b3629230342ded164be22",
+      "bytes": 21450,
+      "lines": 531,
+      "files_changed": 13,
+      "hunks": 32,
+      "additions": 222,
+      "deletions": 26,
+      "contains_binary_patch": false,
+      "files": [
+        "init/coldboot.cpp",
+        "init/first_stage_init.cpp",
+        "init/first_stage_mount.cpp",
+        "init/init.cpp",
+        "init/property_service.cpp",
+        "init/reboot.cpp",
+        "init/selinux.cpp",
+        "init/service.cpp",
+        "init/ueventd.cpp",
+        "init/util.cpp",
+        "libprocessgroup/processgroup.cpp",
+        "rootdir/init.rc",
+        "rootdir/ueventd.rc"
+      ],
+      "registry": [
+        {
+          "id": "boot-system-core",
+          "project_path": "system/core",
+          "phase": "P1",
+          "related_group": "G7",
+          "port_status": "boot-archived",
+          "purpose": "init 路径/关机闭环/installd early-start；夹带 SELinux permissive 与多项 check bypass",
+          "quality": "混合：关机/installd 为真定制；SELinux/property/vdc bypass 为 temp_debt",
+          "impact": "boot 稳定性 vs Phase2 sepolicy 收口",
+          "verification": "优雅关机 + boot_completed",
+          "host_compat": "ok",
+          "temp_debt": true
+        },
+        {
+          "id": "temp-selinux-permissive-bypasses",
+          "project_path": "system/core/init",
+          "phase": "P2",
+          "related_group": "TEMP",
+          "port_status": "boot-archived",
+          "purpose": "对齐 a13：强制 SELinux permissive（IsEnforcing=false、CheckMacPerms 等）",
+          "quality": "2026-07-21 人类决策：intentional a13 策略，非 Phase2 内改 enforcing；禁 enabled.c→0",
+          "impact": "与 a13 行为对齐；win-external-selinux disable 仍 blocked",
+          "verification": "M1/G1 boot 依赖；策略保留",
+          "host_compat": "ok",
+          "temp_debt": true
+        }
+      ],
+      "overlaps": {
+        "init/property_service.cpp": [
+          "patches/android-16/patches/aosp16__system_core.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-16-propsvc.diff"
+        ],
+        "rootdir/init.rc": [
+          "patches/android-16/patches/aosp16__system_core.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-17-initrc.diff"
+        ]
+      },
+      "overlap_groups": [
+        "init/property_service.cpp",
+        "rootdir/init.rc"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__system_hwservicemanager.patch",
+      "name": "aosp16__system_hwservicemanager.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "48553a7aec938afe107a84e7bf6cdcaac889254e93eff6598ae36eadcadbb33b",
+      "bytes": 2770,
+      "lines": 50,
+      "files_changed": 3,
+      "hunks": 3,
+      "additions": 7,
+      "deletions": 13,
+      "contains_binary_patch": false,
+      "files": [
+        "Android.bp",
+        "hwservicemanager.rc",
+        "service.cpp"
+      ],
+      "registry": [
+        {
+          "id": "boot-system-hwservicemanager",
+          "project_path": "system/hwservicemanager",
+          "phase": "P1",
+          "related_group": "G9",
+          "port_status": "boot-archived",
+          "purpose": "hwservicemanager 路径/产物适配 A16",
+          "quality": "构建接缝",
+          "impact": "HIDL 服务发现",
+          "verification": "Layer1",
+          "host_compat": "unknown",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__system_libhidl_vintf.patch",
+      "name": "aosp16__system_libhidl_vintf.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "2bf58406a0160fc85b4b07dd408963eb2a8fb617a4e2645679eb82c082520e79",
+      "bytes": 711,
+      "lines": 20,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 11,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "vintfdata/manifest.xml"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/aosp16__system_security.patch",
+      "name": "aosp16__system_security.patch",
+      "category": "AOSP16 project snapshots",
+      "sha256": "c7cd5fa5086067860e05de6fad00bf59c773febe9d4adda1c40e281099f8bf03",
+      "bytes": 773,
+      "lines": 17,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 4,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "files": [
+        "keystore2/src/maintenance.rs"
+      ],
+      "registry": [
+        {
+          "id": "boot-system-security",
+          "project_path": "system/security",
+          "phase": "P1",
+          "related_group": "G9",
+          "port_status": "boot-archived",
+          "purpose": "keystore/security 构建期适配（完整源码路径）",
+          "quality": "相对 staging bypass 已改善",
+          "impact": "odsign/keystore2 boot level key",
+          "verification": "odsign.key.done",
+          "host_compat": "unknown",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/app-player_buildscripts.patch",
+      "name": "app-player_buildscripts.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "a877f50eb3c9fc04e16b7003ed19155c75060f8b45f909a474efa18f1b78ed49",
+      "bytes": 25249,
+      "lines": 560,
+      "files_changed": 7,
+      "hunks": 39,
+      "additions": 164,
+      "deletions": 53,
+      "contains_binary_patch": false,
+      "files": [
+        "buildscripts/Makefile",
+        "buildscripts/build.sh",
+        "buildscripts/build_nowgg_common_apks.sh",
+        "buildscripts/create_vdi.sh",
+        "buildscripts/create_zips.sh",
+        "buildscripts/odex_script.sh",
+        "buildscripts/sync.sh"
+      ],
+      "registry": [
+        {
+          "id": "boot-app-player-buildscripts",
+          "project_path": "app-player/buildscripts",
+          "phase": "P1",
+          "related_group": "G10",
+          "port_status": "boot-archived",
+          "purpose": "Makefile Baklava 分支、droid target、system.sfs、UUID/create_vdi 适配",
+          "quality": "打包权威；须防 init.rc 覆盖回归",
+          "impact": "Root.vhd / fastboot.vdi 产出",
+          "verification": "Root.vhd 部署启动",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/goldfish-opengl-pie.patch",
+      "name": "goldfish-opengl-pie.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "361e9ba643106bd8090a169221b0357d70c6cea0e3c9e87a62a0a303546e51e4",
+      "bytes": 22494,
+      "lines": 466,
+      "files_changed": 15,
+      "hunks": 26,
+      "additions": 122,
+      "deletions": 51,
+      "contains_binary_patch": false,
+      "files": [
+        "Android.mk",
+        "shared/GoldfishAddressSpace/include/goldfish_address_space_android.impl",
+        "shared/OpenglCodecCommon/glUtils.cpp",
+        "shared/RTVboxGuest/Android.mk",
+        "system/GLESv1/gl.cpp",
+        "system/GLESv2/gl2.cpp",
+        "system/GLESv2_enc/GL2Encoder.cpp",
+        "system/OpenglSystemCommon/HostConnection.cpp",
+        "system/OpenglSystemCommon/ThreadInfo.cpp",
+        "system/egl/egl.cpp",
+        "system/hwc2/EmuHWC2.cpp",
+        "system/hwc2/EmuHWC2.h",
+        "system/mesa/Android.mk",
+        "system/vulkan_enc/Android.mk",
+        "system/vulkan_enc/ResourceTracker.cpp"
+      ],
+      "registry": [
+        {
+          "id": "boot-goldfish-opengl-pie",
+          "project_path": "ggl/goldfish-opengl-pie",
+          "phase": "P1",
+          "related_group": "G3",
+          "port_status": "boot-archived",
+          "purpose": "A16 GLES/HWC2 适配；bstpgaipc HostConnection；VsyncThread sp 修复",
+          "quality": "真图形定制；mac 应对齐 goldfish-opengl-mac",
+          "impact": "host qemu 图形契约；Intel GPU 路径",
+          "verification": "M1 bootanim + SF；host Player ready",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/hd-guest.patch",
+      "name": "hd-guest.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "46c95497093b5697fdc137b3058024b6bf3c9a653878d633fd5a4c0a42c9c2d7",
+      "bytes": 22342,
+      "lines": 517,
+      "files_changed": 7,
+      "hunks": 31,
+      "additions": 211,
+      "deletions": 41,
+      "contains_binary_patch": false,
+      "files": [
+        "guest/BootImage/Makefile",
+        "guest/BootImage/bstsetconf.sh",
+        "guest/BootImage/bstsetup.env",
+        "guest/BootImage/fastboot/Makefile",
+        "guest/BootImage/init.sh",
+        "guest/BootImage/stage2.sh",
+        "guest/Drivers/Makefile"
+      ],
+      "registry": [
+        {
+          "id": "boot-hd-guest",
+          "project_path": "hd/guest",
+          "phase": "P1",
+          "related_group": "G4",
+          "port_status": "boot-archived",
+          "purpose": "BootImage init.sh/stage2、guest 模块、fastboot 注入",
+          "quality": "打包链核心；含 bringup 脚本适配",
+          "impact": "first/second stage、kernel 模块、关机前同步",
+          "verification": "M1 first-stage mount sfs + stage2 exec init",
+          "host_compat": "ok",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-bionic-art/a13__art__bst_full.patch",
+      "name": "a13__art__bst_full.patch",
+      "category": "P2 bionic/art source overlays",
+      "sha256": "131b884f3953c5cc825361e575c86461d0a0ec7b186bdd10bb943b593ac8ba30",
+      "bytes": 26055,
+      "lines": 713,
+      "files_changed": 5,
+      "hunks": 17,
+      "additions": 529,
+      "deletions": 21,
+      "contains_binary_patch": false,
+      "files": [
+        "libnativebridge/libnativebridge.map.txt",
+        "libnativebridge/native_bridge.cc",
+        "libnativeloader/native_loader_namespace.cpp",
+        "runtime/jni/jni_internal.cc",
+        "runtime/oat_quick_method_header.cc"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-bionic-art/a13__bionic__bst_full.patch",
+      "name": "a13__bionic__bst_full.patch",
+      "category": "P2 bionic/art source overlays",
+      "sha256": "ca7baf55bb6c56f9190382b991fc2d59701f93831c8b6e09853b82a95c5fec38",
+      "bytes": 45611,
+      "lines": 1196,
+      "files_changed": 16,
+      "hunks": 35,
+      "additions": 873,
+      "deletions": 7,
+      "contains_binary_patch": false,
+      "files": [
+        "libc/SYSCALLS.TXT",
+        "libc/arch-x86/syscalls/ioperm.S",
+        "libc/arch-x86/syscalls/iopl.S",
+        "libc/arch-x86_64/syscalls/ioperm.S",
+        "libc/arch-x86_64/syscalls/iopl.S",
+        "libc/bionic/fortify.cpp",
+        "libc/bionic/open.cpp",
+        "libc/bionic/poll.cpp",
+        "libc/bionic/system_property_set.cpp",
+        "libc/dns/net/getaddrinfo.c",
+        "libc/libc.map.txt",
+        "libc/private/bionic_fortify.h",
+        "libc/system_properties/obs_str.hpp",
+        "libc/system_properties/system_properties.cpp",
+        "libc/tzcode/localtime.c",
+        "linker/linker.cpp"
+      ],
+      "registry": [],
+      "overlaps": {
+        "libc/bionic/system_property_set.cpp": [
+          "patches/android-16/patches/p2-bionic-art/a13__bionic__bst_full.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-19-bionic-propsvc.diff"
+        ]
+      },
+      "overlap_groups": [
+        "libc/bionic/system_property_set.cpp"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-external/a13__boringssl__bst.patch",
+      "name": "a13__boringssl__bst.patch",
+      "category": "P2 external source overlays",
+      "sha256": "b67dd6392cae8c30ae4711118b2702ad872dd6fb3c96f11e2f70867640483bd7",
+      "bytes": 1194,
+      "lines": 32,
+      "files_changed": 2,
+      "hunks": 2,
+      "additions": 11,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "selftest/Android.bp",
+        "src/crypto/fipsmodule/rsa/padding.c"
+      ],
+      "registry": [],
+      "overlaps": {
+        "selftest/Android.bp": [
+          "patches/android-16/patches/aosp16__external_boringssl.patch",
+          "patches/android-16/patches/p2-external/a13__boringssl__bst.patch"
+        ]
+      },
+      "overlap_groups": [
+        "selftest/Android.bp"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-external/a13__icu__ROB14898-iran-tz.patch",
+      "name": "a13__icu__ROB14898-iran-tz.patch",
+      "category": "P2 external source overlays",
+      "sha256": "80898602138ceee2de2cec1c122a1fc5fc81ee08ab5bbba8f060624e51680987",
+      "bytes": 4097,
+      "lines": 96,
+      "files_changed": 2,
+      "hunks": 3,
+      "additions": 64,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "android_icu4j/libcore_bridge/src/java/com/android/i18n/timezone/ZoneInfoData.java",
+        "android_icu4j/src/main/java/android/icu/impl/OlsonTimeZone.java"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchA-applied.diff",
+      "name": "aosp16__frameworks_base__P2-batchA-applied.diff",
+      "category": "P2 aggregate/candidate snapshots",
+      "sha256": "ab20034bea4a1d6215d4d30ac34cf016c3231ba0ac23b8b7d8c895766aa1ae77",
+      "bytes": 31080,
+      "lines": 682,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 584,
+      "deletions": 60,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/util/BstUtils.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/util/BstUtils.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchA-applied.diff",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_upgrade.patch"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchB-surgical.diff",
+      "name": "aosp16__frameworks_base__P2-batchB-surgical.diff",
+      "category": "P2 aggregate/candidate snapshots",
+      "sha256": "ebccb531f921feb55362abdf101d7991ae048cf202bc96c30fc700871cea5c5f",
+      "bytes": 7131,
+      "lines": 133,
+      "files_changed": 2,
+      "hunks": 6,
+      "additions": 83,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "services/core/java/com/android/server/wm/ActivityStarter.java",
+        "services/core/java/com/android/server/wm/WindowManagerService.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "services/core/java/com/android/server/wm/ActivityStarter.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchB-surgical.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-WM-1-ActivityStarter-ATM.diff"
+        ],
+        "services/core/java/com/android/server/wm/WindowManagerService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchB-surgical.diff"
+        ]
+      },
+      "overlap_groups": [
+        "services/core/java"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-1.diff",
+      "name": "P2-FW-CORE-APP-1.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "d11a0687b269705365456ee6c0ae88e90e8198a60b49bbaa690d17216c703bd6",
+      "bytes": 3714,
+      "lines": 79,
+      "files_changed": 3,
+      "hunks": 6,
+      "additions": 25,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/inputmethodservice/InputMethodService.java",
+        "core/java/android/view/accessibility/AccessibilityManager.java",
+        "core/java/android/widget/EditText.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/inputmethodservice/InputMethodService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-1.diff"
+        ],
+        "core/java/android/view/accessibility/AccessibilityManager.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-1.diff"
+        ],
+        "core/java/android/widget/EditText.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-1.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-10.diff",
+      "name": "P2-FW-CORE-APP-10.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "a3dcd295e0e2680ce6b3ed80a1c5e6b1a815eb81d0afba8e83572f99684b7380",
+      "bytes": 5502,
+      "lines": 134,
+      "files_changed": 1,
+      "hunks": 7,
+      "additions": 75,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/view/Display.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/view/Display.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-10.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-17.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-11.diff",
+      "name": "P2-FW-CORE-APP-11.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "b3a0f1100212eaa20a215d7569425e077d57766202b571e9df17279629ec8e19",
+      "bytes": 7783,
+      "lines": 176,
+      "files_changed": 1,
+      "hunks": 6,
+      "additions": 119,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/content/res/ResourcesImpl.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/content/res/ResourcesImpl.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-11.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-12.diff",
+      "name": "P2-FW-CORE-APP-12.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "88e42c5a8ecdb611eea248880fa27d350f7cf5ce68e8a8552b99c3f8790acccc",
+      "bytes": 10852,
+      "lines": 278,
+      "files_changed": 1,
+      "hunks": 7,
+      "additions": 186,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/app/SharedPreferencesImpl.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/app/SharedPreferencesImpl.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-12.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-13.diff",
+      "name": "P2-FW-CORE-APP-13.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "394ba92ceaf45e781313401ad231d9959e46f5b1bb89be5bed7c6a5eaa4c16e3",
+      "bytes": 14642,
+      "lines": 293,
+      "files_changed": 1,
+      "hunks": 5,
+      "additions": 254,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/app/Activity.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/app/Activity.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-13.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-14.diff",
+      "name": "P2-FW-CORE-APP-14.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "8428b2a3f9c21074757fcadedae3270a4455a2518632af10a1403075487fd610",
+      "bytes": 34444,
+      "lines": 747,
+      "files_changed": 1,
+      "hunks": 11,
+      "additions": 640,
+      "deletions": 8,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/com/android/internal/content/NativeLibraryHelper.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/com/android/internal/content/NativeLibraryHelper.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-14.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/com"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-15.diff",
+      "name": "P2-FW-CORE-APP-15.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "ccbc9586960b0dcbab562309c9d40e8545865b131703b9cb587d6d5faef9280d",
+      "bytes": 31215,
+      "lines": 516,
+      "files_changed": 1,
+      "hunks": 7,
+      "additions": 443,
+      "deletions": 7,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/os/BaseBundle.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/os/BaseBundle.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-15.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-16.diff",
+      "name": "P2-FW-CORE-APP-16.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "6605414d7cf1f6bf37acc8682c77c72fdcc7bd7085924dec8eaf7ca9b78d87de",
+      "bytes": 7575,
+      "lines": 156,
+      "files_changed": 1,
+      "hunks": 4,
+      "additions": 122,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/app/ActivityThread.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/app/ActivityThread.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-16.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-8.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-17.diff",
+      "name": "P2-FW-CORE-APP-17.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "fb85c1ae8384ab9d04e73475541d355779163a264110441a3f2330fe09c13523",
+      "bytes": 2953,
+      "lines": 67,
+      "files_changed": 1,
+      "hunks": 3,
+      "additions": 36,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/view/Display.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/view/Display.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-10.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-17.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-2.diff",
+      "name": "P2-FW-CORE-APP-2.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "8260b65732a0119f0212f1e13b8a61200b82a1db49d582f406f16db13734e202",
+      "bytes": 4981,
+      "lines": 100,
+      "files_changed": 2,
+      "hunks": 6,
+      "additions": 50,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/content/pm/parsing/ApkLiteParseUtils.java",
+        "core/java/android/view/View.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/content/pm/parsing/ApkLiteParseUtils.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-2.diff"
+        ],
+        "core/java/android/view/View.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-2.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-3.diff",
+      "name": "P2-FW-CORE-APP-3.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "41fb3440e391ddeffcf0d7e8aa16a78bbb725c7dff1cb1fba2f083895dce2d82",
+      "bytes": 9787,
+      "lines": 161,
+      "files_changed": 2,
+      "hunks": 4,
+      "additions": 119,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/app/ContextImpl.java",
+        "core/java/android/app/Instrumentation.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/app/ContextImpl.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-3.diff"
+        ],
+        "core/java/android/app/Instrumentation.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-3.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-4.diff",
+      "name": "P2-FW-CORE-APP-4.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "c4cbc4d5400b46bce5603437a5bda98ea6ef481b68b280ccbe04686710e54e0f",
+      "bytes": 6108,
+      "lines": 132,
+      "files_changed": 2,
+      "hunks": 6,
+      "additions": 74,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/view/InputDevice.java",
+        "core/java/android/view/ViewRootImpl.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/view/InputDevice.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-4.diff"
+        ],
+        "core/java/android/view/ViewRootImpl.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-4.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-5.diff",
+      "name": "P2-FW-CORE-APP-5.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "38f4a69356be17d8a88f01b96828564931f36ac73081cbd896d3214d4d58867e",
+      "bytes": 10736,
+      "lines": 223,
+      "files_changed": 2,
+      "hunks": 13,
+      "additions": 117,
+      "deletions": 3,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/os/Environment.java",
+        "core/java/android/provider/Settings.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/os/Environment.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-5.diff"
+        ],
+        "core/java/android/provider/Settings.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-5.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-6.diff",
+      "name": "P2-FW-CORE-APP-6.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "fd5753bffc54b46691cd975a4d234ece8c4db1fe191f2532216f90969905f9e6",
+      "bytes": 9390,
+      "lines": 206,
+      "files_changed": 2,
+      "hunks": 14,
+      "additions": 96,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/widget/Editor.java",
+        "core/java/android/widget/TextView.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/widget/Editor.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-6.diff"
+        ],
+        "core/java/android/widget/TextView.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-6.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-8.diff",
+      "name": "P2-FW-CORE-APP-8.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "70d3e0ca95a12846602f10f276da7dee40d5440206a9dea282cd669b431dbea2",
+      "bytes": 4386,
+      "lines": 93,
+      "files_changed": 1,
+      "hunks": 5,
+      "additions": 54,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/app/ActivityThread.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/app/ActivityThread.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-16.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-8.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-9.diff",
+      "name": "P2-FW-CORE-APP-9.diff",
+      "category": "P2 framework core/app surgical patches",
+      "sha256": "33482883a0a5e901d3947e85967b460441e1e4f417880c750e1072e7bd6874ba",
+      "bytes": 2983,
+      "lines": 67,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 45,
+      "deletions": 4,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/hardware/input/InputManagerGlobal.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/hardware/input/InputManagerGlobal.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-CORE-APP-9.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-1.diff",
+      "name": "P2-FW-PERIPH-1.diff",
+      "category": "P2 framework peripheral surgical patches",
+      "sha256": "509bed947eda40bfa71b200c9f7854c911b1e3ecfa3601d32e21b54dbdd5751f",
+      "bytes": 1694,
+      "lines": 41,
+      "files_changed": 2,
+      "hunks": 3,
+      "additions": 11,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/os/SystemVibrator.java",
+        "media/java/android/media/MediaCodecInfo.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/os/SystemVibrator.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-1.diff"
+        ],
+        "media/java/android/media/MediaCodecInfo.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-1.diff"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android",
+        "media/java/android/media/MediaCodecInfo.java"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-2.diff",
+      "name": "P2-FW-PERIPH-2.diff",
+      "category": "P2 framework peripheral surgical patches",
+      "sha256": "dac82deebb68f7f2b22d09e858bfe3efd851e3216f54208430ec39d113f49013",
+      "bytes": 1413,
+      "lines": 25,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 7,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "telephony/common/com/android/internal/telephony/TelephonyPermissions.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "telephony/common/com/android/internal/telephony/TelephonyPermissions.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-2.diff"
+        ]
+      },
+      "overlap_groups": [
+        "telephony/common/com"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3.diff",
+      "name": "P2-FW-PERIPH-3.diff",
+      "category": "P2 framework peripheral surgical patches",
+      "sha256": "514de046864fca0b7ed4c02c9ca8d593ecc617c9c832ba9989d9f5dfb60076df",
+      "bytes": 1918,
+      "lines": 43,
+      "files_changed": 1,
+      "hunks": 3,
+      "additions": 16,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "files": [
+        "telephony/java/android/telephony/TelephonyManager.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "telephony/java/android/telephony/TelephonyManager.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3b.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-5.diff"
+        ]
+      },
+      "overlap_groups": [
+        "telephony/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3b.diff",
+      "name": "P2-FW-PERIPH-3b.diff",
+      "category": "P2 framework peripheral surgical patches",
+      "sha256": "f11f8c2a829002f1befd54c9491d50b3da059b41a6350e7c92a3c6f4f6fca0fb",
+      "bytes": 1218,
+      "lines": 22,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 4,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "telephony/java/android/telephony/TelephonyManager.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "telephony/java/android/telephony/TelephonyManager.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3b.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-5.diff"
+        ]
+      },
+      "overlap_groups": [
+        "telephony/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-4.diff",
+      "name": "P2-FW-PERIPH-4.diff",
+      "category": "P2 framework peripheral surgical patches",
+      "sha256": "78d0656f5e86d5219958b187ef271f6498f61189c6111fc9dd961a7c8153230c",
+      "bytes": 1340,
+      "lines": 25,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 7,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "telephony/java/android/telephony/ServiceState.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "telephony/java/android/telephony/ServiceState.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-4.diff"
+        ]
+      },
+      "overlap_groups": [
+        "telephony/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-5.diff",
+      "name": "P2-FW-PERIPH-5.diff",
+      "category": "P2 framework peripheral surgical patches",
+      "sha256": "42626e0260d2b6687e546202e8aa6ca48a0cf502526b4e965684ea5de9eefb49",
+      "bytes": 1404,
+      "lines": 23,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 5,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "telephony/java/android/telephony/TelephonyManager.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "telephony/java/android/telephony/TelephonyManager.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-3b.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-5.diff"
+        ]
+      },
+      "overlap_groups": [
+        "telephony/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-6.diff",
+      "name": "P2-FW-PERIPH-6.diff",
+      "category": "P2 framework peripheral surgical patches",
+      "sha256": "2f0b45c288766e9979ec511a1a2407de39cd3e8705a94f8873937ef509d658a6",
+      "bytes": 2250,
+      "lines": 41,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 21,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-6.diff"
+        ]
+      },
+      "overlap_groups": [
+        "packages/SettingsProvider/src"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-7.diff",
+      "name": "P2-FW-PERIPH-7.diff",
+      "category": "P2 framework peripheral surgical patches",
+      "sha256": "51edb75752ccfb187f63af13b3f1408efe103fa89d7a48aa72c8c3cc1726ab77",
+      "bytes": 1336,
+      "lines": 24,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 6,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-7.diff"
+        ]
+      },
+      "overlap_groups": [
+        "packages/SettingsProvider/src"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-8.diff",
+      "name": "P2-FW-PERIPH-8.diff",
+      "category": "P2 framework peripheral surgical patches",
+      "sha256": "5db61ac9c5f9d4625e41482e6a74e84be25466a14525f5ceb89aea3da00e51ca",
+      "bytes": 2671,
+      "lines": 51,
+      "files_changed": 1,
+      "hunks": 3,
+      "additions": 26,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "telephony/java/android/telephony/SubscriptionManager.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "telephony/java/android/telephony/SubscriptionManager.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__d8-subscription.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-8.diff"
+        ]
+      },
+      "overlap_groups": [
+        "telephony/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-4a.diff",
+      "name": "P2-FW-SERVICES-4a.diff",
+      "category": "P2 framework services surgical patches",
+      "sha256": "f0cae6ff030ba8c8216d06ab8242e17d7f8356653a91fb2ef5e4f1a1c6d796b5",
+      "bytes": 3126,
+      "lines": 62,
+      "files_changed": 2,
+      "hunks": 3,
+      "additions": 29,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "services/core/java/com/android/server/appop/AppOpsService.java",
+        "services/core/java/com/android/server/audio/AudioService.java"
+      ],
+      "registry": [
+        {
+          "id": "win-frameworks-base",
+          "project_path": "frameworks/base",
+          "phase": "P2",
+          "related_group": "P2-FRAMEWORK-REST",
+          "port_status": "in_progress",
+          "purpose": "win frameworks/base BlueStacks 定制主体（与 M1 boot frameworks 融合）",
+          "quality": "高置信 bst=220；Phase1 与 boot-frameworks-base 融合，剔除 temp_debt",
+          "impact": "system_server/WMS/HostCall；与 G5/G6 关联",
+          "verification": "Root 848e9737 + Data wipe20260717 = Layer2 7/7 @136s (cont.61). commit 776749bcfac3. core/java 22/22 ✅ (+ 8 extra peripheral incl telephony anti-detection complete + a11y hide 3-layer); services/core 9/21 gap (Clipboard/Location/NMS/ComponentResolver/IntentResolver/AccountManager/Audio/AppOps/AccessibilityManagerService + IMMS onImeChange+text-edit-mode=keyboard-mapping core).",
+          "host_compat": "unknown",
+          "temp_debt": false
+        }
+      ],
+      "overlaps": {
+        "services/core/java/com/android/server/appop/AppOpsService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-4a.diff"
+        ],
+        "services/core/java/com/android/server/audio/AudioService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-4a.diff"
+        ]
+      },
+      "overlap_groups": [
+        "services/core/java"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-5.diff",
+      "name": "P2-FW-SERVICES-5.diff",
+      "category": "P2 framework services surgical patches",
+      "sha256": "a5f0561ff91f6e3753e6afeb9957d6ae3756aa0d25ed04a49f77f3d784beb1e0",
+      "bytes": 2600,
+      "lines": 44,
+      "files_changed": 1,
+      "hunks": 4,
+      "additions": 9,
+      "deletions": 3,
+      "contains_binary_patch": false,
+      "files": [
+        "services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-5.diff"
+        ]
+      },
+      "overlap_groups": [
+        "services/accessibility/java"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6.diff",
+      "name": "P2-FW-SERVICES-6.diff",
+      "category": "P2 framework services surgical patches",
+      "sha256": "d9e713b5fd38241f0e07384eb550854765ede7d41f95b54f47a4d682195b4e5b",
+      "bytes": 2259,
+      "lines": 37,
+      "files_changed": 1,
+      "hunks": 3,
+      "additions": 12,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6b.diff"
+        ]
+      },
+      "overlap_groups": [
+        "services/core/java"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6b.diff",
+      "name": "P2-FW-SERVICES-6b.diff",
+      "category": "P2 framework services surgical patches",
+      "sha256": "8fd518421b9d5b535b0bec1205761c253409b4727fe63dc91a22a4c8f81bc720",
+      "bytes": 4164,
+      "lines": 75,
+      "files_changed": 1,
+      "hunks": 4,
+      "additions": 40,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6b.diff"
+        ]
+      },
+      "overlap_groups": [
+        "services/core/java"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-FW-WM-1-ActivityStarter-ATM.diff",
+      "name": "P2-FW-WM-1-ActivityStarter-ATM.diff",
+      "category": "P2 framework WM surgical patches",
+      "sha256": "3e1ce9efca9381c0f6391c73056fd29b978159840bf36d2a518fb975213c8a6a",
+      "bytes": 6595,
+      "lines": 123,
+      "files_changed": 2,
+      "hunks": 7,
+      "additions": 66,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "services/core/java/com/android/server/wm/ActivityStarter.java",
+        "services/core/java/com/android/server/wm/ActivityTaskManagerService.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "services/core/java/com/android/server/wm/ActivityStarter.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchB-surgical.diff",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-WM-1-ActivityStarter-ATM.diff"
+        ],
+        "services/core/java/com/android/server/wm/ActivityTaskManagerService.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-FW-WM-1-ActivityStarter-ATM.diff"
+        ]
+      },
+      "overlap_groups": [
+        "services/core/java"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-1-audio.diff",
+      "name": "P2-MECH-1-audio.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "26c6356c881b0e3d5d486a3fee17ec7559ea8938468644ef9a2a0c74a6e7fa7e",
+      "bytes": 656,
+      "lines": 13,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 1,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "audio/common/all-versions/default/service/service.cpp"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-1-battery.diff",
+      "name": "P2-MECH-1-battery.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "02a4c055b030f3105abe7f9650747c46a1af497752a89d139e27ae906a43e51e",
+      "bytes": 726,
+      "lines": 16,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 4,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "healthd/BatteryMonitor.cpp"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-10-camera.diff",
+      "name": "P2-MECH-10-camera.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "b8aec155526523365d0606a6d3af888584da1fb3dc23e02415ade1ed5709fe4f",
+      "bytes": 1946,
+      "lines": 44,
+      "files_changed": 2,
+      "hunks": 3,
+      "additions": 15,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "services/camera/libcameraservice/CameraService.cpp",
+        "services/camera/libcameraservice/common/CameraProviderManager.cpp"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-11-wifi.diff",
+      "name": "P2-MECH-11-wifi.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "0730f549c28dacc7f9f31e6d4a046b9f59e855742279b4f8042625d2c23a7608",
+      "bytes": 677,
+      "lines": 14,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 2,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "service/java/com/android/server/wifi/WifiServiceImpl.java"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-12-latinime.diff",
+      "name": "P2-MECH-12-latinime.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "9e0eeb160d043958ee5ec5f8df21eea8d15e7f9fa1c91164512d3b3a4be54995",
+      "bytes": 1066,
+      "lines": 21,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 10,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "java/src/com/android/inputmethod/latin/LatinIME.java"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-14-telephony.diff",
+      "name": "P2-MECH-14-telephony.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "08c8b630a463207896f909aedfe7598447c97d4c223f472e03b3f74f1857fe86",
+      "bytes": 1923,
+      "lines": 34,
+      "files_changed": 1,
+      "hunks": 3,
+      "additions": 9,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "src/java/com/android/internal/telephony/PhoneSubInfoController.java"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-15-telephony2.diff",
+      "name": "P2-MECH-15-telephony2.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "c476343ce6de2accfdec30d8b667628030c4bd9b2d65771eb4a5bfebf610db21",
+      "bytes": 3340,
+      "lines": 63,
+      "files_changed": 2,
+      "hunks": 6,
+      "additions": 13,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "src/java/com/android/internal/telephony/GsmCdmaPhone.java",
+        "src/java/com/android/internal/telephony/uicc/UiccProfile.java"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-16-propsvc.diff",
+      "name": "P2-MECH-16-propsvc.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "2e5c7e3f3fadee471a740d5fafe57fda830bebb1a480af8f99850a08c978c966",
+      "bytes": 1081,
+      "lines": 20,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 9,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "init/property_service.cpp"
+      ],
+      "registry": [],
+      "overlaps": {
+        "init/property_service.cpp": [
+          "patches/android-16/patches/aosp16__system_core.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-16-propsvc.diff"
+        ]
+      },
+      "overlap_groups": [
+        "init/property_service.cpp"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-17-initrc.diff",
+      "name": "P2-MECH-17-initrc.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "33bd0ff924d39b429e919711b15bdbce625ac43c66ea6c3ecc0a7bf6d518bb20",
+      "bytes": 839,
+      "lines": 12,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 1,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "rootdir/init.rc"
+      ],
+      "registry": [],
+      "overlaps": {
+        "rootdir/init.rc": [
+          "patches/android-16/patches/aosp16__system_core.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-17-initrc.diff"
+        ]
+      },
+      "overlap_groups": [
+        "rootdir/init.rc"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-19-bionic-propsvc.diff",
+      "name": "P2-MECH-19-bionic-propsvc.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "4bc4bf3676fa830d2bffabf43e6a848d86bae2e8824a9268b7466a7e0d951f1a",
+      "bytes": 23565,
+      "lines": 501,
+      "files_changed": 1,
+      "hunks": 5,
+      "additions": 465,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "libc/bionic/system_property_set.cpp"
+      ],
+      "registry": [],
+      "overlaps": {
+        "libc/bionic/system_property_set.cpp": [
+          "patches/android-16/patches/p2-bionic-art/a13__bionic__bst_full.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-19-bionic-propsvc.diff"
+        ]
+      },
+      "overlap_groups": [
+        "libc/bionic/system_property_set.cpp"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-2-launcher3-manifest.diff",
+      "name": "P2-MECH-2-launcher3-manifest.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "946494dd37f2ccea4dc326672efba7322bcaae8ac8b2b48729e0a565bcffd834",
+      "bytes": 1182,
+      "lines": 24,
+      "files_changed": 2,
+      "hunks": 2,
+      "additions": 0,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "files": [
+        "AndroidManifest.xml",
+        "quickstep/AndroidManifest-launcher.xml"
+      ],
+      "registry": [],
+      "overlaps": {
+        "AndroidManifest.xml": [
+          "patches/android-16/patches/aosp16__packages_apps_Launcher3.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-2-launcher3-manifest.diff"
+        ],
+        "quickstep/AndroidManifest-launcher.xml": [
+          "patches/android-16/patches/aosp16__packages_apps_Launcher3.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-2-launcher3-manifest.diff"
+        ]
+      },
+      "overlap_groups": [
+        "AndroidManifest.xml",
+        "quickstep/AndroidManifest-launcher.xml"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-3-getprop.diff",
+      "name": "P2-MECH-3-getprop.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "fd2bfc1f49f61d3e9030b811e62a48c80a5f5ecf172ce909f0434c4d1327be70",
+      "bytes": 1795,
+      "lines": 44,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 25,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "toolbox/getprop.cpp"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-4-start.diff",
+      "name": "P2-MECH-4-start.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "b80b6565b7d3ffd17fbb4c721b2fcc210364e1a01491a5da2af9554e6e0c7804",
+      "bytes": 815,
+      "lines": 18,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 7,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "toolbox/start.cpp"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-5-buildmake.diff",
+      "name": "P2-MECH-5-buildmake.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "7f80ad7c45d5e2659f420b09b8590e98cfbe25d24fbb79e2c2beebc2fa9e29ff",
+      "bytes": 2121,
+      "lines": 55,
+      "files_changed": 3,
+      "hunks": 4,
+      "additions": 7,
+      "deletions": 6,
+      "contains_binary_patch": false,
+      "files": [
+        "target/product/handheld_system.mk",
+        "target/product/runtime_libart.mk",
+        "target/product/telephony_system_ext.mk"
+      ],
+      "registry": [],
+      "overlaps": {
+        "target/product/telephony_system_ext.mk": [
+          "patches/android-16/patches/aosp16__build_make.patch",
+          "patches/android-16/patches/p2-framework-rest/P2-MECH-5-buildmake.diff"
+        ]
+      },
+      "overlap_groups": [
+        "target/product/telephony_system_ext.mk"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-6-adb.diff",
+      "name": "P2-MECH-6-adb.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "d54f4a0729bc0eaa292b58dc6e8b81a4cf5de3b72e8d395000219c06d1217426",
+      "bytes": 1791,
+      "lines": 55,
+      "files_changed": 3,
+      "hunks": 3,
+      "additions": 24,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "files": [
+        "adb.cpp",
+        "adb.h",
+        "daemon/file_sync_service.cpp"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-7-ethernet.diff",
+      "name": "P2-MECH-7-ethernet.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "a43e6b1ec4a723e81cfed642a58c42ae8674609f97f347e1c409cf05976f4005",
+      "bytes": 2576,
+      "lines": 52,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 28,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "service-t/src/com/android/server/ethernet/EthernetConfigStore.java"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-8-settings.diff",
+      "name": "P2-MECH-8-settings.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "294e125d0ed2d7b840303338568758bd99fae048e7e33661e8f14be2aa74ea12",
+      "bytes": 1239,
+      "lines": 28,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 7,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "src/com/android/settings/SettingsActivity.java"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/P2-MECH-9-imediasource.diff",
+      "name": "P2-MECH-9-imediasource.diff",
+      "category": "P2 cross-project mechanical patches",
+      "sha256": "698cca7ad6ad6469d1f1e83896d91d275110b056447fe9dbf78bbb57ce14b687",
+      "bytes": 849,
+      "lines": 25,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 7,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "media/libmedia/IMediaSource.cpp"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch",
+      "name": "p2_fw_batchA_gaps_only.patch",
+      "category": "P2 aggregate/candidate snapshots",
+      "sha256": "2008fbeca9612d3d8d16323f59830565c9ebe62e17b3f5f2f68ed7606cdf3807",
+      "bytes": 96037,
+      "lines": 3082,
+      "files_changed": 8,
+      "hunks": 8,
+      "additions": 3034,
+      "deletions": 0,
+      "contains_binary_patch": false,
+      "files": [
+        "cmds/pagefusion/Android.bp",
+        "cmds/pagefusion/PageFusion.cpp",
+        "cmds/pagefusion/RTVboxGuest.cpp",
+        "cmds/pagefusion/RTVboxGuest.h",
+        "cmds/pagefusion/list.h",
+        "cmds/pagefusion/util.cpp",
+        "cmds/pagefusion/util.h",
+        "core/java/com/bluestacks/internal/Sdk23.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "cmds/pagefusion/Android.bp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/PageFusion.cpp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/RTVboxGuest.cpp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/RTVboxGuest.h": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/list.h": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/util.cpp": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "cmds/pagefusion/util.h": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ],
+        "core/java/com/bluestacks/internal/Sdk23.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_gaps_only.patch"
+        ]
+      },
+      "overlap_groups": [
+        "cmds/pagefusion/Android.bp",
+        "cmds/pagefusion/PageFusion.cpp",
+        "cmds/pagefusion/RTVboxGuest.cpp",
+        "cmds/pagefusion/RTVboxGuest.h",
+        "cmds/pagefusion/list.h",
+        "cmds/pagefusion/util.cpp",
+        "cmds/pagefusion/util.h",
+        "core/java/com"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_upgrade.patch",
+      "name": "p2_fw_batchA_upgrade.patch",
+      "category": "P2 aggregate/candidate snapshots",
+      "sha256": "a78307d17fa0cf840f347219e683fe35e4ae0c30cc545d7e6589209bf4a59b3a",
+      "bytes": 36593,
+      "lines": 804,
+      "files_changed": 1,
+      "hunks": 6,
+      "additions": 626,
+      "deletions": 107,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/util/BstUtils.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "core/java/android/util/BstUtils.java": [
+          "patches/android-16/patches/aosp16__frameworks_base.patch",
+          "patches/android-16/patches/p2-framework-rest/aosp16__frameworks_base__P2-batchA-applied.diff",
+          "patches/android-16/patches/p2-framework-rest/p2_fw_batchA_upgrade.patch"
+        ]
+      },
+      "overlap_groups": [
+        "core/java/android"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/patches/p2-framework-rest/p2_fw_batchB_hooks.patch",
+      "name": "p2_fw_batchB_hooks.patch",
+      "category": "P2 aggregate/candidate snapshots",
+      "sha256": "d3d4a950d354eb4d72b8e25fbfdc88c31712c9ab703f30c1eae924620876167a",
+      "bytes": 5073722,
+      "lines": 106256,
+      "files_changed": 1,
+      "hunks": 3204,
+      "additions": 25592,
+      "deletions": 45812,
+      "contains_binary_patch": false,
+      "files": [
+        "core/java/android/app/ActivityManager.java"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/untracked-src/aosp16__device_generic_common/build-error.patch",
+      "name": "build-error.patch",
+      "category": "Patch-equivalent untracked payloads",
+      "sha256": "073438d55e58e2fb47f8dbba29d042638625d1da02dfc6bf91dbd89f44dfe821",
+      "bytes": 1936,
+      "lines": 39,
+      "files_changed": 2,
+      "hunks": 3,
+      "additions": 6,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "files": [
+        "app/Android.mk",
+        "build/tasks/kernel.mk"
+      ],
+      "registry": [],
+      "overlaps": {
+        "app/Android.mk": [
+          "patches/android-16/patches/aosp16__device_generic_common.patch",
+          "patches/android-16/untracked-src/aosp16__device_generic_common/build-error.patch"
+        ],
+        "build/tasks/kernel.mk": [
+          "patches/android-16/patches/aosp16__device_generic_common.patch",
+          "patches/android-16/untracked-src/aosp16__device_generic_common/build-error.patch"
+        ]
+      },
+      "overlap_groups": [
+        "app/Android.mk",
+        "build/tasks/kernel.mk"
+      ]
+    }
+  ]
+}

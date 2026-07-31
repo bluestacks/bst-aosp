@@ -2433,3 +2433,98 @@ D8+D9 build 到 48% 卡在 **pagefusion**（`frameworks/base/cmds/pagefusion/Pag
 **D9 总结**：3670 行 binder C++ 真实现替换 stub，6 个 a13→a16 机械修全闭环（header VNDK+String16 / allowlist b/64223827 / exit-time-dtor / LIBBINDER_EXPORTED visibility / vendor PermissionController guard / (void)uid）。camera/SF 等 C++ BST hooks 现 runtime 连真 Java BST service（非 no-op）。
 
 **⚠️ 发现的 pre-existing 合规缺口（escalation）**：frameworks/base 有 **16 个 BST 文件未 commit**（ActivityStarter/ATMS/WMS/SystemServer/Transitions/BstUtils/dimens 等 M + Features.java/com.bluestacks/internal 未跟踪）——它们在 verified root 6cbb275f 里但源码从未 commit（ActivityStarter 等仅上游 AOSP commit 史）。我**只选择性 commit 了 D8+pagefusion（我的工作）**，未扫入他人的在途工作。这 16 文件的 source-vs-commit drift 需各自 patch-group owner commit（restorability 缺口）。
+
+## 2026-07-28 (cont.103) — aosp16 → android-16 全量合并 (aosp16-bst-merge 分支) + build 启动
+
+用户指令：把 aosp16 所有修改合入根目录 `~/android-16`（BST 目标仓，r4-based + 大量已有提交），新建 `aosp16-bst-merge` 分支，合并后把 app-player/android-16 链到 ~/android-16，编译打包启动验证，成功后提交。
+
+**合并结果（20 个 BST git project，per-project `git diff base..HEAD | git apply --3way`）**：
+- **19/20 CLEAN**：frameworks/base(40c/22924ln) frameworks/native(2c) frameworks/av frameworks/opt/telephony bionic system/core(7c) system/extras LatinIME Wifi Connectivity adb hardware/interfaces build/soong build/make art system/security boringssl Launcher3 device/generic/goldfish。
+- **kernel-a16 CONFLICT（2 处，AI 评估已解）**：①`arch/x86/kernel/setup.c` boot cmdline `bstandroid=baklava64(aosp16)` vs `tiramisu64(android-16)` → 取 **tiramisu64**（匹配 Tiramisu64 实例，deploy 目标 Engine\Tiramisu64）。②`fs/bst_hooks.h` `bst_current_uid_is_user_app(void)` vs `()` → 取 **(void)**（modern C 风格，等价）。
+- **device/bst/qvirt** scaffold（非 git）从 aosp16 cp 入 android-16/device/bst/qvirt。
+- **build/ 结构修复**：android-16 为 plain tree（无 .repo），缺 6 个 manifest 生成的 build/ 符号链接（envsetup.sh/core/target/tools/CleanSpec.mk/buildspec.mk.default → make/*）→ 创建并在 build/ repo（切 aosp16-bst-merge）commit。envsetup+lunch 验证通过。
+
+**app-player/android-16 符号链接**：`~/aosp16` → **`~/android-16`**（repoint）。
+
+**build 启动**：`cd ~/android-16 && bash ~/g1_build.sh`（fresh OUT_DIR=out_nxt_Baklava64），TARGET_PRODUCT=bst_x86_64 ✅，PLATFORM_VERSION=Baklava ✅，无早期错误。fresh 全量 build（新 OUT_DIR 无缓存），ETA ~12h（+ henry 争用）。监控 cron `837695e7`（每 30min @ :13/:43）。
+
+**注意**：合并树 = aosp16 BST + android-16 已有大量提交（henry 等）叠加；build/runtime 可能有两者交互问题，按出现评估（机械修 / escalate）。
+
+**⚠️ cont.103 build 修正（cron cont.103 首检发现）**：首次 "android-16 build" 实际跑在 **~/aosp16**——`g1_build.sh` 第 8 行硬编码 `cd ~/aosp16`，覆盖了外层 `cd ~/android-16`。log 的 `DONE rc=0 / system.img 45721ee0` 是 ~/aosp16 重编产物（md5 与 aosp16/out_nxt_Baklava64/system.img 一致），**~/android-16 实际未编译**（无 system.img；~/android-16/out 是 lunch sanity 残留）。
+
+**修正**：新建 `~/g1_build_android16.sh`（cd ~/android-16 + 同 env + m droid + goldfish mmm + DONE rc 标记 A16DBG:ANDROID16）。重启 build（PID 1363245），验证 cwd=~/android-16、out_nxt_Baklava64 创建在 android-16 内、TARGET_PRODUCT/OUT_DIR 正确。fresh 全量 build（新 OUT_DIR），ETA ~12h。监控 cron 更为 `4d091a56`（relaunch 命令改用 g1_build_android16.sh，并校验 cwd 防止再次跑错树）。
+
+**pack 流水线预备**（避免完成时再踩 hardcoded 路径坑）：`g1_stage_system.sh` 第 8 行也硬编码 AOSP=~/aosp16 → 新建 `~/g1_stage_system_android16.sh`（AOSP=~/android-16）。g1_copy_bst_apks.sh / r228-pack-root.sh 用共享 ~/releases/Baklava64（无 aosp16 硬编码）。win 侧 g1_win_deploy.ps1 + g1_boot_verify.ps1 不受影响。
+
+## 2026-07-28 (cont.104) — android-16 合并完成 + build 踩 android-16 base (25Q4) 多个预存问题
+
+**合并现状（aosp16-bst-merge 分支）— 全 BST 项目已合入**：
+- 初次硬编码 list 漏了 **6 个 BST 项目**（用 local patch 文件名交叉核对发现）：device/generic/common（含签名 keystore+APK 二进制，format-patch --binary + am）、device/generic/x86_64、hardware/google/aemu、hardware/libhardware、system/hwservicemanager、system/libhidl。
+- 加初次 20 + 这 6 = **26 个 BST 项目全合入**。kernel-a16 2 冲突已解（setup.c tiramisu64 / bst_hooks.h (void)）。
+
+**build 踩的 android-16 base (25Q4) 预存问题（非我合并引入）**：
+1. **denylist Android.mk 致命**：`build/soong/ui/build/androidmk_denylist.go` 对 blocked Android.mk `ctx.Fatalf`（非 warning）。android-16 有 `external/{efibootmgr,efivar,libjxl/third_party/sjpeg}/src/Android.mk`（"inital porting of efibootmgr" BST，aosp16 无）→ lunch dumpvars 致命失败。已 disable（.disabled）+ commit on aosp16-bst-merge。
+2. **device/generic/common 漏合**致 `bst_x86_64.mk` inherit 的 `x86_64.mk` 缺失 → 已补合。
+3. **⚠️ gfxstream host vulkan 变体缺失（DEEP，escalation）**：`hardware/google/gfxstream/host/vulkan/Android.bp` 定义 `libgfxstream_host_vulkan_server`（cc_library_static，UPSTREAM 25Q4 提交 49eec516d/70caa04e5，**非 BST**；aosp16 r4 无此文件）→ 依赖 `gfxstream_host_common` 的 `os:linux_glibc,link:static` 变体不存在（只有 os:android）。该模块被 `host/Android.bp` 依赖，**不能简单 disable**。根因：android-16 base 是 25Q4-evolved，gfxstream 新增 host 模块需 host 变体配置，bst_x86_64 product 未配。
+
+**当前状态**：lunch 现工作（TARGET_PRODUCT=bst_x86_64），Soong 过了 hwservicemanager（合 system/hwservicemanager 后），卡在 gfxstream host vulkan 变体。这是 android-16 base (25Q4) 与 bst_x86_64 build 的架构性差异，非机械冲突。
+
+## 2026-07-28 (cont.105) — ✅ android-16 merged-tree 过 config，进入编译（6 冲突全解）
+
+**突破**：android-16 (aosp16-bst-merge) build 过了所有 Soong/Kati config 阶段，进入主编译（174631 ninja 步，~12h）。合并树 = aosp16 BST + android-16 25Q4 base。**6 个 config 冲突全解**：
+
+1. **denylist Android.mk Fatalf**：external/{efibootmgr,efivar,libjxl}/src/Android.mk（android-16 的 "efibootmgr porting"，aosp16 无）→ disable + commit on aosp16-bst-merge。
+2. **device/generic/common 漏合** + 5 个其他 BST 项目漏合（device/generic/x86_64, hardware/google/aemu, hardware/libhardware, system/hwservicemanager, system/libhidl）→ 用 local patch 文件名交叉核对发现 + 补合（format-patch --binary + am，因 device/generic/common 含 keystore/APK 二进制）。
+3. **aemu REVERT → 25Q4**：aosp16 BST 禁了 gfxstream_defaults（r4 goldfish 冲突）→ 致 gfxstream_host_common 无 host 变体，android-16 25Q4 gfxstream host 模块缺变体。revert aemu（用 25Q4 matched 版）解。
+4. **hwservicemanager + build/make generic/Android.bp REVERT → 25Q4**：aosp16 BST 改 hwsm 为 /system install（Root.vhd 无 system_ext）→ 破 aosp_shared_system_image GSI 的 arch:common hwsm 依赖。revert hwsm + build/make/target/product/generic/Android.bp 到 25Q4（system_ext_specific + compat symlink）解。
+5. **HD_SOURCE_TOP export 漏**：g1_build_android16.sh（g1_build.sh 副本）漏了 `export APP_PLAYER_DIR HD_SOURCE_TOP`（hd guest 模块 vmsg 需）→ 补。
+6. **build/soong finder.go goldfish-opengl-pie scan**：aosp16 BST 在 finder.go outsideModList 硬编码扫 `../ggl/goldfish-opengl-pie/Android.mk`（r4 gfxstream 无 guest qemupipe，不冲突）→ android-16 25Q4 gfxstream 有 guest qemupipe → libqemupipe.ranchu 重复定义。删该行（保留 ../hd/Source/* hd guest 模块）解。
+
+**根因总结**：android-16 = 25Q4-evolved base，自带完整 gfxstream/aemu/hwservicemanager/build/make infra。aosp16 BST（r4-based）的 infra 改动（goldfish-opengl-pie graphics, hwsm /system migration, aemu gfxstream_defaults disable）与 25Q4 冲突。**r4 BST infra 改动 revert 到 25Q4**；frameworks/telephony 等 version-tolerant hooks 保留。build/soong outsideModList 保留 hd（BST host-guest IPC）去 goldfish-opengl-pie（25Q4 gfxstream 替代）。
+
+**当前**：主编译中（174631 步，fresh OUT_DIR，henry 争用，~12h）。监控 cron `6c65d285`。DONE rc=0 后 pack/deploy/Layer2。
+
+## 2026-07-29 (cont.106) — ✅ android-16 启动 7/7；定位 submodule、VINTF、USB 与宿主状态机差异
+
+本轮严格只构建/打包 `~/android-16`，未修改或使用 `~/aosp16` 产物；`aosp16` 仅用于只读代码/元数据对比。
+
+### Submodule 与分支审计
+
+- 根仓 `android-16`：`aosp16-bst-merge`，HEAD `9254e5d`。
+- `.gitmodules` 声明的 **1016/1016** 个项目均已初始化；分支为 **985 × `aosp16-bst` + 31 × `aosp16-bst-merge`**，无 detached/其他分支。
+- `aosp16-bst-merge` 的 31 个项目与实际合入列表一致（含 kernel-a16、frameworks/base、hardware/interfaces、gfxstream、hwservicemanager 等）。
+- `external/OpenCL-CLHPP/external/CMock` 是嵌套 gitlink，但父项目没有 `.gitmodules` 映射。只读对比确认参考 `aosp16` 同样是 commit `d0b6cec`、同一 CMock gitlink、同样未初始化，因此这是原仓元数据缺陷，不是本次迁移漏 init，也不阻塞当前构建/启动。
+
+### qvirt 与 graphics VINTF
+
+- 发现 `device/bst/qvirt` 原先不是 submodule，4 个 product 文件在 android-16 根仓中均为 untracked；已纳入根仓。
+- 最初把 graphics fragment 加在 `bst_x86_64.mk`，但 `device/generic/common/BoardConfig.mk` 后续用 `:=` 覆盖。最终改为在 qvirt `BoardConfig.mk` include 架构配置后追加 allocator/composer/mapper manifest。
+- 根仓 commit：`9254e5d device: track qvirt products and graphics VINTF`。
+- `device_vendor_manifest.xml_all_targets` 目标构建成功，最终 vendor manifest MD5 `be3fe5cbf66be87b89af9f9ba0857c05`，包含 allocator 2.0、composer 2.1、mapper 2.1、IServiceManager 1.2。
+
+### system_server 约 200 秒死亡根因
+
+- G8 脚本把 USB HAL rc 移到 `vendor/etc/init.disabled_by_g8`，但二进制与 VINTF 均存在；运行时每秒重复找不到 `android.hardware.usb@1.0::IUsb/default`，最终 system_server 死亡。
+- `scripts/g8_disable_vendor_hal_rc.sh` 只恢复 USB rc，保留 camera/configstore/drm 当前策略。
+- 重打 Root MD5 `5dea6c256bbf7bae1bb1061153312b68`；USB HAL 在 guest 20.9 秒启动。复测 system_server 越过原 198/206 秒死亡窗口并持续存活。
+
+### 宿主长期停在 StartingKernel 根因
+
+- app-player 状态机只在 `hcallGetPropsClbk → plrGetPropsHcall` 成功后进入 `StartingAndroid`；activity displayed 仅在已处于 `StartingAndroid` 时才能切 `Ready`。
+- guest 日志显示 `/boot/bin/bstconf: not found`。文件实际存在，ELF interpreter 为 `/system/bin/linker64`；问题是 runtime APEX 未早挂载。
+- 内核 cmdline 为 `bstandroid=tiramisu64`（匹配 Engine 实例名），但 A16 APEX 早挂载代码仅判断 `baklava64`，整段被静默跳过。
+- 修复：system 挂载后同时检查 `/system/apex/com.android.runtime.apex` 与 `ro.build.version.sdk=36`，命中后仅覆盖 initrd 内启动 profile 为 `baklava64`，不修改实例名或 kernel cmdline。
+- 读回证据：guest 2.16 秒识别 Baklava，2.26/2.34 秒挂载 runtime/i18n APEX，linkerconfig rc=0；2.68 秒 bstconf 发 GET_PROPS，宿主收到 `hcallGetPropsClbk`、发送 `kernel_boot_completed` 并进入 `StartingAndroid`。
+
+### fastboot 打包流程缺口
+
+- 首次重打 initrd 暴露旧 Makefile 使用 `-cp $(KDIR)/drivers/media/v4l2-core/videobuf-core.ko`：android-16 out-of-tree kernel 没有该源码树内产物，copy 失败却被忽略，生成缺模块镜像并在 guest 1.47 秒 panic。
+- 从本轮修改前、已验证可启动的 android-16 fastboot 备份中提取 `videobuf-core.ko`，MD5 `06cca18af3c3fc7b435b212132b5a96f`，vermagic `5.15.119+`，未引用 aosp16。
+- BootImage Makefile 改为优先 KDIR 产物、否则使用 BootImage prebuilt；两者都不存在时硬失败，不再静默生成坏镜像。
+- 最终 fastboot MD5 `40892c6e7b5b4ddd922bd88a994b5f6f`，UUID `91b80c95-aa7d-459d-93e4-c479f5babbb7`。
+
+### 最终验证
+
+- `g1_boot_verify.ps1`：**7/7 @123s**（system_mounted/init_second/odsign/boot_completed/activity/ready/hide_boot）。
+- guest 86.6 秒 `System now ready`；92.1 秒宿主 `Player state: ready` 并 `fUiHideBootProgressBar`；112.4 秒 launcher `com.uncube.launcher3/HomeActivity` displayed。
+- 剩余非阻塞噪声：camera、media C2、weaver/secure-element 缺服务，fs-verity 在 Data transport endpoint 上不支持，以及部分 VINTF AIDL 查询告警；均未阻塞 Ready/launcher。

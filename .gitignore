@@ -9,6 +9,7 @@ out/
 build.log
 artifacts/
 .triage_tmp/
+.codex-tmp/
 
 # 编辑器/系统
 .DS_Store
@@ -17,3 +18,10 @@ Thumbs.db
 *.swo
 .idea/
 .vscode/
+
+# Language/tool caches
+__pycache__/
+*.py[cod]
+
+# Signing material is injected by the approved external signing path.
+patches/android-16/untracked-src/aosp16__device_generic_common/apksigner/bluestacks-market.keystore

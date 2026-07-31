@@ -8,6 +8,9 @@ the AOSP16-to-Android-16 work as a promotion into the mainline integration tree.
 - [`inventory.json`](inventory.json): per-file inventory with explicit authority and availability.
 - [`inventory.md`](inventory.md): human-readable file index.
 - [`binary-retention.md`](binary-retention.md): byte-retention decision for every binary-like record.
+- [`binary-local-evidence.json`](binary-local-evidence.json): observed identities for ignored local binaries.
+- [`binary-artifact-staging.json`](binary-artifact-staging.json): deterministic archive identities awaiting publication.
+- [Binary artifact workflow](../development-workflow/binary-artifacts.md): deterministic external bundle handling.
 - [`findings.md`](findings.md): P0-P3 generated findings and actions.
 - [`inventory.schema.json`](inventory.schema.json): inventory contract.
 - [`validation.md`](validation.md): full Python, JSON, Bash, and PowerShell static validation.
@@ -22,11 +25,11 @@ the AOSP16-to-Android-16 work as a promotion into the mainline integration tree.
 
 ## Current Snapshot
 
-- Inventory entries: **979**
-- Existing files: **978**
-- Text lines: **301297**
-- Stages: `android16-promotion`=34, `aosp16-development`=841, `generated`=15, `reference`=45, `shared`=44
-- Availability: `generated`=15, `removed-tombstone`=1, `repository`=963
+- Inventory entries: **982**
+- Existing files: **981**
+- Text lines: **301834**
+- Stages: `android16-promotion`=34, `aosp16-development`=841, `generated`=15, `reference`=45, `shared`=47
+- Availability: `generated`=15, `removed-tombstone`=1, `repository`=966
 - Findings: P2=1, P3=16
 
 Regenerate with:

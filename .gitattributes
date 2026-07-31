@@ -18,6 +18,7 @@
 /scripts/merge_aosp16_to_android16.sh text eol=lf
 /scripts/generate_android16_patch_inventory.py text eol=lf
 /scripts/generate_project_review.py text eol=lf
+/scripts/manage_binary_artifacts.py text eol=lf
 /scripts/patch-goldfish-emuhwc2-vsync-sp.py text eol=lf
 /scripts/patch-goldfish-hwc2-bst-product.py text eol=lf
 /scripts/resolve_kernel_conflicts.py text eol=lf

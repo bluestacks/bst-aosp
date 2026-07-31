@@ -8,6 +8,10 @@ Local-only identities come from the committed observation manifest
 [`binary-local-evidence.json`](binary-local-evidence.json); they are not
 counted as repository files.
 
+The deterministic pack/verify/restore workflow is defined in
+[`binary-artifacts.md`](../development-workflow/binary-artifacts.md) and
+implemented by [`manage_binary_artifacts.py`](../../scripts/manage_binary_artifacts.py).
+
 ## Decision Summary
 
 - `drop-duplicate-layout`: **10** files, **7.69 MiB**
@@ -20,9 +24,9 @@ counted as repository files.
 
 | Bundle | Required content | Current status |
 |---|---|---|
-| `henry-boot-baseline` | Boot kernel and boot initrd | Missing artifact URI |
-| `henry-fastboot-baseline` | Fastboot kernel, canonical initrd, and final fastboot image | Missing artifact URI |
-| `henry-initrd-runtime` | bstconf, bstchkdata, and nine kernel modules | Missing artifact URI |
+| `henry-boot-baseline` | Boot kernel and boot initrd | Local bundle supported; artifact URI missing |
+| `henry-fastboot-baseline` | Fastboot kernel, canonical initrd, and final fastboot image | Local bundle supported; artifact URI missing |
+| `henry-initrd-runtime` | bstconf, bstchkdata, and nine kernel modules | Local bundle supported; artifact URI missing |
 
 The 16 files in these bundles must be uploaded to an approved artifact
 store or made reproducible from pinned source, kernel ABI, and toolchain

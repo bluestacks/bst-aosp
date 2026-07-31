@@ -2,26 +2,26 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 979,
-    "existing_files": 978,
-    "bytes": 18851594,
-    "text_lines": 301297,
+    "files": 982,
+    "existing_files": 981,
+    "bytes": 18871857,
+    "text_lines": 301834,
     "by_stage": {
       "android16-promotion": 34,
       "aosp16-development": 841,
       "generated": 15,
       "reference": 45,
-      "shared": 44
+      "shared": 47
     },
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 963
+      "tracked": 966
     },
     "by_availability": {
       "generated": 15,
       "removed-tombstone": 1,
-      "repository": 963
+      "repository": 966
     },
     "findings_by_severity": {
       "P2": 1,
@@ -1084,11 +1084,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 1333,
-      "sha256": "1ce8bd0e1d6ac8ac75c5f6a211e2aa265a69c396d810859127c39ac8838cb188",
+      "bytes": 1381,
+      "sha256": "73f203dd1f56c8f8555babba68774eaca8a6d9b05d53e7ea3bab6b61474de9ac",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 31,
+      "line_count": 32,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [],
@@ -1127,6 +1127,7 @@
         "scripts/lib/android16_env.sh",
         "scripts/lib/android16_guard.py",
         "scripts/libhidl_drop_mgr_token.py",
+        "scripts/manage_binary_artifacts.py",
         "scripts/merge_aosp16_to_android16.sh",
         "scripts/patch-goldfish-emuhwc2-vsync-sp.py",
         "scripts/patch-goldfish-hwc2-bst-product.py",
@@ -2331,11 +2332,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 1200,
-      "sha256": "cac8e60b9c01cb68e8245cf36a91f2ea7f28c1847c17b6464a21b93b3f5b71dd",
+      "bytes": 1405,
+      "sha256": "7b27a994e06045e43703bfbae9c1c75d21216abe3043b81274c30b95aaa95d28",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 27,
+      "line_count": 31,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [
@@ -2441,6 +2442,47 @@
         ]
       },
       "preservation": "historical-first-class",
+      "missing_links": []
+    },
+    {
+      "path": "docs/development-workflow/binary-artifacts.md",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 3349,
+      "sha256": "2f1032d0a9b14e9bb66683334e47f79493d8ff3bec3ece9c5053393c7c641cb8",
+      "media_type": "text/markdown",
+      "encoding": "utf-8-sig",
+      "line_count": 78,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Binary Artifact Workflow",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [
+        "scripts/manage_binary_artifacts.py"
+      ],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -2612,6 +2654,45 @@
         "status": "pass",
         "checks": [
           "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "docs/project-review/binary-artifact-staging.json",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 1405,
+      "sha256": "ed298bcf55698aca5d1722943c09e9b692d6957117d13d72384ebd48aeb18fd2",
+      "media_type": "application/json",
+      "encoding": "utf-8-sig",
+      "line_count": 37,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Project documentation and review output.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "json-parse"
         ]
       },
       "preservation": "active",
@@ -28149,11 +28230,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 55881,
-      "sha256": "58d62b11c72816ec4e5cba53f0e28c06923197347b5f78665e69b4371cb4c162",
+      "bytes": 56609,
+      "sha256": "d6d35fa768935a69fee0feb6728305d22b133c73130adb4313bf29607a0e2423",
       "media_type": "text/x-python",
       "encoding": "utf-8-sig",
-      "line_count": 1524,
+      "line_count": 1532,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [
@@ -28192,6 +28273,7 @@
         "scripts/g8_disable_vendor_hal_rc.sh",
         "scripts/generate_android16_patch_inventory.py",
         "scripts/lib/android16_env.sh",
+        "scripts/manage_binary_artifacts.py",
         "scripts/merge_aosp16_to_android16.sh",
         "scripts/p2_mech2_apply.py",
         "scripts/patch-goldfish-emuhwc2-vsync-sp.py",
@@ -28363,6 +28445,45 @@
         ]
       },
       "preservation": "historical-first-class",
+      "missing_links": []
+    },
+    {
+      "path": "scripts/manage_binary_artifacts.py",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 14528,
+      "sha256": "dbe7720adb56cff19c1855b28468c3ebedf2fd2d21605be08a74218a3499c9aa",
+      "media_type": "text/x-python",
+      "encoding": "utf-8-sig",
+      "line_count": 409,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Pack, verify, and restore the required external binary evidence bundles.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "python-ast"
+        ]
+      },
+      "preservation": "active",
       "missing_links": []
     },
     {

@@ -16,6 +16,10 @@ All stages use [`review-and-evidence.md`](review-and-evidence.md): no completion
 claim is valid without tree identity, source identity, output identity, and an
 independent validation readback.
 
+Historical binaries follow [`binary-artifacts.md`](binary-artifacts.md):
+identity metadata stays in Git, while the 16 required non-reconstructable
+inputs are packaged into deterministic external bundles.
+
 ## Current State
 
 The initial AOSP16-to-Android-16 promotion is complete and represented by

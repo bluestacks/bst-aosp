@@ -127,6 +127,7 @@ ANDROID16_ACTIVE_SCRIPTS = {
 }
 SHARED_REPOSITORY_TOOLS = {
     "scripts/generate_project_review.py",
+    "scripts/manage_binary_artifacts.py",
     "scripts/validate_project_files.py",
 }
 
@@ -1266,6 +1267,10 @@ def binary_retention_markdown(payload: dict[str, Any]) -> str:
         "[`binary-local-evidence.json`](binary-local-evidence.json); they are not",
         "counted as repository files.",
         "",
+        "The deterministic pack/verify/restore workflow is defined in",
+        "[`binary-artifacts.md`](../development-workflow/binary-artifacts.md) and",
+        "implemented by [`manage_binary_artifacts.py`](../../scripts/manage_binary_artifacts.py).",
+        "",
         "## Decision Summary",
         "",
     ]
@@ -1281,9 +1286,9 @@ def binary_retention_markdown(payload: dict[str, Any]) -> str:
             "",
             "| Bundle | Required content | Current status |",
             "|---|---|---|",
-            "| `henry-boot-baseline` | Boot kernel and boot initrd | Missing artifact URI |",
-            "| `henry-fastboot-baseline` | Fastboot kernel, canonical initrd, and final fastboot image | Missing artifact URI |",
-            "| `henry-initrd-runtime` | bstconf, bstchkdata, and nine kernel modules | Missing artifact URI |",
+            "| `henry-boot-baseline` | Boot kernel and boot initrd | Local bundle supported; artifact URI missing |",
+            "| `henry-fastboot-baseline` | Fastboot kernel, canonical initrd, and final fastboot image | Local bundle supported; artifact URI missing |",
+            "| `henry-initrd-runtime` | bstconf, bstchkdata, and nine kernel modules | Local bundle supported; artifact URI missing |",
             "",
             "The 16 files in these bundles must be uploaded to an approved artifact",
             "store or made reproducible from pinned source, kernel ABI, and toolchain",
@@ -1355,6 +1360,9 @@ the AOSP16-to-Android-16 work as a promotion into the mainline integration tree.
 - [`inventory.json`](inventory.json): per-file inventory with explicit authority and availability.
 - [`inventory.md`](inventory.md): human-readable file index.
 - [`binary-retention.md`](binary-retention.md): byte-retention decision for every binary-like record.
+- [`binary-local-evidence.json`](binary-local-evidence.json): observed identities for ignored local binaries.
+- [`binary-artifact-staging.json`](binary-artifact-staging.json): deterministic archive identities awaiting publication.
+- [Binary artifact workflow](../development-workflow/binary-artifacts.md): deterministic external bundle handling.
 - [`findings.md`](findings.md): P0-P3 generated findings and actions.
 - [`inventory.schema.json`](inventory.schema.json): inventory contract.
 - [`validation.md`](validation.md): full Python, JSON, Bash, and PowerShell static validation.

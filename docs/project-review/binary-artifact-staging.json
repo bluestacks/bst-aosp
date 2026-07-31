@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "status": "local-staged-unpublished",
+  "policy": "Archive identity is committed for publication readback; bytes remain outside Git and blockers remain open until immutable retrieval URIs are recorded.",
+  "source_manifest": "docs/project-review/binary-retention.json",
+  "source_manifest_canonical_sha256": "1fbd3bbc90588c830f01fa2124e86df3024ca3c8ff46181fcd02694e951c2747",
+  "archive_format": "deterministic-zip-stored-v1",
+  "bundles": [
+    {
+      "name": "henry-boot-baseline",
+      "member_count": 2,
+      "member_bytes": 9689488,
+      "archive_file": "henry-boot-baseline.zip",
+      "archive_bytes": 9690590,
+      "archive_sha256": "77e39535aa7344f1fa8c513d017541ffd5ace19235881b240b45d686ccd4f302",
+      "artifact_uri": null
+    },
+    {
+      "name": "henry-fastboot-baseline",
+      "member_count": 3,
+      "member_bytes": 19586734,
+      "archive_file": "henry-fastboot-baseline.zip",
+      "archive_bytes": 19588196,
+      "archive_sha256": "e410c96d79e6d648f6ab03789e8504f292d42d3f8dcd7c62c9b7983935b7d71f",
+      "artifact_uri": null
+    },
+    {
+      "name": "henry-initrd-runtime",
+      "member_count": 11,
+      "member_bytes": 1010816,
+      "archive_file": "henry-initrd-runtime.zip",
+      "archive_bytes": 1015581,
+      "archive_sha256": "6d539aa8d9a32ef5202742096fcb1cf0d0cb6a8b03f4a31b30fbc2404eaa50a7",
+      "artifact_uri": null
+    }
+  ]
+}

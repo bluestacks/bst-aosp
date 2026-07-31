@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import ast
 import hashlib
+import io
 import json
 import mimetypes
 import re
@@ -20,6 +21,7 @@ REVIEW_DIR = ROOT / "docs" / "project-review"
 HISTORY_DIR = ROOT / "docs" / "development-history"
 AOSP16_HISTORY_DIR = HISTORY_DIR / "aosp16"
 PROMOTION_HISTORY_DIR = HISTORY_DIR / "android16-merge"
+LOCAL_BINARY_EVIDENCE_PATH = REVIEW_DIR / "binary-local-evidence.json"
 
 GENERATED_PATHS = {
     "docs/project-review/README.md",
@@ -29,6 +31,8 @@ GENERATED_PATHS = {
     "docs/project-review/inventory.schema.json",
     "docs/project-review/validation.json",
     "docs/project-review/validation.md",
+    "docs/project-review/binary-retention.json",
+    "docs/project-review/binary-retention.md",
     "docs/android-16-patch-review/patch-inventory.json",
     "docs/android-16-patch-review/patch-inventory.md",
     "docs/development-history/timeline.json",
@@ -172,11 +176,47 @@ def git_state() -> tuple[set[str], set[str], set[str], dict[str, str]]:
     return tracked, untracked, ignored, porcelain
 
 
+def git_index_blobs(paths: list[str]) -> dict[str, bytes]:
+    if not paths:
+        return {}
+    queries = b"".join(
+        f":{path}\n".encode("utf-8", errors="surrogateescape")
+        for path in paths
+    )
+    result = subprocess.run(
+        ["git", "cat-file", "--batch"],
+        cwd=ROOT,
+        check=True,
+        input=queries,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stream = io.BytesIO(result.stdout)
+    blobs: dict[str, bytes] = {}
+    for path in paths:
+        header = stream.readline().decode("utf-8", errors="replace").rstrip("\n")
+        if header.endswith(" missing"):
+            continue
+        fields = header.rsplit(" ", 2)
+        if len(fields) != 3 or fields[1] != "blob":
+            raise RuntimeError(f"unexpected git cat-file response for {path}: {header}")
+        size = int(fields[2])
+        blobs[path] = stream.read(size)
+        if stream.read(1) != b"\n":
+            raise RuntimeError(f"invalid git cat-file delimiter after {path}")
+    return blobs
+
+
 def all_paths() -> list[str]:
+    ignored = git_zpaths(
+        "ls-files", "--others", "--ignored", "--exclude-standard", "-z"
+    )
     paths = {
         path.relative_to(ROOT).as_posix()
         for path in ROOT.rglob("*")
-        if path.is_file() and ".git" not in path.relative_to(ROOT).parts
+        if path.is_file()
+        and ".git" not in path.relative_to(ROOT).parts
+        and path.relative_to(ROOT).as_posix() not in ignored
     }
     paths.update(git_zpaths("ls-files", "-z"))
     paths.update(GENERATED_PATHS)
@@ -354,6 +394,20 @@ def infer_replacement(path: str) -> str | None:
     return None
 
 
+def infer_availability(
+    path: str, git_state: str, exists: bool
+) -> tuple[str, str]:
+    if path in REMOVED_PATHS and not exists:
+        return "removed-tombstone", "security-and-provenance-record"
+    if path in GENERATED_PATHS:
+        return "generated", "regenerable"
+    if git_state == "tracked":
+        return "repository", "repository-authoritative"
+    if git_state in {"ignored", "untracked", "filesystem-only"}:
+        return "local-only", "local-observation"
+    return "unknown", "unresolved"
+
+
 def infer_necessity(path: str, stage: str) -> str:
     if stage == "generated":
         return "Regenerable; do not treat as a source of truth."
@@ -520,6 +574,9 @@ def markdown_missing_links(path: str, text: str | None) -> list[dict[str, Any]]:
 def collect_inventory() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     tracked, untracked, ignored, _porcelain = git_state()
     paths = all_paths()
+    index_blobs = git_index_blobs(
+        sorted(path for path in paths if path in tracked and path not in GENERATED_PATHS)
+    )
     script_names: dict[str, list[str]] = defaultdict(list)
     for path in paths:
         if path.startswith("scripts/") and Path(path).suffix.lower() in {
@@ -536,6 +593,10 @@ def collect_inventory() -> tuple[list[dict[str, Any]], list[dict[str, Any]], lis
             # Generated outputs describe themselves without content-derived fields so
             # regeneration reaches a stable fixed point.
             raw[path] = (b"", None, "generated-output")
+        elif path in index_blobs:
+            data = index_blobs[path]
+            text, encoding = decode_text(data, absolute.suffix.lower())
+            raw[path] = (data, text, encoding)
         elif absolute.exists():
             data = absolute.read_bytes()
             text, encoding = decode_text(data, absolute.suffix.lower())
@@ -549,13 +610,15 @@ def collect_inventory() -> tuple[list[dict[str, Any]], list[dict[str, Any]], lis
 
     for path in paths:
         data, text, encoding = raw[path]
-        exists = (ROOT / path).exists()
         generated_self = path in GENERATED_PATHS
+        exists = generated_self or (ROOT / path).exists()
         digest = None if generated_self or not exists else hashlib.sha256(data).hexdigest()
         if digest:
             hashes[(len(data), digest)].append(path)
 
-        if path in REMOVED_PATHS and not exists:
+        if generated_self:
+            state = "generated"
+        elif path in REMOVED_PATHS and not exists:
             state = "removed"
         elif path in tracked:
             state = "tracked"
@@ -563,8 +626,6 @@ def collect_inventory() -> tuple[list[dict[str, Any]], list[dict[str, Any]], lis
             state = "untracked"
         elif path in ignored:
             state = "ignored"
-        elif generated_self:
-            state = "generated"
         else:
             state = "filesystem-only"
         stage = classify_stage(path, text)
@@ -573,10 +634,23 @@ def collect_inventory() -> tuple[list[dict[str, Any]], list[dict[str, Any]], lis
         security = security_assessment(path, text, exists)
         missing_links = markdown_missing_links(path, text)
         line_count = None if text is None else len(text.splitlines())
+        availability, authority = infer_availability(path, state, exists)
+        content_source = (
+            "generated-contract"
+            if generated_self
+            else "git-index"
+            if path in index_blobs
+            else "removed-tombstone"
+            if path in REMOVED_PATHS and not (ROOT / path).exists()
+            else "working-tree"
+        )
         record = {
             "path": path,
             "exists": exists,
             "git_state": state,
+            "availability": availability,
+            "authority": authority,
+            "content_source": content_source,
             "bytes": len(data) if exists else None,
             "sha256": digest,
             "media_type": media_type(path, text),
@@ -873,6 +947,9 @@ def inventory_schema() -> dict[str, Any]:
                     "required": [
                         "path",
                         "git_state",
+                        "availability",
+                        "authority",
+                        "content_source",
                         "stage",
                         "purpose",
                         "necessity",
@@ -901,6 +978,9 @@ def summary_for(inventory: list[dict[str, Any]], findings: list[dict[str, Any]])
         "by_git_state": dict(
             sorted(Counter(item["git_state"].split(":", 1)[0] for item in inventory).items())
         ),
+        "by_availability": dict(
+            sorted(Counter(item["availability"] for item in inventory).items())
+        ),
         "findings_by_severity": dict(
             sorted(Counter(item["severity"] for item in findings).items())
         ),
@@ -916,7 +996,8 @@ def inventory_markdown(inventory: list[dict[str, Any]], summary: dict[str, Any])
         "# Project File Inventory",
         "",
         "> Generated by `scripts/generate_project_review.py`. "
-        "The JSON inventory is authoritative.",
+        "Tracked records are repository-authoritative; ignored and untracked records "
+        "are explicitly local observations.",
         "",
         f"- Files: **{summary['files']}**",
         f"- Existing bytes: **{summary['bytes']}**",
@@ -928,8 +1009,8 @@ def inventory_markdown(inventory: list[dict[str, Any]], summary: dict[str, Any])
             [
                 f"## `{area}`",
                 "",
-                "| Path | Stage | Git | Result | Preservation | Validation | Purpose |",
-                "|---|---|---|---|---|---|---|",
+                "| Path | Stage | Availability | Git | Result | Preservation | Validation | Purpose |",
+                "|---|---|---|---|---|---|---|---|",
             ]
         )
         for item in items:
@@ -937,6 +1018,7 @@ def inventory_markdown(inventory: list[dict[str, Any]], summary: dict[str, Any])
             purpose = item["purpose"].replace("|", "\\|").replace("\n", " ")
             lines.append(
                 f"| [`{path}`](../../{path}) | `{item['stage']}` | "
+                f"`{item['availability']}` | "
                 f"`{item['git_state']}` | `{item['result']}` | "
                 f"`{item['preservation']}` | "
                 f"`{item['validation_evidence']['status']}` | {purpose} |"
@@ -975,6 +1057,286 @@ def findings_markdown(findings: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+BINARY_EXTERNAL_REQUIRED = {
+    "references/henry-hd-guest/BootImage/Boot/boot/bzImage": "henry-boot-baseline",
+    "references/henry-hd-guest/BootImage/Boot/boot/initrd.img": "henry-boot-baseline",
+    "references/henry-hd-guest/BootImage/bstchkdata": "henry-initrd-runtime",
+    "references/henry-hd-guest/BootImage/bstconf": "henry-initrd-runtime",
+    "references/henry-hd-guest/BootImage/fastboot/bzImage": "henry-fastboot-baseline",
+    "references/henry-hd-guest/BootImage/fastboot/fastboot.img": "henry-fastboot-baseline",
+    "references/henry-hd-guest/BootImage/initrd.img": "henry-fastboot-baseline",
+}
+BINARY_EXTERNAL_MODULE_PREFIX = (
+    "references/henry-hd-guest/BootImage/initrd/boot/bstmods/"
+)
+BINARY_GENERATED_INTERMEDIATES = {
+    "references/henry-hd-guest/BootImage/fastboot/boot_bzImage.o",
+    "references/henry-hd-guest/BootImage/fastboot/fastboot.img.padded",
+    "references/henry-hd-guest/BootImage/fastboot/fastboot_asm.o",
+    "references/henry-hd-guest/BootImage/fastboot/fastboot_main.o",
+    "references/henry-hd-guest/BootImage/fastboot/fastbootblock",
+    "references/henry-hd-guest/BootImage/fastboot/fastbootblock.o",
+    "references/henry-hd-guest/BootImage/fastboot/zero.file",
+}
+BINARY_DUPLICATES = {
+    ".codex-tmp/videobuf-core.ko": (
+        "references/henry-hd-guest/BootImage/initrd/boot/bstmods/"
+        "videobuf-core.ko"
+    ),
+    "references/henry-hd-guest/BootImage/fastboot/initrd.img": (
+        "references/henry-hd-guest/BootImage/initrd.img"
+    ),
+    "references/henry-hd-guest/BootImage/initrd/boot/bin/bstchkdata": (
+        "references/henry-hd-guest/BootImage/bstchkdata"
+    ),
+    "references/henry-hd-guest/BootImage/initrd/boot/bin/bstconf": (
+        "references/henry-hd-guest/BootImage/bstconf"
+    ),
+    "references/henry-hd-guest/BootImage/initrd/boot/bin/bstreport": (
+        "references/henry-hd-guest/BootImage/bstreport_64"
+    ),
+    "references/henry-hd-guest/BootImage/initrd/boot/bin/busybox": (
+        "references/henry-hd-guest/BootImage/busybox-ndk"
+    ),
+    "references/henry-hd-guest/BootImage/initrd/boot/bin/echo": (
+        "references/henry-hd-guest/BootImage/busybox-ndk"
+    ),
+    "references/henry-hd-guest/BootImage/initrd/boot/bin/insmod": (
+        "references/henry-hd-guest/BootImage/busybox-ndk"
+    ),
+    "references/henry-hd-guest/BootImage/initrd/boot/bin/recovery": (
+        "references/henry-hd-guest/BootImage/recovery"
+    ),
+    "references/henry-hd-guest/BootImage/initrd/boot/bin/sh": (
+        "references/henry-hd-guest/BootImage/busybox-ndk"
+    ),
+}
+
+
+def binary_retention_decision(item: dict[str, Any]) -> dict[str, Any]:
+    path = item["path"]
+    decision = ""
+    reason = ""
+    canonical = None
+    bundle = None
+    status = "complete"
+    if path in REMOVED_PATHS:
+        decision = "security-tombstone"
+        reason = "Credential bytes must stay out of Git; retain identity and rotation record."
+    elif item["git_state"] == "tracked":
+        decision = "keep-in-git"
+        reason = (
+            "Repository clones can retrieve and verify this canonical historical payload. "
+            "Opaque executables still require provenance and license review."
+        )
+    elif "__pycache__/" in path or path.endswith(".pyc"):
+        decision = "drop-cache"
+        reason = "Interpreter cache is reproducible, machine-specific, and has no evidence value."
+    elif path in BINARY_DUPLICATES:
+        decision = "drop-duplicate-layout"
+        canonical = BINARY_DUPLICATES[path]
+        reason = (
+            "Bytes duplicate the canonical input; preserve only the layout/copy relation "
+            "in the initrd assembly manifest."
+        )
+    elif path in BINARY_GENERATED_INTERMEDIATES:
+        decision = "drop-generated-intermediate"
+        reason = (
+            "Object, padding, bootblock, or zero-fill output is derivable from source and "
+            "the final image; record the toolchain instead of the bytes."
+        )
+    elif path in BINARY_EXTERNAL_REQUIRED:
+        decision = "external-artifact-required"
+        bundle = BINARY_EXTERNAL_REQUIRED[path]
+        reason = (
+            "Canonical boot input or final image is not available from Git and cannot be "
+            "reconstructed from this repository alone."
+        )
+        status = "blocked-no-artifact-uri"
+    elif path.startswith(BINARY_EXTERNAL_MODULE_PREFIX):
+        decision = "external-artifact-required"
+        bundle = "henry-initrd-runtime"
+        reason = (
+            "Kernel module bytes are required for exact historical initrd replay; source, "
+            "kernel ABI, and toolchain are outside this repository."
+        )
+        status = "blocked-no-artifact-uri"
+    else:
+        decision = "manual-review"
+        reason = "No retention rule matched this binary-like file."
+        status = "open"
+    return {
+        "path": path,
+        "bytes": item["bytes"],
+        "sha256": item["sha256"],
+        "availability": item["availability"],
+        "git_state": item["git_state"],
+        "decision": decision,
+        "status": status,
+        "canonical": canonical,
+        "artifact_bundle": bundle,
+        "reason": reason,
+    }
+
+
+def binary_retention_payload(inventory: list[dict[str, Any]]) -> dict[str, Any]:
+    binary_items = [
+        item
+        for item in inventory
+        if item["encoding"] == "binary" or item["path"] in REMOVED_PATHS
+    ]
+    local_evidence = json.loads(
+        LOCAL_BINARY_EVIDENCE_PATH.read_text(encoding="utf-8")
+    )
+    known_paths = {item["path"] for item in binary_items}
+    for item in local_evidence["files"]:
+        if item["path"] in known_paths:
+            continue
+        binary_items.append(
+            {
+                **item,
+                "availability": "local-only",
+                "git_state": "ignored",
+                "encoding": "binary",
+            }
+        )
+    decisions = [binary_retention_decision(item) for item in binary_items]
+    decisions.sort(key=lambda item: item["path"])
+    counts = Counter(item["decision"] for item in decisions)
+    bytes_by_decision = {
+        decision: sum(
+            item["bytes"] or 0
+            for item in decisions
+            if item["decision"] == decision
+        )
+        for decision in counts
+    }
+    bundles = {
+        bundle: {
+            "files": sum(item["artifact_bundle"] == bundle for item in decisions),
+            "bytes": sum(
+                item["bytes"] or 0
+                for item in decisions
+                if item["artifact_bundle"] == bundle
+            ),
+        }
+        for bundle in sorted(
+            {
+                item["artifact_bundle"]
+                for item in decisions
+                if item["artifact_bundle"]
+            }
+        )
+    }
+    return {
+        "schema_version": 1,
+        "scope": "binary-like repository and local-evidence files",
+        "policy": (
+            "A hash verifies bytes after retrieval; it does not make an absent binary "
+            "available or reproducible."
+        ),
+        "local_evidence_source": (
+            LOCAL_BINARY_EVIDENCE_PATH.relative_to(ROOT).as_posix()
+        ),
+        "local_evidence_observed_at": local_evidence["observed_at"],
+        "summary": {
+            "files": len(decisions),
+            "by_decision": dict(sorted(counts.items())),
+            "bytes_by_decision": dict(sorted(bytes_by_decision.items())),
+            "external_bundles": bundles,
+            "external_artifact_blockers": sum(
+                item["decision"] == "external-artifact-required"
+                for item in decisions
+            ),
+        },
+        "files": decisions,
+    }
+
+
+def binary_retention_markdown(payload: dict[str, Any]) -> str:
+    counts = payload["summary"]["by_decision"]
+    lines = [
+        "# Binary Retention Assessment",
+        "",
+        "> SHA-256 is an identity check, not storage. Local-only binaries are not",
+        "> authoritative project assets until they have a retrieval URI or a complete",
+        "> source/toolchain reconstruction recipe.",
+        "",
+        "Local-only identities come from the committed observation manifest",
+        "[`binary-local-evidence.json`](binary-local-evidence.json); they are not",
+        "counted as repository files.",
+        "",
+        "## Decision Summary",
+        "",
+    ]
+    for decision, count in counts.items():
+        size = payload["summary"]["bytes_by_decision"][decision]
+        lines.append(
+            f"- `{decision}`: **{count}** files, **{size / 1024 / 1024:.2f} MiB**"
+        )
+    lines.extend(
+        [
+            "",
+            "## Required External Bundles",
+            "",
+            "| Bundle | Required content | Current status |",
+            "|---|---|---|",
+            "| `henry-boot-baseline` | Boot kernel and boot initrd | Missing artifact URI |",
+            "| `henry-fastboot-baseline` | Fastboot kernel, canonical initrd, and final fastboot image | Missing artifact URI |",
+            "| `henry-initrd-runtime` | bstconf, bstchkdata, and nine kernel modules | Missing artifact URI |",
+            "",
+            "The 16 files in these bundles must be uploaded to an approved artifact",
+            "store or made reproducible from pinned source, kernel ABI, and toolchain",
+            "identities. Until then they are recovery blockers, not completed evidence.",
+            "",
+            "## Per-File Decision",
+            "",
+            "| Decision | Status | Path | Bytes | Canonical/bundle | Reason |",
+            "|---|---|---|---:|---|---|",
+        ]
+    )
+    for item in payload["files"]:
+        path = item["path"]
+        link = f"[`{path}`](../../{path})" if item["availability"] == "repository" else f"`{path}`"
+        target = item["canonical"] or item["artifact_bundle"] or "-"
+        reason = item["reason"].replace("|", "\\|")
+        lines.append(
+            f"| `{item['decision']}` | `{item['status']}` | {link} | "
+            f"{item['bytes'] or ''} | `{target}` | {reason} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Deletion Rule",
+            "",
+            "Only `drop-cache`, `drop-generated-intermediate`, and",
+            "`drop-duplicate-layout` entries are deletion candidates. Delete them only",
+            "after canonical paths and initrd layout relations are committed. The",
+            "security tombstone remains in metadata, never as credential bytes.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def verify_local_binary_evidence() -> tuple[int, int, list[str]]:
+    payload = json.loads(LOCAL_BINARY_EVIDENCE_PATH.read_text(encoding="utf-8"))
+    present = 0
+    missing = 0
+    mismatches: list[str] = []
+    for item in payload["files"]:
+        path = ROOT / item["path"]
+        if not path.is_file():
+            missing += 1
+            continue
+        present += 1
+        data = path.read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+        if len(data) != item["bytes"] or digest != item["sha256"]:
+            mismatches.append(item["path"])
+    return present, missing, mismatches
+
+
 def review_readme(summary: dict[str, Any]) -> str:
     stages = ", ".join(
         f"`{stage}`={count}" for stage, count in summary["by_stage"].items()
@@ -990,8 +1352,9 @@ the AOSP16-to-Android-16 work as a promotion into the mainline integration tree.
 
 ## Generated Artifacts
 
-- [`inventory.json`](inventory.json): authoritative per-file machine inventory.
+- [`inventory.json`](inventory.json): per-file inventory with explicit authority and availability.
 - [`inventory.md`](inventory.md): human-readable file index.
+- [`binary-retention.md`](binary-retention.md): byte-retention decision for every binary-like record.
 - [`findings.md`](findings.md): P0-P3 generated findings and actions.
 - [`inventory.schema.json`](inventory.schema.json): inventory contract.
 - [`validation.md`](validation.md): full Python, JSON, Bash, and PowerShell static validation.
@@ -1010,6 +1373,7 @@ the AOSP16-to-Android-16 work as a promotion into the mainline integration tree.
 - Existing files: **{summary['existing_files']}**
 - Text lines: **{summary['text_lines']}**
 - Stages: {stages}
+- Availability: {", ".join(f"`{key}`={value}" for key, value in summary["by_availability"].items())}
 - Findings: {findings or "none"}
 
 Regenerate with:
@@ -1056,6 +1420,15 @@ def write_outputs(
     (REVIEW_DIR / "README.md").write_text(
         review_readme(summary), encoding="utf-8", newline="\n"
     )
+    retention = binary_retention_payload(inventory)
+    (REVIEW_DIR / "binary-retention.json").write_text(
+        json.dumps(retention, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    (REVIEW_DIR / "binary-retention.md").write_text(
+        binary_retention_markdown(retention), encoding="utf-8", newline="\n"
+    )
 
     history = history_records()
     (HISTORY_DIR / "timeline.json").write_text(
@@ -1094,8 +1467,23 @@ def main() -> None:
         action="store_true",
         help="Regenerate in memory and fail if existing generated JSON differs.",
     )
+    parser.add_argument(
+        "--verify-local-evidence",
+        action="store_true",
+        help="Verify local files that are present against the observation manifest.",
+    )
     args = parser.parse_args()
     inventory, findings, duplicate_groups = collect_inventory()
+    if args.verify_local_evidence:
+        present, missing, mismatches = verify_local_binary_evidence()
+        print(
+            f"local binary evidence: present={present} missing={missing} "
+            f"mismatches={len(mismatches)}"
+        )
+        if mismatches:
+            raise SystemExit(
+                "local binary evidence mismatch: " + ", ".join(mismatches)
+            )
     if args.check:
         expected_path = REVIEW_DIR / "inventory.json"
         if not expected_path.exists():
@@ -1111,6 +1499,18 @@ def main() -> None:
         }
         if current != expected:
             raise SystemExit("project review inventory is stale")
+        retention = binary_retention_payload(inventory)
+        retention_json = REVIEW_DIR / "binary-retention.json"
+        retention_md = REVIEW_DIR / "binary-retention.md"
+        if not retention_json.exists() or json.loads(
+            retention_json.read_text(encoding="utf-8")
+        ) != retention:
+            raise SystemExit("binary retention inventory is stale")
+        expected_markdown = binary_retention_markdown(retention)
+        if not retention_md.exists() or retention_md.read_text(
+            encoding="utf-8"
+        ) != expected_markdown:
+            raise SystemExit("binary retention report is stale")
         print("project review inventory is current")
         return
     write_outputs(inventory, findings, duplicate_groups)

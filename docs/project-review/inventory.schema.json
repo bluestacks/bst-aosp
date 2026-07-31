@@ -27,6 +27,9 @@
         "required": [
           "path",
           "git_state",
+          "availability",
+          "authority",
+          "content_source",
           "stage",
           "purpose",
           "necessity",

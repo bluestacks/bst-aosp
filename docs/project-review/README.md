@@ -5,8 +5,9 @@ the AOSP16-to-Android-16 work as a promotion into the mainline integration tree.
 
 ## Generated Artifacts
 
-- [`inventory.json`](inventory.json): authoritative per-file machine inventory.
+- [`inventory.json`](inventory.json): per-file inventory with explicit authority and availability.
 - [`inventory.md`](inventory.md): human-readable file index.
+- [`binary-retention.md`](binary-retention.md): byte-retention decision for every binary-like record.
 - [`findings.md`](findings.md): P0-P3 generated findings and actions.
 - [`inventory.schema.json`](inventory.schema.json): inventory contract.
 - [`validation.md`](validation.md): full Python, JSON, Bash, and PowerShell static validation.
@@ -21,11 +22,12 @@ the AOSP16-to-Android-16 work as a promotion into the mainline integration tree.
 
 ## Current Snapshot
 
-- Inventory entries: **1046**
-- Existing files: **1045**
-- Text lines: **333086**
-- Stages: `android16-promotion`=34, `aosp16-development`=842, `generated`=35, `reference`=87, `shared`=48
-- Findings: P2=1, P3=25
+- Inventory entries: **979**
+- Existing files: **978**
+- Text lines: **301297**
+- Stages: `android16-promotion`=34, `aosp16-development`=841, `generated`=15, `reference`=45, `shared`=44
+- Availability: `generated`=15, `removed-tombstone`=1, `repository`=963
+- Findings: P2=1, P3=16
 
 Regenerate with:
 

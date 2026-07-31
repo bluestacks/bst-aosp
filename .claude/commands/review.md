@@ -13,7 +13,15 @@ allowed-tools: Read, Grep, Glob, Edit, Agent, Bash(ssh:*), Bash(git diff:*), Bas
 
 ## Step 1 — 确定 review base
 
-base = 本工作单元 fork 自的 ref（按 CLAUDE.md「每工作单元开独立分支」）。repo 多仓库下，对每个受影响 project，base 是 android-16.0.0_r4 在该 project 的 upstream commit（或该 project 的 port 分支 fork point）。子代理自己读 repo 状态建 diff（独立 readback），别替它算 diff。若不在 port 分支 / 无 base，传无 base，子代理退回 `git diff HEAD`（仅未提交，见 `quick-review.md`）。`git status` 没东西可审就说清并停。
+base = 本工作单元 fork 自的 ref。按阶段选择：
+
+- AOSP16 historical port：记录的 upstream/fork point。
+- AOSP16→Android-16 promotion：目标项目应用 development 内容前的 SHA。
+- Android-16 mainline：`aosp16-bst` 或明确记录的工作单元 fork point。
+
+repo 多仓库下每个受影响 project 单独确定 base，并同时审根 gitlink。
+子代理自己读状态建 diff。若无 base，退回 `git diff HEAD`，并明确仅覆盖
+未提交改动。
 
 ## Step 2 — 派发 review 子代理
 

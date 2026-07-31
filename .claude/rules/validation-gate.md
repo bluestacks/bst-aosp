@@ -10,12 +10,19 @@
 
 ### Layer 1 — 编译验证（远程，完整 AOSP 树）
 
+当前 mainline 的 `<remote-root>` 必须解析为 `~/android-16`。先执行
+`bash ~/bst-aosp/scripts/g1_build_android16.sh --check`；保存 tree、branch、
+HEAD、OUT_DIR 和 product readback。历史 AOSP16 绿基线只证明 development
+阶段，不替代 Android-16 target build。
+
 ```bash
 ssh <host> 'cd <remote-root> && bash -lc "source build/envsetup.sh && lunch <target> && m <module>"'
 # 全量镜像: m dist → out/dist/*.img；迭代清理: installclean（比 m clean 轻）
 ```
 
-回读：真实 exit code（`echo $?`）+ 产物 `ls -la out/target/product/<device>/*.img`（mtime）。**绝不信任「m 跑完没报错」。**
+回读：真实 exit code（`echo $?`）+ 产物
+`ls -la out/target/product/<device>/*.img`（mtime）+ SHA-256 + identity
+sidecar。**绝不信任「m 跑完没报错」。**
 
 ### Layer 2 — 启动/行为 readback oracle 套件
 
@@ -29,6 +36,8 @@ oracle 清单与取数见 [docs/boot-oracles.md](../../docs/boot-oracles.md) + b
 - 若 Layer 2 因耗时本会话跑不完，summary 标 `verification: build-only, boot-pending` 并登记 `progress/`。
 - **mac 不做 Layer 2**（见 `platform-win-first-mac-reuse.md`）。
 - **绝不未跑就声称 gate 通过。**
+- stage/pack/deploy/boot 使用的 identity HEAD 不一致时，即使各命令单独
+  返回 0，也视为验证失败。
 
 ## 以 readback 验证，而非信任确认（Verify by readback）
 

@@ -2,7 +2,10 @@
 description: 移植一个 patch-group——识别→研究→rebase→文档→验证回环→存 patch→checkpoint
 allowed-tools: Bash(ssh:*), Bash(scp:*), Read, Write, Edit, Agent, Grep, Glob, WebFetch, WebSearch
 ---
-port 一个 **patch-group**（关联定制）到 android-16，按 `.claude/rules/patch-porting.md`。
+这是 **AOSP16 development 历史/复现命令**：port 一个 patch-group 到
+AOSP16 开发线，按 `.claude/rules/patch-porting.md`。初始 promotion 已完成；
+当前 Android-16 普通修复不得用本命令把旧整文件覆盖到 mainline。当前流程见
+`docs/development-workflow/android16-mainline.md`。
 
 ## 步骤
 
@@ -38,6 +41,10 @@ port 一个 **patch-group**（关联定制）到 android-16，按 `.claude/rules
    untracked → `untracked-src/`；写/更新 `checkpoint_ref`（可指向 `RESTORE.md` 节或 `patches/android-16/checkpoints/<group>.md`）。verify-by-readback：本地 patch 与远程 diff 一致。
 
 8. **完成循环**：`/save-summary` → `/review`（review base = 开分支时的 upstream）→ report。
+
+9. **阶段退出**：形成完整 development freeze 后，转
+   `/promote-android16`；不得直接把 development build 结果登记成
+   Android-16 mainline 验证。
 
 ## 接缝
 

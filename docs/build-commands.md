@@ -1,30 +1,42 @@
 # 构建命令（Build Commands）
 
-> Phase 0 探测（2026-06-17）部分填实；manifest URL / lunch 目标待人类确认。
+> 当前 mainline 构建根为 `~/android-16`。`~/aosp16` 命令仅用于历史
+> development 记录，不能作为当前 build/stage/pack 产物来源。
 
-## guest 完整 AOSP 树（远程 `markxu@172.16.6.191`，root `~/aosp16`）
+## AOSP16 开发树（历史基线）
 
-- **manifest**：上游 `https://android.googlesource.com/platform/manifest` `-b android-16.0.0_r4`（revision `android-16.0.0_r4`，247G）。
-- **sync 状态**：✅ 完成（`repo sync -c -j4`，`SYNC_EXIT=0`）。首次 `-j8` 因 googlesource 配额失败，降 `-j4` 重试成功。
+- `~/aosp16` 从 `android-16.0.0_r4` 建立，承载 G1/P2/cont.101
+  开发、打包和启动验证。
+- 历史命令与产物身份见
+  [`development-history/aosp16/`](development-history/aosp16/)；不要把这里
+  的命令复制成当前 mainline 构建。
 - **lunch 目标（统一板方案，已采纳）**：两端共用 BlueStacks 板 `device/bst/qvirt`，仅 arch 不同：
   - **mac** → `lunch bst_arm64-userdebug`（arm64；板源 `android-mac/device/bst/qvirt`）。
   - **win** → `lunch bst_x86_64-userdebug`（x86_64；新增 product 变体；win 不再用 cuttlefish/generic）。
   - 依据：两端虚拟化均实现 qvirt 设备（mac `qvm`、win `hd/Source/{vmsg,hst,gr}`）+ `hardware/bst/*` HAL 两端都有。Phase 1 = port 单一 `device/bst/qvirt` 到 android-16（arm64+x86_64 双 product）。详见 architecture.md。
 
-```bash
-# 状态检查（无 sleep，快速）
-ssh markxu@172.16.6.191 'cat ~/aosp16_sync_exit 2>/dev/null && echo DONE || echo RUNNING; pgrep -af "repo sync" | head -1; tail -n 12 ~/aosp16_sync.log'
+## Android-16 mainline（当前）
 
-# 构建（sync 完成后）—— lunch 目标待定制清单
-ssh markxu@172.16.6.191 'cd ~/aosp16 && bash -lc "source build/envsetup.sh && lunch <target> && m <module>"'
-# 全量镜像: m dist → out/dist/*.img；迭代清理: installclean
+```bash
+# 只读身份/依赖检查；不启动构建
+ssh markxu@172.16.6.191 \
+  'bash ~/bst-aosp/scripts/g1_build_android16.sh --check'
+
+# 全流程前预检（同样不 build/pack/deploy）
+bash scripts/g1_build_pack.sh --check
+
+# build + pack + deploy + boot oracle
+bash scripts/g1_build_pack.sh
 ```
 
-- 产物：`~/aosp16/out/target/product/<device>/*.img`、`~/aosp16/out/dist/`。
+Preflight 必须显示 resolved tree=`~/android-16`、branch、完整 HEAD、
+OUT_DIR 和 `bst_x86_64`。命中 `~/aosp16` 即失败。
 
-## G1（android-16 `bst_x86_64`）Phase 1 — build+pack+deploy+verify（权威，对齐 buildscripts）
+## Android-16 `bst_x86_64` build+pack+deploy+verify
 
-> 当前活跃流程。单一入口 `scripts/g1_build_pack.sh`（win Git Bash 跑）。详见 [`patches/android-16/checkpoints/G1-RESTORE.md`](../patches/android-16/checkpoints/G1-RESTORE.md) + [`G1.md`](../patches/android-16/checkpoints/G1.md) + porting-log cont.4。
+> 当前活跃流程。单一入口 `scripts/g1_build_pack.sh`（win Git Bash 跑）。
+> G1-RESTORE 是 AOSP16 历史恢复基线；当前 target-only gate 见
+> [`development-workflow/promotion.md`](development-workflow/promotion.md)。
 > 调试约束：**禁 `m clean`（用 installclean）+ 禁 apk 重编**（apk 用 prebuilt，g1_copy_bst_apks 从 apks_Baklava64 拷）。
 
 ```bash
@@ -37,25 +49,34 @@ bash scripts/g1_build_pack.sh --pack-only
 ```
 
 **流程分解**（g1_build_pack.sh 内部，每步 readback）：
-1. 远程 `g1_build.sh`：`lunch bst_x86_64-trunk_staging-eng` + env（OUT_DIR=out_nxt_Baklava64 / ALLOW_MISSING_DEPENDENCIES=true / 见 G1-RESTORE §1）+ `m droid -j24`（Layer1，含 vendor/system_ext fold 进 OUT system/ 目录）。
-2. 远程 `g1_build_libs.sh`：hd guest 10 模块 + goldfish mmm（EGL/gralloc/hwc2）。
-3. 远程 `g1_stage_system.sh`：rsync OUT `qvirt/system/`（含 vendor/system_ext/product 子目录 = fold）→ `~/releases/Baklava64/system`。
-4. 远程 `g1_copy_bst_apks.sh`：append `ro.hardware.gralloc=bst`+`egl=emulation` 到 staged build.prop（抗 rsync --delete）+ BST apk（launcher/gamecenter/bsxlauncher）预装 priv-app（含 unzip native lib）。
-5. 远程 `r228-pack-root.sh`（= buildscripts pack）：`make-baklava-system-sfs`（含 e2fsdroid SELinux contexts）→ `Root.fs` → **`create_vdi.sh`**（parted msdos 分区 sda1 + mke2fs）→ `VBoxManage clonehd --format VHD` → `sethduuid 54e9ad31`。
-6. win `g1_win_deploy.ps1`：scp Root.vhd（md5 校验，备份旧版替换）。
+1. 远程 `g1_build_android16.sh`：身份 preflight +
+   `lunch bst_x86_64-trunk_staging-eng` + `m droid -j24` + 一次
+   goldfish EGL/gralloc/hwc2 mmm，生成 `g1_android16_build.identity`。
+2. 远程 `g1_build_libs.sh`：hd guest 必需模块；可选模块失败告警，
+   hostcall/gcall/server/tool 失败则中止。
+3. 远程 `g1_pack_root.sh`：从同一 Android-16 HEAD stage OUT fold、
+   复核 build identity、只 stage 已编译图形、复制 APK、应用
+   overlays/HAL 策略、调用 r228 pack，并生成 `Root.vhd.identity`。
+4. `g1_copy_bst_apks.sh`：append `ro.hardware.gralloc=bst`+`egl=emulation`
+   到 staged build.prop（抗 rsync --delete）+ BST apk
+   （launcher/gamecenter/bsxlauncher）预装 priv-app（含 unzip native lib）。
+5. win `g1_win_deploy.ps1`：同时 scp Root.vhd 和 identity，用 SHA-256
+   比对后备份替换。
 7. win 干净首启：`Data_orig.vhdx → Data.vhdx`（**copy，勿删**）。
-8. win `g1_boot_verify.ps1`：Layer2 boot oracle（`[Ready]` tag + fUiHideBootProgressBar + ActivityDisplayed）。
+8. win `g1_boot_verify.ps1`：读部署 identity，Layer2 7 个 oracle 任一
+   缺失即返回非零。
 
 **fastboot.vdi 重建**（kernel-a16 + 修复版 bs_bootlog initrd；非每次，仅 kernel/bs_bootlog 变时）：
 ```bash
-ssh markxu@172.16.6.191 'cd ~/app-player/hd/guest/BootImage && KDIR=~/aosp16/kernel-a16 make build_fastboot'
+ssh markxu@172.16.6.191 'cd ~/app-player/hd/guest/BootImage && KDIR=~/android-16/kernel-a16 make build_fastboot'
 # → fastboot/fastboot.vdi；sethduuid 91b80c95；scp 到 Engine\Tiramisu64\fastboot.vdi
 ```
 
 **⚠️ gotchas（必读，见 G1.md「踩坑速查」）**：
 - **Data.vhdx 勿删**：干净首启 `Data_orig.vhdx → Data.vhdx`（copy）。删了 → VBox `Could not open medium Data.vhdx` → 卡 [Initializing]。
 - **UUID 验 footer 不信 showhdinfo**：`showhdinfo` 显示注册表缓存值；文件实际 UUID 看 hexdump footer offset 64。r228 远程 sethduuid 曾报成功但没真改 footer。
-- **fastboot build_fastboot 须设 `KDIR=~/aosp16/kernel-a16`**（否则 `No rule to make target '/arch/x86/boot/bzImage'`）。
+- **fastboot build_fastboot 须设 `KDIR=~/android-16/kernel-a16`**；Makefile
+  必须在 kernel 产物和已验证 prebuilt 均不存在时硬失败。
 - **create_vdi「挂起」= chown read-only abort**：r228 开头清 nbd + 重建干净 Root.fs 即解。
 - **launcher 在 Priv-Downloads 段**：buildscripts `copy_system_apks` 遇 Data: 就 break，不拷 launcher（它在 Priv-Downloads）→ G1 删 dataFS 后缺 → FallbackHome。故 `g1_copy_bst_apks.sh` **硬编码 APK 列表 force 预装 priv-app**（不读 APPCONFFILE）。历史：早期版本读 APPCONFFILE 须 `tr -d '\r'`（CRLF）。
 

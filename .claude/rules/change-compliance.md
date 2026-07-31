@@ -12,10 +12,16 @@
 
 ### 1. 远程 commit（不留 dirty）
 
-- 每个涉及的 aosp16 project（`~/aosp16/<project>`）在**远程 git commit**，不留 dirty/未跟踪散落。
+- **先标阶段**：AOSP16 development 的历史工作位于
+  `~/aosp16/<project>`；promotion/mainline 的当前工作位于
+  `~/android-16/<project>`。不得用一棵树的构建结果证明另一棵树。
+- 每个涉及的 project 在其所属树中**远程 git commit**，不留
+  dirty/未跟踪散落。
   - `git add -A` + `git commit`（合规 message，见下）。
   - `device/*` untracked scaffold（非 git repo）→ 存 `bst-aosp/patches/android-16/untracked-src/`。
 - **commit 前清噪音**：`.bak`/`.bak.rXXX`/`.disabled`/`.bak-r*` 等中间态文件**不入 commit**（`git rm` 或 amend 移除）；否则 `git diff`/`repo status` 噪声 + 一致性缺口。
+- promotion/mainline 还必须记录根 gitlink、组件 HEAD、base/work branch
+  以及目标 remote；根仓提交不能引用只存在于本地的组件 SHA。
 
 ### 2. 正式 + temp_debt 双重标注
 

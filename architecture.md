@@ -1,6 +1,8 @@
 # 架构决策记录（ADR）—— bst-aosp Android 13→16 Guest 升级
 
-> 状态：活跃。M1（android-16 win boot）已完成（2026-07-14）；当前阶段 = Phase 1 清单融合移植。
+> 状态：活跃。AOSP16 development 已在 cont.101 形成绿基线；初始
+> promotion 已在 cont.106 完成 Android-16 7/7 验证；当前为
+> Android-16 mainline maintenance。
 
 ## 1. 升级目标
 
@@ -78,6 +80,16 @@
 4. **mac**：基于同份代码收尾（不做独立验证）。
 
 每组：研究 → rebase → 文档（源/用途/质量/影响）→ 验证回环 → 存 patch → checkpoint（可恢复）。见 [.claude/rules/patch-porting.md](.claude/rules/patch-porting.md)。
+
+### 6.1 Development 与 Mainline
+
+- `~/aosp16` 是 r4-based development/验证线，保留完整 bring-up 和
+  patch-group 历史。
+- `~/android-16` 是 25Q4-evolved mainline。Promotion 按
+  freeze → audit → compare → merge → target-only validation → publish。
+- 未修改项目在 `aosp16-bst`；修改项目在 `aosp16-bst-merge`。
+- mainline build/stage/pack/boot 的 tree、HEAD、OUT_DIR 和 artifact
+  identity 必须一致，禁止使用 `~/aosp16/out*`。
 
 ## 7. host-guest 契约面
 

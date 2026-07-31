@@ -9,35 +9,35 @@ description: 在 bst-aosp 任何区域动手前找到对的文档——架构决
 
 ## 架构（仓库根）
 
-- **[architecture.md](architecture.md)** — 完整架构决策记录。关键节：升级目标、组件角色、**统一板 qvirt + boot 路径回归决策（§4.2）**、验证策略、porting 顺序、host-guest 契约、风险。
-- **[architecture-brief.md](architecture-brief.md)** — 压缩版，先读它抓 gist。
+- **[architecture.md](../../../architecture.md)** — 完整架构决策记录。关键节：升级目标、组件角色、**统一板 qvirt + boot 路径回归决策（§4.2）**、验证策略、porting 顺序、host-guest 契约、风险。
+- **[architecture-brief.md](../../../architecture-brief.md)** — 压缩版，先读它抓 gist。
 
 ## 验证
 
-- **两层验证** → `architecture.md` *验证策略* + [.claude/rules/validation-gate.md](.claude/rules/validation-gate.md)。
-- **埋点与测试** → [.claude/rules/instrumentation-and-tests.md](.claude/rules/instrumentation-and-tests.md)。
-- **启动 oracle** → [docs/boot-oracles.md](docs/boot-oracles.md) + [progress/android-16-boot-guide.md](progress/android-16-boot-guide.md) §7 / [patches/android-16/RESTORE.md](patches/android-16/RESTORE.md)。
+- **两层验证** → `architecture.md` *验证策略* + [validation-gate.md](../../rules/validation-gate.md)。
+- **埋点与测试** → [instrumentation-and-tests.md](../../rules/instrumentation-and-tests.md)。
+- **启动 oracle** → [docs/boot-oracles.md](../../../docs/boot-oracles.md) + [progress/android-16-boot-guide.md](../../../progress/android-16-boot-guide.md) §7 / [patches/android-16/RESTORE.md](../../../patches/android-16/RESTORE.md)。
 
 ## 阶段与流程
 
-- **阶段模型** → [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md)（M0/M1 归档 → Phase1 融合 → Phase2 其余+临时债 → Phase3 CI）。
-- **完成循环** → [.claude/rules/completion-loop.md](.claude/rules/completion-loop.md)。
-- **双端清单** → [.claude/rules/dual-platform-customization.md](.claude/rules/dual-platform-customization.md)。
-- **win 先行 / mac 同码** → [.claude/rules/platform-win-first-mac-reuse.md](.claude/rules/platform-win-first-mac-reuse.md)。
-- **定制移植（patch-group）** → [.claude/rules/patch-porting.md](.claude/rules/patch-porting.md) + `/port-patch`。
+- **阶段模型** → [SETUP-ROADMAP.md](../../SETUP-ROADMAP.md)（AOSP16 开发线 → promotion → Android-16 主线维护）。
+- **完成循环** → [completion-loop.md](../../rules/completion-loop.md)。
+- **双端清单** → [dual-platform-customization.md](../../rules/dual-platform-customization.md)。
+- **win 先行 / mac 同码** → [platform-win-first-mac-reuse.md](../../rules/platform-win-first-mac-reuse.md)。
+- **定制移植（patch-group）** → [patch-porting.md](../../rules/patch-porting.md) + `/port-patch`。
 
 ## 进度与契约
 
-- **定制 registry v2** → [patches/registry.md](patches/registry.md) / [patches/registry.json](patches/registry.json) / [patches/registry.schema.md](patches/registry.schema.md)。
-- **Phase 计划** → [progress/phase1-port-plan.md](progress/phase1-port-plan.md) / [progress/phase2-port-plan.md](progress/phase2-port-plan.md)。
-- **移植时间线** → [progress/porting-log.md](progress/porting-log.md)。
-- **A16 boot 存档** → [patches/android-16/RESTORE.md](patches/android-16/RESTORE.md)。
-- **host 兼容** → [progress/host-compat.md](progress/host-compat.md) + [.claude/rules/host-guest-contract.md](.claude/rules/host-guest-contract.md)。
+- **定制 registry v2** → [patches/registry.md](../../../patches/registry.md) / [patches/registry.json](../../../patches/registry.json) / [patches/registry.schema.md](../../../patches/registry.schema.md)。
+- **Phase 计划** → [progress/phase1-port-plan.md](../../../progress/phase1-port-plan.md) / [progress/phase2-port-plan.md](../../../progress/phase2-port-plan.md)。
+- **移植时间线** → [progress/porting-log.md](../../../progress/porting-log.md)。
+- **A16 boot 存档** → [patches/android-16/RESTORE.md](../../../patches/android-16/RESTORE.md)。
+- **host 兼容** → [progress/host-compat.md](../../../progress/host-compat.md) + [host-guest-contract.md](../../rules/host-guest-contract.md)。
 
 ## 远程与构建
 
-- **主机/路径** → [docs/remote-topology.md](docs/remote-topology.md) + [.claude/rules/remote-build.md](.claude/rules/remote-build.md)。
-- **构建命令** → [docs/build-commands.md](docs/build-commands.md)。
+- **主机/路径** → [docs/remote-topology.md](../../../docs/remote-topology.md) + [remote-build.md](../../rules/remote-build.md)。
+- **构建命令** → [docs/build-commands.md](../../../docs/build-commands.md)。
 
 ## 三处 host 源（本地参考）
 

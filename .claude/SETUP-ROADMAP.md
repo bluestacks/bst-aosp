@@ -5,6 +5,23 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 
 ---
 
+## 当前生命周期
+
+1. **AOSP16 development**：M0/M1/Phase 1/Phase 2 的开发、调试和全量
+   功能对齐记录；cont.101 形成最终绿基线。
+2. **AOSP16 → Android-16 promotion**：cont.103-cont.106；最终
+   1016/1016 项目初始化，985 个 base 分支、31 个 merge 分支，
+   Android-16 启动 7/7。
+3. **Android-16 mainline maintenance（当前）**：普通修复直接基于
+   `aosp16-bst`，工作分支 `aosp16-bst-merge`。只有新的完整开发批次
+   才重新走 freeze/promotion。
+
+权威流程：
+[`docs/development-workflow/`](../docs/development-workflow/)；完整历史：
+[`docs/development-history/`](../docs/development-history/)。
+
+---
+
 ## 已完成里程碑（归档）
 
 ### M0 — 脚手架 + 环境 + android-13 win 基线
@@ -22,7 +39,7 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 
 ---
 
-## 当前阶段：Phase 2 — guest 全量功能对齐（host/Phase3 暂不规划）
+## AOSP16 开发阶段记录：Phase 2 — guest 全量功能对齐
 
 ```mermaid
 flowchart TD
@@ -47,7 +64,7 @@ flowchart TD
 
 **Gate→P2**：✅ win G1 boot 到 launcher + 临时债登记完整（见 G1-RESTORE §8）。
 
-### Phase 2 — 其余定制 + **全量功能对齐**（**当前 · 唯一活跃阶段**）
+### Phase 2 — 其余定制 + **全量功能对齐**（已完成并 promotion）
 
 > **人类决策 2026-07-21**：Phase 2 **必须完成** a13→a16 功能对齐（含 frameworks 全量子系统）；**不规划** host / Phase 3 任务；构建机争用不作问题、不处理。移植一律遵守 `.claude/rules/patch-porting.md` 等规则。
 
@@ -61,7 +78,8 @@ flowchart TD
 - [x] **P2-FRAMEWORK-REST**：**22/22 core/java** ✅；services/core gap 持续收口；**deferred 8/9 done**（D1/D2/D5/D6/D7/D8/D9 + ActiveServices；仅 D3 截图 defer 到虚拟化 port）；Root.vhd **`02690d11`** / system.img `a878d3c8` Layer2 **7/7 @161s**（cont.101）。frameworks/base source-vs-commit drift 清零（全 commit）。
 - [x] P2-TEMP-FSTAB：obsolete（无 `/vdc` skip）。
 
-**下一步**：① D3 截图共享（已 defer 到虚拟化 port 阶段，design 见 `progress/d3-redesign.md`）；② mac `bst_arm64` 同码收口；③ Phase 2 gate 收尾（a13 功能对齐）。详见 `phase2-port-plan.md` · `porting-log.md` cont.101。
+**历史收口**：cont.101 形成 AOSP16 绿基线；后续 promotion 和 Android-16
+验证见 `progress/porting-log.md` cont.103-cont.106。
 
 **Gate（Phase 2 完成）**：a13 功能对齐通过（含 frameworks）；r262/`performance_hint` 已收口；SELinux permissive；mac 同码。**不设** host/Phase 3 gate。
 

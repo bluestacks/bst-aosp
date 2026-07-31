@@ -4,7 +4,9 @@
 
 ## 一句话
 
-guest 是基于 android-16.0.0_r4 的完整 AOSP 树；把 `-a13`/`-mac` 定制 port 过来；**win 先行验证、mac 同码复用**；统一板 `device/bst/qvirt`（x86_64/arm64 各自定制）。
+先在 r4-based AOSP16 development 线完成定制移植与验证，再 promotion 到
+Android-16 25Q4-evolved mainline；**win 先行验证、mac 同码复用**；统一板
+`device/bst/qvirt`。
 
 ## 组件角色
 
@@ -19,15 +21,17 @@ guest 是基于 android-16.0.0_r4 的完整 AOSP 树；把 `-a13`/`-mac` 定制 
 - **Layer 2 启动**：boot oracle（sfs 挂载 → `boot_completed` → `Player state: ready` → Settings → 优雅关机）。
 - 原则：**Verify by readback**；每次修改加埋点（`A16DBG:`）与测试。
 
-## 阶段（当前）
+## 阶段
 
 | 里程碑 | 状态 |
 |---|---|
 | M1 android-16 win boot | **完成** |
 | Phase 1 清单融合 + qvirt | **完成** |
-| Phase 2 guest **全量功能对齐**（含 frameworks；SELinux=a13 permissive；Shell←`performance_hint` ✅） | **当前 · 唯一活跃** |
-| Phase 3 host/CI | **暂不规划** |
+| Phase 2 AOSP16 全量功能对齐 | **完成，cont.101 7/7** |
+| AOSP16 → Android-16 promotion | **完成，cont.106 7/7** |
+| Android-16 mainline maintenance | **当前** |
 
-当前要点：FW-CORE-APP **9/22** ✅；权威 Root `4ba4bdd3` Layer2 7/7 @597s。工作单元 = **patch-group**。
+当前分支模型：base=`aosp16-bst`，work=`aosp16-bst-merge`。活动构建只从
+`~/android-16` 取源码和产物。
 
 详情：[architecture.md](architecture.md) · [SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md) · [phase2-port-plan.md](progress/phase2-port-plan.md) · [summary](.claude/summary.md)。

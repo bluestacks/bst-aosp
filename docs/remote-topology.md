@@ -8,7 +8,7 @@
 |---|---|---|---|---|
 | **win host** | 本机 Windows | `C:\workspace\app-player` | tag `bst-v5.22.210-5.22.210.1033` ✅ | BlueStacks 已装；android 子模块未 init |
 | **mac host** | macOS Mac mini | `zeqing@172.16.0.204`（`~/app-player-mac`） | ✅ tag `bst-v5.21.700-nxt_mac2-5.21.700.7526`（detached, clean；submodule 已 deinit，hd/ggl 构建时按需 init） | BlueStacks 已装 |
-| **guest 构建** | Ubuntu | `markxu@172.16.6.191`（clouddev） | android-13/android-mac 子模块（递归 init 中） | aosp16 已 sync；缺 hd/buildscripts |
+| **guest 构建** | Ubuntu | `markxu@172.16.6.191`（clouddev） | `~/android-16` mainline + `~/aosp16` development record | Android-16 promotion 已完成并验证 |
 
 > mac 另有 `~/workspace/app-player-mac`（ai-worker 5.22.999 开发用），非本项目规范目录。
 
@@ -29,7 +29,10 @@
 ### guest 构建（clouddev 172.16.6.191）
 - `ssh markxu@172.16.6.191`（免密已设）。Ubuntu 22.04，7.3T 工作盘。
 - `~/android-13`（win guest，`bluestacks/android-13.git`）、`~/android-mac`（mac guest）——**递归 init 子模块中**。
-- `~/aosp16`（上游 android-16.0.0_r4，247G，sync 完成）——aosp16 阶段用。
+- `~/aosp16`：AOSP16 development/绿基线树；当前任务不得修改或消费其
+  `out*`，历史脚本保留原路径。
+- `~/android-16`：当前 mainline；记录基线为 1016/1016 initialized，
+  985 × `aosp16-bst` + 31 × `aosp16-bst-merge`。
 - `~/kernel-common-a13`、`~/kernel-mac`。
 - **缺口**：buildscripts 流程需 `hd` 兄弟目录 + `kernel64-hyperv` + buildscripts 本体——clouddev 暂无（待补）。
 
@@ -41,4 +44,6 @@
 
 ## 流程（路线）
 
-① 检查+完成环境设置（三端）→ ② **android-13 基线**：guest 编译(clouddev)→打包→替换 win+mac host 已装 BlueStacks→运行测试，两端通过 → ③ 才开始 aosp16 工作。定制清单重新生成（等子模块）。详见 [.claude/SETUP-ROADMAP.md](../.claude/SETUP-ROADMAP.md)。
+历史路线为环境设置 → Android 13 基线 → AOSP16 development。当前路线为
+Android-16 mainline maintenance；完整阶段模型见
+[`docs/development-workflow/`](development-workflow/)。

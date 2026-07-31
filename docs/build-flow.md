@@ -33,18 +33,21 @@
 | `kernel64-hyperv` | ❌ 只有 `kernel`（路径/名不一致） |
 | `hd/` 兄弟（`mmm ../hd/Source/vmsg/guest`） | ❌ clouddev 无 hd |
 | buildscripts 本身 | ❌ clouddev 无（在 app-player 仓库） |
-| android-16 目标树 | `~/aosp16` 纯上游（无 bluestacks/device/bst） |
+| Android-16 mainline | ✅ `~/android-16`，promotion 后的 BlueStacks 集成树 |
 
 ## 升级影响点（android-13→16）
 
-1. **ANDROIDHOME → android-16**：但 android-16 树须携带 BlueStacks 定制（device/bst/qvirt、hardware/bst、external/bluestacks/*）+ hd guest 模块集成 + kernel。**不是裸 ~/aosp16**。
+1. **ANDROIDHOME → `~/android-16`**：树携带 promotion 后的 BlueStacks
+   定制、qvirt、hd guest 集成和 kernel；不得指回 `~/aosp16`。
 2. **hd guest 模块 API 兼容**：VmsgDrv.c / bstpgaipc / hcall / gcall 需适配 android-16 内核 API。
 3. **kernel**：kernel64-hyperv 路径 + android-16 内核配置。
 4. **init.sh**：android-16 启动流程适配（init/fstab/dm-verity 变化）。
 5. **buildscripts/Makefile**：可能需小改（路径、kernel 名、模块列表）。
 
-## 待决策（升级构建架构）
+## 已决策的升级构建架构
 
-- android-16 可构建树怎么来：**port 定制进 `~/aosp16`** 再补 hd 集成 + kernel？还是**fork android-13 树结构到 android-16**（保留 external/bluestacks/hd 集成骨架）？
-- **hd 在 clouddev 的位置**：buildscripts 需 hd 兄弟目录——clouddev 要 checkout hd（win `hd.git` / mac `hd-mac.git`，对应 tag/分支）。
-- 是否在 clouddev 复刻 buildscripts 流程，还是另有 Linux 构建环境。
+- AOSP16 先完成完整 development/验证，再 promotion 到
+  `~/android-16` 25Q4-evolved mainline。
+- hd 来源为 `~/app-player/hd`，活动脚本统一导出 `HD_SOURCE_TOP`。
+- Linux guest 构建沿用 source build + OUT fold + buildscripts-compatible
+  Root pack；每阶段携带 source/artifact identity。

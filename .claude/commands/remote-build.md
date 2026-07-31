@@ -6,22 +6,32 @@ allowed-tools: Bash(ssh:*), Bash(scp:*), Read, Write, CronCreate, CronDelete, Cr
 
 ## 步骤
 
-1. **选主机**：从 `docs/remote-topology.md` 取 guest 构建机（`<host>`）与远程根（`<remote-root>`）、lunch 目标（`<target>`）、设备（`<device>`）。Phase 0 未填则先确认（escalate）。
+1. **选阶段和主机**：默认 current mainline，`<remote-root>=~/android-16`。
+   只有明确 historical replay 才能选择 `~/aosp16`。从
+   `docs/remote-topology.md` 取 guest 构建机、lunch 目标和设备。
 
-2. **发起后台构建**（单次 `bash -lc` 保证 envsetup 持久）：
+2. **身份预检**：
+   ```bash
+   ssh <host> 'bash ~/bst-aosp/scripts/g1_build_android16.sh --check'
+   ```
+   保存 resolved tree、branch、HEAD、OUT_DIR 和 product；任一不符即停止。
+
+3. **发起后台构建**（单次 `bash -lc` 保证 envsetup 持久）：
    ```bash
    ssh <host> 'cd <remote-root> && nohup bash -lc "source build/envsetup.sh && lunch <target> && m <module>; echo EXIT=\$? > /tmp/build_exit" > /tmp/build.log 2>&1 & echo PID=$!'
    ```
    记下 PID 与 `/tmp/build.log`、`/tmp/build_exit` 路径到 summary。
 
-3. **轮询**：用 `CronCreate` 排程（如每 10 分钟）：
+4. **轮询**：用 `CronCreate` 排程（如每 10 分钟）：
    ```bash
    ssh <host> 'ps -p <pid> >/dev/null && echo RUNNING || echo DONE; tail -n 50 /tmp/build.log; cat /tmp/build_exit 2>/dev/null'
    ```
 
-4. **完成回读**（readback，非信任）：读 `/tmp/build_exit` 的真实 exit code + `ls -la out/target/product/<device>/*.img`（mtime）+ `tail -n 100 build.log`。**EXIT=0 且产物存在才算 Layer 1 过。**
+5. **完成回读**（readback，非信任）：读 `/tmp/build_exit` 的真实 exit
+   code、产物、SHA-256 和 identity sidecar。**EXIT=0、产物存在且 sidecar
+   HEAD 与预检一致才算 Layer 1 过。**
 
-5. **断线恢复**：SSH 断了不杀 nohup 进程；重连先 `ps -p <pid>` + `tail` 恢复观测，不重发命令。
+6. **断线恢复**：SSH 断了不杀 nohup 进程；重连先 `ps -p <pid>` + `tail` 恢复观测，不重发命令。
 
 ## 注意
 

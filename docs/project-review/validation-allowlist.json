@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "path": "scripts/p2_mech2_apply.py",
+      "check": "python-ast",
+      "reason": "Historical cont.65 authoring residue: lines 20-21 are a truncated earlier comment-block attempt. The successful change is preserved in the canonical patch and Layer 2 record; rewriting this script would falsify the development record.",
+      "replacement": "patches/android-16/patches/p2-framework-rest/P2-MECH-2-launcher3-manifest.diff"
+    }
+  ]
+}

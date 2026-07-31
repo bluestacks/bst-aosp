@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BST AOSP project review inventory",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_from",
+    "summary",
+    "files",
+    "findings",
+    "duplicate_groups"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "generated_from": {
+      "const": "."
+    },
+    "summary": {
+      "type": "object"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "git_state",
+          "stage",
+          "purpose",
+          "necessity",
+          "performance",
+          "security",
+          "result",
+          "dependencies",
+          "validation_evidence",
+          "preservation"
+        ]
+      }
+    },
+    "findings": {
+      "type": "array"
+    },
+    "duplicate_groups": {
+      "type": "array"
+    }
+  }
+}

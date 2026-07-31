@@ -1,0 +1,3726 @@
+{
+  "schema_version": 1,
+  "scope": "local repository only; Android source trees are not read",
+  "counts": {
+    "expected-failure": 1,
+    "pass": 618
+  },
+  "checks": [
+    {
+      "path": ".claude/scheduled_tasks.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": ".claude/settings.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": ".claude/settings.local.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/android-16-patch-review/patch-inventory.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/timeline.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/project-review/inventory.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/project-review/inventory.schema.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/project-review/validation-allowlist.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "patches/android-16/bootimage/hd/guest/BootImage/bstsetconf.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "patches/android-16/bootimage/hd/guest/BootImage/init.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "patches/android-16/bootimage/hd/guest/BootImage/stage2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "patches/android-16/untracked-src/aosp16__device_generic_common/init.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "patches/registry.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "patches/registry.v1.backup.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/android-16-boot-patches/01-build_Baklava64.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/android-16-boot-patches/02-build_Baklava_common.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-buildscripts/build.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-buildscripts/build_Baklava64.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-buildscripts/build_Baklava_common.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-buildscripts/create_vdi.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/BootImage/bstsetconf.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/BootImage/fastboot/cp_bzImage_initrd.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/BootImage/init.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/BootImage/init_hvf.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/BootImage/initrd-implode.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/BootImage/initrd/boot/bstsetconf.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/BootImage/initrd/boot/stage2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/BootImage/make_vhd_from_iso_and_copy_to_filer.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/BootImage/stage2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/init.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "references/henry-hd-guest/stage2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/_g1_clean_reverify.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/_p2_registry_breakdown.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/_p2_registry_summary.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/_registry_p2_summary.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/_registry_pending_all.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/_remote_commit_all.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/_triage_p1_p3.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/aemu_host_supported.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/apply-henry-aosp-repo-diff.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/apply-henry-service-cpp.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/build-squashfs-module-initrd.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/clouddev-build-tiramisu64.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/create-vdi-raw-system.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/enable-squashfs-kernel.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/fix-bootimage-makefile.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/fix-gfxstream-soong-stubs.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/fix-makefile-adbd.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/fix-makefile-dalvik.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/fix-makefile-initrd.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/fix-round10-remote.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/fix-round10-restore.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/fix-service-cpp.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/fix-stage2.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/gen-boot-framework-only.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/gen-boot-framework.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/henry-boot-align-entry.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/henry-boot-sync-bootimage.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/henry-r208-pack-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/henry-r211-vbox.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/hotpatch-root-system-raw.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/hotpatch-vhd-system-raw.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/hotpatch-vhd-system-sfs.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/incremental-root-vhd.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/inspect-art-payload.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/pack-baklava-root-system-sfs.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-bs-bootlog-init-rc.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-device-init-x86-renderengine-skiavk-a16.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-finder-outside-mods.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-goldfish-egl-sf-fixdrawbuffer-rc.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-hd-nvidia-sf-drawarrays-unbind-ebo.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-hd-nvidia-surfaceflinger-fixDrawBuffer.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-hd-xpl-xerr-format.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-init-boot-blockers.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-init-bringup-tolerance.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-init-rc-hwservicemanager.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-init-zygote-default.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-baklava-apex.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-baklava-bind-system.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-baklava-system-img.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-baklava-system-losetup.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-baklava-system-sfs.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-runtime-apex.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-sfs-apex-mount.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-system-sfs-losetup-f.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-system-sfs-losetup-f2.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-system-sfs-losetup.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-system-sfs-mount-loop.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-initsh-videobuf-optional.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-keystore2-earlyboot-perm-bypass.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-ldconfig-r140-bionic.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-ldconfig-r141-system-bionic.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-makefile-baklava-system-sfs.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-makefile-extra-bins.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-makefile-kernel-a16.sh",
+      "check": "python-ast-by-shebang",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-property-always-allow.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-root-vdi-hwservicemanager.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round100-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round101-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round102-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round103-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round104-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round105-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round106-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round107-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round108-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round109-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round11-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round110-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round111-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round112-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round113-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round114-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round115-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round116-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round117-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round118-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round12-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round129-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round13-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round130-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round131-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round136-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round137-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round138-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round140-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round141-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round142-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round143-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round145-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round147-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round148-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round149-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round150-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round151-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round152-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round153-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round154-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round155-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round156-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round157-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round158-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round159-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round160-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round161-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round17-init.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round20-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round21-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round22-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round226-fastboot-bootlog.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round23-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round24-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round25-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round26-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round27-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round28-system-sfs.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round31-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round32-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round52-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round53-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round54-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round55-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round56-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round57-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round58-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round59-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round60-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round61-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round62-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round63-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round64-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round65-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round66-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round66b-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round67-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round68-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round68b-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round69-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round70-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round71-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round72-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round73-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round74-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round75-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round77-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round79-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round81-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round82-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round83-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round83b-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round84-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round84b-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round85-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round86-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round87-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round88-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round89-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round90-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round91-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round92-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round93-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round94-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round95-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round96-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round97-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round98-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round98b-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round99-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-round99b-boot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-selinux-api36.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-selinux-bringup.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-selinux-setenforce.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-selinux-skip.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-selinux-vendor-version.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-selinux.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-service-cpp.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-service-filecontext.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-service-util.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-servicemanager-vintf.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-aconfigd.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-bin-overlay.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-bind-bin.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-clean.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-final.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-henry-style.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-linker-overlay.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-more-bins.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-overlay-fix.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-r171d.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-r171e.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-round10.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-stage2-tmpfs.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/patch-vintf-graphics-hidl.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r229-rebuild-goldfish-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r231-rebuild-goldfish-gles-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r232-rebuild-goldfish-egl-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r234-rebuild-ramdisk-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r237-rebuild-ramdisk-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r238-pack-hostcall-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r238-rebuild-hostcall-system.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r239-pack-audio-hal-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r240-henry-bst-audio-copy.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r240-henry-bst-audio-link.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r240-pack-bst-audio-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r241-pack-audio-hidl-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r241-rebuild-audio-hidl.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r244-build-stage-init.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r244-fix-critical-reboot.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r244-fix-selinux-fatal.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r244-fix-service-reboot.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r244-ninja-init.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r244-pack-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r244-restore-builtins.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r244-restore-henry-init-full.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r244-restore-henry-odsign-init.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r252-patch-auth-services.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/r252-rebuild-services.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/rebuild-bstmods-initrd.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/rebuild-henry-align.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/rebuild-initrd-round8.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/rebuild-initrd-round8b.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/rebuild-initrd-round8c.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/rebuild-kernel-bstmods-atomic.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/rebuild-kernel-squashfs.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/rebuild-round10.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/rebuild-round9.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/relink-init.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/repack-root-fs-system-sfs.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/repack-root-sfs-only.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/repack-root-vhd.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/repack-system-sfs-raw.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/revert-goldfish-egl-sf-fixdrawbuffer-rc.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/stage2-baklava64.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/stage2-good-vhd.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/archive/stage2-round10.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/audit_a16_merge.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/audit_android16_promotion.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/bs_bootlog.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/check_log2.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/check_logs.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/check_logs2.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/check_prev_log.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/check_state.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/check_timeline.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/check_vbox_logs.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/fix-hwsm-soong.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/fix_bst_hal_includes.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/fix_bst_hal_includes2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/fix_bst_mk.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/fix_registry_review.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_apply_boot_overlays.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_boot_verify.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_build.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_build_android16.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_build_libs.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_build_stable.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_copy_bst_apks.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_equiv_check.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_fold_m1.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_pack_root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_pack_root_mdroid.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_rebuild_graphics.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_reset_data_wipe.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_save_hal_fixes.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_stage_system.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_start_pack_remote.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_win_deploy.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g8_disable_vendor_hal_rc.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/generate_android16_patch_inventory.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/generate_project_review.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/lib/android16_env.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/lib/android16_guard.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/libhidl_drop_mgr_token.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/make-baklava-system-sfs.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/manual-relink-init.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/merge_aosp16_to_android16.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/merge_external.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/merge_registry_v2.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_apply_remaining.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_apply_remaining_after_sysimg.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_await_g1_then_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_await_stable.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_batchAB_stage_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_batchA_build.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_batchB_expand.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_batchB_gen.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_batchB_surgical.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_batchC_safe.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_batchD.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_batchD_cleanup.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_blast_research.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_bstutils_metalava.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_check_artifacts.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_check_artifacts2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_classify_deltas.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_classify_external.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_classify_external_fast.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_clean_conflicts.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cleanup_native.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont20.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont20_revert_rebuild.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont21.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont21_classify.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont21_pack_fast.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont21_research.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont21b.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont21c_revert_selinux.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont21d.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont21d_await.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont21d_surgical.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_await_v2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_await_wait.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_diagnose.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_health.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_perfhint_lookup.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_perfhint_lookup2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_perfhint_prep.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_poll.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_restore_hintmanager.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_stable_pids.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_start.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_status.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_surgical.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22_wait90.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22b_kill_stale_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22b_rebuild_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_cont22b_v3.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_d9_allowlist.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_d9_export.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_d9_fix_exit_time_dtor.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_d9_fix_headers.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_d9_pagefusion.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_d9_vendor_guard.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_data_wipe2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_data_wipe_dalvik_keystore.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_data_wipe_sp.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_defer_mac.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_device_hidl_manager.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_diag_build.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_diag_ckati.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_diag_ckati2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_diag_cont22.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_diag_cont22_err.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_diag_ninja_stuck.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_drop_external_noise.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_drop_incompat_native.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_drop_packaging_noise.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_external_intent.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fix_allowlist_build.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fix_libc_map.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fix_vintf_dup_manager.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_formal_diag_mmm.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_formal_diag_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_formal_diag_prep.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_formalize_hwsm_comment.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_full_pack_after_droid.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_am1_apply.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_am1_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_am1_revert.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_am_anchors.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_am_extract.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_classify.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp10_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp10_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp10_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp11_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp11_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp11_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp12_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp12_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp12_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp13_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp13_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp13_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp14_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp14_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp14_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp15_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp15_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp15_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp16_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp16_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp16_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp17_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp17_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp17_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp1_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp2_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp3_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp4_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp4_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp4_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp5_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp5_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp5_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp6_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp6_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp6_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp7_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp7_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp7_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp8_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp8_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp8_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp9_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp9_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_coreapp9_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_gap_fast.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_gap_inventory.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_periph1_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_periph2_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_periph3_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_periph3b_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_periph4_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_periph5_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_periph6_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_periph7_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_periph8_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services1_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services1_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services1_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services1a_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services1a_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services1a_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services1b_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services1b_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services1b_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2_fix_nms.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2a_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2a_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2a_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2b_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2b_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services2b_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services3_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services3_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services3_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services4a_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services4a_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services4a_commit.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services5_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services6_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_services6b_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_wm1_apply.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_wm1_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_wm2_apply.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_wm2_build_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_wm2_dc_research.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_wm_anchors.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_wm_extract.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_wm_read_anchors2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_fw_wm_read_anchors3.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_g8_inventory.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_gen_bionic_art.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_gen_functional_ext.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_gralloc_pack_bg.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_hard_restart.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_hidl_manager_1_2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_kill_md5_diag.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_kill_root_md5.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_kill_stuck_build.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_mech10_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_mech1_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_mech2_apply.py",
+      "check": "python-ast",
+      "status": "expected-failure",
+      "detail": "unexpected indent at line 20",
+      "allowlist_reason": "Historical cont.65 authoring residue: lines 20-21 are a truncated earlier comment-block attempt. The successful change is preserved in the canonical patch and Layer 2 record; rewriting this script would falsify the development record.",
+      "replacement": "patches/android-16/patches/p2-framework-rest/P2-MECH-2-launcher3-manifest.diff"
+    },
+    {
+      "path": "scripts/p2_mech3_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_mech4_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_mech5_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_mech6_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_mech7_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_mech8_apply.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_native_binder_bp.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_native_overlay.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_native_remainder.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_native_safe.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_ninja_alive.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_pack_once.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_poll_cont21d.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_rebuild_services_nogrm.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_repack_wm1.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_replace_cont22_await.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_research_perfhint.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_research_perfhint2.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_research_perfhint3.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_research_power_hal.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_restart_cont21d.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_restore_diag.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_revert_fw_batchAB.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_safe_reapply.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_start_cont21d.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_start_cont22_poll.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_status_cont21d.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_stop_full_droid.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_stop_surgical_wait.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_strip_binder_bp.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_surgical_remaining.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_sysimg_watch_pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_systemimage_batchAB.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_systemimage_batchAB_j8.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_triage_inventory.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_who_builds.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/p2_wire_orientation.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/parse-minidump-exception.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-device-init-x86-renderengine-a16.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-goldfish-emuhwc2-vsync-sp.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-goldfish-gl2encoder-getinternalformat-a16.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-goldfish-glutils-a16-params.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-goldfish-hwc2-bst-product.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-init-henry-path.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-init-selinux-tail.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-initsh-bstpgaipc-mknod.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-ldconfig-bs-bringup.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/patch-ueventd-bluestacks-devices.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/prune-vendor-gralloc-hw.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r228-pack-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r242-pack-selinux-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r243-audio-vintf-pack.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r245-fix-bstsetup-divzero.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r245-fix-bstsetup-quotes.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r245-rebuild-fastboot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r245-wipe-keystore-data.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r246-patch-stage2-metadata.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r246-rebuild-fastboot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r247-pack-root.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r247-patch-init-installd.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r247-rebuild-fastboot.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r248-patch-systemserver.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r248-rebuild-services.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r249-patch-debug-configgz.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r249-rebuild-runtime.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r250-pack-llndk.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r251-patch-securelock.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r251-rebuild-services.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r253-patch-authcontroller.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r253-rebuild-systemui.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r254-patch-gcall-baklava.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r254-rebuild-gcall-jni.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r254b-pack-gcall.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r255-patch-wms-activity-displayed.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r255-rebuild-services.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r255c-fix-wms-method.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r256-patch-widgetmanager.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r256-rebuild-launcher.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r257-find-home-apks.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r257-patch-launcher-home.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r257-rebuild-home.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r258-patch-lockscreen.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r258-rebuild-lockscreen.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r259-patch-activity-resumed.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r259-rebuild-services.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r260-patch-henry-shutdown.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r260-rebuild-init-shutdown.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r261-patch-auth-service.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r261-rebuild-services.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r262-patch-disable-shell-transitions.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r262-rebuild-systemui.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r262b-patch-gate-transition-player.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/r262b-rebuild-systemui.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/registry_sync_d8d9.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/remote-capture-a16-appplayer.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/remote-capture-a16-diffs.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/remote_fill_key_stats.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/remote_scoop_triage.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/remote_start_external.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/remote_start_focused.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/resolve_kernel_conflicts.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/restore-a16-from-scratch.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/restore-init-do-exec-start.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/toggle-gfxstream-soong.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/triage_dual.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/triage_dual_fast.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/triage_external.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/triage_focused.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/validate_project_files.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/win-replace-tiramisu64.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    }
+  ]
+}

@@ -4,8 +4,8 @@
   "summary": {
     "files": 1046,
     "existing_files": 1045,
-    "bytes": 68347270,
-    "text_lines": 333089,
+    "bytes": 68347146,
+    "text_lines": 333086,
     "by_stage": {
       "android16-promotion": 34,
       "aosp16-development": 842,
@@ -28539,12 +28539,12 @@
     {
       "path": "scripts/generate_project_review.py",
       "exists": true,
-      "git_state": "tracked:M",
-      "bytes": 39952,
-      "sha256": "450453fcfe45d140733b533033f62c30e86077fc20eac15823e378ce97157a28",
+      "git_state": "tracked",
+      "bytes": 39828,
+      "sha256": "94da3a1882d783058cc89fca77cb526231dc9f1a6d772fe26c47a4a94300ca0d",
       "media_type": "text/x-python",
       "encoding": "utf-8-sig",
-      "line_count": 1127,
+      "line_count": 1124,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [

@@ -518,7 +518,7 @@ def markdown_missing_links(path: str, text: str | None) -> list[dict[str, Any]]:
 
 
 def collect_inventory() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
-    tracked, untracked, ignored, porcelain = git_state()
+    tracked, untracked, ignored, _porcelain = git_state()
     paths = all_paths()
     script_names: dict[str, list[str]] = defaultdict(list)
     for path in paths:
@@ -567,9 +567,6 @@ def collect_inventory() -> tuple[list[dict[str, Any]], list[dict[str, Any]], lis
             state = "generated"
         else:
             state = "filesystem-only"
-        if path in porcelain and not generated_self:
-            state = f"{state}:{porcelain[path].strip() or 'modified'}"
-
         stage = classify_stage(path, text)
         origin_tree, target_tree = infer_origin_target(stage)
         validation = validate_content(path, text)

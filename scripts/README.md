@@ -1,74 +1,80 @@
-# scripts/ — A16 boot 脚本索引
+# Script Stage Index
 
-> 作用于远程 guest 构建机 `~/aosp16` / `~/app-player`（idempotent patch + pack/deploy）。
-> 问题背景：[`../progress/android-16-boot-guide.md`](../progress/android-16-boot-guide.md)
-> 恢复流程：[`../patches/android-16/RESTORE.md`](../patches/android-16/RESTORE.md)
+The script tree is intentionally path-stable. AOSP16 development scripts remain
+first-class evidence, including failed and superseded attempts; they are not
+bulk-renamed or rewritten because progress logs and checkpoints refer to these
+names directly.
 
-**顶层 = 最终可运行流水线**（约 70 个）。历史一次性脚本在 [`archive/`](archive/)（溯源用，不进日常流水线）。
+The authoritative per-file classification is generated in
+[`../docs/project-review/inventory.md`](../docs/project-review/inventory.md).
+Static parser results and the historical exception are in
+[`../docs/project-review/validation.md`](../docs/project-review/validation.md).
 
----
+## Android-16 Active Pipeline
 
-## 1. 日常流水线（最常用）
+These are the maintained promotion/mainline entry points. They reject an
+`aosp16` source root and print the resolved tree, branch, HEAD, product, and
+`OUT_DIR` before work starts.
 
-| 脚本 | 用途 |
-|---|---|
-| `r228-pack-root.sh` | system.sfs → Root.fs → create_vdi → Root.vhd（UUID `54e9ad31-…`） |
-| `make-baklava-system-sfs.sh` | staged system → mkuserimg(+file_contexts) → simg2img → mksquashfs |
-| `prune-vendor-gralloc-hw.sh` | 打包前清理 vendor gralloc 冲突（被 r228 调用） |
-| `r245-rebuild-fastboot.sh` / `r246` / `r247` | 重建 fastboot.vdi（kernel-a16 + initrd）|
-| `r247-pack-root.sh` | 含 installd early-start 的 Root 打包（避免冲掉 r247） |
-| `r254b-pack-gcall.sh` / `r250-pack-llndk.sh` | 增量打 libgcall_jni / llndk 进 Root |
-| `r242-pack-selinux-root.sh` / `r243-audio-vintf-pack.sh` | SELinux xattr + audio VINTF 打包 |
-| `win-replace-tiramisu64.ps1` | Windows 替换 `Engine\Tiramisu64\{Root.vhd,fastboot.vdi}` |
-| `remote-capture-a16-*.sh` | 从远程抓权威 diff → `patches/android-16/` |
-| `restore-a16-from-scratch.sh` | 干净树恢复辅助（配合 RESTORE.md） |
-
-## 2. 最终产物补丁（R245–R261，仍可幂等重打）
-
-| 阶段 | patch | rebuild |
+| Entry | Role | Side effects |
 |---|---|---|
-| bstsetup / keystore data | `r245-fix-bstsetup-*.py`、`r245-wipe-keystore-data.sh` | `r245-rebuild-fastboot.sh` |
-| `/metadata` tmpfs | `r246-patch-stage2-metadata.sh` | `r246-rebuild-fastboot.sh` |
-| installd early-start | `r247-patch-init-installd.py` | `r247-rebuild-fastboot.sh` / `r247-pack-root.sh` |
-| HintManager / Biometric skip | `r248-patch-systemserver.py` | `r248-rebuild-services.sh` |
-| `/proc/config.gz` 容错 | `r249-patch-debug-configgz.py` | `r249-rebuild-runtime.sh` |
-| SystemUI biometric NPE | `r251-patch-securelock.py`、`r253-patch-authcontroller.py` | `r251-rebuild-services.sh`、`r253-rebuild-systemui.sh` |
-| gcall Baklava64 | `r254-patch-gcall-baklava.py` | `r254-rebuild-gcall-jni.sh` |
-| WMS ActivityDisplayed | `r255-patch-wms-*.py`、`r255c-fix-wms-method.py`、**`r259-patch-activity-resumed.py`** | `r255/r259-rebuild-services.sh` |
-| launcher / lockscreen | `r256`–`r258-patch-*.py` | 各自 rebuild |
-| AuthService 恢复（Settings） | **`r261-patch-auth-service.py`** | `r261-rebuild-services.sh` |
-| 优雅关机 | **`r260-patch-henry-shutdown.py`** | `r260-rebuild-init-shutdown.sh` |
+| `g1_build_android16.sh` | Layer 1 Android-16 build and graphics stage | Builds under the validated Android-16 root |
+| `g1_build_pack.sh` | Orchestrates build, Root packaging, deploy, and Layer 2 verification | Remote build plus Windows deployment |
+| `g1_pack_root.sh` | Authoritative target-tree Root packaging | Recreates staged system and Root artifacts |
+| `g1_stage_system.sh` | Folds target `OUT_DIR` into the release staging tree | Replaces staged system content |
+| `g1_apply_boot_overlays.sh` | Applies source-built overlays before packaging | Copies framework, HAL, and graphics files |
+| `g1_rebuild_graphics.sh` | Builds `goldfish-opengl-pie` from the target tree | Cleans selected intermediates and rebuilds graphics |
+| `g1_copy_bst_apks.sh` | Injects required BlueStacks APK payloads | Copies three required APKs |
+| `g8_disable_vendor_hal_rc.sh` | Applies the recorded vendor HAL startup policy | Moves selected RC files to a backup directory |
+| `g1_win_deploy.ps1` | Deploys Root with SHA-256 readback | Replaces the Windows engine Root |
+| `g1_boot_verify.ps1` | Evaluates the Layer 2 boot oracle | Starts/stops the local instance and reads logs |
+| `lib/android16_env.sh` | Shared tree and artifact identity gate | None when sourced; writes identity only on request |
 
-## 3. 图形 / init / soong 支撑补丁
+Run `--check` on the supported pipeline entry before target-tree work. Static
+review in this repository does not invoke those checks because this review must
+not read either Android source tree.
 
-| 脚本 | 用途 |
-|---|---|
-| `patch-goldfish-emuhwc2-vsync-sp.py` | HWC2 VsyncThread → `sp<>` |
-| `patch-goldfish-gl2encoder-getinternalformat-a16.py` / `patch-goldfish-glutils-a16-params.py` | GLES 3.1 查询放宽 |
-| `patch-device-init-x86-renderengine-a16.py` | skiaglthreaded |
-| `patch-ueventd-bluestacks-devices.py` / `patch-initsh-bstpgaipc-mknod.py` | `/dev/bstpgaipc` |
-| `fix-hwsm-soong.py` / `toggle-gfxstream-soong.py` | hwservicemanager 路径冲突 / 禁 gfxstream |
-| `patch-ldconfig-bs-bringup.py` | namespace `search.paths += /system/${LIB}` |
-| `patch-init-henry-path.py` / `patch-init-selinux-tail.py` / `restore-init-do-exec-start.py` / `manual-relink-init.py` | init second-stage 路径 / 绕 soong relink |
+## Promotion Audit
 
-## 4. 回读 oracle
+| Entry | Role | Default behavior |
+|---|---|---|
+| `audit_android16_promotion.py freeze` | Captures the AOSP16 project branch, SHA, dirty state, and patch identity | Read-only |
+| `audit_android16_promotion.py audit` | Audits Android-16 submodule initialization, branch distribution, gitlinks, remotes, and optional remote SHA presence | Read-only |
+| `audit_a16_merge.sh` | Compatibility wrapper for the Python audit | Read-only |
+| `generate_android16_patch_inventory.py` | Rebuilds patch and payload review documents | Repository-only |
+| `generate_project_review.py` | Rebuilds inventory and history indexes | Repository-only |
+| `validate_project_files.py` | Runs Python, JSON, Bash, and PowerShell static parsers | Repository-only |
+| `merge_aosp16_to_android16.sh` | Preserved cont.103 merge executor | Refuses to run unless `--apply-historical` is explicit |
 
-| 脚本 | 用途 |
-|---|---|
-| `bs_bootlog.sh` | guest 串口 boot log |
-| `check_logs*.ps1` / `check_state.ps1` / `check_timeline.ps1` / `check_vbox_logs.ps1` | host Player.log / BstkCore.log |
-| `parse-minidump-exception.py` | host minidump（NVIDIA nvoglv64 等） |
+The promotion process and branch contract are documented in
+[`../docs/development-workflow/promotion.md`](../docs/development-workflow/promotion.md).
 
----
+## AOSP16 Development Workflows
 
-## archive/ 放了什么
+All other top-level `g1_*`, `p2_*`, `r###-*`, triage, capture, restore, and
+diagnostic scripts belong to the AOSP16 development and validation stage unless
+their inventory record says otherwise. Their `~/aosp16` paths are historical
+facts and must not be mass-replaced.
 
-约 240 个历史脚本，包括：
+The main families are:
 
-- `patch-round*`、round8–10、henry-*（早期 bringup）
-- 多轮 `patch-initsh-*` / `patch-stage2-*` / `patch-selinux-*`（已被 bootimage 快照与 AOSP diff 固化）
-- NVIDIA-only 图形规避（已回退，最终用 Intel GPU）
-- staging-era ART/odrefresh（`gen-boot-framework*`、`stage2-good-vhd.sh` 等）
-- 被后续回合取代的 `r229`–`r244` 增量 pack/rebuild、`r252`（AuthService 误关，由 r261 纠正）
+| Family | Purpose | Evidence |
+|---|---|---|
+| `g1_*` legacy entries | Early build, staging, packaging, and equivalence loops | G1 checkpoints and cont.1-22 |
+| `p2_*` | Framework, native, registry, and mechanical port batches | P2 registries and cont.23-101 |
+| `r245` through `r262` | Final boot and functional corrections | Boot guide, porting log, patch registry |
+| `remote-capture-a16-*` | Captures the validated source diffs and payloads | `patches/android-16/` |
+| `check_*`, `triage_*`, `parse-*` | Windows and guest diagnostic oracles | Boot-debug and checkpoint records |
 
-需要追溯某次回合时去 `archive/` 按文件名找即可。
+`p2_mech2_apply.py` is intentionally preserved with its historical truncation.
+The successful result is
+[`P2-MECH-2-launcher3-manifest.diff`](../patches/android-16/patches/p2-framework-rest/P2-MECH-2-launcher3-manifest.diff)
+and cont.65. It is the only expected Python parse failure.
+
+## Historical Archive
+
+[`archive/`](archive/README.md) contains earlier round scripts, staging
+experiments, reverted work, and superseded pack chains. Archive means
+"historical first-class", not disposable. Exact duplicates are retained until
+layout, payload, and checkpoint semantics have been reviewed; the inventory
+records hashes and duplicate groups without deleting them.

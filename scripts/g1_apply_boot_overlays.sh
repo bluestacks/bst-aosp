@@ -2,8 +2,15 @@
 # G1: after qvirt stage, re-apply M1 boot-proven overlays (HCALL + WMS + graphics).
 # g1_stage_system.sh --delete wipes these; must run before every pack.
 set -euo pipefail
-AOSP=~/aosp16
-OD=~/releases/Baklava64
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/android16_env.sh"
+bst_android16_preflight
+[ "${1:-}" != "--check" ] || {
+  echo "A16DBG:ANDROID16: overlays CHECK OK; no files copied"
+  exit 0
+}
+AOSP="$BST_ANDROID16_ROOT"
+OD="$BST_RELEASE_ROOT"
 SYS="$OD/system"
 ROOTED="$OD/rooted_system"
 OUT_ROOT="$AOSP/out_nxt_Baklava64"
@@ -67,8 +74,9 @@ stage_lib() {
 stage_lib libhostcall_jni.so
 stage_lib libgcall_jni.so
 
-# 3) Standard goldfish rebuild + stage (always; no skip / no VHD extract)
-bash ~/bst-aosp/scripts/g1_rebuild_graphics.sh
+# 3) Stage graphics produced by g1_build_android16.sh. A manual rebuild remains
+# available, but the normal pipeline compiles this chain once.
+bash "$SCRIPT_DIR/g1_rebuild_graphics.sh" --stage-only
 
 echo "A16DBG:G1: overlay readback:"
 for f in framework/services.jar lib64/libgcall_jni.so lib64/libhostcall_jni.so \

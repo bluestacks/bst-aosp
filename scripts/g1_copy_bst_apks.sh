@@ -5,10 +5,19 @@
 # G1 removed dataFS (no apk data), so we FORCE pre-install into system/priv-app instead →
 # launcher becomes HOME on every boot (proven via adb install) → host ActivityDisplayed → [Ready].
 # Run AFTER g1_stage_system.sh (rsync --delete) and BEFORE r228-pack-root.sh.
-set -uo pipefail
-APKFOLDER=~/app-player/bst/apks_Baklava64
-OUT=~/releases/Baklava64/system        # staged system root
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/android16_env.sh"
+bst_android16_preflight
+APKFOLDER="$BST_APP_PLAYER_ROOT/bst/apks_Baklava64"
+OUT="$BST_RELEASE_ROOT/system"        # staged system root
 LOG=~/g1_copy_bst_apks.log
+[ "${1:-}" != "--check" ] || {
+  [ -d "$APKFOLDER" ] || { echo "missing $APKFOLDER"; exit 1; }
+  [ -f "$OUT/build.prop" ] || { echo "missing $OUT/build.prop"; exit 1; }
+  echo "A16DBG:ANDROID16: copy-apks CHECK OK; no files copied"
+  exit 0
+}
 exec > >(tee "$LOG") 2>&1
 echo "A16DBG:G1: copy_bst_apks (force priv-app pre-install) start $(date -Is)"
 
@@ -30,7 +39,7 @@ APKS=(com.uncube.launcher3.apk com.bluestacks.gamecenter.apk com.bluestacks.bsxl
 copied=0
 for apk in "${APKS[@]}"; do
   src="$APKFOLDER/$apk"
-  [ -f "$src" ] || { echo "  WARN: $apk missing in apks_Baklava64"; continue; }
+  [ -f "$src" ] || { echo "ERROR: required APK missing: $src" >&2; exit 1; }
   pkg=$(basename -s .apk "$apk")
   dest="$OUT/priv-app/$pkg"
   mkdir -p "$dest"
@@ -51,6 +60,10 @@ for apk in "${APKS[@]}"; do
 done
 
 echo "A16DBG:G1: copy_bst_apks DONE copied=$copied $(date -Is)"
+[ "$copied" -eq "${#APKS[@]}" ] || {
+  echo "ERROR: copied $copied/${#APKS[@]} required APKs" >&2
+  exit 1
+}
 echo "=== readback: launcher in staged priv-app? ==="
 ls -la "$OUT/priv-app/com.uncube.launcher3/" 2>/dev/null
 find "$OUT/priv-app/com.uncube.launcher3/lib" -type f 2>/dev/null | head

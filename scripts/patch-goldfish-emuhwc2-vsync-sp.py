@@ -7,11 +7,11 @@ incStrongRequireStrong and aborts on embedded (non-sp-owned) Thread members.
 from __future__ import annotations
 
 import pathlib
-import sys
+import argparse
+import os
 
-GGL = pathlib.Path.home() / "ggl/goldfish-opengl-pie"
-H = GGL / "system/hwc2/EmuHWC2.h"
-C = GGL / "system/hwc2/EmuHWC2.cpp"
+from lib.android16_guard import require_historical_target
+
 
 
 def patch_file(path: pathlib.Path, old: str, new: str, label: str) -> None:
@@ -26,19 +26,34 @@ def patch_file(path: pathlib.Path, old: str, new: str, label: str) -> None:
 
 
 def main() -> int:
-    if not H.is_file() or not C.is_file():
-        print(f"missing {H} or {C}", file=sys.stderr)
-        return 1
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--root",
+        type=pathlib.Path,
+        default=pathlib.Path(
+            os.environ.get(
+                "BST_GOLDFISH_OPENGL_ROOT",
+                str(pathlib.Path.home() / "ggl/goldfish-opengl-pie"),
+            )
+        ),
+    )
+    parser.add_argument("--apply-historical", action="store_true")
+    args = parser.parse_args()
+    ggl = require_historical_target(args.root, args.apply_historical)
+    header = ggl / "system/hwc2/EmuHWC2.h"
+    source = ggl / "system/hwc2/EmuHWC2.cpp"
+    if not header.is_file() or not source.is_file():
+        raise SystemExit(f"missing {header} or {source}")
 
     patch_file(
-        H,
+        header,
         "        VsyncThread mVsyncThread;",
         "        sp<VsyncThread> mVsyncThread;  // BS-A16: sp-owned before Thread::run",
         "EmuHWC2.h VsyncThread member",
     )
 
     patch_file(
-        C,
+        source,
         """    mVsyncPeriod(1000*1000*1000/60), // vsync is 60 hz
     mVsyncThread(*this),
     mClientTarget(),""",
@@ -48,7 +63,7 @@ def main() -> int:
     )
 
     patch_file(
-        C,
+        source,
         """    {
         mVsyncThread.run("", HAL_PRIORITY_URGENT_DISPLAY);
     }""",

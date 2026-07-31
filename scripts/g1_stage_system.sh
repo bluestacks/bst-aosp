@@ -2,9 +2,19 @@
 # G1: stage OUT qvirt/system/ (fold: vendor/system_ext/product) → releases/Baklava64/system
 # Per G1-RESTORE §2: rsync OUT directory — do NOT mount system.img (loses folded subdirs).
 set -euo pipefail
-AOSP=~/aosp16
-OD=~/releases/Baklava64
-SRC="$AOSP/out_nxt_Baklava64/target/product/qvirt/system"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/android16_env.sh"
+bst_android16_preflight
+AOSP="$BST_ANDROID16_ROOT"
+OD="$BST_RELEASE_ROOT"
+SRC="$AOSP/$BST_OUT_DIR_NAME/target/product/qvirt/system"
+SYSTEM_IMG="$AOSP/$BST_OUT_DIR_NAME/target/product/qvirt/system.img"
+[ -d "$SRC" ] || { echo "missing staged source directory: $SRC" >&2; exit 1; }
+bst_verify_identity_file "$BST_BUILD_IDENTITY_FILE" "$SYSTEM_IMG"
+[ "${1:-}" != "--check" ] || {
+  echo "A16DBG:ANDROID16: stage CHECK OK; build identity verified; no files copied"
+  exit 0
+}
 LOG=~/g1_stage_system.log
 exec > >(tee "$LOG") 2>&1
 echo "A16DBG:G1: stage-system start $(date -Is) (OUT dir fold, not system.img mount)"
@@ -30,3 +40,5 @@ ls -la "$OD/system/build.prop" "$OD/system/vendor/bin/vndservicemanager" 2>/dev/
 grep -E 'ro.product.device|ro.product.name|ro.hardware.gralloc|ro.hardware.egl' "$OD/system/build.prop" || true
 test -f "$OD/system/vendor/bin/vndservicemanager" && echo "  vndservicemanager OK" || echo "  WARN: vndservicemanager missing (m droid fold incomplete?)"
 echo "A16DBG:G1: stage-system DONE"
+bst_write_identity_file "$OD/system.identity" "$SYSTEM_IMG"
+cat "$OD/system.identity"

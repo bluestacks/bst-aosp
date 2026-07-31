@@ -1,0 +1,31 @@
+# Maintained Android-16 and repository-only workflow code.
+/scripts/audit_a16_merge.sh text eol=lf
+/scripts/audit_android16_promotion.py text eol=lf
+/scripts/aemu_host_supported.py text eol=lf
+/scripts/g1_apply_boot_overlays.sh text eol=lf
+/scripts/g1_build_android16.sh text eol=lf
+/scripts/g1_build_libs.sh text eol=lf
+/scripts/g1_build_pack.sh text eol=lf
+/scripts/g1_copy_bst_apks.sh text eol=lf
+/scripts/g1_pack_root.sh text eol=lf
+/scripts/g1_rebuild_graphics.sh text eol=lf
+/scripts/g1_stage_system.sh text eol=lf
+/scripts/g1_start_pack_remote.sh text eol=lf
+/scripts/g8_disable_vendor_hal_rc.sh text eol=lf
+/scripts/lib/android16_env.sh text eol=lf
+/scripts/lib/android16_guard.py text eol=lf
+/scripts/libhidl_drop_mgr_token.py text eol=lf
+/scripts/merge_aosp16_to_android16.sh text eol=lf
+/scripts/generate_android16_patch_inventory.py text eol=lf
+/scripts/generate_project_review.py text eol=lf
+/scripts/patch-goldfish-emuhwc2-vsync-sp.py text eol=lf
+/scripts/patch-goldfish-hwc2-bst-product.py text eol=lf
+/scripts/resolve_kernel_conflicts.py text eol=lf
+/scripts/validate_project_files.py text eol=lf
+/scripts/g1_boot_verify.ps1 text eol=crlf
+/scripts/g1_win_deploy.ps1 text eol=crlf
+
+# Historical evidence and replay payloads retain their archived bytes.
+/scripts/archive/** -text
+/patches/** -text
+/references/** -text

@@ -2,10 +2,18 @@
 param(
     [string]$PlayerExe = "C:\Program Files\BlueStacks_nxt\HD-Player.exe",
     [string]$LogDir = "C:\ProgramData\BlueStacks_nxt\Logs",
-    [int]$TimeoutSec = 600
+    [int]$TimeoutSec = 600,
+    [string]$ArtifactIdentity = "C:\ProgramData\BlueStacks_nxt\Engine\Tiramisu64\Root.vhd.identity",
+    [switch]$CheckOnly
 )
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
 if (-not (Test-Path $PlayerExe)) { throw "HD-Player missing: $PlayerExe" }
+if (-not (Test-Path $LogDir)) { throw "LogDir missing: $LogDir" }
+if (-not (Test-Path $ArtifactIdentity)) { throw "Artifact identity missing: $ArtifactIdentity" }
+if ($CheckOnly) {
+    Write-Host "A16DBG:ANDROID16: boot-verify CHECK OK; player was not started"
+    exit 0
+}
 
 function Get-LogLinesSince {
     param([string]$Path, [datetime]$Since)
@@ -20,6 +28,8 @@ function Get-LogLinesSince {
 }
 
 Write-Host "A16DBG:G1: boot-verify start timeout=${TimeoutSec}s"
+Write-Host "A16DBG:G1: deployed artifact identity:"
+Get-Content $ArtifactIdentity
 Get-Process -Name "HD-Player","BstkSVC","BstkVMMgr" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 $before = Get-Date
@@ -53,8 +63,15 @@ while ((Get-Date) -lt $deadline) {
     if ($found.Keys.Count -ge $patterns.Count) { break }
 }
 Write-Host "=== G1 boot oracle results ==="
+$failed = @()
 foreach ($pat in $patterns) {
     $ok = $found.ContainsKey($pat.id)
+    if (-not $ok) { $failed += $pat.id }
     Write-Host ("  [{0}] {1}" -f ($(if($ok){"PASS"}else{"FAIL"})), $pat.id)
 }
 Write-Host "A16DBG:G1: boot-verify done elapsed=$([int]((Get-Date)-$before).TotalSeconds)s"
+if ($failed.Count -gt 0) {
+    Write-Error "Boot oracle failed: $($failed -join ', ')"
+    exit 1
+}
+exit 0

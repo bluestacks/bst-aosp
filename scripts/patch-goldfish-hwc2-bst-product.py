@@ -1,31 +1,38 @@
 #!/usr/bin/env python3
-"""BS-A16: build hwcomposer.android_x86_64 for bst_x86_64 (M1 used android_x86_64 lunch)."""
+"""Apply the recorded bst_x86_64 HWC2 product-filter promotion fix."""
+
 from __future__ import annotations
 
-import pathlib
-import sys
+import argparse
+import os
+from pathlib import Path
 
-MK = pathlib.Path.home() / "ggl/goldfish-opengl-pie/system/hwc2/Android.mk"
-
-OLD = "ifeq ($(TARGET_PRODUCT),android_x86_64)"
-NEW = "ifneq ($(filter android_x86_64 bst_x86_64,$(TARGET_PRODUCT)),)"
+from lib.android16_guard import require_historical_target
 
 
-def main() -> int:
-    if not MK.is_file():
-        print(f"missing {MK}", file=sys.stderr)
-        return 1
-    text = MK.read_text(encoding="utf-8")
-    if NEW in text:
-        print("OK already: hwc2 Android.mk bst_x86_64 product filter")
-        return 0
-    if OLD not in text:
-        print(f"anchor missing in {MK}", file=sys.stderr)
-        return 1
-    MK.write_text(text.replace(OLD, NEW, 1), encoding="utf-8")
-    print(f"Patched: {MK}")
-    return 0
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--root",
+    type=Path,
+    default=Path(
+        os.environ.get(
+            "BST_GOLDFISH_OPENGL_ROOT",
+            str(Path.home() / "ggl/goldfish-opengl-pie"),
+        )
+    ),
+)
+parser.add_argument("--apply-historical", action="store_true")
+args = parser.parse_args()
+root = require_historical_target(args.root, args.apply_historical)
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+path = root / "system/hwc2/Android.mk"
+old = "ifeq ($(TARGET_PRODUCT),android_x86_64)"
+new = "ifneq ($(filter android_x86_64 bst_x86_64,$(TARGET_PRODUCT)),)"
+source = path.read_text(encoding="utf-8")
+if new in source:
+    print("already applied")
+    raise SystemExit(0)
+if old not in source:
+    raise SystemExit(f"product-filter anchor not found in {path}")
+path.write_text(source.replace(old, new, 1), encoding="utf-8")
+print(f"updated {path}")

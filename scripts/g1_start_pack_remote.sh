@@ -1,13 +1,8 @@
 #!/bin/bash
 # Launcher: start g1_pack_root in background (remote). Avoids PowerShell heredoc issues.
 set -euo pipefail
-perl -pi -e 's/\r$//' \
-  ~/bst-aosp/scripts/g1_apply_boot_overlays.sh \
-  ~/bst-aosp/scripts/g1_rebuild_graphics.sh \
-  ~/bst-aosp/scripts/g8_disable_vendor_hal_rc.sh \
-  ~/bst-aosp/scripts/g1_pack_root.sh \
-  ~/g1_pack_root.sh 2>/dev/null || true
-cp ~/bst-aosp/scripts/g1_pack_root.sh ~/g1_pack_root.sh
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$SCRIPT_DIR/g1_pack_root.sh" --check
 
 INIT="$HOME/releases/Baklava64/system/vendor/etc/init"
 BK="$HOME/releases/Baklava64/system/vendor/etc/init.disabled_by_g8"
@@ -17,7 +12,7 @@ if [ -f "$BK/android.hardware.security.keymint-service.rc" ]; then
 fi
 
 rm -f ~/g1_pack_root.log
-nohup bash ~/g1_pack_root.sh </dev/null >/dev/null 2>&1 &
+nohup bash "$SCRIPT_DIR/g1_pack_root.sh" </dev/null >/dev/null 2>&1 &
 echo "PACK_PID=$!"
 sleep 4
 pgrep -af 'g1_pack_root|g1_stage_system' | head -8 || true

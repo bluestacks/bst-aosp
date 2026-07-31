@@ -36,6 +36,10 @@ GENERATED_PATHS = {
     "docs/development-history/android16-merge/timeline.md",
     "docs/development-history/android16-merge/patch-traceability.md",
 }
+REMOVED_PATHS = {
+    "patches/android-16/untracked-src/aosp16__device_generic_common/"
+    "apksigner/bluestacks-market.keystore",
+}
 
 TEXT_SUFFIXES = {
     "",
@@ -176,6 +180,7 @@ def all_paths() -> list[str]:
     }
     paths.update(git_zpaths("ls-files", "-z"))
     paths.update(GENERATED_PATHS)
+    paths.update(REMOVED_PATHS)
     return sorted(paths)
 
 
@@ -550,7 +555,9 @@ def collect_inventory() -> tuple[list[dict[str, Any]], list[dict[str, Any]], lis
         if digest:
             hashes[(len(data), digest)].append(path)
 
-        if path in tracked:
+        if path in REMOVED_PATHS and not exists:
+            state = "removed"
+        elif path in tracked:
             state = "tracked"
         elif path in untracked:
             state = "untracked"

@@ -1,6 +1,7 @@
 # Maintained Android-16 and repository-only workflow code.
 /scripts/audit_a16_merge.sh text eol=lf
 /scripts/audit_android16_promotion.py text eol=lf
+/scripts/audit_a13_port_coverage.py text eol=lf
 /scripts/aemu_host_supported.py text eol=lf
 /scripts/check_android16_worktree.py text eol=lf
 /scripts/g1_apply_boot_overlays.sh text eol=lf
@@ -20,6 +21,7 @@
 /scripts/generate_android16_patch_inventory.py text eol=lf
 /scripts/generate_android16_delta_review.py text eol=lf
 /scripts/generate_project_review.py text eol=lf
+/scripts/render_a13_port_audit.py text eol=lf
 /scripts/manage_binary_artifacts.py text eol=lf
 /scripts/patch-goldfish-emuhwc2-vsync-sp.py text eol=lf
 /scripts/patch-goldfish-hwc2-bst-product.py text eol=lf

@@ -1,11 +1,15 @@
 # Development History
 
-This directory indexes two connected engineering lines:
+This directory indexes the predecessor audit and two connected engineering
+lines:
 
-1. [`aosp16/`](aosp16/README.md) is the validated development line. It contains
+1. [`a13-port-audit/`](a13-port-audit/README.md) compares the final A13 product
+   line with both A16 trees and records code-level omissions, adaptations and
+   rejected legacy patches.
+2. [`aosp16/`](aosp16/README.md) is the validated development line. It contains
    the bring-up, source port, build, packaging, boot, failure, and functional
    parity record.
-2. [`android16-merge/`](android16-merge/README.md) is the promotion of that
+3. [`android16-merge/`](android16-merge/README.md) is the promotion of that
    validated line into the Android-16 mainline integration repository.
 
 The source of truth remains the append-only

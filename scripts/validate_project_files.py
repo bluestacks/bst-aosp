@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import os
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
@@ -149,7 +150,11 @@ def collect() -> dict[str, Any]:
 
     bash = shutil.which("bash")
     shell_paths = relevant_files(".sh")
-    with ThreadPoolExecutor(max_workers=12) as pool:
+    # Windows bash.exe commonly proxies into WSL. Concurrent stdin-only parser
+    # launches can occasionally return status 1 without diagnostics, so keep
+    # that bridge serial while retaining parallel checks on native platforms.
+    bash_workers = 1 if os.name == "nt" else 12
+    with ThreadPoolExecutor(max_workers=bash_workers) as pool:
         items.extend(pool.map(lambda path: bash_check(path, bash), shell_paths))
 
     powershell = shutil.which("pwsh") or shutil.which("powershell")

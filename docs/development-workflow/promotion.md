@@ -27,12 +27,16 @@ gitlink, and component HEAD before editing:
 ```bash
 python3 scripts/audit_android16_promotion.py audit \
   --root ~/android-16 \
-  --enforce-recorded-baseline \
+  --enforce-current-baseline \
   --output /tmp/android16-before.json
 ```
 
-The recorded promotion baseline is 1016 initialized projects: 985 on
-`aosp16-bst` and 31 on `aosp16-bst-merge`.
+The withdrawn first candidate recorded 1016 initialized projects: 985 on
+`aosp16-bst` and 31 on `aosp16-bst-merge`. That topology remains historical.
+The current reviewed baseline is 1022 submodules: 987 on `aosp16-bst` and 35 on
+`aosp16-bst-merge`; `--enforce-current-baseline` checks those values explicitly.
+The camera HAL is inline in the current mainline root, so a duplicate camera
+submodule is intentionally excluded.
 
 ### 3. Compare and Merge
 
@@ -45,8 +49,12 @@ The recorded promotion baseline is 1016 initialized projects: 985 on
 - Preserve Android-16 25Q4 infrastructure when an r4-era substitution has
   become obsolete; preserve BlueStacks product hooks when still required.
 - Keep `goldfish-opengl-pie` on its established external path and compile the
-  selected EGL/gralloc/HWC provider explicitly. Do not infer that 25Q4 AEMU host
-  support makes the BlueStacks guest graphics provider unnecessary.
+  selected EGL/gralloc/HWC provider explicitly. It must not be added to the
+  main Kati module scan: preserve the native 25Q4 gfxstream graph, then stage
+  the Windows provider through the dedicated graphics flow.
+- Windows product changes belong to
+  `device/generic/x86_64/android_x86_64`; do not restore qvirt or weaken
+  target-global build/VINTF policy.
 - The historical first-pass executor is inert unless explicitly invoked with
   `--apply-historical`. It is evidence, not the current maintenance path.
 
@@ -67,6 +75,8 @@ artifact hash.
 ### 5. Publish
 
 - Push changed component repositories to `mark-bst:aosp16-bst-merge`.
+- Require every commit in `aosp16-bst..aosp16-bst-merge` to use
+  `[A16] <imperative summary>`; the audit rejects nonconforming titles.
 - Verify each pushed branch tip equals the root gitlink SHA.
 - Update and review root gitlinks only after component reachability passes.
 - Submit the root branch to `bluestacks/android-16:aosp16-bst`.

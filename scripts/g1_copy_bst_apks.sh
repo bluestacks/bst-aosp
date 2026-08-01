@@ -25,14 +25,14 @@ echo "A16DBG:G1: copy_bst_apks (force priv-app pre-install) start $(date -Is)"
 # NOTE: init.sh init_hal_gralloc() was tried as the formal fix but PROVEN INEFFECTIVE (2026-07-20):
 # init.sh runs AFTER hwcomposer inits -> gralloc unset at hwcomposer init -> hwcomposer SIGSEGV ×830.
 # build.prop is loaded by init VERY early (before HALs) -> append here is reliable.
-# FORMAL fix DONE (2026-07-20 cont.12): PRODUCT_PROPERTY_OVERRIDES in bst_x86_64.mk bakes into OUT build.prop.
+# FORMAL fix: PRODUCT_PROPERTY_OVERRIDES in android_x86_64.mk bakes into OUT build.prop.
 # Append below is idempotent safety-net only (skip if already present from bake).
-# in device/bst/qvirt/bst_x86_64.mk (bakes into build.prop at build time). Until that rebuild,
+# in device/generic/x86_64/android_x86_64.mk. Until that rebuild,
 # this post-stage append is the working mechanism.
 PROP="$OUT/build.prop"
 grep -q '^ro.hardware.gralloc=' "$PROP" 2>/dev/null || echo "ro.hardware.gralloc=bst" >> "$PROP"
 grep -q '^ro.hardware.egl=' "$PROP" 2>/dev/null || echo "ro.hardware.egl=emulation" >> "$PROP"
-echo "  build.prop: ro.hardware.gralloc=$(grep '^ro.hardware.gralloc=' "$PROP") , egl=$(grep '^ro.hardware.egl=' "$PROP")"
+echo "  build.prop: gralloc=$(sed -n 's/^ro.hardware.gralloc=//p' "$PROP") , egl=$(sed -n 's/^ro.hardware.egl=//p' "$PROP")"
 
 # Boot-critical BST custom apks (HOME launcher + host redirect target). Pre-installed to priv-app.
 APKS=(com.uncube.launcher3.apk com.bluestacks.gamecenter.apk com.bluestacks.bsxlauncher.apk)
@@ -48,7 +48,8 @@ for apk in "${APKS[@]}"; do
   # pre-extract native libs (system scans priv-app; pre-extract ensures libs available without
   # relying on first-boot extraction). unzip lib/x86_64 + lib/x86 from the apk.
   tmp=$(mktemp -d)
-  ( cd "$tmp" && unzip -o -q "$src" 'lib/x86_64/*' 'lib/x86/*' 2>/dev/null )
+  # unzip returns nonzero when either optional ABI glob is absent.
+  ( cd "$tmp" && unzip -o -q "$src" 'lib/x86_64/*' 'lib/x86/*' 2>/dev/null ) || true
   if [ -d "$tmp/lib" ]; then
     cp -a "$tmp/lib" "$dest/"
     echo "  $apk -> priv-app/$pkg/ (+lib: $(find "$dest/lib" -type f | wc -l) sos)"

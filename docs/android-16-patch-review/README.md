@@ -1,5 +1,16 @@
 # Android 16 Patch Review
 
+> **Correction, 2026-07-31:** this review was written before the first
+> promotion candidate was withdrawn. References to qvirt as the current board
+> or PR #1 as accepted are historical. Windows now targets
+> `android_x86_64`; current decisions and newly confirmed omissions are tracked
+> in
+> [the rework audit](../development-history/android16-merge/rework-audit.md).
+
+The rework added a dedicated review for the five product-referenced HAL
+repositories that were missing from the first root candidate:
+[`review-hardware-bst.md`](review-hardware-bst.md).
+
 ## 1. Scope
 
 This directory reviews every `.patch` and `.diff` artifact under
@@ -40,7 +51,7 @@ python scripts/generate_android16_patch_inventory.py
 
 | Status | Meaning |
 |---|---|
-| `required` | Needed for the current qvirt/BST boot or a declared host-guest contract |
+| `required` | Needed for the current `android_x86_64`/BST boot or a declared host-guest contract |
 | `conditional` | Needed only when the corresponding product feature is enabled |
 | `optional` | Compatibility, telemetry or presentation feature; boot does not depend on it |
 | `temporary` | Bring-up bypass or diagnostic code; must have an owner and removal condition |
@@ -147,7 +158,7 @@ power consumption.
 
 Required for the current product:
 
-- qvirt product/device definition and boot filesystem assembly;
+- `android_x86_64` product/device definition and boot filesystem assembly;
 - kernel and initrd contract;
 - core APEX/linker bootstrap;
 - BST hostcall/gcall IPC;

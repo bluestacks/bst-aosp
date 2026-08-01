@@ -10,10 +10,10 @@
 - 历史命令与产物身份见
   [`development-history/aosp16/`](development-history/aosp16/)；不要把这里
   的命令复制成当前 mainline 构建。
-- **lunch 目标（统一板方案，已采纳）**：两端共用 BlueStacks 板 `device/bst/qvirt`，仅 arch 不同：
+- **历史 lunch 目标（当时采用，现已撤销）**：两端曾共用 BlueStacks 板 `device/bst/qvirt`，仅 arch 不同：
   - **mac** → `lunch bst_arm64-userdebug`（arm64；板源 `android-mac/device/bst/qvirt`）。
   - **win** → `lunch bst_x86_64-userdebug`（x86_64；新增 product 变体；win 不再用 cuttlefish/generic）。
-  - 依据：两端虚拟化均实现 qvirt 设备（mac `qvm`、win `hd/Source/{vmsg,hst,gr}`）+ `hardware/bst/*` HAL 两端都有。Phase 1 = port 单一 `device/bst/qvirt` 到 android-16（arm64+x86_64 双 product）。详见 architecture.md。
+  - 该段仅说明 AOSP16 历史构建身份，不是当前 Android-16 命令。
 
 ## Android-16 mainline（当前）
 
@@ -30,9 +30,9 @@ bash scripts/g1_build_pack.sh
 ```
 
 Preflight 必须显示 resolved tree=`~/android-16`、branch、完整 HEAD、
-OUT_DIR 和 `bst_x86_64`。命中 `~/aosp16` 即失败。
+OUT_DIR 和 `android_x86_64`。命中 `~/aosp16` 即失败。
 
-## Android-16 `bst_x86_64` build+pack+deploy+verify
+## Android-16 `android_x86_64` build+pack+deploy+verify
 
 > 当前活跃流程。单一入口 `scripts/g1_build_pack.sh`（win Git Bash 跑）。
 > G1-RESTORE 是 AOSP16 历史恢复基线；当前 target-only gate 见
@@ -50,7 +50,7 @@ bash scripts/g1_build_pack.sh --pack-only
 
 **流程分解**（g1_build_pack.sh 内部，每步 readback）：
 1. 远程 `g1_build_android16.sh`：身份 preflight +
-   `lunch bst_x86_64-trunk_staging-eng` + `m droid -j24` + 一次
+   `lunch android_x86_64-trunk_staging-eng` + `m droid -j24` + 一次
    goldfish EGL/gralloc/hwc2 mmm，生成 `g1_android16_build.identity`。
 2. 远程 `g1_build_libs.sh`：hd guest 必需模块；可选模块失败告警，
    hostcall/gcall/server/tool 失败则中止。

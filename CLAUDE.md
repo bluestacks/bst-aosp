@@ -47,14 +47,21 @@
 
 ## 当前阶段
 
-**Android-16 mainline maintenance。**
+**AOSP16-to-Android-16 promotion review complete；PR #2 待主线 review/merge。**
 
 - AOSP16 开发线最终绿基线：Root.vhd `02690d11`、system.img
   `a878d3c8`、Layer2 7/7 @161s（cont.101）。
-- Promotion 验证：1016/1016 submodule，985 × `aosp16-bst` +
+- 已撤回候选的历史验证：1016/1016 submodule，985 × `aosp16-bst` +
   31 × `aosp16-bst-merge`，Android-16 Layer2 7/7 @123s（cont.106）。
-- 根 PR：
-  [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1)。
+- 当前 rework 已补齐产品继承链和两个 ALSA payload 根指针；同步最新
+  主线后采用其内联 `hardware/bst/camera`，不再保留重复 camera submodule。
+  当前审计基线为 1022 个 submodule：987 × `aosp16-bst` + 35 ×
+  `aosp16-bst-merge`，根提交 `298403a`。
+- 原根 PR
+  [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1)
+  已关闭；替代 PR
+  [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2)
+  已通过目标树构建、打包、远程 SHA 回读和 Windows 7/7 启动验证。
 - 当前 multi-repo branch 合规：未修改项目必须为 `aosp16-bst`；承载
   promotion 或后续修改的项目为 `aosp16-bst-merge`。不得用 detached
   HEAD 代替分支状态。
@@ -86,7 +93,12 @@ HEAD、OUT_DIR 和 product。活动 build/stage/pack 禁止使用
 ## Working agreement
 
 - **双端定制清单 + 有意识统一。** diff `-a13`/`-mac` vs 上游 android-13；同一定制归 `unify_group`；平台特有加平台区分。见 [.claude/rules/dual-platform-customization.md](.claude/rules/dual-platform-customization.md)。
-- **统一板先做。** `device/bst/qvirt`（`bst_x86_64` / `bst_arm64`）是构建前提；arch 差异下沉 BoardConfig。
+- **Windows 产品固定。** 当前 Windows guest 只使用
+  `device/generic/x86_64/android_x86_64`，lunch
+  `android_x86_64-trunk_staging-eng`；不得恢复 `device/bst/qvirt`、
+  `bst_x86_64` 或 `bst_arm64` 统一板入口。mac 产品适配另行评估。
+- **提交标题固定。** Android-16 promotion/mainline 的所有提交标题必须为
+  `[A16] <imperative summary>`；正文继续记录 source、必要性、性能、安全和验证证据。
 - **工作单元 = patch-group**（关联 patch 一起移植）；每组全验证回环 + 文档（源/用途/质量/影响）+ 存 patch + checkpoint。见 [.claude/rules/patch-porting.md](.claude/rules/patch-porting.md)。
 - **先判定阶段。** `/port-patch` 属 AOSP16 开发线历史/复现流程；当前
   Android-16 修复以 `aosp16-bst` 为 base，在 `aosp16-bst-merge` 工作。

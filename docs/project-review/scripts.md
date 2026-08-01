@@ -42,8 +42,10 @@ successive scripts.
 performs read-only freeze and target audit operations. It checks initialization,
 detached HEAD, dirty state, branch, project HEAD, root gitlink, expected branch
 distribution, remotes, and optional remote branch-tip reachability. The
-recorded complete topology is 1,016 projects: 985 on `aosp16-bst` and 31 on
-`aosp16-bst-merge`.
+withdrawn first-candidate topology was 1,016 projects: 985 on `aosp16-bst` and
+31 on `aosp16-bst-merge`. The current rework has 1,021 projects after restoring
+five product-referenced HAL repositories; current branch counts must be read
+from the audit rather than inferred from the old candidate.
 
 [`merge_aosp16_to_android16.sh`](../../scripts/merge_aosp16_to_android16.sh) is
 retained as the cont.103 executor but is inert unless the historical apply flag

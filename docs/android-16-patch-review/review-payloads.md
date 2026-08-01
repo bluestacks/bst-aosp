@@ -107,10 +107,12 @@ different ownership, provenance and release policy.
   treated as a production implementation without profiling.
 - **Performance:** `low` directly; selected graphics and power HALs have
   `high` indirect impact.
-- **Necessity/status:** `required`. These files define the migrated products
-  and replace several temporary generic/global workarounds.
-- **Required validation:** both lunch targets, VINTF check, package
-  installation list, graphics startup and power-hint behavior.
+- **Necessity/status:** `historical-first-class/superseded`. The shared-board
+  decision was later withdrawn. These files remain evidence of the AOSP16
+  development phase and must not be installed in the Android-16 root tree.
+- **Replacement:** Windows uses
+  `device/generic/x86_64/android_x86_64`. A future mac product must be reviewed
+  independently rather than restoring `bst_arm64`/qvirt.
 
 ### `untracked-src/aosp16__device_generic_common`
 
@@ -130,7 +132,8 @@ different ownership, provenance and release policy.
   are required; legacy HALs, debug behavior, PPP hardware profiles and bundled
   applications are conditional or optional.
 - **Required action:** split the content into board core, feature packages,
-  compatibility data and release payloads. Keep VINTF enforcement in qvirt,
+  compatibility data and release payloads. Keep Android 16's global VINTF
+  enforcement, adapt only obsolete health/keymaster/USB declarations to FCM 8,
   remove dead/duplicate policy and gate privileged maintenance scripts.
 
 ### `build-error.patch`
@@ -150,13 +153,40 @@ different ownership, provenance and release policy.
 
 ### `untracked-src/aosp16__device_generic_x86_64`
 
-- **Code/purpose:** one legacy x86_64 product makefile.
-- **Review:** **P2 duplication**. It overlaps the unified qvirt product and can
-  reintroduce a second product identity or divergent package list.
+- **Code/purpose:** the x86_64 product makefile used by the Windows target.
+- **Review:** **P1 current product contract**. It must stay thin: inherit the
+  shared Android-x86 content and carry only Windows-required overrides.
 - **Performance:** none directly.
-- **Necessity/status:** `superseded` by `device/bst/qvirt`.
-- **Required action:** retain only as migration evidence unless a separately
-  supported generic x86_64 target is declared.
+- **Necessity/status:** `required/current`; qvirt is historical and removed.
+- **Required action:** preserve the `android_x86_64` identity and verify its
+  package/VINTF/graphics readback against the AOSP16 green behavior.
+
+### `external/alsa-lib`
+
+- **Source/target:** AOSP16 source `b881b3666a24` to Android-16 merge
+  `e54ae1267d27`.
+- **Code/purpose:** preserves the ALSA configuration source used by the audio
+  packaging lineage and disables its obsolete Android Make entry point.
+- **Review:** source identity is required because the AOSP16 working tree used
+  cross-tree Git metadata; rebuilding that implicit link would be
+  non-reproducible. The compatibility commit changes no library code.
+- **Performance:** none in the Android image; no module is added to the Soong or
+  Kati graph.
+- **Necessity/status:** `required/provenance`; runtime use is confirmed only by
+  the target package and Layer 2 audio readback.
+
+### `external/alsa-utils`
+
+- **Source/target:** AOSP16 source `2e0c01ee6018` to Android-16 merge
+  `12f8c54f77f4`.
+- **Code/purpose:** preserves the `alsactl` initialization payload used by the
+  audio packaging lineage and disables its obsolete Android Make entry point.
+- **Review:** the root gitlink replaces an implicit app-player module-store
+  dependency. No utility executable is installed by the compatibility commit.
+- **Performance:** none until a packaging consumer copies the configuration;
+  no Android build target is added.
+- **Necessity/status:** `required/provenance`; verify payload hashes and audio
+  initialization in the final Root image.
 
 ## Framework New-File Payload
 
@@ -208,8 +238,9 @@ different ownership, provenance and release policy.
 - **Performance:** no direct cost, but choosing the wrong gralloc/HWC path has
   `high` graphics impact.
 - **Necessity/status:** `superseded/audit-only`.
-- **Required action:** document the single supported graphics provider in
-  qvirt and verify that duplicate modules are absent from Soong's graph.
+- **Required action:** document the single Windows graphics provider in
+  `android_x86_64` and verify that duplicate modules are absent from Soong's
+  graph.
 
 ## HAL Archive
 
@@ -297,7 +328,7 @@ different ownership, provenance and release policy.
 
 | Payload | Decision | Reason |
 |---|---|---|
-| qvirt product files | Integrate and maintain | Canonical product ownership and VINTF/graphics selection |
+| qvirt product files | Preserve as historical evidence only | Current Windows ownership is `android_x86_64`; only proven behavior is transferred |
 | Kernel source/config | Integrate from pinned commit/config derivation | Boot-critical, but current text snapshot is not reproducible |
 | BootImage source scripts | Rebase and maintain | Boot-critical; must match current app-player packaging |
 | Framework HostCall/filter new files | Integrate with permission and latency hardening | Required product IPC and compatibility policy |
@@ -315,8 +346,8 @@ different ownership, provenance and release policy.
 2. Remove credentials, backups, `.orig` files and generated Android outputs
    from source inputs.
 3. Replace MD5-only identity with SHA-256 plus SBOM, license and producer data.
-4. Verify qvirt VINTF, graphics and HAL selection without global compatibility
-   bypasses.
+4. Verify `android_x86_64` VINTF, graphics and HAL selection without global
+   compatibility bypasses.
 5. Run Binder permission and host-disconnect tests for every HostCall/utility
    operation.
 6. Benchmark boot, first app launch, frame time, native translation RSS and

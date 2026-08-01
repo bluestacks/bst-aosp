@@ -8,7 +8,7 @@
 |---|---|---|---|---|
 | **win host** | 本机 Windows | `C:\workspace\app-player` | tag `bst-v5.22.210-5.22.210.1033` ✅ | BlueStacks 已装；android 子模块未 init |
 | **mac host** | macOS Mac mini | `zeqing@172.16.0.204`（`~/app-player-mac`） | ✅ tag `bst-v5.21.700-nxt_mac2-5.21.700.7526`（detached, clean；submodule 已 deinit，hd/ggl 构建时按需 init） | BlueStacks 已装 |
-| **guest 构建** | Ubuntu | `markxu@172.16.6.191`（clouddev） | `~/android-16` mainline + `~/aosp16` development record | Android-16 promotion 已完成并验证 |
+| **guest 构建** | Ubuntu | `markxu@172.16.6.191`（clouddev） | `~/android-16` mainline + `~/aosp16` development record | Android-16 promotion PR #2 待 review/merge |
 
 > mac 另有 `~/workspace/app-player-mac`（ai-worker 5.22.999 开发用），非本项目规范目录。
 
@@ -31,8 +31,11 @@
 - `~/android-13`（win guest，`bluestacks/android-13.git`）、`~/android-mac`（mac guest）——**递归 init 子模块中**。
 - `~/aosp16`：AOSP16 development/绿基线树；当前任务不得修改或消费其
   `out*`，历史脚本保留原路径。
-- `~/android-16`：当前 mainline；记录基线为 1016/1016 initialized，
-  985 × `aosp16-bst` + 31 × `aosp16-bst-merge`。
+- `~/android-16`：当前 promotion target；首个已撤回候选记录为
+  1016/1016 initialized、985 × `aosp16-bst` + 31 ×
+  `aosp16-bst-merge`。最终基线同步主线内联 camera 后共有 1022 个
+  submodule：987 × `aosp16-bst` + 35 × `aosp16-bst-merge`，无 dirty、
+  detached HEAD、根指针漂移或远程 SHA 缺失。
 - `~/kernel-common-a13`、`~/kernel-mac`。
 - **缺口**：buildscripts 流程需 `hd` 兄弟目录 + `kernel64-hyperv` + buildscripts 本体——clouddev 暂无（待补）。
 

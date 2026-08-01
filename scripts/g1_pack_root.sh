@@ -26,7 +26,7 @@ bash "$SCRIPT_DIR/g1_apply_boot_overlays.sh"
 bash "$SCRIPT_DIR/g8_disable_vendor_hal_rc.sh"
 bash "$ROOT_PACK_SCRIPT"
 VHD="$BST_RELEASE_ROOT/bst-v5.22.210_Baklava64-local/Root.vhd"
-SYSTEM_IMG="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/qvirt/system.img"
+SYSTEM_IMG="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/x86_64/system.img"
 [ -f "$VHD" ] || { echo "missing packed Root.vhd: $VHD" >&2; exit 1; }
 md5sum "$VHD" "$BST_RELEASE_ROOT/system.sfs" "$SYSTEM_IMG"
 sha256sum "$VHD" "$BST_RELEASE_ROOT/system.sfs" "$SYSTEM_IMG"

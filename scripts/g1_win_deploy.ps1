@@ -1,4 +1,4 @@
-# G1 Layer2: deploy bst_x86_64/qvirt Root.vhd to win Tiramisu64 instance
+# Android-16 Layer2: deploy the android_x86_64 Root.vhd to the Windows instance.
 param(
     [string]$CloudHost = "markxu@172.16.6.191",
     [string]$RemotePkg = "~/releases/Baklava64/bst-v5.22.210_Baklava64-local",

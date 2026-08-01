@@ -8,7 +8,9 @@ features from scratch.
 ## Record Map
 
 - [`promotion-record.md`](promotion-record.md): frozen source, merge decisions,
-  validation, and publication identity.
+  first-candidate validation and withdrawn publication identity.
+- [`rework-audit.md`](rework-audit.md): active omission review, structural
+  corrections and new validation gates.
 - [`timeline.md`](timeline.md): generated cont.103-cont.106 chronology.
 - [`patch-traceability.md`](patch-traceability.md): every archived patch mapped
   to registry and timeline evidence where available.
@@ -22,8 +24,11 @@ features from scratch.
   `aosp16-bst-merge`.
 - Development fork: `mark-bst`.
 - Integration target: `bluestacks/android-16:aosp16-bst`.
-- Root pull request:
+- Withdrawn root pull request:
   [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1).
+- Current reviewed pull request:
+  [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2),
+  root `298403a`, ready to merge with no base conflict.
 
 The promotion gate requires every submodule initialized, no detached projects,
 the root gitlink matching the reviewed component SHA, and every referenced SHA

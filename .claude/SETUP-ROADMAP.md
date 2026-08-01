@@ -9,10 +9,11 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 
 1. **AOSP16 development**：M0/M1/Phase 1/Phase 2 的开发、调试和全量
    功能对齐记录；cont.101 形成最终绿基线。
-2. **AOSP16 → Android-16 promotion**：cont.103-cont.106；最终
-   1016/1016 项目初始化，985 个 base 分支、31 个 merge 分支，
-   Android-16 启动 7/7。
-3. **Android-16 mainline maintenance（当前）**：普通修复直接基于
+2. **AOSP16 → Android-16 promotion（当前 rework）**：cont.103-cont.106
+   的首个候选曾以 1016/1016、985 base、31 merge 启动 7/7，后因遗漏
+   和结构回归撤回；当前补齐 5 个产品依赖 HAL 后为 1021 项目，须重新
+   完成构建、启动和分支审计。
+3. **Android-16 mainline maintenance（promotion 通过后）**：普通修复直接基于
    `aosp16-bst`，工作分支 `aosp16-bst-merge`。只有新的完整开发批次
    才重新走 freeze/promotion。
 
@@ -35,7 +36,9 @@ gate 内容是 AOSP 升级里程碑。阶段开了、且有真东西可做时再
 - [x] 权威存档：[patches/android-16/RESTORE.md](../patches/android-16/RESTORE.md)（20 tracked patch + 92 untracked + bootimage/kernel）。
 - [x] 问题全流程：[progress/android-16-boot-guide.md](../progress/android-16-boot-guide.md)。
 
-> **注意**：M1 boot 跑在 `device/generic/common` + `device/generic/x86_64`，含大量 **临时 bringup hack**（permissive SELinux、check bypass、`r262` 关 shell transitions）。下一阶段要把临时 patch 与清单最小 patch **融合转正**，并迁移到统一板 `device/bst/qvirt`。
+> **历史注意**：M1 boot 跑在 `device/generic/common` +
+> `device/generic/x86_64`。后续曾迁移到 `device/bst/qvirt`；该统一板决策
+> 现已撤销，当前 Windows 产品回到 `android_x86_64`。
 
 ---
 
@@ -53,12 +56,17 @@ flowchart TD
 
 ### Phase 1 — 融合最小 boot 集（**完成 · 2026-07-17 cont.4**）
 
-目标：把「能 boot 的最小集」从临时形态**转正为结构化的最小 BST 定制集**，并迁移到统一板 `device/bst/qvirt`（x86_64/arm64 各自定制）。
+历史目标：把「能 boot 的最小集」从临时形态转正并迁入 qvirt。当前
+promotion rework 将仍必要的产品配置迁回
+`device/generic/x86_64/android_x86_64.mk`，不再维护统一板 product。
 
 - [x] 双端定制清单重生成（`-a13`/`-mac` vs 上游 android-13）→ registry v2（196 条；review-fix 2026-07-15）。
 - [x] boot 存量映射进 registry（真定制 vs `temp_debt`）。
 - [x] Phase 1 / Phase 2 计划成文（`progress/phase1-port-plan.md` / `phase2-port-plan.md`）。
-- [x] **G1** 统一板 `device/bst/qvirt` / `bst_x86_64`：Layer1 ✅；Layer2 host oracle 全绿（boot 到 launcher 可见）→ [G1-RESTORE](../patches/android-16/checkpoints/G1-RESTORE.md) · [porting-log cont.4](../progress/porting-log.md)。
+- [x] **G1（历史）** `device/bst/qvirt` / `bst_x86_64` 曾通过 Layer1
+  和 Layer2；该结果保留作回溯，不再定义当前产品。当前替代项是
+  `android_x86_64` 重新验证 → [G1-RESTORE](../patches/android-16/checkpoints/G1-RESTORE.md)
+  · [porting-log cont.4](../progress/porting-log.md)。
 - [x] G2–G10 最小 boot 集已并入可 boot 镜像（部分 temp_debt 挂 Phase 2）。
 - 规则：`.claude/rules/dual-platform-customization.md`、`patch-porting.md`、`platform-win-first-mac-reuse.md`、`instrumentation-and-tests.md`。
 

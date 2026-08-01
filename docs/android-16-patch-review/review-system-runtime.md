@@ -16,8 +16,13 @@ cross-project patches.
 - **Performance:** potentially `high`; JNI and OAT paths are hot.
 - **Necessity/status:** `audit-only/partially ported`. Use it to identify intent,
   not as a replay unit.
+- **Android-16 adaptation:** `libnativebridge` and `libnativebridge_lazy` share
+  one version script. Exporting `bst_nbpname` therefore requires the normal
+  implementation plus a lazy `GetFuncPtr` forwarder; otherwise the lazy shared
+  library fails its version-script link check. The forwarder resolves once and
+  keeps package state in the normal library.
 - **Recommendation:** maintain per-hunk tests for native bridge namespace and
-  omit code already provided by Android 16.
+  both library exports, and omit code already provided by Android 16.
 
 ### `a13__bionic__bst_full.patch`
 
@@ -55,9 +60,11 @@ cross-project patches.
 - **Review:** **P1 correctness**. Timezone rules are data/version sensitive;
   hard-coded logic can become stale or disagree with tzdata.
 - **Performance:** `low`; timezone calculation only.
-- **Necessity/status:** `conditional`, surgically ported and Layer2 verified.
-- **Recommendation:** add date-boundary tests around the affected transitions
-  and compare with the bundled tzdata release.
+- **Necessity/status:** `superseded/rejected`. Current tzdata already represents
+  Iran's rule change; the hard-coded Android 13 workaround is not in the
+  Android-16 target.
+- **Recommendation:** keep bundled tzdata authoritative and cover historical
+  and post-abolition dates with boundary tests.
 
 ## Cross-Project Mechanical Patches
 
@@ -125,8 +132,11 @@ cross-project patches.
   evaluation and was reverted.
 - **Performance:** smaller image/package scan if implemented correctly; no
   steady runtime cost.
-- **Necessity/status:** `superseded`. App removal was reimplemented at
-  `device/bst/qvirt`; do not modify global build/make for this.
+- **Necessity/status:** `superseded as a global patch`. Only the four
+  qvirt-proven app exclusions are implemented at
+  `device/generic/x86_64/android_x86_64`; the ART debug-package change is not
+  carried because it was not part of the verified board delta. Do not modify
+  global build/make for either behavior.
 - **Tests:** clean lunch/release-config and installed package list.
 
 ### `P2-MECH-6-adb.diff`

@@ -12,7 +12,8 @@ port 一个 patch-group，或评估清单分阶段。
 
 1. **双端清单重生成 + 统一分析**（`dual-platform-customization.md`）。
 2. **boot 存量映射**（`patches/android-16/` → registry，标 `temp_debt`）。
-3. **Phase 1**：融合（临时 boot patch + 清单最小 patch），统一板 `device/bst/qvirt` 最先（G1）。
+3. **Phase 1**：融合（临时 boot patch + 清单最小 patch）。历史 G1 qvirt
+   决策已撤销；当前 Windows product 固定为 `android_x86_64`。
 4. **Phase 2**：其余按优先级；关联组一起移植；临时债真实修复。
 5. **mac**：win 验证通过后基于同份代码开发（`platform-win-first-mac-reuse.md`）。
 

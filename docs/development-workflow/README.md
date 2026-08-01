@@ -22,10 +22,11 @@ inputs are packaged into deterministic external bundles.
 
 ## Current State
 
-The initial AOSP16-to-Android-16 promotion is complete and represented by
-[bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1).
-Current implementation work belongs to the Android-16 mainline stage unless a
-new, explicitly frozen development batch is promoted.
+The initial AOSP16-to-Android-16 promotion candidate was represented by
+[bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1), but
+that PR is closed while the project corrects missing ports, removes the retired
+qvirt product, and revalidates the Windows `android_x86_64` target. Work remains
+in the promotion stage until a new target-only evidence chain is complete.
 
 This repository is documentation, scripts, patch evidence, and workflow
 scaffolding. It is not an AOSP source tree.

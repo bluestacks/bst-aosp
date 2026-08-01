@@ -33,7 +33,7 @@ Get-Content $ArtifactIdentity
 Get-Process -Name "HD-Player","BstkSVC","BstkVMMgr" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 $before = Get-Date
-Start-Process -FilePath $PlayerExe -ArgumentList "--instance","Tiramisu64" -WindowStyle Normal
+Start-Process -FilePath $PlayerExe -ArgumentList "--instance","Tiramisu64" -WindowStyle Hidden
 $patterns = @(
     @{ id="system_mounted"; rx="A16DBG: system mounted" },
     @{ id="init_second"; rx="init second stage started" },

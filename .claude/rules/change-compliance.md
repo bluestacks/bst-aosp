@@ -36,7 +36,7 @@
 - **关键 runtime 路径必须打点**（对齐 `instrumentation-and-tests.md`）：bypass 分支、HAL 注册、boot 阶段、mount/init/crash 关键点。
 - 打点字符串 `A16DBG:<area>:` 前缀，**可 grep**（串口 / bs_bootlog / Player.log / logcat）。
 - **死代码陷阱**：打点不要放在 `if(false)`/常量分支内（编译器死代码消除 → 二进制无该串）。放在分支**外**（always-emitted）或条件会真命中的分支内。
-- build-config / data 文件（Android.bp/.rc/manifest.xml）无天然打点点 → readback 兜底 + `bst_x86_64.mk` build-time `$(warning A16DBG:G1: ...)` 子项标记。
+- build-config / data 文件（Android.bp/.rc/manifest.xml）无天然打点点 → readback 兜底；Windows 产品配置从 `android_x86_64.mk` 回读。
 - 语言对应：C/C++ `ALOGI/LOG(INFO)`、Rust `info!`（确保 `log` crate import）、Java `Log.i`。
 
 ### 4. BST 可溯源
@@ -55,7 +55,7 @@
 ## 合规 commit message 模板
 
 ```
-BlueStacks android-16 (aosp16) port: <project>
+[A16] <imperative summary>
 
 Source: <BST -a13/-mac fork | G1 Phase 1 | M1 | 原创>.
 <formal | temp_debt: <what>; Phase 2 fix: <how>>.

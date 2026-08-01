@@ -2,12 +2,12 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 982,
-    "existing_files": 981,
-    "bytes": 18871857,
-    "text_lines": 301834,
+    "files": 990,
+    "existing_files": 989,
+    "bytes": 20108130,
+    "text_lines": 332525,
     "by_stage": {
-      "android16-promotion": 34,
+      "android16-promotion": 42,
       "aosp16-development": 841,
       "generated": 15,
       "reference": 45,
@@ -16,10 +16,12 @@
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 966
+      "tracked": 966,
+      "untracked": 8
     },
     "by_availability": {
       "generated": 15,
+      "local-only": 8,
       "removed-tombstone": 1,
       "repository": 966
     },
@@ -1635,6 +1637,45 @@
       "missing_links": []
     },
     {
+      "path": "docs/android-16-patch-review/review-hardware-bst.md",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 5336,
+      "sha256": "a1ccd687b60373006756f73b8bdefaabf58c6570ca7af5f513e94f1b56c0b5d1",
+      "media_type": "text/markdown",
+      "encoding": "utf-8-sig",
+      "line_count": 101,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Hardware/BST HAL Promotion Review",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
       "path": "docs/android-16-patch-review/review-payloads.md",
       "exists": true,
       "git_state": "tracked",
@@ -1983,6 +2024,49 @@
       "missing_links": []
     },
     {
+      "path": "docs/development-history/android16-merge/current-delta.md",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 54642,
+      "sha256": "ac9f5d8b7d972adf7679d0103fcd02429f73a2741b48ec356e9513dee94edc38",
+      "media_type": "text/markdown",
+      "encoding": "utf-8-sig",
+      "line_count": 978,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [
+        "cont.90"
+      ],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Current Android-16 Promotion Delta",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [
+        "scripts/generate_android16_delta_review.py"
+      ],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
       "path": "docs/development-history/android16-merge/patch-traceability.md",
       "exists": true,
       "git_state": "generated",
@@ -2022,6 +2106,48 @@
       "missing_links": []
     },
     {
+      "path": "docs/development-history/android16-merge/promotion-audit.json",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 1141882,
+      "sha256": "71063d29c688c48b797b0faa38780b966bdc9aee9e7aea49319eba1b786c756d",
+      "media_type": "application/json",
+      "encoding": "utf-8-sig",
+      "line_count": 28850,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [
+        "R4",
+        "R8"
+      ],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Project documentation and review output.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "Storage and checkout cost; no runtime cost unless injected into a build artifact.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "json-parse"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
       "path": "docs/development-history/android16-merge/promotion-record.md",
       "exists": true,
       "git_state": "tracked",
@@ -2056,6 +2182,49 @@
       "dependencies": [
         "scripts/g1_build.sh"
       ],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "docs/development-history/android16-merge/rework-audit.md",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 12512,
+      "sha256": "d31cbfc56e5b772327fa683fb7359c51b37b609cebe3e1cbbbc56bafcb6713a5",
+      "media_type": "text/markdown",
+      "encoding": "utf-8-sig",
+      "line_count": 178,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [
+        "2026-07-31",
+        "cont.90",
+        "R4"
+      ],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Android-16 Promotion Rework Audit",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
       "validation_evidence": {
         "status": "pass",
         "checks": [
@@ -26873,6 +27042,45 @@
       "missing_links": []
     },
     {
+      "path": "scripts/check_android16_worktree.py",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 6493,
+      "sha256": "c6cc64f7f4a5623d4bdccde013634e380363db79d9e390b3e671756f61ded5d3",
+      "media_type": "text/x-python",
+      "encoding": "utf-8-sig",
+      "line_count": 195,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Check the Android-16 root and every submodule without Git's serial recursion.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "recorded",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "python-ast"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
       "path": "scripts/check_log2.ps1",
       "exists": true,
       "git_state": "tracked",
@@ -28170,6 +28378,47 @@
         "status": "pending",
         "checks": [
           "bash-n"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "scripts/generate_android16_delta_review.py",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 8594,
+      "sha256": "a1c583b7c71548099adb88f74efe979f011cf0544e5f86508cfc0d1af24991bd",
+      "media_type": "text/x-python",
+      "encoding": "utf-8-sig",
+      "line_count": 173,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [
+        "cont.90"
+      ],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Render the committed Android-16 promotion delta from an audit snapshot.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "python-ast"
         ]
       },
       "preservation": "active",
@@ -38562,6 +38811,45 @@
       "missing_links": []
     },
     {
+      "path": "scripts/publish_android16_components.py",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 4569,
+      "sha256": "b03e2edf626cda5fdd23c0dd914bc9d4d350f6ee56d51b1a521ce571e415d550",
+      "media_type": "text/x-python",
+      "encoding": "utf-8-sig",
+      "line_count": 140,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Publish audited Android-16 component tips with explicit remote leases.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "recorded",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "python-ast"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
       "path": "scripts/r228-pack-root.sh",
       "exists": true,
       "git_state": "tracked",
@@ -40877,6 +41165,45 @@
         ]
       },
       "preservation": "historical-first-class",
+      "missing_links": []
+    },
+    {
+      "path": "scripts/rewrite_a16_commit_messages.sh",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 2245,
+      "sha256": "a19902e1b788bd1e7fa94014196e8abb378cb6e79acaec622cd938645098cf81",
+      "media_type": "application/x-sh",
+      "encoding": "utf-8-sig",
+      "line_count": 76,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Rewrite only promotion commit subjects while proving that the resulting tree is unchanged.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pending",
+        "checks": [
+          "bash-n"
+        ]
+      },
+      "preservation": "active",
       "missing_links": []
     },
     {

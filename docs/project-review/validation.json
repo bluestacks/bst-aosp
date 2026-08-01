@@ -3,7 +3,7 @@
   "scope": "local repository only; Android source trees are not read",
   "counts": {
     "expected-failure": 1,
-    "pass": 622
+    "pass": 627
   },
   "checks": [
     {
@@ -26,6 +26,12 @@
     },
     {
       "path": "docs/android-16-patch-review/patch-inventory.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/promotion-audit.json",
       "check": "json-parse",
       "status": "pass",
       "detail": ""
@@ -1693,6 +1699,12 @@
       "detail": ""
     },
     {
+      "path": "scripts/check_android16_worktree.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
       "path": "scripts/check_log2.ps1",
       "check": "powershell-parser",
       "status": "pass",
@@ -1875,6 +1887,12 @@
     {
       "path": "scripts/g8_disable_vendor_hal_rc.sh",
       "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/generate_android16_delta_review.py",
+      "check": "python-ast",
       "status": "pass",
       "detail": ""
     },
@@ -3381,6 +3399,12 @@
       "detail": ""
     },
     {
+      "path": "scripts/publish_android16_components.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
       "path": "scripts/r228-pack-root.sh",
       "check": "bash-n",
       "status": "pass",
@@ -3701,6 +3725,12 @@
     {
       "path": "scripts/restore-init-do-exec-start.py",
       "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/rewrite_a16_commit_messages.sh",
+      "check": "bash-n",
       "status": "pass",
       "detail": ""
     },

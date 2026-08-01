@@ -23,7 +23,8 @@ AOSP16=~/aosp16
 DST=~/android-16
 mkdir -p /tmp/a16merge
 
-# All projects with BST commits in aosp16 (+ device/bst/qvirt scaffold handled separately)
+# All projects with BST commits in aosp16. The retired qvirt product was handled
+# separately and must not be recreated by this historical executor.
 PROJECTS=(
   frameworks/base frameworks/native frameworks/av frameworks/opt/telephony
   bionic system/core system/extras packages/inputmethods/LatinIME

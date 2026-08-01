@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the recorded bst_x86_64 HWC2 product-filter promotion fix."""
+"""Remove the retired bst_x86_64 product from the external HWC2 build filter."""
 
 from __future__ import annotations
 
@@ -26,13 +26,13 @@ args = parser.parse_args()
 root = require_historical_target(args.root, args.apply_historical)
 
 path = root / "system/hwc2/Android.mk"
-old = "ifeq ($(TARGET_PRODUCT),android_x86_64)"
-new = "ifneq ($(filter android_x86_64 bst_x86_64,$(TARGET_PRODUCT)),)"
+old = "ifneq ($(filter android_x86_64 bst_x86_64,$(TARGET_PRODUCT)),)"
+new = "ifeq ($(TARGET_PRODUCT),android_x86_64)"
 source = path.read_text(encoding="utf-8")
 if new in source:
-    print("already applied")
+    print("already uses android_x86_64 only")
     raise SystemExit(0)
 if old not in source:
     raise SystemExit(f"product-filter anchor not found in {path}")
 path.write_text(source.replace(old, new, 1), encoding="utf-8")
-print(f"updated {path}")
+print(f"removed bst_x86_64 from {path}")

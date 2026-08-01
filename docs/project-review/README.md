@@ -25,11 +25,11 @@ the AOSP16-to-Android-16 work as a promotion into the mainline integration tree.
 
 ## Current Snapshot
 
-- Inventory entries: **982**
-- Existing files: **981**
-- Text lines: **301834**
-- Stages: `android16-promotion`=34, `aosp16-development`=841, `generated`=15, `reference`=45, `shared`=47
-- Availability: `generated`=15, `removed-tombstone`=1, `repository`=966
+- Inventory entries: **990**
+- Existing files: **989**
+- Text lines: **332525**
+- Stages: `android16-promotion`=42, `aosp16-development`=841, `generated`=15, `reference`=45, `shared`=47
+- Availability: `generated`=15, `local-only`=8, `removed-tombstone`=1, `repository`=966
 - Findings: P2=1, P3=16
 
 Regenerate with:

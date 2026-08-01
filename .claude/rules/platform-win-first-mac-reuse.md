@@ -1,7 +1,8 @@
 # 平台策略：win 先行验证 · mac 同码复用
 
-# android-16 guest 升级：**只在 win 上做构建与启动验证**；mac 在 win 收敛后
-# 基于**同一份代码**（统一源 + 平台差异）开发，**不做独立 Layer 1/Layer 2 验证**。
+# android-16 guest 升级：当前只在 win 上做构建与启动验证；Windows
+# 产品为 android_x86_64。共享源码可供 mac 后续复用，但产品板和 arch
+# 配置必须单独评估。
 
 ## Trigger
 
@@ -12,7 +13,7 @@
 1. **验证只跑 win**：Layer 1（远程 `m`）+ Layer 2（Windows BlueStacks / Root.vhd 替换 / boot oracle）均在 win 路径。
 2. **mac 不做验证**：不为 mac 单独跑 lunch/m/boot 作为 gate；不为「mac 也过一下」拖延 Phase 门控。
 3. **同份代码**：guest 源码统一（frameworks/system/hardware/bst 共享部分）；arch/平台差异落在：
-   - `device/bst/qvirt` 的 `bst_x86_64` vs `bst_arm64` product / BoardConfig；
+   - Windows `device/generic/x86_64/android_x86_64` 与未来 mac product / BoardConfig；
    - `#ifdef` / `TARGET_ARCH` / 条件 mk；
    - 仅一端需要的 patch 标 `platform=mac` 或 `platform=win`，移植时隔离。
 4. **mac 开发时序**：win Phase 1（及后续相关 Phase 2 组）验证通过并 **存 patch + checkpoint** 后，再基于该检查点给 mac 加 arm64 差异；不并行两套 guest 树。

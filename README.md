@@ -20,10 +20,10 @@
 |---|---|---|
 | M0 | 三端环境设置（win host / mac host / guest clouddev）+ 定制清单重新生成（registry v2） | ✅ |
 | M1 | android-16 win boot（临时形态，存档 `patches/android-16/`） | ✅（2026-07-14） |
-| Phase 1 | 融合最小 boot 集转正 + 统一板 `device/bst/qvirt` / `bst_x86_64`（**G1 ported，boot 到 launcher**） | ✅（2026-07-17，Root.vhd `2a7a497a`） |
+| Phase 1 | AOSP16 开发线曾以 `device/bst/qvirt` / `bst_x86_64` 完成 G1 boot；该板型决定只作为历史证据保留 | ✅ 历史阶段（2026-07-17） |
 | Phase 2 | AOSP16 guest 全量功能对齐；最终 Root.vhd `02690d11` / system.img `a878d3c8` | ✅ 7/7 @161s（cont.101） |
-| Promotion | AOSP16 绿基线合入 Android-16；1016/1016 项目，985 base + 31 merge | ✅ 7/7 @123s（cont.106） |
-| Mainline | Android-16 后续维护，base=`aosp16-bst`，work=`aosp16-bst-merge` | 当前 |
+| Promotion | AOSP16 绿基线合入 Android-16；旧 PR #1 已关闭，正在补齐遗漏并切回 Windows `android_x86_64` | 进行中 |
+| Mainline | Android-16 后续维护，base=`aosp16-bst`，work=`aosp16-bst-merge` | 待 promotion 重新验证 |
 
 见 [.claude/SETUP-ROADMAP.md](.claude/SETUP-ROADMAP.md)。
 

@@ -5,8 +5,9 @@
 ## 一句话
 
 先在 r4-based AOSP16 development 线完成定制移植与验证，再 promotion 到
-Android-16 25Q4-evolved mainline；**win 先行验证、mac 同码复用**；统一板
-`device/bst/qvirt`。
+Android-16 25Q4-evolved mainline；**win 先行验证**，Windows 产品固定为
+`device/generic/x86_64/android_x86_64`；mac 产品单独评估，不再由
+`device/bst/qvirt` 统一板隐式代表。
 
 ## 组件角色
 
@@ -26,10 +27,10 @@ Android-16 25Q4-evolved mainline；**win 先行验证、mac 同码复用**；统
 | 里程碑 | 状态 |
 |---|---|
 | M1 android-16 win boot | **完成** |
-| Phase 1 清单融合 + qvirt | **完成** |
+| Phase 1 清单融合 + qvirt | **历史完成，当前已撤销 qvirt 产品** |
 | Phase 2 AOSP16 全量功能对齐 | **完成，cont.101 7/7** |
-| AOSP16 → Android-16 promotion | **完成，cont.106 7/7** |
-| Android-16 mainline maintenance | **当前** |
+| AOSP16 → Android-16 promotion | **重做中；首个 cont.106 候选已撤销** |
+| Android-16 mainline maintenance | **等待 promotion 新绿基线** |
 
 当前分支模型：base=`aosp16-bst`，work=`aosp16-bst-merge`。活动构建只从
 `~/android-16` 取源码和产物。

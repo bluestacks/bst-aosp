@@ -2,6 +2,7 @@
 /scripts/audit_a16_merge.sh text eol=lf
 /scripts/audit_android16_promotion.py text eol=lf
 /scripts/aemu_host_supported.py text eol=lf
+/scripts/check_android16_worktree.py text eol=lf
 /scripts/g1_apply_boot_overlays.sh text eol=lf
 /scripts/g1_build_android16.sh text eol=lf
 /scripts/g1_build_libs.sh text eol=lf
@@ -17,11 +18,14 @@
 /scripts/libhidl_drop_mgr_token.py text eol=lf
 /scripts/merge_aosp16_to_android16.sh text eol=lf
 /scripts/generate_android16_patch_inventory.py text eol=lf
+/scripts/generate_android16_delta_review.py text eol=lf
 /scripts/generate_project_review.py text eol=lf
 /scripts/manage_binary_artifacts.py text eol=lf
 /scripts/patch-goldfish-emuhwc2-vsync-sp.py text eol=lf
 /scripts/patch-goldfish-hwc2-bst-product.py text eol=lf
+/scripts/publish_android16_components.py text eol=lf
 /scripts/resolve_kernel_conflicts.py text eol=lf
+/scripts/rewrite_a16_commit_messages.sh text eol=lf
 /scripts/validate_project_files.py text eol=lf
 /scripts/g1_boot_verify.ps1 text eol=crlf
 /scripts/g1_win_deploy.ps1 text eol=crlf

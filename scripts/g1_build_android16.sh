@@ -23,20 +23,20 @@ while [ "$#" -gt 0 ]; do
 done
 
 bst_android16_preflight
-[ -d "$BST_GOLDFISH_OPENGL_ROOT" ] || {
-  echo "A16DBG:ANDROID16: missing graphics source: $BST_GOLDFISH_OPENGL_ROOT" >&2
-  exit 1
-}
+bst_android16_graphics_preflight
 [ "$CHECK_ONLY" -eq 0 ] || {
   echo "A16DBG:ANDROID16: CHECK OK; no build started"
   exit 0
 }
 
 cd "$BST_ANDROID16_ROOT"
+GOLDFISH_MODULE_PATH="$(bst_android16_graphics_module_path)"
 export OEM=nxt IMAGE=Baklava64 OUT_DIR="$BST_OUT_DIR_NAME" IS_64_BUILD=1
 export APP_PLAYER_DIR="$BST_APP_PLAYER_ROOT" HD_SOURCE_TOP="$BST_HD_SOURCE_TOP"
 export ALLOW_MISSING_DEPENDENCIES=true BST_BUILD_WITH_DEXPREOPT=true
 export USE_OPENGL_RENDERER=true
+export BST_BUILD_EXTERNAL_GOLDFISH=true
+export BUILD_EMULATOR_OPENGL=true BUILD_EMULATOR_OPENGL_DRIVER=true
 
 set +u
 source build/envsetup.sh
@@ -60,24 +60,18 @@ set +e
 m droid -j"$JOBS"
 rc=$?
 if [ "$rc" -eq 0 ]; then
-  echo "A16DBG:ANDROID16: mmm goldfish-opengl-pie (graphics chain)"
-  mmm "$BST_GOLDFISH_OPENGL_ROOT" \
-    BUILD_EMULATOR_OPENGL=true \
-    BUILD_EMULATOR_OPENGL_DRIVER=true \
-    -j"$JOBS"
+  echo "A16DBG:ANDROID16: mmm $GOLDFISH_MODULE_PATH (graphics chain)"
+  mmm "$GOLDFISH_MODULE_PATH" -j"$JOBS"
   rc=$?
 fi
 if [ "$rc" -eq 0 ]; then
-  echo "A16DBG:ANDROID16: mmm goldfish-opengl-pie/system/hwc2"
-  mmm "$BST_GOLDFISH_OPENGL_ROOT/system/hwc2" \
-    BUILD_EMULATOR_OPENGL=true \
-    BUILD_EMULATOR_OPENGL_DRIVER=true \
-    -j"$JOBS"
+  echo "A16DBG:ANDROID16: mmm $GOLDFISH_MODULE_PATH/system/hwc2"
+  mmm "$GOLDFISH_MODULE_PATH/system/hwc2" -j"$JOBS"
   rc=$?
 fi
 set -e
 
-IMG="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/qvirt/system.img"
+IMG="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/x86_64/system.img"
 IDENTITY="$BST_BUILD_IDENTITY_FILE"
 echo "A16DBG:ANDROID16: artifacts:"
 if [ "$rc" -eq 0 ]; then
@@ -95,7 +89,7 @@ if [ "$rc" -eq 0 ]; then
   bst_write_identity_file "$IDENTITY" "$IMG"
   cat "$IDENTITY"
 fi
-ls "$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/qvirt/system/vendor/bin/vndservicemanager" \
+ls "$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/x86_64/system/vendor/bin/vndservicemanager" \
   2>/dev/null && echo vnd_OK || echo vnd_MISSING
 echo "A16DBG:ANDROID16: DONE rc=$rc $(date -Is)"
 exit "$rc"

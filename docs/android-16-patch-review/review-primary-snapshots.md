@@ -35,7 +35,8 @@ changed paths are in [patch-inventory.md](patch-inventory.md).
   hwservicemanager relocation is `conditional` on the single-partition Root
   image and must remain synchronized with its rc and manifest.
 - **Recommendation:** split into three commits and keep enforcement enabled for
-  CI. Express product exceptions in `device/bst/qvirt`, not global build files.
+  CI. Express Windows product exceptions in `device/generic/x86_64`, not global
+  build files; qvirt is historical only.
 
 ### `aosp16__build_soong.patch`
 
@@ -65,9 +66,10 @@ changed paths are in [patch-inventory.md](patch-inventory.md).
 - **Performance:** device properties and media configuration affect boot,
   memory and codec selection. Preinstalled APKs increase image size and boot
   package scan time.
-- **Necessity:** only a subset is `required`. The durable destination is
-  `device/bst/qvirt`; hardware-specific ALSA/IDC files and unused APKs are
-  `conditional` or `optional`.
+- **Necessity:** only a subset is `required`. Shared Android-x86/BST behavior
+  remains under `device/generic/common`, while Windows-only selection belongs
+  in `device/generic/x86_64`; hardware-specific ALSA/IDC files and unused APKs
+  are `conditional` or `optional`.
 - **Recommendation:** inventory every binary by hash/license, remove credentials
   from patch history, and split product, init, media, input and app payloads.
 
@@ -76,23 +78,28 @@ changed paths are in [patch-inventory.md](patch-inventory.md).
 - **Code/purpose:** adjusts the generic goldfish product to align graphics and
   hwservicemanager packaging with the BST image.
 - **Review:** **P1**. The small diff changes ownership of boot-critical modules;
-  it must agree with qvirt product packages, build/make and VINTF.
+  it must agree with `android_x86_64` product packages, build/make and VINTF.
 - **Performance:** none directly.
 - **Necessity:** `conditional`; needed only when this product inheritance path
-  remains active. The qvirt product should be authoritative.
+  remains active. The `android_x86_64` product is authoritative for Windows.
 - **Recommendation:** add a product-composition test that checks exactly one
   allocator, composer and hwservicemanager implementation.
 
 ### `aosp16__device_generic_x86_64.patch`
 
 - **Code/purpose:** provides the x86_64 product entry, AndroidProducts listing
-  and board inheritance used before the unified qvirt product was formalized.
-- **Review:** **P2**. The code is simple but duplicates product ownership and
-  encourages device policy to remain under `device/generic`.
+  and board inheritance used by the current Windows product.
+- **Review:** **P1 product contract**. The original file is thin; the rework
+  keeps the `android_x86_64` identity and adds only the proven qvirt-era runtime
+  services, graphics properties and package exclusions. Android 16 VINTF
+  enforcement remains active and matches qvirt. Obsolete common HAL
+  declarations are adapted to FCM 8, while a product-local framework matrix
+  supplies only the three legacy declarations required by build-time VINTF
+  validation.
 - **Performance:** none.
-- **Necessity:** `superseded` by `device/bst/qvirt/bst_x86_64`.
-- **Recommendation:** keep only as migration evidence and test qvirt lunch
-  independently.
+- **Necessity:** `required/current`; qvirt is superseded.
+- **Recommendation:** test `android_x86_64-trunk_staging-eng` independently and
+  reject any reintroduction of the second qvirt product identity.
 
 ### `aosp16__external_boringssl.patch`
 
@@ -197,13 +204,14 @@ changed paths are in [patch-inventory.md](patch-inventory.md).
 - **Performance:** runtime target cost is negligible; host tooling/test coverage
   can change.
 - **Necessity:** `conditional` on disabling the built-in gfxstream modules.
-- **Recommendation:** select graphics providers in Soong/product namespaces and
-  explicitly restate required defaults instead of commenting them out.
+- **Current decision:** `rejected for Android-16`. The 25Q4 host Vulkan graph
+  requires these defaults. Restore target aemu unchanged and isolate the
+  external BlueStacks provider through the Windows product and separate build.
 
 ### `aosp16__hardware_interfaces.patch`
 
 - **Code/purpose:** disables legacy GNSS and memtrack HIDL default services that
-  are not backed by the qvirt device.
+  are not backed by the Windows `android_x86_64` device.
 - **Review:** **P1**. This avoids service startup failures but can remove APIs
   expected by framework components. The product manifest must omit the same
   services.
@@ -251,8 +259,9 @@ changed paths are in [patch-inventory.md](patch-inventory.md).
   memory only when triggered.
 - **Necessity:** shutdown, BST device nodes and selected property/init triggers
   are `required`; security bypasses are `temporary` and not production-safe.
-- **Recommendation:** split by subsystem, move policy to qvirt sepolicy/product
-  files, remove unconditional returns and add coldboot/property/SELinux tests.
+- **Recommendation:** split by subsystem, keep device policy in the active
+  generic-common/x86_64 ownership layers, remove unconditional returns and add
+  coldboot/property/SELinux tests.
 
 ### `aosp16__system_hwservicemanager.patch`
 
@@ -262,8 +271,9 @@ changed paths are in [patch-inventory.md](patch-inventory.md).
   `if (false)` around transport validation defeats manifest compatibility and
   was documented as diagnostic debt.
 - **Performance:** no meaningful steady-state cost.
-- **Necessity:** placement is `required` for the chosen image layout; transport
-  bypass is `superseded` by the qvirt graphics/VINTF manifest fix.
+- **Necessity:** placement is conditional on the image layout; the transport
+  bypass is `superseded` by the active device manifest and product-local VINTF
+  enforcement.
 - **Recommendation:** preserve validation and add a boot assertion that the
   allocator/composer/mapper services are declared and registered.
 
@@ -274,7 +284,7 @@ changed paths are in [patch-inventory.md](patch-inventory.md).
 - **Review:** **P1**. A device HAL in framework VINTF can duplicate device or
   module fragments and makes target-level filtering difficult.
 - **Performance:** none.
-- **Necessity:** `superseded` by the dedicated qvirt graphics manifest.
+- **Necessity:** `superseded` by the active Android-x86 device manifest.
 - **Recommendation:** keep device-specific HALs in the device manifest and run
   `assemble_vintf`/runtime transport checks.
 

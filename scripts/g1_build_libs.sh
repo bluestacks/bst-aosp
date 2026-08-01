@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/android16_env.sh"
 bst_android16_preflight
+bst_android16_graphics_preflight
 [ "${1:-}" != "--check" ] || {
   [ -d "$BST_HD_SOURCE_TOP/Source" ] || { echo "missing $BST_HD_SOURCE_TOP/Source"; exit 1; }
   echo "A16DBG:ANDROID16: build-libs CHECK OK; no build started"
@@ -22,8 +23,9 @@ export OEM=nxt IMAGE=Baklava64 OUT_DIR="$OUT_DIR_NAME" IS_64_BUILD=1
 export APP_PLAYER_DIR="$BST_APP_PLAYER_ROOT" HD_SOURCE_TOP="$BST_HD_SOURCE_TOP"
 export ALLOW_MISSING_DEPENDENCIES=true BST_BUILD_WITH_DEXPREOPT=true USE_OPENGL_RENDERER=true
 export BUILD_EMULATOR_OPENGL=true BUILD_EMULATOR_OPENGL_DRIVER=true
+export BST_BUILD_EXTERNAL_GOLDFISH=true
 source build/envsetup.sh
-lunch bst_x86_64-trunk_staging-eng
+lunch "$BST_LUNCH_TARGET"
 set -u
 
 J="-j$(nproc)"

@@ -51,3 +51,9 @@ not yet represented by project commits. Promotion therefore cannot trust only
 the three commits above: the patch archive, working-tree snapshots, registry,
 and later 31-project promotion audit are all required to reconstruct the
 validated source state.
+
+The 2026-07-31 re-audit found the same class of gap outside frameworks/base:
+staged ART loader work, working-tree VINTF/HIDL fixes, an untracked gfxstream
+stub directory, and functionality represented only by Android 13/P2 evidence.
+This baseline is still the authoritative runtime result, but its source freeze
+is an evidence bundle rather than a single root commit.

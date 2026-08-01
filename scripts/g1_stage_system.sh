@@ -1,5 +1,5 @@
 #!/bin/bash
-# G1: stage OUT qvirt/system/ (fold: vendor/system_ext/product) → releases/Baklava64/system
+# G1: stage OUT android_x86_64/system/ (fold: vendor/system_ext/product) → releases/Baklava64/system
 # Per G1-RESTORE §2: rsync OUT directory — do NOT mount system.img (loses folded subdirs).
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -7,8 +7,8 @@ source "$SCRIPT_DIR/lib/android16_env.sh"
 bst_android16_preflight
 AOSP="$BST_ANDROID16_ROOT"
 OD="$BST_RELEASE_ROOT"
-SRC="$AOSP/$BST_OUT_DIR_NAME/target/product/qvirt/system"
-SYSTEM_IMG="$AOSP/$BST_OUT_DIR_NAME/target/product/qvirt/system.img"
+SRC="$AOSP/$BST_OUT_DIR_NAME/target/product/x86_64/system"
+SYSTEM_IMG="$AOSP/$BST_OUT_DIR_NAME/target/product/x86_64/system.img"
 [ -d "$SRC" ] || { echo "missing staged source directory: $SRC" >&2; exit 1; }
 bst_verify_identity_file "$BST_BUILD_IDENTITY_FILE" "$SYSTEM_IMG"
 [ "${1:-}" != "--check" ] || {

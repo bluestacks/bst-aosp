@@ -1,8 +1,8 @@
 # 架构决策记录（ADR）—— bst-aosp Android 13→16 Guest 升级
 
 > 状态：活跃。AOSP16 development 已在 cont.101 形成绿基线；初始
-> promotion 已在 cont.106 完成 Android-16 7/7 验证；当前为
-> Android-16 mainline maintenance。
+> promotion 曾在 cont.106 完成 Android-16 7/7 验证，但 PR #1 已关闭；
+> 当前重做遗漏审计、Windows 产品切换和 target-only 验证。
 
 ## 1. 升级目标
 
@@ -33,27 +33,29 @@
 - **图形驱动可使用 mac 分支 `bst-v5.21.700-nxt_mac2` 的代码构建**（跨平台）。
 - registry 按 `platform`(win/mac/both) + `unify_group` 组织；有意识统一两端，特有定制加平台区分。
 
-### 4.1 统一板 `device/bst/qvirt`（主线 · 已确认）
+### 4.1 Windows 产品 `android_x86_64`（当前决策）
 
-两端共用 BlueStacks 自定义板 `device/bst/qvirt`，**同一份板源**，x86_64 / arm64 **各自定制**（BoardConfig / product mk）：
+Windows Android-16 使用上游产品入口
+`device/generic/x86_64/android_x86_64.mk`：
 
 | 平台 | product | arch |
 |---|---|---|
-| win | `bst_x86_64` | x86_64 |
-| mac | `bst_arm64` | arm64 |
+| win | `android_x86_64` | x86_64 |
+| mac | 未定；单独适配 | arm64 |
 
-- 依据：两端虚拟化均实现 qvirt 设备模型（mac `qvm`；win `hd/Source/{vmsg,hst,gr}`）；`hardware/bst/*` HAL 两端都有。
-- 共享：`device.mk` / `init.bst.rc` / `fstab.bst` 等 arch 无关配置。
-- 差异：BoardConfig、product mk、arch 相关 HAL/内核驱动。
+- `device/bst/qvirt`、`bst_x86_64` 和 `bst_arm64` 不属于当前主线产品定义。
+- BST 运行时包、图形属性和产品排除项落在
+  `device/generic/x86_64/android_x86_64.mk`。
+- 共享 framework/system 定制仍可跨平台复用；产品和 arch 配置不再强制统一。
 
 ### 4.2 Boot 路径回归决策（2026-07-15）
 
 | 项 | 内容 |
 |---|---|
 | M1 boot 实际路径 | `device/generic/common` + `device/generic/x86_64`，lunch `android_x86_64-trunk_staging-eng` |
-| 主线目标 | 统一板 `device/bst/qvirt` |
-| Phase 1 动作 | 把 booted generic overlay **并入 qvirt**，产出 `bst_x86_64`；与 mac `bst_arm64` 对齐 |
-| 风险 | 迁移可能打破已绿 boot → G1 必须以 Layer 2 boot 回归 oracle 为 gate，不过则 escalate |
+| 原主线目标 | 统一板 `device/bst/qvirt`（已撤销） |
+| 当前动作 | 回到已启动过的 `android_x86_64` 产品入口，并迁回仍必要的产品配置 |
+| 风险 | 产品切换可能改变包、VINTF 和图形选择；必须重新跑 Layer 1、完整镜像和 Layer 2 oracle |
 
 证据：`patches/android-16/RESTORE.md`、`progress/android-16-boot-guide.md`。
 
@@ -75,7 +77,8 @@
 
 顺序：
 1. 双端 diff 出完整定制清单 + 统一/平台差异标注 + boot 存量映射（registry v2）。
-2. **Phase 1**：融合（临时 boot patch + 清单最小 patch）→ G1–G10（统一板最先）。
+2. **Phase 1**：融合（临时 boot patch + 清单最小 patch）→ G1–G10；历史
+   qvirt 决策保留作回溯，当前 Windows 产品为 `android_x86_64`。
 3. **Phase 2**：其余按优先级 + 关联分组；临时债真实修复。
 4. **mac**：基于同份代码收尾（不做独立验证）。
 

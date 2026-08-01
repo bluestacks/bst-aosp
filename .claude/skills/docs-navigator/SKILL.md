@@ -9,7 +9,7 @@ description: 在 bst-aosp 任何区域动手前找到对的文档——架构决
 
 ## 架构（仓库根）
 
-- **[architecture.md](../../../architecture.md)** — 完整架构决策记录。关键节：升级目标、组件角色、**统一板 qvirt + boot 路径回归决策（§4.2）**、验证策略、porting 顺序、host-guest 契约、风险。
+- **[architecture.md](../../../architecture.md)** — 完整架构决策记录。关键节：升级目标、组件角色、**Windows `android_x86_64` 当前板型与 qvirt 历史决策（§4.2）**、验证策略、porting 顺序、host-guest 契约、风险。
 - **[architecture-brief.md](../../../architecture-brief.md)** — 压缩版，先读它抓 gist。
 
 ## 验证
@@ -51,5 +51,5 @@ description: 在 bst-aosp 任何区域动手前找到对的文档——架构决
 - **当前 phase / 下一步** → SETUP-ROADMAP.md + phase1/phase2-port-plan.md。
 - **port 一个 patch-group** → patch-porting.md + `/port-patch`。
 - **如何验证** → validation-gate.md + instrumentation-and-tests.md。
-- **统一板 / qvirt 迁移** → architecture.md §4。
+- **Windows 板型 / qvirt 历史回溯** → architecture.md §4；当前 Windows 只使用 `android_x86_64`。
 - **动了 host 契约？** → host-guest-contract.md + progress/host-compat.md。

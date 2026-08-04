@@ -11,9 +11,14 @@ features from scratch.
   first-candidate validation and withdrawn publication identity.
 - [`rework-audit.md`](rework-audit.md): active omission review, structural
   corrections and new validation gates.
+- [`a13-authority-completion.md`](a13-authority-completion.md): current
+  code-level A13 authority review, newly restored patch groups and validation
+  debt after the previous PR was withdrawn.
 - [`timeline.md`](timeline.md): generated cont.103-cont.106 chronology.
 - [`patch-traceability.md`](patch-traceability.md): every archived patch mapped
   to registry and timeline evidence where available.
+- [`houdini16-integration.md`](houdini16-integration.md): restricted payload
+  identity, A13 native-bridge mapping, Android 16 decisions and validation gates.
 - [`../../android-16-patch-review/README.md`](../../android-16-patch-review/README.md):
   detailed code, necessity, performance, and risk review.
 
@@ -26,9 +31,12 @@ features from scratch.
 - Integration target: `bluestacks/android-16:aosp16-bst`.
 - Withdrawn root pull request:
   [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1).
-- Current reviewed pull request:
+- Withdrawn replacement pull request:
   [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2),
-  root `298403a`, ready to merge with no base conflict.
+  historical root `298403a`. Its build and boot evidence remains historical
+  evidence only.
+- Current local review root: `f0947d915915e45d69a683679895553780161a61`.
+  It has not been pushed, submitted as a replacement PR, or boot-validated.
 
 The promotion gate requires every submodule initialized, no detached projects,
 the root gitlink matching the reviewed component SHA, and every referenced SHA

@@ -1,0 +1,161 @@
+From 73ff2c7e6cd7ec615d632054c62ce8c2c7a41fdc Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Thu, 23 Nov 2023 16:34:35 +0800
+Subject: [PATCH 087/224] [A13] SystemUI customizations, changes includes- 1.
+ add icon hide list 2. hide notification section header 3. hide battery icon
+ view 4. hide brightness dialog view 5. hide mobile signal icon
+
+---
+ packages/SystemUI/res/layout/qs_panel.xml           |  1 +
+ .../status_bar_notification_section_header.xml      |  1 +
+ packages/SystemUI/res/values/config.xml             |  7 +++++--
+ .../android/systemui/battery/BatteryMeterView.java  |  4 +++-
+ .../systemui/statusbar/StatusBarMobileView.java     |  5 ++++-
+ .../android/systemui/tuner/TunerServiceImpl.java    | 13 ++++++++++++-
+ 6 files changed, 26 insertions(+), 5 deletions(-)
+
+diff --git a/packages/SystemUI/res/layout/qs_panel.xml b/packages/SystemUI/res/layout/qs_panel.xml
+index 1eb05bfd602d..dbd158639967 100644
+--- a/packages/SystemUI/res/layout/qs_panel.xml
++++ b/packages/SystemUI/res/layout/qs_panel.xml
+@@ -30,6 +30,7 @@
+         android:scrollbars="none"
+         android:clipChildren="false"
+         android:clipToPadding="false"
++        android:visibility="gone"
+         android:layout_weight="1">
+         <com.android.systemui.qs.QSPanel
+             android:id="@+id/quick_settings_panel"
+diff --git a/packages/SystemUI/res/layout/status_bar_notification_section_header.xml b/packages/SystemUI/res/layout/status_bar_notification_section_header.xml
+index c4d8d55f74e2..413d742f30d6 100644
+--- a/packages/SystemUI/res/layout/status_bar_notification_section_header.xml
++++ b/packages/SystemUI/res/layout/status_bar_notification_section_header.xml
+@@ -37,6 +37,7 @@
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:gravity="start|center_vertical"
++            android:visibility="gone"
+             android:layout_weight="1">
+ 
+             <TextView
+diff --git a/packages/SystemUI/res/values/config.xml b/packages/SystemUI/res/values/config.xml
+index 7d72598c34cf..057da30ce3d9 100644
+--- a/packages/SystemUI/res/values/config.xml
++++ b/packages/SystemUI/res/values/config.xml
+@@ -68,7 +68,6 @@
+ 
+     <!-- The default tiles to display in QuickSettings -->
+     <string name="quick_settings_tiles_default" translatable="false">
+-        internet,bt,flashlight,dnd,alarm,airplane,controls,wallet,rotation,battery,cast,screenrecord,mictoggle,cameratoggle,custom(com.android.permissioncontroller/.permission.service.SafetyCenterQsTileService)
+     </string>
+ 
+     <!-- The class path of the Safety Quick Settings Tile -->
+@@ -79,9 +78,13 @@
+     <!-- The minimum number of tiles to display in QuickSettings -->
+     <integer name="quick_settings_min_num_tiles">6</integer>
+ 
++     <!-- BlacklIstIcon List-->
++     <string name="icon_black_list" translatable="false">
++          rotate,volume,airplane,zen,alarm_clock,headset,bluetooth,managed_profile,cast,hotspot,mobile,ethernet,wifi,battery
++     </string>
++
+     <!-- Tiles native to System UI. Order should match "quick_settings_tiles_default" -->
+     <string name="quick_settings_tiles_stock" translatable="false">
+-        internet,bt,flashlight,dnd,alarm,airplane,controls,wallet,rotation,battery,cast,screenrecord,mictoggle,cameratoggle,location,hotspot,inversion,saver,dark,work,night,reverse,reduce_brightness,qr_code_scanner,onehanded,color_correction,dream
+     </string>
+ 
+     <!-- The tiles to display in QuickSettings -->
+diff --git a/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java b/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java
+index 03d999f697d0..eca34aedb936 100644
+--- a/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java
++++ b/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java
+@@ -37,6 +37,7 @@ import android.util.AttributeSet;
+ import android.util.TypedValue;
+ import android.view.Gravity;
+ import android.view.LayoutInflater;
++import android.view.View;
+ import android.view.ViewGroup;
+ import android.widget.ImageView;
+ import android.widget.LinearLayout;
+@@ -118,6 +119,7 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
+ 
+         mBatteryIconView = new ImageView(context);
+         mBatteryIconView.setImageDrawable(mDrawable);
++        mBatteryIconView.setVisibility(View.INVISIBLE);
+         final MarginLayoutParams mlp = new MarginLayoutParams(
+                 getResources().getDimensionPixelSize(R.dimen.status_bar_battery_icon_width),
+                 getResources().getDimensionPixelSize(R.dimen.status_bar_battery_icon_height));
+@@ -330,7 +332,7 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
+                 (mShowPercentAvailable && systemSetting && mShowPercentMode != MODE_OFF)
+                 || mShowPercentMode == MODE_ON
+                 || mShowPercentMode == MODE_ESTIMATE;
+-        shouldShow = shouldShow && !mBatteryStateUnknown;
++        shouldShow = false;//shouldShow && !mBatteryStateUnknown;
+ 
+         if (shouldShow) {
+             if (!showing) {
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/StatusBarMobileView.java b/packages/SystemUI/src/com/android/systemui/statusbar/StatusBarMobileView.java
+index fdad101ae0f6..51f48c4e44d3 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/StatusBarMobileView.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/StatusBarMobileView.java
+@@ -162,11 +162,14 @@ public class StatusBarMobileView extends BaseStatusBarFrameLayout implements Dar
+ 
+     private void initViewState() {
+         setContentDescription(mState.contentDescription);
+-        if (!mState.visible || mForceHidden) {
++        mMobileGroup.setVisibility(View.GONE);
++        /*
++        if (!mState.visible) {
+             mMobileGroup.setVisibility(View.GONE);
+         } else {
+             mMobileGroup.setVisibility(View.VISIBLE);
+         }
++        */
+         mMobileDrawable.setLevel(mState.strengthId);
+         if (mState.typeId > 0) {
+             mMobileType.setContentDescription(mState.typeContentDescription);
+diff --git a/packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java b/packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java
+index b23d870fb82f..6598cca7e5f1 100644
+--- a/packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java
+@@ -28,6 +28,7 @@ import android.os.Handler;
+ import android.os.HandlerExecutor;
+ import android.os.Looper;
+ import android.os.UserManager;
++import android.os.SystemProperties;
+ import android.provider.Settings;
+ import android.provider.Settings.Secure;
+ import android.text.TextUtils;
+@@ -71,7 +72,8 @@ public class TunerServiceImpl extends TunerService {
+             QSTileHost.TILES_SETTING,
+             Settings.Secure.DOZE_ALWAYS_ON,
+             Settings.Secure.MEDIA_CONTROLS_RESUME,
+-            Settings.Secure.MEDIA_CONTROLS_RECOMMENDATION
++            Settings.Secure.MEDIA_CONTROLS_RECOMMENDATION,
++            StatusBarIconController.ICON_HIDE_LIST
+     };
+ 
+     private final Observer mObserver = new Observer();
+@@ -125,6 +127,7 @@ public class TunerServiceImpl extends TunerService {
+                 reregisterAll();
+             }
+         };
++        initIconHideList();
+         mUserTracker.addCallback(mCurrentUserTracker,
+                 new HandlerExecutor(mainHandler));
+     }
+@@ -162,6 +165,14 @@ public class TunerServiceImpl extends TunerService {
+         setValue(TUNER_VERSION, newVersion);
+     }
+ 
++    private void initIconHideList() {
++        String value = mContext.getResources().getString(R.string.icon_black_list);//SystemProperties.getInt("bst.config.modify_statusbar", 1) > 0 ? mContext.getResources().getString(R.string.icon_black_list) : null;
++        ArraySet<String> iconHideList = StatusBarIconController.getIconHideList(mContext, value);
++        Settings.Secure.putStringForUser(mContentResolver,
++                        StatusBarIconController.ICON_HIDE_LIST,
++                        TextUtils.join(",", iconHideList), mCurrentUser);
++    }
++
+     @Override
+     public String getValue(String setting) {
+         return Settings.Secure.getStringForUser(mContentResolver, setting, mCurrentUser);

@@ -1,0 +1,42 @@
+From eee7124f21cec5d3cad6c6861f145c57445ce856 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 19:25:47 +0800
+Subject: [PATCH] [A16] Restore efibootmgr for installer
+
+---
+ src/Android.bp | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+ create mode 100644 src/Android.bp
+
+diff --git a/src/Android.bp b/src/Android.bp
+new file mode 100644
+index 0000000..23b3abd
+--- /dev/null
++++ b/src/Android.bp
+@@ -0,0 +1,23 @@
++cc_binary {
++    name: "efibootmgr",
++
++    srcs: [
++        "efi.c",
++        "efibootmgr.c",
++        "unparse_path.c",
++    ],
++    local_include_dirs: ["include"],
++    static_libs: ["libefivar"],
++
++    cflags: [
++        "-Werror",
++        "-Wall",
++        "-Wextra",
++        "-Wsign-compare",
++        "-Wstrict-aliasing",
++        "-D_FILE_OFFSET_BITS=64",
++        "-D_GNU_SOURCE",
++        "-DEFIBOOTMGR_VERSION=\"17\"",
++        "-DDEFAULT_LOADER=\"\\\\elilo.efi\"",
++    ],
++}
+-- 
+2.34.1
+

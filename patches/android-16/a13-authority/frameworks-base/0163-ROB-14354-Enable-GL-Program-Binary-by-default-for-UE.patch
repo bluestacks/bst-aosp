@@ -1,0 +1,232 @@
+From 8d249c198b3e44662ecf78106da288016d4e6077 Mon Sep 17 00:00:00 2001
+From: jammy <jammy@bluestacks.com>
+Date: Wed, 5 Feb 2025 18:03:16 +0800
+Subject: [PATCH 163/224] ROB-14354: Enable GL Program Binary by default for
+ UE5 games
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   |  30 ++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |   2 +
+ .../server/BstFilterAppsService.java          | 140 ++++++++++++++++++
+ 3 files changed, 172 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index cb0e9921de76..6b78ef5a6831 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1860,4 +1860,34 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isUnreal5App(String pkgName)
++    {
++        try {
++            return mService.isUnreal5App(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
++    /**
++     * @hide
++     */
++    public boolean isUE5PBDisabled(String pkgName)
++    {
++        try {
++            return mService.isUE5PBDisabled(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index a44409b591bb..0c42266f0414 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -120,4 +120,6 @@ interface IBstFilterAppsService
+     boolean isHardKeyBoard(String pkgName);
+     boolean isIntelAutoGLFlushApp(String pkgName);
+     boolean isRotateDisabled(String pkgName);
++    boolean isUnreal5App(String pkgName);
++    boolean isUE5PBDisabled(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 019eef0c9d82..41c5041e172b 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -193,6 +193,8 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mHardKeyBoardAppList = new TreeSet<String>();
+     private Set<String>           mIntelAutoGLFlushAppList = new TreeSet<String>();
+     private Set<String>           mRotateDisabledAppList = new TreeSet<String>();
++    private Map<String, Boolean>  mUnreal5AppMap = new HashMap<String, Boolean>();
++    private Set<String>           mUE5PBDisabledAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2643,6 +2645,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mRotateDisabledAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("UE5PBDisabled")) {
++                                    synchronized (mUE5PBDisabledAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mUE5PBDisabledAppList \n");
++                                        mUE5PBDisabledAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mUE5PBDisabledAppList \n");
++                                            mUE5PBDisabledAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mUE5PBDisabledAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3350,6 +3368,16 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mRotateDisabledAppList.clear();
+         }
+ 
++        synchronized (mUnreal5AppMap)
++        {
++            mUnreal5AppMap.clear();
++        }
++
++        synchronized (mUE5PBDisabledAppList)
++        {
++            mUE5PBDisabledAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7584,4 +7612,116 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         if (DEBUG) Slog.d(TAG, pkgName + " is not in mRotateDisabledAppList App List\n");
+         return false;
+     }
++
++    private final boolean searchUnreal5Lib(String path)
++    {
++        File file = new File(path);
++        File[] subFiles = file.listFiles();
++        for (File sub : subFiles)
++        {
++            String subname = sub.getName();
++            if (sub.isDirectory())
++            {
++                String subpath = path + "/" + subname;
++                if(searchUnreal5Lib(subpath))
++                    return true;
++            }
++            else
++            {
++                if (subname.equals("libUnreal.so"))
++                {
++                    if (DEBUG) Slog.d(TAG, "This is a Unreal5 game: " + path + "\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
++    private final String composeApkLibPath(String path, String pkg) {
++        File file = new File(path);
++        File[] subFiles = file.listFiles();
++        for (File sub : subFiles) {
++            if (sub.isDirectory()) {
++                String subname = sub.getName();
++                String subpath = path + "/" + subname;
++                File file2 = new File(subpath);
++                File[] subFiles2 = file2.listFiles();
++                for (File sub2 : subFiles2) {
++                    String subname2 = sub2.getName();
++                    if (subname2.startsWith(pkg)){
++                        String subpath2 = subpath + "/" + subname2 + "/" + "lib";
++                        return subpath2;
++                    }
++                }
++            }
++        }
++        return null;
++    }
++
++    private final boolean checkIfUnreal5Game(String pkgName)
++    {
++        if(pkgName == null)
++            return false;
++        String apkpath = null;
++        int index = pkgName.indexOf(":psoprogramservice");
++        if (index > 0)
++        {
++            String subPkgName = pkgName.substring(0, index);
++            apkpath = composeApkLibPath("/data/app", subPkgName);
++        }
++        else
++        {
++            apkpath = composeApkLibPath("/data/app", pkgName);
++        }
++        if(apkpath == null)
++            return false;
++        return searchUnreal5Lib(apkpath);
++    }
++
++    /**
++     * @hide
++     */
++    public boolean isUnreal5App(String pkgName)
++    {
++        boolean res = false;
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " is Unreal5 App\n");
++        synchronized (mUnreal5AppMap)
++        {
++            if (mUnreal5AppMap.containsKey(pkgName))
++                return mUnreal5AppMap.get(pkgName);
++            else
++            {
++                res = checkIfUnreal5Game(pkgName);
++                mUnreal5AppMap.put(pkgName, res);
++            }
++        }
++        return res;
++    }
++
++    /**
++     * @hide
++     */
++    public boolean isUE5PBDisabled(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in UE5PBDisabled app list\n");
++        initLists();
++        synchronized (mUE5PBDisabledAppList)
++        {
++            if (mUE5PBDisabledAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mUE5PBDisabledAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in UE5PBDisabled App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

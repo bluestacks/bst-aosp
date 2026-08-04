@@ -2528,3 +2528,71 @@ D8+D9 build 到 48% 卡在 **pagefusion**（`frameworks/base/cmds/pagefusion/Pag
 - `g1_boot_verify.ps1`：**7/7 @123s**（system_mounted/init_second/odsign/boot_completed/activity/ready/hide_boot）。
 - guest 86.6 秒 `System now ready`；92.1 秒宿主 `Player state: ready` 并 `fUiHideBootProgressBar`；112.4 秒 launcher `com.uncube.launcher3/HomeActivity` displayed。
 - 剩余非阻塞噪声：camera、media C2、weaver/secure-element 缺服务，fs-verity 在 Data transport endpoint 上不支持，以及部分 VINTF AIDL 查询告警；均未阻塞 Ready/launcher。
+
+## 2026-08-05 (cont.107) — A13 权威逐提交补漏；当前仅 Layer 1
+
+用户重新明确：最终定制权威是 `~/app-player/android-13:bst-v5.22.210`，
+`~/aosp16` 仅作只读实现/历史验证参考。此前以 AOSP16 绿线为边界而拒绝的
+Android 13 产品语义必须重新逐提交审查；移植仍只写入、构建
+`~/android-16` 的 `android_x86_64-trunk_staging-eng`。
+
+本轮已确认并补齐的真实遗漏：
+
+- `frameworks/native`：绝对鼠标、atrace 权限、managed-su/dumpstate、完整
+  dumpstate diagnostics、FPS scheduler/SurfaceFlinger 传播。
+- `frameworks/av`：servicemanager readiness、camera HAL 帧率 fallback、H.263
+  16CIF 上限、swcodec SP-HAL lookup；同时完成全部 21 个 A13 commit 的代码
+  判定，拒绝无必要的 CFI 降级。
+- `hardware/interfaces`：恢复 framebuffer HWC 的 `bst.max_fps` polling、
+  VSYNC_PERIOD 更新和 refresh callback，并修正 A13 拼写、空回调和锁边界。
+- `external/selinux`：Android userspace 报告 SELinux disabled，host 行为保持
+  上游；组件 `62b46b73374c`，根 `8dc66a08a561`。
+- `system/security`：保留 `prng_seeder` 二进制/测试但不安装 early-init rc；
+  组件 `6443d21a351b`，根 `53eb20abecc1`。
+- `packages/modules/Connectivity`：此前只合入 static IP，本轮按三个
+  patch-group 补齐：network presentation（组件 `2f0481f305ca`，根
+  `36afb8e5b225`）、DSCP unroll（组件 `ce5d67fa66f1`，根
+  `01328ab7feb1`）、`nxt_cn` captive portal default（组件
+  `b3f8ca2c95e4`，根 `6f242cafabcd`）。
+
+验证证据：
+
+- SELinux：`libselinux/init/installd` build；host tests 32/64 各 12/12；
+  target 32/64 反汇编均返回 0。
+- PRNG：binary + 32/64 test build；安装树中 binary 存在、rc 不存在。
+- Connectivity：`FrameworksNetTests` + `ConnectivityUnitTestsLib` +
+  `dscpPolicy.o` build；两个具名测试进入 test jar；APEX/system BPF 对象
+  SHA-256 相同。
+- 所有 Android-16 提交标题使用 `[A16]`，组件分支保持
+  `aosp16-bst-merge`，根仅剩既有 `.gitignore` Houdini 修改未提交。
+
+**当前边界**：根 HEAD `6f242cafabcd7271ecd78cc72d99498fbf988da5`；
+没有执行 full `m droid`、stage/package、Windows deploy 或 boot oracle；没有
+push/PR。cont.106 与撤回 PR 的 7/7 只能作历史证据，不能证明当前树可启动。
+完整 review、性能/安全评估与 artifact hashes 见
+`docs/development-history/android16-merge/a13-authority-completion.md`。
+
+## 2026-08-05 (cont.108) — system/vold quota 补漏与受限二进制证据收敛
+
+继续按 A13 最终树逐项目核对。Bluetooth、Wifi、NetworkStack、Telephony、
+DownloadProvider、libcore、Launcher3、LatinIME、libhardware、libxml2 与 Skia
+均已在 Android-16 存在独立 `[A16]` 适配提交；旧 coverage 报告绑定旧根 SHA，
+其低文本覆盖不能作为遗漏结论。
+
+发现 `system/vold` 提交
+`fb129833c9b27047bd529da67ce56fe248969075` 的 project-quota no-op 语义在
+AOSP16 和 Android-16 均缺失。按最终 A13 行为将 `SetQuotaInherit()` 与
+`SetQuotaProjectId()` 改为成功返回，不保留死 `#if 0` 代码。组件提交
+`bf57a99ee447bc089e29ff52ac3624fae61a5fde`，根提交
+`f0947d915915e45d69a683679895553780161a61`。
+
+验证：`m vold vold_prepare_subdirs vold_tests -j8` 完成 607/607；x86_64
+对象反汇编显示两个 helper 均为 `xor eax,eax; ret`。只完成编译和产物回读，
+未执行 guest 测试、full `m droid`、打包、部署或 boot oracle。
+
+Widevine A13 authority patch 同时包含源码与 1,250,188-byte prebuilt。审查仓
+仅保留一份 `--no-binary` 代码 patch，并在
+`patches/android-16/a13-authority/restricted-binary-evidence.json` 记录 source/
+target commit、Git blob、size、SHA-256 和 publication gate；两份 stable
+patch-id 相同的内嵌二进制导出不进入 Git。目标 `frameworks/av` 仍保留 A13
+权威 blob，本次只减少审查证据重复，不撤销产品移植。

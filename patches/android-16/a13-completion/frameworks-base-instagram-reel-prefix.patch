@@ -1,0 +1,20 @@
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index 80b39715cdb0..7d63b4f4b954 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -2113,13 +2113,14 @@ static void UpdateInstagramReelMediaProperty(const std::string& package_name) {
+   if (package_name != "com.instagram.android") {
+     return;
+   }
++  android::base::SetProperty("bst.config.instagram_reel_media", "");
+   DIR* directory = opendir("/data/data/com.instagram.android/databases");
+   if (directory == nullptr) {
+     return;
+   }
+   while (dirent* entry = readdir(directory)) {
+     if (strstr(entry->d_name, "reel_media") != nullptr) {
+-      android::base::SetProperty("instagram_reel_media", "1");
++      android::base::SetProperty("bst.config.instagram_reel_media", "1");
+       break;
+     }
+   }

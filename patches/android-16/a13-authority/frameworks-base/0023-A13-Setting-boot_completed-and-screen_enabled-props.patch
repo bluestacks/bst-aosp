@@ -1,0 +1,36 @@
+From 64e22bb49da92d0f40d63f98cc31556adfe09562 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Wed, 27 Sep 2023 13:42:47 +0800
+Subject: [PATCH 023/224] [A13] Setting boot_completed and screen_enabled props
+
+---
+ .../java/com/android/server/am/ActivityManagerService.java     | 1 +
+ .../java/com/android/server/wm/ActivityTaskManagerService.java | 3 +++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 1b538ad1f144..a84f0669f1ca 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -5146,6 +5146,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+             }
+             // Tell anyone interested that we are done booting!
+             SystemProperties.set("sys.boot_completed", "1");
++            SystemProperties.set("bst.config.boot_completed", "1");
+ 
+             // And trigger dev.bootcomplete if we are not showing encryption progress
+             if (!"trigger_restart_min_framework".equals(VoldProperties.decrypt().orElse(""))
+diff --git a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
+index 6a3293c7afad..49e132cda3d3 100644
+--- a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
++++ b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
+@@ -5827,6 +5827,9 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
+             synchronized (mGlobalLock) {
+                 updateEventDispatchingLocked(booted);
+             }
++
++            Slog.d(TAG, "Setting bst screen enabled flag");
++            SystemProperties.set("bst.config.screen_enabled", "1");
+         }
+ 
+         @Override

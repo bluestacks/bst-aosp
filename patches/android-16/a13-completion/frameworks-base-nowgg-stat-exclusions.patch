@@ -1,0 +1,27 @@
+From 35847c26966d341195d3c30315c54323c622fc87 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Mon, 3 Aug 2026 18:43:07 +0800
+Subject: [PATCH] [A16] Exclude now.gg services from detection stats
+
+---
+ .../java/com/android/server/pm/PackageManagerService.java     | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index ca9d24ddbe55..a66ec6c5cbb5 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -3007,6 +3007,10 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+         }
+ 
+         if ("android.hardware.nowgg".equalsIgnoreCase(name)) {
++            if ("gg.now.accounts".equalsIgnoreCase(callingPackage)
++                    || "gg.now.billing.service2".equalsIgnoreCase(callingPackage)) {
++                return true;
++            }
+             if (BST_DEBUG) {
+                 Log.d(TAG, "Package " + callingPackage + " queried for feature " + name);
+             }
+-- 
+2.34.1
+

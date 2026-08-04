@@ -1,0 +1,34 @@
+From 648e475b2dbba35f1fba4fc95bf5d3d3d140fdb7 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 15:02:04 +0800
+Subject: [PATCH] [A16] Restore BlueStacks navigation bar policy
+
+---
+ services/core/java/com/android/server/wm/DisplayPolicy.java | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayPolicy.java b/services/core/java/com/android/server/wm/DisplayPolicy.java
+index b05de11ffc61..1e27d066a529 100644
+--- a/services/core/java/com/android/server/wm/DisplayPolicy.java
++++ b/services/core/java/com/android/server/wm/DisplayPolicy.java
+@@ -179,6 +179,9 @@ public class DisplayPolicy {
+     /** Use the transit animation in style resource (see {@link #selectAnimation}). */
+     static final int ANIMATION_STYLEABLE = 0;
+ 
++    private static final boolean BST_HIDE_NAVIGATION_BAR =
++            SystemProperties.getInt("bst.enable_navigationbar", 0) == 0;
++
+     private static final int SHOW_TYPES_FOR_SWIPE = Type.statusBars() | Type.navigationBars();
+     private static final int SHOW_TYPES_FOR_PANIC = Type.navigationBars();
+ 
+@@ -690,6 +693,7 @@ public class DisplayPolicy {
+             mHasStatusBar = false;
+             mHasNavigationBar = mDisplayContent.isSystemDecorationsSupported();
+         }
++        mHasNavigationBar = !BST_HIDE_NAVIGATION_BAR;
+ 
+         mRefreshRatePolicy = new RefreshRatePolicy(mService,
+                 mDisplayContent.getDisplayInfo(),
+-- 
+2.34.1
+

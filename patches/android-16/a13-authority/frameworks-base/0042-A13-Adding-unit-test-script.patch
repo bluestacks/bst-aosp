@@ -1,0 +1,85 @@
+From 35830d67f34a69b64f038b686390327e3f09c73c Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 26 Oct 2023 13:52:57 +0800
+Subject: [PATCH 042/224] [A13] Adding unit-test script
+
+This script is for find mismatch in native and java bst services
+---
+ unit-test.sh | 68 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 68 insertions(+)
+ create mode 100755 unit-test.sh
+
+diff --git a/unit-test.sh b/unit-test.sh
+new file mode 100755
+index 000000000000..dac4cc5426b2
+--- /dev/null
++++ b/unit-test.sh
+@@ -0,0 +1,68 @@
++#!/bin/bash
++ANDROID_HOME=$1
++OUT_PATH=$2
++DATE=`date +%d-%m-%y-%H-%M`
++SERVICE_NAME=(IBstFilterAppsService IBstUtilsService)
++len=${#SERVICE_NAME[@]}
++AIDL_INPUT_FILE_PATH="frameworks/base/core/java/com/bluestacks/os"
++AIDL_EXECUTE="$OUT_PATH/host/linux-x86/bin/aidl"
++if [ -z "$ANDROID_HOME" ]; then
++    echo "ANDROID_HOME not set, exiting."
++    exit 1
++fi
++
++die()
++{
++	echo -e "$@"
++	exit 1
++}
++
++die_if_error()
++{
++	if [ $? -ne 0 ]; then
++		die "$@"
++	fi
++}
++
++cd $ANDROID_HOME
++die_if_error "$ANDROID_HOME dir not present"
++
++for (( i=0; i<$len; i++ )); do
++    AIDL_INPUT_FILE="$AIDL_INPUT_FILE_PATH/${SERVICE_NAME[i]}.aidl"
++    AIDL_OUTPUT_FILE="/tmp/${SERVICE_NAME[$i]}.java-$DATE"
++    HEADER_FILE="$ANDROID_HOME/frameworks/native/include/binder/${SERVICE_NAME[$i]}.h"
++    COMPARE_FILE="/tmp/${SERVICE_NAME[$i]}.h-$DATE"
++
++    CMD_TO_EXECUTE="$AIDL_EXECUTE -d/tmp/${SERVICE_NAME[i]}.P -b  -Iframeworks/base -Iframeworks/base/src -Isystem/update_engine/binder_bindings -Iframeworks/base/core/java -Iframeworks/base/graphics/java -Iframeworks/base/location/java -Iframeworks/base/media/java -Iframeworks/base/media/mca/effect/java -Iframeworks/base/media/mca/filterfw/java -Iframeworks/base/media/mca/filterpacks/java -Iframeworks/base/drm/java -Iframeworks/base/opengl/java -Iframeworks/base/sax/java -Iframeworks/base/telecomm/java -Iframeworks/base/telephony/java -Iframeworks/base/wifi/java -Iframeworks/base/keystore/java -Iframeworks/base/rs/java -Iframeworks/native/aidl/binder -Iframeworks/av/camera/aidl -Iframeworks/native/aidl/gui -Isystem/netd/server/binder -Iframeworks/base/core/java -Iframeworks/base/graphics/java -Iframeworks/base/location/java -Iframeworks/base/media/java -Iframeworks/base/media/mca/effect/java -Iframeworks/base/media/mca/filterfw/java -Iframeworks/base/media/mca/filterpacks/java -Iframeworks/base/drm/java -Iframeworks/base/opengl/java -Iframeworks/base/sax/java -Iframeworks/base/telecomm/java -Iframeworks/base/telephony/java -Iframeworks/base/wifi/java -Iframeworks/base/keystore/java -Iframeworks/base/rs/java $AIDL_INPUT_FILE $AIDL_OUTPUT_FILE"
++
++    $CMD_TO_EXECUTE
++    die_if_error "failed to execute aidl tool"
++
++    sed -i '/static final int/!d' $AIDL_OUTPUT_FILE
++    sed -i 's/    static final int //g' $AIDL_OUTPUT_FILE
++    sed -i 's/(android.os.IBinder./IBinder::/g' $AIDL_OUTPUT_FILE
++    sed -i 's/TRANSACTION_/T_/g' $AIDL_OUTPUT_FILE
++    sed -i 's/);//g' $AIDL_OUTPUT_FILE
++
++    cp $HEADER_FILE $COMPARE_FILE
++    die_if_error "failed to copy $HEADER_FILE"
++
++    sed -i '/IBinder::/!d' $COMPARE_FILE
++    sed -i 's/,//g' $COMPARE_FILE
++    sed -i 's/^[ \t]*//' $COMPARE_FILE
++
++    cmp --verbose $AIDL_OUTPUT_FILE $COMPARE_FILE
++    if [ $? -ne 0 ]; then
++        # setting set -x to get just these logs on screen
++        set -x
++        echo "mismatch in $AIDL_INPUT_FILE $HEADER_FILE. check order of functions in these files"
++        die 'mismatch_in_aidl_and_header_file'
++    fi
++
++   rm $COMPARE_FILE
++   rm $AIDL_OUTPUT_FILE
++
++    # setting set -x to get just these logs on screen
++done
++set -x
++echo "Success: aidl files from IBst services are matched"

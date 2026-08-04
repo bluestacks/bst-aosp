@@ -1,0 +1,106 @@
+From 6eeda468c57ede6e1f5f5b220f01aa8de3ecabe0 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Mon, 3 Aug 2026 18:48:28 +0800
+Subject: [PATCH] [A16] Hide BlueStacks running services from apps
+
+---
+ .../com/android/server/am/ActiveServices.java | 28 +++++++++++++++++++
+ .../server/am/ActivityManagerConstants.java   |  2 +-
+ 2 files changed, 29 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/ActiveServices.java b/services/core/java/com/android/server/am/ActiveServices.java
+index 5016e9d62c6f..9de2d01ba70f 100644
+--- a/services/core/java/com/android/server/am/ActiveServices.java
++++ b/services/core/java/com/android/server/am/ActiveServices.java
+@@ -219,6 +219,7 @@ import android.stats.devicepolicy.DevicePolicyEnums;
+ import android.text.TextUtils;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.EventLog;
+ import android.util.Pair;
+ import android.util.PrintWriterPrinter;
+@@ -7747,6 +7748,9 @@ public final class ActiveServices {
+         ArrayList<ActivityManager.RunningServiceInfo> res
+                 = new ArrayList<ActivityManager.RunningServiceInfo>();
+ 
++        final String callingPackage = callingUid >= Process.FIRST_APPLICATION_UID
++                ? BstUtils.getAppNameFromPid(mAm.mInjector.getCallingPid()) : null;
++
+         final long ident = mAm.mInjector.clearCallingIdentity();
+         try {
+             if (canInteractAcrossUsers) {
+@@ -7755,12 +7759,18 @@ public final class ActiveServices {
+                     ArrayMap<ComponentName, ServiceRecord> alls = getServicesLocked(users[ui]);
+                     for (int i=0; i<alls.size() && res.size() < maxNum; i++) {
+                         ServiceRecord sr = alls.valueAt(i);
++                        if (shouldHideBstRunningService(sr, callingUid, callingPackage)) {
++                            continue;
++                        }
+                         res.add(makeRunningServiceInfoLocked(sr));
+                     }
+                 }
+ 
+                 for (int i=0; i<mRestartingServices.size() && res.size() < maxNum; i++) {
+                     ServiceRecord r = mRestartingServices.get(i);
++                    if (shouldHideBstRunningService(r, callingUid, callingPackage)) {
++                        continue;
++                    }
+                     ActivityManager.RunningServiceInfo info =
+                             makeRunningServiceInfoLocked(r);
+                     info.restarting = r.nextRestartTime;
+@@ -7772,6 +7782,10 @@ public final class ActiveServices {
+                 for (int i=0; i<alls.size() && res.size() < maxNum; i++) {
+                     ServiceRecord sr = alls.valueAt(i);
+ 
++                    if (shouldHideBstRunningService(sr, callingUid, callingPackage)) {
++                        continue;
++                    }
++
+                     if (allowed || (sr.app != null && sr.app.uid == callingUid)) {
+                         res.add(makeRunningServiceInfoLocked(sr));
+                     }
+@@ -7779,6 +7793,9 @@ public final class ActiveServices {
+ 
+                 for (int i=0; i<mRestartingServices.size() && res.size() < maxNum; i++) {
+                     ServiceRecord r = mRestartingServices.get(i);
++                    if (shouldHideBstRunningService(r, callingUid, callingPackage)) {
++                        continue;
++                    }
+                     if (r.userId == userId
+                         && (allowed || (r.app != null && r.app.uid == callingUid))) {
+                         ActivityManager.RunningServiceInfo info =
+@@ -7795,6 +7812,17 @@ public final class ActiveServices {
+         return res;
+     }
+ 
++    private static boolean shouldHideBstRunningService(ServiceRecord service, int callingUid,
++            @Nullable String callingPackage) {
++        if (service.processName == null || !service.processName.startsWith("com.bluestacks")
++                || callingUid < Process.FIRST_APPLICATION_UID || callingPackage == null
++                || callingPackage.startsWith("com.bluestacks")) {
++            return false;
++        }
++        return "com.android.vending".equalsIgnoreCase(callingPackage)
++                || !callingPackage.startsWith("com.android");
++    }
++
+     public PendingIntent getRunningServiceControlPanelLocked(ComponentName name) {
+         int userId = UserHandle.getUserId(mAm.mInjector.getCallingUid());
+         ServiceRecord r = getServiceByNameLocked(name, userId);
+diff --git a/services/core/java/com/android/server/am/ActivityManagerConstants.java b/services/core/java/com/android/server/am/ActivityManagerConstants.java
+index e639fd49a136..385611bd89a6 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerConstants.java
++++ b/services/core/java/com/android/server/am/ActivityManagerConstants.java
+@@ -314,7 +314,7 @@ final class ActivityManagerConstants extends ContentObserver {
+     /**
+      * Default value to {@link #SERVICE_TIMEOUT}.
+      */
+-    private static final long DEFAULT_SERVICE_TIMEOUT = 20 * 1000 * Build.HW_TIMEOUT_MULTIPLIER;
++    private static final long DEFAULT_SERVICE_TIMEOUT = 2 * 60 * 1000;
+ 
+     /**
+      * Default value to {@link #SERVICE_BACKGROUND_TIMEOUT}.
+-- 
+2.34.1
+

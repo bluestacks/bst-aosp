@@ -1,0 +1,32 @@
+From cbaef60a377306b55037e6320f728a538dc5bbec Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 31 Oct 2023 16:48:25 +0800
+Subject: [PATCH 052/224] [A13] [ROB-6795] Fixing Chat is not working properly
+ on few apps
+
+---
+ .../java/com/android/server/wm/DisplayContent.java    | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index 34244a36f892..43abf65a7b2e 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -2403,7 +2403,16 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+             }
+ 
+             if (device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC) {
+-                config.keyboard = Configuration.KEYBOARD_QWERTY;
++                /*
++                * ROB-6795, ROB-6863, ROB-6497, ROB-6653:
++                * The input field of some Unity versions cannot pop up the input method normally.
++                * The reason is that the input field component detects that there is a physical keyboard and does not pop up the input method
++                * (see the activateInputfieldInternal method in the unity engine inputfield.cs for the specific code location),
++                * so here changed to no physical keyboard, Makes the soft keyboard pop up normally.
++                * it will impact mService.mHardKeyboardAvailable, and will impact the process of shouldShowImeSwitcherLocked in InputMethodManagerService
++                */
++                //config.keyboard = Configuration.KEYBOARD_QWERTY;
++                config.keyboard = Configuration.KEYBOARD_NOKEYS;
+                 keyboardPresence |= presenceFlag;
+             }
+         }

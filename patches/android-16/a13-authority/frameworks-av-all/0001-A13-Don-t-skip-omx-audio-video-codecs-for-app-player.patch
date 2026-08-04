@@ -1,0 +1,50 @@
+From c830a22dc7b4eef5e651affd3740f6470417eb61 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Wed, 27 Sep 2023 15:41:36 +0800
+Subject: [PATCH 01/21] [A13] Don't skip omx audio & video codecs for
+ app-player
+
+---
+ media/libstagefright/omx/OMXStore.cpp | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/media/libstagefright/omx/OMXStore.cpp b/media/libstagefright/omx/OMXStore.cpp
+index 4827d9e056..ab285009a1 100644
+--- a/media/libstagefright/omx/OMXStore.cpp
++++ b/media/libstagefright/omx/OMXStore.cpp
+@@ -124,10 +124,15 @@ static bool isTV() {
+     return kIsTv;
+ }
+ 
++static bool isAppPlayerBooted() {
++    return android::base::GetIntProperty("bst.config.boot_completed", -1) == 1 ? true : false;
++}
++
+ void OMXStore::addPlugin(OMXPluginBase *plugin) {
+     Mutex::Autolock autoLock(mLock);
+ 
+     bool typeTV = isTV();
++    bool appPlayer = isAppPlayerBooted();
+     int firstApiLevel = getFirstApiLevel();
+ 
+     OMX_U32 index = 0;
+@@ -144,16 +149,16 @@ void OMXStore::addPlugin(OMXPluginBase *plugin) {
+             bool skip = false;
+             for (String8 role : roles) {
+                 if (role.find("video_decoder") != -1 || role.find("video_encoder") != -1) {
+-                    if (firstApiLevel >= __ANDROID_API_T__) {
++                    if (!appPlayer && firstApiLevel >= __ANDROID_API_T__) {
+                         skip = true;
+                         break;
+-                    } else if (!typeTV && firstApiLevel >= __ANDROID_API_S__) {
++                    } else if (!appPlayer && !typeTV && firstApiLevel >= __ANDROID_API_S__) {
+                         skip = true;
+                         break;
+                     }
+                 }
+                 if (role.find("audio_decoder") != -1 || role.find("audio_encoder") != -1) {
+-                    if (firstApiLevel >= __ANDROID_API_T__) {
++                    if (!appPlayer && firstApiLevel >= __ANDROID_API_T__) {
+                         skip = true;
+                         break;
+                     }

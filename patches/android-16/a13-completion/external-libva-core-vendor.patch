@@ -1,0 +1,43 @@
+From c474e2c752b20997902df1f1b500f0439a58b3a5 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 20:32:27 +0800
+Subject: [PATCH] [A16] Provide platform and vendor libva variants
+
+---
+ Android.bp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index ea3b60a..8225063 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -71,7 +71,7 @@ cc_library_headers {
+         "libva_gen_headers",
+     ],
+ 
+-    vendor: true,
++    vendor_available: true,
+     enabled: false,
+     arch: {
+         x86_64: {
+@@ -131,7 +131,7 @@ cc_library_shared {
+         },
+     },
+ 
+-    vendor: true,
++    vendor_available: true,
+     enabled: false,
+ }
+ 
+@@ -169,7 +169,7 @@ cc_library_shared {
+         "-Winvalid-pch",
+     ],
+ 
+-    vendor: true,
++    vendor_available: true,
+     enabled: false,
+     arch: {
+         x86_64: {
+-- 
+2.34.1
+

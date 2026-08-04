@@ -1,0 +1,301 @@
+From dad15bbbd29371ef74f714bdcd89eef51c632611 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 23:51:09 +0800
+Subject: [PATCH] [A16] Restore absolute mouse coordinates
+
+---
+ .../reader/mapper/CursorInputMapper.cpp       | 111 +++++++++++++++---
+ .../reader/mapper/CursorInputMapper.h         |  14 ++-
+ .../tests/CursorInputMapper_test.cpp          |  20 ++++
+ 3 files changed, 129 insertions(+), 16 deletions(-)
+
+diff --git a/services/inputflinger/reader/mapper/CursorInputMapper.cpp b/services/inputflinger/reader/mapper/CursorInputMapper.cpp
+index ec52d1076a..b9ee6ed6a1 100644
+--- a/services/inputflinger/reader/mapper/CursorInputMapper.cpp
++++ b/services/inputflinger/reader/mapper/CursorInputMapper.cpp
+@@ -20,6 +20,7 @@
+ 
+ #include "CursorInputMapper.h"
+ 
++#include <algorithm>
+ #include <optional>
+ 
+ #include <com_android_input_flags.h>
+@@ -71,6 +72,11 @@ CursorMotionAccumulator::CursorMotionAccumulator() {
+ 
+ void CursorMotionAccumulator::reset(InputDeviceContext& deviceContext) {
+     clearRelativeAxes();
++    const auto absXInfo = deviceContext.getAbsoluteAxisInfo(ABS_X);
++    const auto absYInfo = deviceContext.getAbsoluteAxisInfo(ABS_Y);
++    mAbsX = absXInfo ? absXInfo->minValue : 0;
++    mAbsY = absYInfo ? absYInfo->minValue : 0;
++    mMoved = false;
+ }
+ 
+ void CursorMotionAccumulator::clearRelativeAxes() {
+@@ -83,15 +89,29 @@ void CursorMotionAccumulator::process(const RawEvent& rawEvent) {
+         switch (rawEvent.code) {
+             case REL_X:
+                 mRelX = rawEvent.value;
++                mMoved = true;
+                 break;
+             case REL_Y:
+                 mRelY = rawEvent.value;
++                mMoved = true;
++                break;
++        }
++    } else if (rawEvent.type == EV_ABS) {
++        switch (rawEvent.code) {
++            case ABS_X:
++                mAbsX = rawEvent.value;
++                mMoved = true;
++                break;
++            case ABS_Y:
++                mAbsY = rawEvent.value;
++                mMoved = true;
+                 break;
+         }
+     }
+ }
+ 
+ void CursorMotionAccumulator::finishSync() {
++    mMoved = false;
+     clearRelativeAxes();
+ }
+ 
+@@ -211,6 +231,8 @@ CursorInputMapper::Parameters CursorInputMapper::computeParameters(
+     }
+ 
+     parameters.orientationAware = config.getBool("cursor.orientationAware").value_or(false);
++    parameters.hasAbsoluteAxes = parameters.mode == Parameters::Mode::POINTER &&
++            deviceContext.hasAbsoluteAxis(ABS_X) && deviceContext.hasAbsoluteAxis(ABS_Y);
+ 
+     parameters.hasAssociatedDisplay = false;
+     if (parameters.mode == Parameters::Mode::POINTER || parameters.orientationAware) {
+@@ -225,6 +247,8 @@ void CursorInputMapper::dumpParameters(std::string& dump) {
+                          toString(mParameters.hasAssociatedDisplay));
+     dump += StringPrintf(INDENT4 "Mode: %s\n", ftl::enum_string(mParameters.mode).c_str());
+     dump += StringPrintf(INDENT4 "OrientationAware: %s\n", toString(mParameters.orientationAware));
++    dump += StringPrintf(INDENT4 "HasAbsoluteAxes: %s\n",
++                         toString(mParameters.hasAbsoluteAxes));
+ }
+ 
+ std::list<NotifyArgs> CursorInputMapper::reset(nsecs_t when) {
+@@ -287,12 +311,38 @@ std::list<NotifyArgs> CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+     int32_t buttonsPressed = currentButtonState & ~lastButtonState;
+     int32_t buttonsReleased = lastButtonState & ~currentButtonState;
+ 
+-    float deltaX = mCursorMotionAccumulator.getRelativeX() * mXScale;
+-    float deltaY = mCursorMotionAccumulator.getRelativeY() * mYScale;
+-    bool moved = deltaX != 0 || deltaY != 0;
+-
+-    // Rotate delta according to orientation.
+-    rotateDelta(mOrientation, &deltaX, &deltaY);
++    float deltaX = 0;
++    float deltaY = 0;
++    float xCursorPosition = AMOTION_EVENT_INVALID_CURSOR_POSITION;
++    float yCursorPosition = AMOTION_EVENT_INVALID_CURSOR_POSITION;
++    bool moved = false;
++    const bool useAbsoluteAxes = mParameters.hasAbsoluteAxes &&
++            mParameters.mode == Parameters::Mode::POINTER && mRawAbsXInfo && mRawAbsYInfo;
++
++    if (useAbsoluteAxes) {
++        const float rawWidth = mRawAbsXInfo->maxValue - mRawAbsXInfo->minValue;
++        const float rawHeight = mRawAbsYInfo->maxValue - mRawAbsYInfo->minValue;
++        float normalizedX = rawWidth > 0
++                ? (mCursorMotionAccumulator.getAbsoluteX() - mRawAbsXInfo->minValue) / rawWidth
++                : 0;
++        float normalizedY = rawHeight > 0
++                ? (mCursorMotionAccumulator.getAbsoluteY() - mRawAbsYInfo->minValue) / rawHeight
++                : 0;
++        normalizedX = std::clamp(normalizedX, 0.0f, 1.0f);
++        normalizedY = std::clamp(normalizedY, 0.0f, 1.0f);
++        rotateAbsolute(mOrientation, &normalizedX, &normalizedY);
++        xCursorPosition = mBoundsInLogicalDisplay.left +
++                normalizedX * (mBoundsInLogicalDisplay.right - mBoundsInLogicalDisplay.left);
++        yCursorPosition = mBoundsInLogicalDisplay.top +
++                normalizedY * (mBoundsInLogicalDisplay.bottom - mBoundsInLogicalDisplay.top);
++        moved = mCursorMotionAccumulator.hasMoved();
++    } else {
++        deltaX = mCursorMotionAccumulator.getRelativeX() * mXScale;
++        deltaY = mCursorMotionAccumulator.getRelativeY() * mYScale;
++        moved = deltaX != 0 || deltaY != 0;
++        rotateDelta(mOrientation, &deltaX, &deltaY);
++        mPointerVelocityControl.move(when, &deltaX, &deltaY);
++    }
+ 
+     // Move the pointer.
+     PointerProperties pointerProperties;
+@@ -312,11 +362,6 @@ std::list<NotifyArgs> CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+     mWheelYVelocityControl.move(when, nullptr, &vscroll);
+     mWheelXVelocityControl.move(when, &hscroll, nullptr);
+ 
+-    mPointerVelocityControl.move(when, &deltaX, &deltaY);
+-
+-    float xCursorPosition = AMOTION_EVENT_INVALID_CURSOR_POSITION;
+-    float yCursorPosition = AMOTION_EVENT_INVALID_CURSOR_POSITION;
+-
+     // Moving an external trackball or mouse should wake the device.
+     // We don't do this for internal cursor devices to prevent them from waking up
+     // the device in your pocket.
+@@ -338,9 +383,14 @@ std::list<NotifyArgs> CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+ 
+         PointerCoords moveCoords;
+         moveCoords.clear();
+-        moveCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_X, deltaX);
+-        moveCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_Y, deltaY);
+-        if (mSource != AINPUT_SOURCE_MOUSE) {
++        if (useAbsoluteAxes) {
++            moveCoords.setAxisValue(AMOTION_EVENT_AXIS_X, xCursorPosition);
++            moveCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, yCursorPosition);
++        } else {
++            moveCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_X, deltaX);
++            moveCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_Y, deltaY);
++        }
++        if (!useAbsoluteAxes && mSource != AINPUT_SOURCE_MOUSE) {
+             // Pointer capture and navigation modes
+             moveCoords.setAxisValue(AMOTION_EVENT_AXIS_X, deltaX);
+             moveCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, deltaY);
+@@ -367,6 +417,10 @@ std::list<NotifyArgs> CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+ 
+         PointerCoords pointerCoords;
+         pointerCoords.clear();
++        if (useAbsoluteAxes) {
++            pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_X, xCursorPosition);
++            pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, yCursorPosition);
++        }
+         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_PRESSURE, down ? 1.0f : 0.0f);
+ 
+         if (buttonsReleased) {
+@@ -475,6 +529,14 @@ void CursorInputMapper::configureBasicParams() {
+             [[fallthrough]];
+         case Parameters::Mode::POINTER:
+             mSource = AINPUT_SOURCE_MOUSE;
++            if (mParameters.hasAbsoluteAxes) {
++                mRawAbsXInfo = getAbsoluteAxisInfo(ABS_X);
++                mRawAbsYInfo = getAbsoluteAxisInfo(ABS_Y);
++                if (!mRawAbsXInfo || !mRawAbsYInfo) {
++                    ALOGW("Absolute cursor axes disappeared during configuration");
++                    mParameters.hasAbsoluteAxes = false;
++                }
++            }
+             mXPrecision = 1.0f;
+             mYPrecision = 1.0f;
+             mXScale = 1.0f;
+@@ -493,6 +555,27 @@ void CursorInputMapper::configureBasicParams() {
+     mHWheelScale = 1.0f;
+ }
+ 
++void CursorInputMapper::rotateAbsolute(ui::Rotation orientation, float* x, float* y) {
++    const float oldX = *x;
++    const float oldY = *y;
++    switch (orientation) {
++        case ui::Rotation::Rotation90:
++            *x = oldY;
++            *y = 1.0f - oldX;
++            break;
++        case ui::Rotation::Rotation180:
++            *x = 1.0f - oldX;
++            *y = 1.0f - oldY;
++            break;
++        case ui::Rotation::Rotation270:
++            *x = 1.0f - oldY;
++            *y = oldX;
++            break;
++        case ui::Rotation::Rotation0:
++            break;
++    }
++}
++
+ void CursorInputMapper::configureOnPointerCapture(const InputReaderConfiguration& config) {
+     if (config.pointerCaptureRequest.isEnable()) {
+         if (mParameters.mode == Parameters::Mode::POINTER) {
+diff --git a/services/inputflinger/reader/mapper/CursorInputMapper.h b/services/inputflinger/reader/mapper/CursorInputMapper.h
+index 7215403de2..2eb9455068 100644
+--- a/services/inputflinger/reader/mapper/CursorInputMapper.h
++++ b/services/inputflinger/reader/mapper/CursorInputMapper.h
+@@ -37,10 +37,16 @@ public:
+ 
+     inline int32_t getRelativeX() const { return mRelX; }
+     inline int32_t getRelativeY() const { return mRelY; }
++    inline int32_t getAbsoluteX() const { return mAbsX; }
++    inline int32_t getAbsoluteY() const { return mAbsY; }
++    inline bool hasMoved() const { return mMoved; }
+ 
+ private:
+-    int32_t mRelX;
+-    int32_t mRelY;
++    int32_t mRelX{0};
++    int32_t mRelY{0};
++    int32_t mAbsX{0};
++    int32_t mAbsY{0};
++    bool mMoved{false};
+ 
+     void clearRelativeAxes();
+ };
+@@ -88,6 +94,7 @@ private:
+         Mode mode;
+         bool hasAssociatedDisplay;
+         bool orientationAware;
++        bool hasAbsoluteAxes;
+     } mParameters;
+ 
+     CursorButtonAccumulator mCursorButtonAccumulator;
+@@ -95,6 +102,8 @@ private:
+     CursorScrollAccumulator mCursorScrollAccumulator;
+ 
+     int32_t mSource;
++    std::optional<RawAbsoluteAxisInfo> mRawAbsXInfo;
++    std::optional<RawAbsoluteAxisInfo> mRawAbsYInfo;
+     float mXScale;
+     float mYScale;
+     float mXPrecision;
+@@ -138,6 +147,7 @@ private:
+     [[nodiscard]] std::list<NotifyArgs> sync(nsecs_t when, nsecs_t readTime);
+ 
+     static Parameters computeParameters(const InputDeviceContext& deviceContext);
++    static void rotateAbsolute(ui::Rotation orientation, float* x, float* y);
+ };
+ 
+ } // namespace android
+diff --git a/services/inputflinger/tests/CursorInputMapper_test.cpp b/services/inputflinger/tests/CursorInputMapper_test.cpp
+index 14cbf524b4..46064e3faf 100644
+--- a/services/inputflinger/tests/CursorInputMapper_test.cpp
++++ b/services/inputflinger/tests/CursorInputMapper_test.cpp
+@@ -169,6 +169,10 @@ protected:
+                 .WillRepeatedly(Return(false));
+         EXPECT_CALL(mMockEventHub, hasRelativeAxis(EVENTHUB_ID, REL_HWHEEL_HI_RES))
+                 .WillRepeatedly(Return(false));
++        EXPECT_CALL(mMockEventHub, getAbsoluteAxisInfo(EVENTHUB_ID, ABS_X))
++                .WillRepeatedly(Return(std::nullopt));
++        EXPECT_CALL(mMockEventHub, getAbsoluteAxisInfo(EVENTHUB_ID, ABS_Y))
++                .WillRepeatedly(Return(std::nullopt));
+ 
+         mFakePolicy->setDefaultPointerDisplayId(DISPLAY_ID);
+         mFakePolicy->addDisplayViewport(createPrimaryViewport(ui::Rotation::Rotation0));
+@@ -222,6 +226,22 @@ TEST_F(CursorInputMapperUnitTest, GetSourcesReturnsMouseInPointerMode) {
+     ASSERT_EQ(AINPUT_SOURCE_MOUSE, mMapper->getSources());
+ }
+ 
++TEST_F(CursorInputMapperUnitTest, ProcessAbsoluteMouseCoordinates) {
++    setupAxis(ABS_X, true, 0, DISPLAY_WIDTH - 1, /*resolution=*/1);
++    setupAxis(ABS_Y, true, 0, DISPLAY_HEIGHT - 1, /*resolution=*/1);
++    createMapper();
++
++    std::list<NotifyArgs> args;
++    args += process(ARBITRARY_TIME, EV_ABS, ABS_X, 120);
++    args += process(ARBITRARY_TIME, EV_ABS, ABS_Y, 300);
++    args += process(ARBITRARY_TIME, EV_SYN, SYN_REPORT, 0);
++
++    ASSERT_THAT(args,
++                ElementsAre(VariantWith<NotifyMotionArgs>(
++                        AllOf(WithMotionAction(HOVER_MOVE), WithCoords(120.0f, 300.0f),
++                              WithCursorPosition(120.0f, 300.0f)))));
++}
++
+ TEST_F(CursorInputMapperUnitTest, GetSourcesReturnsTrackballInNavigationMode) {
+     mPropertyMap.addProperty("cursor.mode", "navigation");
+     createMapper();
+-- 
+2.34.1
+

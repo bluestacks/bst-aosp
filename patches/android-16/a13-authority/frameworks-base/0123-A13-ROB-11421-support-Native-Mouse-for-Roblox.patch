@@ -1,0 +1,85 @@
+From cd9029897887e984a325a2c456732113578ecddd Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Mon, 11 Mar 2024 16:30:57 +0800
+Subject: [PATCH 123/224] [A13] ROB-11421: support Native Mouse for Roblox
+
+---
+ core/java/android/view/View.java              | 27 +++++++++++++++++++
+ .../server/wm/WindowManagerService.java       |  5 ++++
+ 2 files changed, 32 insertions(+)
+
+diff --git a/core/java/android/view/View.java b/core/java/android/view/View.java
+index 333efad2c4c8..97c9dfcec0c7 100644
+--- a/core/java/android/view/View.java
++++ b/core/java/android/view/View.java
+@@ -91,6 +91,7 @@ import android.graphics.drawable.Drawable;
+ import android.graphics.drawable.GradientDrawable;
+ import android.hardware.display.DisplayManagerGlobal;
+ import android.net.Uri;
++import android.os.Binder;
+ import android.os.Build;
+ import android.os.Bundle;
+ import android.os.Handler;
+@@ -106,6 +107,7 @@ import android.sysprop.DisplayProperties;
+ import android.text.InputType;
+ import android.text.TextUtils;
+ import android.util.AttributeSet;
++import android.util.BstUtils;
+ import android.util.FloatProperty;
+ import android.util.LayoutDirection;
+ import android.util.Log;
+@@ -199,6 +201,8 @@ import java.util.concurrent.atomic.AtomicInteger;
+ import java.util.function.Consumer;
+ import java.util.function.Predicate;
+ 
++import com.bluestacks.os.BstHostCallManager;
++
+ /**
+  * <p>
+  * This class represents the basic building block for user interface components. A View
+@@ -26944,6 +26948,29 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
+     @Deprecated
+     public void setSystemUiVisibility(int visibility) {
+         if (visibility != mSystemUiVisibility) {
++            ///ROB-11421, roblox now only support singleSurface which won't tigger focusChange, so we use SYSTEM_UI_FLAG_FULLSCREEN instead.
++            if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) != (mSystemUiVisibility & View.SYSTEM_UI_FLAG_FULLSCREEN)) {
++                int uid = Binder.getCallingUid();
++                Log.d(VIEW_LOG_TAG, "setSystemUiVisibility - uid="+uid);
++                if (uid >= 10000) {
++                    String packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++                    if (packageName != null && packageName.equals("com.roblox.client")) {
++                        String activityName = " "; //HD don't use the param for now, but it will do empty-check,so we set with a space
++                        String mouseAction = (visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == View.SYSTEM_UI_FLAG_FULLSCREEN ? "enableNative" : "";
++                        String lastSentMouseAction = android.os.SystemProperties.get("bst.config.last_mouse_action", "");
++                        Log.d(VIEW_LOG_TAG, "bstSendRobloxImmersiveModeChange : "+"  mouseAction  : "+ mouseAction + "  lastSentMouseAction : "+ lastSentMouseAction);
++                        if ( !mouseAction.isEmpty() || !lastSentMouseAction.isEmpty()) {
++                            BstHostCallManager mBstHostCallManagerService = (BstHostCallManager) mContext.getSystemService(Context.BST_HOST_CALL);
++                            int rval = mBstHostCallManagerService.onSetMouseAction(packageName, activityName, mouseAction);
++                            android.os.SystemProperties.set("bst.config.last_mouse_action", mouseAction);
++                            if (rval != 0) {
++                                Log.w(VIEW_LOG_TAG, "ERROR in sending onSetMouseAction request, rval = " + rval);
++                            }
++                        }
++                    }
++                }
++            }
++
+             mSystemUiVisibility = visibility;
+             if (mParent != null && mAttachInfo != null && !mAttachInfo.mRecomputeGlobalAttributes) {
+                 mParent.recomputeViewAttributes(this);
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 9cf20cef733d..df23cb514d07 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -6272,6 +6272,11 @@ public class WindowManagerService extends IWindowManager.Stub
+         }
+         String mouseAction = mBstFilterApps.getMouseAction(packageName, activityName);
+         String lastSentMouseAction = SystemProperties.get("bst.config.last_mouse_action", "");
++        ///ROB-11421, roblox now only support singleSurface which won't tigger focusChange, so we use SYSTEM_UI_FLAG_FULLSCREEN instead.
++        if (packageName != null && packageName.equals("com.roblox.client")) {
++            int subtreeSystemUiVis = newFocus.getAttrs().subtreeSystemUiVisibility;
++            mouseAction = (subtreeSystemUiVis & View.SYSTEM_UI_FLAG_FULLSCREEN) == View.SYSTEM_UI_FLAG_FULLSCREEN ? "enableNative" : "";
++        }
+         Slog.d(TAG, "bstSendTopDisplayedOnFocusChange packageName : "+ packageName
+                         + "  activityName : "+ activityName
+                         + "  mouseAction  : "+ mouseAction

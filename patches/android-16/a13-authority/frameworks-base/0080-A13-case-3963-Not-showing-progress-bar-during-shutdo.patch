@@ -1,0 +1,26 @@
+From cf7054ea61c29ca192501fe6354cec8de8cc2d9a Mon Sep 17 00:00:00 2001
+From: muzhong-bst <muzhong@bluestacks.com>
+Date: Mon, 20 Nov 2023 16:01:34 +0800
+Subject: [PATCH 080/224] [A13] case 3963, Not showing progress bar during
+ shutdown
+
+RVC: bd73f400cf6234d30b2eea87bb26f8105f53d5e2
+Pie: 6bd713cab4517c67df9841d006466035f5cfd355
+---
+ .../core/java/com/android/server/power/ShutdownThread.java     | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/power/ShutdownThread.java b/services/core/java/com/android/server/power/ShutdownThread.java
+index a82d4eaa5b28..4f55a2bc66ff 100644
+--- a/services/core/java/com/android/server/power/ShutdownThread.java
++++ b/services/core/java/com/android/server/power/ShutdownThread.java
+@@ -343,7 +343,8 @@ public final class ShutdownThread extends Thread {
+         pd.setCancelable(false);
+         pd.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
+ 
+-        pd.show();
++        // Not showing progress dialog when shutting down
++        // pd.show();
+         return pd;
+     }
+ 

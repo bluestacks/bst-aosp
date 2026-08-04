@@ -1,0 +1,35 @@
+From 26ca7f568e7b9d5f07f3832615682094da047588 Mon Sep 17 00:00:00 2001
+From: wei-bst <wei@bluestacks.com>
+Date: Mon, 28 Jul 2025 10:58:46 +0800
+Subject: [PATCH 200/224] Fixing build error
+
+---
+ .../com/bluestacks/os/BstFilterAppsManager.java   | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 2e7389a49d19..39f2062a8c1c 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1959,13 +1959,14 @@ public class BstFilterAppsManager {
+      */
+     public boolean isExtractNativeLibs(String pkgName)
+     {
+-       try {
+-           return mService.isExtractNativeLibs(pkgName);
+-       } catch(Exception e) {
+-        // Catching the error and returning default behavior as if entry was not
+-        // present in config.db
+-        if (DEBUG) e.printStackTrace();
+-        return false;
++        try {
++            return mService.isExtractNativeLibs(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
+     }
+     
+     /**

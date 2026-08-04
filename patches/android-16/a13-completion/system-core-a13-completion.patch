@@ -1,0 +1,790 @@
+diff --git a/healthd/BatteryMonitor.cpp b/healthd/BatteryMonitor.cpp
+index e4bc63cd1..a64578d7a 100644
+--- a/healthd/BatteryMonitor.cpp
++++ b/healthd/BatteryMonitor.cpp
+@@ -565,10 +565,9 @@ static void doLogValues(const HealthInfo& props, const struct healthd_config& he
+              props.chargerAcOnline ? "a" : "", props.chargerUsbOnline ? "u" : "",
+              props.chargerWirelessOnline ? "w" : "", props.chargerDockOnline ? "d" : "");
+ 
+-    // A16DBG:P2:MECH BST: gate dmesg spam + set klog level (a13)
++    // A16DBG:P2:MECH BST: gate dmesg spam (a13)
+     if (false)
+         KLOG_WARNING(LOG_TAG, "%s\n", dmesgline);
+-    klog_set_level(3);
+ }
+ 
+ void BatteryMonitor::logValues(const HealthInfo_2_1& health_info,
+@@ -802,6 +801,7 @@ void BatteryMonitor::init(struct healthd_config *hc) {
+     String8 path;
+     char pval[PROPERTY_VALUE_MAX];
+ 
++    klog_set_level(3);
+     mHealthdConfig = hc;
+     std::unique_ptr<DIR, decltype(&closedir)> dir(opendir(POWER_SUPPLY_SYSFS_PATH), closedir);
+     if (dir == NULL) {
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 106c9d94c..d276f9e33 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -850,15 +850,6 @@ static void load_override_properties() {
+     if (ALLOW_LOCAL_PROP_OVERRIDE) {
+         std::map<std::string, std::string> properties;
+         load_properties_from_file("/data/local.prop", nullptr, &properties);
+-        // A16DBG:P2:MECH BST: load BST prop files (a13)
+-        if (access("/data/.bluestacks.prop", F_OK) == 0) {
+-            load_properties_from_file("/data/.bluestacks.prop", nullptr, &properties);
+-            LOG(INFO) << "A16DBG:P2:MECH loaded /data/.bluestacks.prop";
+-        }
+-        if (access("/data/.bstconf.prop", F_OK) == 0) {
+-            load_properties_from_file("/data/.bstconf.prop", nullptr, &properties);
+-            LOG(INFO) << "A16DBG:P2:MECH loaded /data/.bstconf.prop";
+-        }
+         for (const auto& [name, value] : properties) {
+             std::string error;
+             if (PropertySetNoSocket(name, value, &error) != PROP_SUCCESS) {
+@@ -1127,8 +1118,16 @@ static void BstReadSerialno() {
+     }
+ }
+ 
++static void BstSetAndroidImage() {
++    const char* image = GetProperty("ro.product.cpu.abilist64", "").empty() ? "Baklava32"
++                                                                          : "Baklava64";
++    std::string error;
++    if (PropertySetNoSocket("bst.android_image", image, &error) != PROP_SUCCESS) {
++        LOG(ERROR) << "Could not set bst.android_image to '" << image << "': " << error;
++    }
++}
++
+ void PropertyLoadBootDefaults() {
+-    BstReadSerialno();
+     // We read the properties and their values into a map, in order to always allow properties
+     // loaded in the later property files to override the properties in loaded in the earlier
+     // property files, regardless of if they are "ro." properties or not.
+@@ -1186,11 +1185,16 @@ void PropertyLoadBootDefaults() {
+     // precedence is.
+     LoadPropertiesFromSecondStageRes(&properties);
+ 
+-    // system should have build.prop, unlike the other partitions
+-    if (auto res = load_properties_from_file("/system/build.prop", nullptr, &properties);
+-        !res.ok()) {
++    // A complete country/OEM override replaces system/build.prop when present.
++    if (access("/data/.bluestacks.prop", R_OK) == 0) {
++        load_properties_from_file("/data/.bluestacks.prop", nullptr, &properties);
++    } else if (auto res = load_properties_from_file("/system/build.prop", nullptr, &properties);
++               !res.ok()) {
+         LOG(WARNING) << res.error();
+     }
++    if (access("/data/.bstconf.prop", R_OK) == 0) {
++        load_properties_from_file("/data/.bstconf.prop", nullptr, &properties);
++    }
+ 
+     load_properties_from_partition("system_ext", /* support_legacy_path_until */ 30);
+     load_properties_from_file("/system_dlkm/etc/build.prop", nullptr, &properties);
+@@ -1200,10 +1204,16 @@ void PropertyLoadBootDefaults() {
+     load_properties_from_file("/vendor/default.prop", nullptr, &properties);
+     // }
+     load_properties_from_file("/vendor/build.prop", nullptr, &properties);
++    if (access("/data/.vendor.prop", R_OK) == 0) {
++        load_properties_from_file("/data/.vendor.prop", nullptr, &properties);
++    }
+     load_properties_from_file("/vendor_dlkm/etc/build.prop", nullptr, &properties);
+     load_properties_from_file("/odm_dlkm/etc/build.prop", nullptr, &properties);
+     load_properties_from_partition("odm", /* support_legacy_path_until */ 28);
+     load_properties_from_partition("product", /* support_legacy_path_until */ 30);
++    if (access("/data/.additional_system.prop", R_OK) == 0) {
++        load_properties_from_file("/data/.additional_system.prop", nullptr, &properties);
++    }
+ 
+     if (access(kDebugRamdiskProp, R_OK) == 0) {
+         LOG(INFO) << "Loading " << kDebugRamdiskProp;
+@@ -1228,6 +1238,8 @@ void PropertyLoadBootDefaults() {
+     property_initialize_ro_vendor_api_level();
+ 
+     update_sys_usb_config();
++    BstReadSerialno();
++    BstSetAndroidImage();
+ }
+ 
+ void PropertyLoadDerivedDefaults() {
+diff --git a/init/selinux.cpp b/init/selinux.cpp
+index 3707ca658..d37b0c54b 100644
+--- a/init/selinux.cpp
++++ b/init/selinux.cpp
+@@ -97,28 +97,9 @@ namespace init {
+ 
+ namespace {
+ 
+-enum EnforcingStatus { SELINUX_PERMISSIVE, SELINUX_ENFORCING };
+-
+-EnforcingStatus StatusFromProperty() {
+-    std::string value;
+-    if (android::fs_mgr::GetKernelCmdline("androidboot.selinux", &value) && value == "permissive") {
+-        return SELINUX_PERMISSIVE;
+-    }
+-    if (android::fs_mgr::GetBootconfig("androidboot.selinux", &value) && value == "permissive") {
+-        return SELINUX_PERMISSIVE;
+-    }
+-    return SELINUX_ENFORCING;
+-}
+-
+ bool IsEnforcing() {
+     // BlueStacks(baklava bringup): force SELinux permissive (consistent with A13).
+     return false;
+-    return false; // BlueStacks
+-    return false;
+-    if (ALLOW_PERMISSIVE_SELINUX) {
+-        return StatusFromProperty() == SELINUX_ENFORCING;
+-    }
+-    return true;
+ }
+ 
+ bool ReadFirstLine(const char* file, std::string* line) {
+diff --git a/init/service.cpp b/init/service.cpp
+index da0247eac..50fb47496 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -81,10 +81,6 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
+     if (!is_selinux_enabled() || security_getenforce() == 0) {
+         return "skip";
+     }
+-    // BlueStacks: permissive - skip SELinux domain check
+-    if (!is_selinux_enabled() || security_getenforce() == 0) {
+-        return "skip";
+-    }
+ 
+     std::string computed_context;
+ 
+@@ -188,6 +184,10 @@ void Service::NotifyStateChange(const std::string& new_state) const {
+     std::string prop_name = "init.svc." + name_;
+     SetProperty(prop_name, new_state);
+ 
++    if (!GetBoolProperty("bst.debug.boottime_pid", false)) {
++        return;
++    }
++
+     if (new_state == "running") {
+         uint64_t start_ns = time_started_.time_since_epoch().count();
+         std::string boottime_property = "ro.boottime." + name_;
+diff --git a/init/util.cpp b/init/util.cpp
+index 1f2ce142e..1e7b10c5b 100644
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -548,7 +548,12 @@ Result<MountAllOptions> ParseMountAll(const std::vector<std::string>& args) {
+ 
+     std::string fstab_path;
+     if (first_option_arg > 1) {
+-        fstab_path = args[1];
++        auto expanded = ExpandProps(args[1]);
++        if (!expanded.ok()) {
++            return Error() << "mount_all: cannot expand '" << args[1]
++                           << "': " << expanded.error();
++        }
++        fstab_path = *expanded;
+     } else if (compat_mode) {
+         return Error() << "mount_all argument 1 must be the fstab path";
+     }
+@@ -620,7 +625,12 @@ Result<std::string> ParseUmountAll(const std::vector<std::string>& args) {
+         }
+         return {};
+     }
+-    return args[1];
++    auto expanded = ExpandProps(args[1]);
++    if (!expanded.ok()) {
++        return Error() << "umount_all: cannot expand '" << args[1]
++                       << "': " << expanded.error();
++    }
++    return *expanded;
+ }
+ 
+ static void InitAborter(const char* abort_message) {
+diff --git a/libcutils/fs_config.cpp b/libcutils/fs_config.cpp
+index f28c897ed..ddf3f8793 100644
+--- a/libcutils/fs_config.cpp
++++ b/libcutils/fs_config.cpp
+@@ -77,6 +77,7 @@ static const struct fs_path_config android_dirs[] = {
+     { 00751, AID_ROOT,         AID_SHELL,        0, "system/bin" },
+     { 00755, AID_ROOT,         AID_ROOT,         0, "system/etc/ppp" },
+     { 00755, AID_ROOT,         AID_SHELL,        0, "system/vendor" },
++    { 00755, AID_ROOT,         AID_SHELL,        0, "system/xbin/bstk" },
+     { 00750, AID_ROOT,         AID_SHELL,        0, "system/xbin" },
+     { 00751, AID_ROOT,         AID_SHELL,        0, "system_ext/bin" },
+     { 00751, AID_ROOT,         AID_SHELL,        0, "vendor/bin" },
+@@ -173,6 +174,7 @@ static const struct fs_path_config android_files[] = {
+ 
+     // the following two files are INTENTIONALLY set-uid, but they
+     // are NOT included on user builds.
++    { 06755, AID_ROOT,      AID_ROOT,      0, "system/xbin/bstk/su" },
+     { 06755, AID_ROOT,      AID_ROOT,      0, "system/xbin/procmem" },
+     { 04750, AID_ROOT,      AID_SHELL,     0, "system/xbin/su" },
+ 
+diff --git a/libutils/binder/Unicode.cpp b/libutils/binder/Unicode.cpp
+index 2ed2d4f80..e223789b3 100644
+--- a/libutils/binder/Unicode.cpp
++++ b/libutils/binder/Unicode.cpp
+@@ -102,7 +102,7 @@ static inline void utf32_codepoint_to_utf8(uint8_t* dstP, char32_t srcChar, size
+ 
+ static inline int32_t utf32_at_internal(const char* cur, size_t *num_read)
+ {
+-    const char first_char = *cur;
++    const unsigned char first_char = *cur;
+     if ((first_char & 0x80) == 0) { // ASCII
+         *num_read = 1;
+         return *cur;
+diff --git a/rootdir/etc/hosts b/rootdir/etc/hosts
+index 649151cef..585f47742 100644
+--- a/rootdir/etc/hosts
++++ b/rootdir/etc/hosts
+@@ -1,2 +1,3 @@
+ 127.0.0.1       localhost
+ ::1             ip6-localhost
++127.0.0.1       coinhive.com
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 300f6eaba..cdb45f2e9 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -14,12 +14,14 @@ import /system/etc/init/hw/init.${ro.zygote}.rc
+ # Cgroups are mounted right before early-init using list from /etc/cgroups.json
+ on early-init
+     # Disable sysrq from keyboard
+-    write /proc/sys/kernel/sysrq 0
++    # BlueStacks kernels retain keyboard sysrq support for host diagnostics.
++    # write /proc/sys/kernel/sysrq 0
+ 
+     # Android doesn't need kernel module autoloading, and it causes SELinux
+     # denials.  So disable it by setting modprobe to the empty string.  Note: to
+     # explicitly set a sysctl to an empty string, a trailing newline is needed.
+-    write /proc/sys/kernel/modprobe \n
++    # BlueStacks guest drivers rely on kernel module autoloading.
++    # write /proc/sys/kernel/modprobe \n
+ 
+     # Set the security context of /adb_keys if present.
+     restorecon /adb_keys
+@@ -224,7 +226,8 @@ on init
+     chmod 0755 /dev/binderfs
+ 
+     # Mount fusectl
+-    mount fusectl none /sys/fs/fuse/connections
++    # The BlueStacks kernel does not require a second fusectl mount here.
++    # mount fusectl none /sys/fs/fuse/connections
+ 
+     symlink /dev/binderfs/binder /dev/binder
+     symlink /dev/binderfs/hwbinder /dev/hwbinder
+@@ -272,6 +275,8 @@ on init
+     # Symlink to keep legacy apps working in multi-user world
+     symlink /storage/self/primary /mnt/sdcard
+     symlink /mnt/user/0/primary /mnt/runtime/default/self/primary
++    symlink /sdcard /storage/sdcard0
++    symlink /sdcard /storage/sdcard
+ 
+     write /proc/sys/kernel/panic_on_oops 1
+     write /proc/sys/kernel/hung_task_timeout_secs 0
+@@ -627,6 +632,7 @@ on late-fs
+     # Ensure that tracefs has the correct permissions.
+     # This does not work correctly if it is called in post-fs.
+     chmod 0755 /sys/kernel/tracing
++    chmod 0755 /sys/kernel/debug
+     chmod 0755 /sys/kernel/debug/tracing
+ 
+     # HALs required before storage encryption can get unlocked (FBE)
+@@ -682,6 +688,8 @@ on post-fs-data
+ 
+     # Avoid predictable entropy pool. Carry over entropy from previous boot.
+     copy /data/system/entropy.dat /dev/urandom
++    # Disable ARM-specific OpenSSL capability selection under translation.
++    export OPENSSL_armcap 0
+ 
+     mkdir /data/vendor 0771 root root encryption=Require
+     mkdir /data/vendor/hardware 0771 root root
+@@ -1143,6 +1151,7 @@ on boot
+     # parameters to match how it is managing things.
+     write /proc/sys/vm/overcommit_memory 1
+     write /proc/sys/vm/min_free_order_shift 4
++    write /proc/sys/vm/min_free_kbytes 4096
+ 
+     # System server manages zram writeback
+     chown root system /sys/block/zram0/idle
+@@ -1308,7 +1317,6 @@ service console /system/bin/sh
+     class core
+     console
+     disabled
+-    user shell
+     group shell log readproc
+     seclabel u:r:shell:s0
+     setenv HOSTNAME console
+@@ -1326,7 +1334,8 @@ on property:ro.debuggable=1
+     chmod 0775 /data/misc/a11ytrace
+ 
+ on init && property:ro.debuggable=1
+-    start console
++    # Console stays opt-in; when started it retains the A13 root UID behavior.
++    # start console
+ 
+ # BlueStacks maintenance services and property triggers.
+ service install_zip /system/bin/logwrapper /system/bin/install_studio_zip
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index 1c304b777..60ab7cebf 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -1,7 +1,7 @@
+ import /vendor/etc/ueventd.rc
+ import /odm/etc/ueventd.rc
+ 
+-firmware_directories /etc/firmware/ /odm/firmware/ /vendor/firmware/ /firmware/image/
++firmware_directories /system/lib/firmware /etc/firmware/ /odm/firmware/ /vendor/firmware/ /firmware/image/
+ uevent_socket_rcvbuf_size 16M
+ 
+ subsystem graphics
+@@ -49,6 +49,7 @@ subsystem vfio
+ /dev/hwbinder             0666   root       root
+ /dev/vndbinder            0666   root       root
+ /dev/vfio/*               0666   root       root
++/dev/video*               0660   root       camera
+ 
+ /dev/pmsg0                0222   root       log
+ /dev/dma_heap/system      0444   system     system
+@@ -63,10 +64,10 @@ subsystem vfio
+ 
+ # these should not be world writable
+ /dev/uhid                 0660   uhid       uhid
+-/dev/uinput               0660   uhid       uhid
++/dev/uinput               0660   system     bluetooth
+ /dev/rtc0                 0640   system     system
+-/dev/tty0                 0660   root       system
+-/dev/graphics/*           0660   root       graphics
++/dev/tty0                 0660   system     system
++/dev/graphics/*           0660   system     graphics
+ /dev/input/*              0660   root       input
+ /dev/v4l-touch*           0660   root       input
+ /dev/snd/*                0660   system     audio
+diff --git a/toolbox/getevent.c b/toolbox/getevent.c
+index 7b896e9ec..3686ca7e0 100644
+--- a/toolbox/getevent.c
++++ b/toolbox/getevent.c
+@@ -6,7 +6,8 @@
+ #include <fcntl.h>
+ #include <sys/ioctl.h>
+ #include <sys/inotify.h>
+-#include <sys/limits.h>
++#include <limits.h>
++#include <time.h>
+ #include <sys/poll.h>
+ #include <linux/input.h>
+ #include <err.h>
+@@ -33,10 +34,30 @@ static struct label key_value_labels[] = {
+ #undef LABEL
+ #undef LABEL_END
+ 
++#define BST_EV_ABS_AND_KEY		0x17
++
+ static struct pollfd *ufds;
+ static char **device_names;
+ static int nfds;
+ 
++// Track mouse button state for multiple Mouse Devices
++struct mouse_device_state {
++    int device_index;
++    int buttons_pressed;
++    int last_x;
++    int last_y;
++    int skip_sync_event;
++};
++
++static struct mouse_device_state *mouse_devices = NULL;
++static int mouse_device_count = 0;
++
++// Event filter variables
++static int event_filter_enabled = 0;
++static uint32_t event_filter_mask = 0;
++static char **device_filter_paths = NULL;
++static int device_filter_count = 0;
++
+ enum {
+     PRINT_DEVICE_ERRORS     = 1U << 0,
+     PRINT_DEVICE            = 1U << 1,
+@@ -60,6 +81,145 @@ static const char *get_label(const struct label *labels, int value)
+     return labels->name;
+ }
+ 
++static int device_in_filter(const char *device)
++{
++    if (device_filter_count == 0) return 1; // no filter means allow all
++    for (int i = 0; i < device_filter_count; i++) {
++        if (strcmp(device_filter_paths[i], device) == 0)
++            return 1;
++    }
++    return 0;
++}
++
++// Find mouse device state by device index
++static struct mouse_device_state *find_mouse_device(int device_index)
++{
++    for (int i = 0; i < mouse_device_count; i++) {
++        if (mouse_devices[i].device_index == device_index) {
++            return &mouse_devices[i];
++        }
++    }
++    return NULL;
++}
++
++// Add a mouse device to tracking
++static void add_mouse_device(int device_index)
++{
++    struct mouse_device_state *new_devices = realloc(mouse_devices,
++        sizeof(struct mouse_device_state) * (mouse_device_count + 1));
++    if (new_devices == NULL) {
++        fprintf(stderr, "out of memory for mouse device tracking\n");
++        return;
++    }
++    mouse_devices = new_devices;
++    mouse_devices[mouse_device_count].device_index = device_index;
++    mouse_devices[mouse_device_count].buttons_pressed = 0;
++    mouse_devices[mouse_device_count].last_x = -1;
++    mouse_devices[mouse_device_count].last_y = -1;
++    mouse_devices[mouse_device_count].skip_sync_event = 0;
++    mouse_device_count++;
++}
++
++// Remove a mouse device from tracking
++static void remove_mouse_device(int device_index)
++{
++    for (int i = 0; i < mouse_device_count; i++) {
++        if (mouse_devices[i].device_index == device_index) {
++            // Shift remaining devices
++            memmove(&mouse_devices[i], &mouse_devices[i + 1],
++                sizeof(struct mouse_device_state) * (mouse_device_count - i - 1));
++            mouse_device_count--;
++            struct mouse_device_state *new_devices = realloc(mouse_devices,
++                sizeof(struct mouse_device_state) * mouse_device_count);
++            if (mouse_device_count > 0 && new_devices != NULL) {
++                mouse_devices = new_devices;
++            } else if (mouse_device_count == 0) {
++                free(mouse_devices);
++                mouse_devices = NULL;
++            }
++            return;
++        }
++    }
++}
++
++// Adjust mouse device indices when a device is removed before them
++static void adjust_mouse_device_indices(int removed_index)
++{
++    for (int i = 0; i < mouse_device_count; i++) {
++        if (mouse_devices[i].device_index > removed_index) {
++            mouse_devices[i].device_index--;
++        }
++    }
++}
++
++
++static int parse_event_types(const char *arg)
++{
++    char *token, *str, *saveptr;
++    uint32_t mask = 0;
++
++    str = strdup(arg);
++    if (!str) return -1;
++
++    token = strtok_r(str, ",", &saveptr);
++    while (token != NULL) {
++        if (strcmp(token, "BST_EV_ABS_AND_KEY") == 0) {
++            mask |= (1 << BST_EV_ABS_AND_KEY);
++            mask |= (1 << EV_ABS);
++            mask |= (1 << EV_KEY);
++        }
++        else if (strcmp(token, "EV_SYN") == 0) {
++            mask |= (1 << EV_SYN);
++        } else if (strcmp(token, "EV_KEY") == 0) {
++            mask |= (1 << EV_KEY);
++        } else if (strcmp(token, "EV_REL") == 0) {
++            mask |= (1 << EV_REL);
++        } else if (strcmp(token, "EV_ABS") == 0) {
++            mask |= (1 << EV_ABS);
++        } else if (strcmp(token, "EV_MSC") == 0) {
++            mask |= (1 << EV_MSC);
++        } else if (strcmp(token, "EV_SW") == 0) {
++            mask |= (1 << EV_SW);
++        } else if (strcmp(token, "EV_LED") == 0) {
++            mask |= (1 << EV_LED);
++        } else if (strcmp(token, "EV_SND") == 0) {
++            mask |= (1 << EV_SND);
++        } else if (strcmp(token, "EV_REP") == 0) {
++            mask |= (1 << EV_REP);
++        } else if (strcmp(token, "EV_FF") == 0) {
++            mask |= (1 << EV_FF);
++        } else if (strcmp(token, "EV_PWR") == 0) {
++            mask |= (1 << EV_PWR);
++        } else if (strcmp(token, "EV_FF_STATUS") == 0) {
++            mask |= (1 << EV_FF_STATUS);
++        } else {
++            fprintf(stderr, "Unknown event type: %s\n", token);
++            free(str);
++            return -1;
++        }
++        token = strtok_r(NULL, ",", &saveptr);
++    }
++
++    free(str);
++    event_filter_mask = mask;
++    event_filter_enabled = 1;
++    return 0;
++}
++
++static void print_startup_timestamp(void)
++{
++    struct timespec mono, real;
++
++    clock_gettime(CLOCK_MONOTONIC, &mono);
++    clock_gettime(CLOCK_REALTIME, &real);
++
++    double mono_sec = mono.tv_sec + mono.tv_nsec / 1e9;
++    double real_sec = real.tv_sec + real.tv_nsec / 1e9;
++
++    printf("[ %10.6f] epoch_time: %.6f\n", mono_sec, real_sec);
++}
++
++
+ static int print_input_props(int fd)
+ {
+     uint8_t bits[INPUT_PROP_CNT / 8];
+@@ -388,6 +548,16 @@ static int open_device(const char *device, int print_flags)
+         printf("  version:  %d.%d.%d\n",
+                version >> 16, (version >> 8) & 0xff, version & 0xff);
+ 
++    ufds[nfds].fd = fd;
++    ufds[nfds].events = POLLIN;
++    device_names[nfds] = strdup(device);
++    nfds++;
++
++    // Check if this is a Mouse Device (only if event filtering is enabled)
++    if(event_filter_enabled && strcasecmp(name, "mouse device")) {
++        add_mouse_device(nfds - 1); // nfds was just incremented, so use nfds - 1
++    }
++
+     if(print_flags & PRINT_POSSIBLE_EVENTS) {
+         print_possible_events(fd, print_flags);
+     }
+@@ -399,11 +569,6 @@ static int open_device(const char *device, int print_flags)
+         print_hid_descriptor(id.bustype, id.vendor, id.product);
+     }
+ 
+-    ufds[nfds].fd = fd;
+-    ufds[nfds].events = POLLIN;
+-    device_names[nfds] = strdup(device);
+-    nfds++;
+-
+     return 0;
+ }
+ 
+@@ -415,6 +580,14 @@ int close_device(const char *device, int print_flags)
+             int count = nfds - i - 1;
+             if(print_flags & PRINT_DEVICE)
+                 printf("remove device %d: %s\n", i, device);
++
++            // Remove mouse device tracking if this device is a mouse device
++            if(find_mouse_device(i) != NULL) {
++                remove_mouse_device(i);
++            }
++            // Adjust indices for mouse devices that come after this one
++            adjust_mouse_device_indices(i);
++
+             free(device_names[i]);
+             memmove(device_names + i, device_names + i + 1, sizeof(device_names[0]) * count);
+             memmove(ufds + i, ufds + i + 1, sizeof(ufds[0]) * count);
+@@ -487,6 +660,8 @@ static int scan_dir(const char *dirname, int print_flags)
+             (de->d_name[1] == '.' && de->d_name[2] == '\0')))
+             continue;
+         strcpy(filename, de->d_name);
++        if (!device_in_filter(devname))
++            continue;
+         open_device(devname, print_flags);
+     }
+     closedir(dir);
+@@ -495,7 +670,7 @@ static int scan_dir(const char *dirname, int print_flags)
+ 
+ static void usage(char *name)
+ {
+-    fprintf(stderr, "Usage: %s [-t] [-n] [-s switchmask] [-S] [-v [mask]] [-d] [-p] [-i] [-l] [-q] [-c count] [-r] [device]\n", name);
++    fprintf(stderr, "Usage: %s [-t] [-n] [-s switchmask] [-S] [-v [mask]] [-d] [-p] [-i] [-l] [-f event_types] [-q] [-c count] [-r] [device]\n", name);
+     fprintf(stderr, "    -t: show time stamps\n");
+     fprintf(stderr, "    -n: don't print newlines\n");
+     fprintf(stderr, "    -s: print switch states for given bits\n");
+@@ -505,9 +680,11 @@ static void usage(char *name)
+     fprintf(stderr, "    -p: show possible events (errs, dev, name, pos. events)\n");
+     fprintf(stderr, "    -i: show all device info and possible events\n");
+     fprintf(stderr, "    -l: label event types and names in plain text\n");
++    fprintf(stderr, "    -f: filter event types (comma-separated: EV_SYN,EV_KEY,EV_REL,EV_ABS,EV_MSC,EV_SW,EV_LED,EV_SND,EV_REP,EV_FF,EV_PWR,EV_FF_STATUS,BST_EV_ABS_AND_KEY)\n");
+     fprintf(stderr, "    -q: quiet (clear verbosity mask)\n");
+     fprintf(stderr, "    -c: print given number of events then exit\n");
+     fprintf(stderr, "    -r: print rate events are received\n");
++    fprintf(stderr, "    -D: comma-separated list of full device paths to listen (e.g. -D \"/dev/input/event2,/dev/input/event4\")\n");
+ }
+ 
+ int getevent_main(int argc, char *argv[])
+@@ -534,7 +711,7 @@ int getevent_main(int argc, char *argv[])
+ 
+     opterr = 0;
+     do {
+-        c = getopt(argc, argv, "tns:Sv::dpilqc:rh");
++        c = getopt(argc, argv, "tns:Sv::dpilf:c:rqhD:");
+         if (c == EOF)
+             break;
+         switch (c) {
+@@ -564,6 +741,27 @@ int getevent_main(int argc, char *argv[])
+         case 'd':
+             print_flags |= PRINT_HID_DESCRIPTOR;
+             break;
++        case 'D': {
++            char *token, *saveptr;
++            char *list = strdup(optarg);
++            if (!list) {
++                fprintf(stderr, "Memory allocation failed for -D argument\n");
++                exit(1);
++            }
++
++            token = strtok_r(list, ",", &saveptr);
++            while (token) {
++                device_filter_paths = realloc(device_filter_paths, sizeof(char*) * (device_filter_count + 1));
++                if (!device_filter_paths) {
++                    fprintf(stderr, "Out of memory parsing -D argument\n");
++                    exit(1);
++                }
++                device_filter_paths[device_filter_count++] = strdup(token);
++                token = strtok_r(NULL, ",", &saveptr);
++            }
++            free(list);
++            break;
++        }
+         case 'p':
+             print_flags |= PRINT_DEVICE_ERRORS | PRINT_DEVICE
+                     | PRINT_DEVICE_NAME | PRINT_POSSIBLE_EVENTS | PRINT_INPUT_PROPS;
+@@ -580,6 +778,12 @@ int getevent_main(int argc, char *argv[])
+         case 'l':
+             print_flags |= PRINT_LABELS;
+             break;
++        case 'f':
++            if(parse_event_types(optarg) < 0) {
++                usage(argv[0]);
++                exit(1);
++            }
++            break;
+         case 'q':
+             print_flags_set = 1;
+             break;
+@@ -613,6 +817,7 @@ int getevent_main(int argc, char *argv[])
+     ufds = calloc(1, sizeof(ufds[0]));
+     ufds[0].fd = inotify_init();
+     ufds[0].events = POLLIN;
++    print_startup_timestamp();
+     if(device) {
+         if(!print_flags_set)
+             print_flags |= PRINT_DEVICE_ERRORS;
+@@ -667,6 +872,98 @@ int getevent_main(int argc, char *argv[])
+                         fprintf(stderr, "could not get evdev event, %s\n", strerror(errno));
+                         return 1;
+                     }
++
++                    // Apply event filtering and Bluestacks mouse handling if enabled
++                    if(event_filter_enabled) {
++                        // Check basic event type filter
++                        if(!(event_filter_mask & (1 << event.type))) {
++                            continue;
++                        }
++
++                        // Ignore ABS_GAS and ABS_BRAKE events globally when BST_EV_ABS_AND_KEY is enabled
++                        if((event_filter_mask & (1 << BST_EV_ABS_AND_KEY)) && event.type == EV_ABS &&
++                            (event.code == ABS_GAS || event.code == ABS_BRAKE)) {
++                            continue;
++                        }
++
++                        // Track mouse button state for Mouse Devices
++                        struct mouse_device_state *mouse_state = find_mouse_device(i);
++                        if(mouse_state != NULL) {
++                            int is_drag_end = 0;
++
++                            if((event_filter_mask & (1 << BST_EV_ABS_AND_KEY))) {
++                                if(event.type == EV_ABS) {
++                                    // Update last known coordinates
++                                    if(event.code == ABS_X) {
++                                        mouse_state->last_x = event.value;
++                                    } else if(event.code == ABS_Y) {
++                                        mouse_state->last_y = event.value;
++                                    }
++                                }
++                                else if(event.type == EV_KEY) {
++                                    // Check for any mouse button (BTN_MOUSE is same as BTN_LEFT)
++                                    if(event.code == BTN_LEFT || event.code == BTN_RIGHT ||
++                                    event.code == BTN_MIDDLE || event.code == BTN_SIDE ||
++                                    event.code == BTN_EXTRA || event.code == BTN_MOUSE) {
++                                        if(event.value == 0) { // Button up (released)
++                                            mouse_state->buttons_pressed--;
++                                            if(mouse_state->buttons_pressed < 0)
++                                                mouse_state->buttons_pressed = 0;
++
++                                            // Check if this release just ended the drag (buttons now == 0)
++                                            if(mouse_state->buttons_pressed == 0) {
++                                                is_drag_end = 1;
++                                                // Clear skip_sync_event so SYN_REPORT after button release is not suppressed
++                                                // This ensures SYN_REPORT after button release is not suppressed
++                                                mouse_state->skip_sync_event = 0;
++                                            }
++                                        } else { // Button down (pressed)
++                                            mouse_state->buttons_pressed++;
++                                            // Clear skip_sync_event so SYN_REPORT after button press is not suppressed
++                                            mouse_state->skip_sync_event = 0;
++                                            // Generate fake events with last mouse position when button is pressed
++                                            if(mouse_state->last_x != -1 && mouse_state->last_y != -1) {
++                                                // Generate EV_ABS ABS_X event
++                                                if(get_time) {
++                                                    printf("[%8ld.%06ld] ", event.time.tv_sec, event.time.tv_usec);
++                                                }
++                                                if(print_device)
++                                                    printf("%s: ", device_names[i]);
++                                                print_event(EV_ABS, ABS_X, mouse_state->last_x, print_flags);
++                                                printf("%s", newline);
++
++                                                // Generate EV_ABS ABS_Y event
++                                                if(get_time) {
++                                                    printf("[%8ld.%06ld] ", event.time.tv_sec, event.time.tv_usec);
++                                                }
++                                                if(print_device)
++                                                    printf("%s: ", device_names[i]);
++                                                print_event(EV_ABS, ABS_Y, mouse_state->last_y, print_flags);
++                                                printf("%s", newline);
++                                            }
++                                        }
++                                    }
++                                }
++                                // Only suppress coordinate events during hover (no buttons pressed)
++                                // Exception: allow events when this is a drag end
++                                if(mouse_state->buttons_pressed == 0 && !is_drag_end) {
++                                    // Skip ABS X/Y coordinate events during hover
++                                    if(event.type == EV_ABS && (event.code == ABS_X || event.code == ABS_Y)) {
++                                        mouse_state->skip_sync_event = 1;
++                                        continue;
++                                    }
++                                }
++                                // Suppress SYN_REPORT only if it's from hover coordinate suppression
++                                // Don't suppress if this is a drag end (button just released)
++                                if(event.type == EV_SYN && event.code == SYN_REPORT &&
++                                   mouse_state->skip_sync_event && !is_drag_end) {
++                                    mouse_state->skip_sync_event = 0;
++                                    continue;
++                                }
++                            }
++                        }
++                    }
++
+                     if(get_time) {
+                         printf("[%8ld.%06ld] ", event.time.tv_sec, event.time.tv_usec);
+                     }
+@@ -689,3 +986,9 @@ int getevent_main(int argc, char *argv[])
+ 
+     return 0;
+ }
++
++#ifdef GETEVENT_WITH_MAIN
++int main(int argc, char *argv[]) {
++    return getevent_main(argc, argv);
++}
++#endif

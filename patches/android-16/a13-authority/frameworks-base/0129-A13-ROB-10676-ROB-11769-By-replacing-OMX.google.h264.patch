@@ -1,0 +1,28 @@
+From 80f7566b67ef86e05ff44b5dbbf4a3691558bc9f Mon Sep 17 00:00:00 2001
+From: allen-bst <70563899+allen-bst@users.noreply.github.com>
+Date: Fri, 15 Mar 2024 16:29:10 +0800
+Subject: [PATCH 129/224] [A13] ROB-10676 ROB-11769: By replacing
+ OMX.google.h264.encoder with (#142)
+
+c2.android.avc.encoder to circumvent whatsapp's restrictions on
+OMX.google.h264.encoder and solve the problem that chat cannot send video
+---
+ media/java/android/media/MediaCodecInfo.java | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/media/java/android/media/MediaCodecInfo.java b/media/java/android/media/MediaCodecInfo.java
+index 75fd64a4ccf5..446735781f3c 100644
+--- a/media/java/android/media/MediaCodecInfo.java
++++ b/media/java/android/media/MediaCodecInfo.java
+@@ -106,6 +106,11 @@ public final class MediaCodecInfo {
+      */
+     @NonNull
+     public final String getName() {
++        //ROB-10676 By replacing OMX.google.h264.encoder with c2.android.avc.encoder to circumvent whatsapp's restrictions on OMX.google.h264.encoder and solve the problem that chat cannot send video
++        if ("OMX.google.h264.encoder".equals(mName)) {
++            String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
++            if (topPackageName != null && topPackageName.startsWith("com.whatsapp")) return "c2.android.avc.encoder";
++        }
+         return mName;
+     }
+ 

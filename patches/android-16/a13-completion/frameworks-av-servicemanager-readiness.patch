@@ -1,0 +1,212 @@
+From 865747995b45b51ee815e33e984b928790910099 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 01:17:40 +0800
+Subject: [PATCH] [A16] Restore servicemanager readiness probe
+
+---
+ bstsvcmsgrtest/Android.bp        |   9 ++
+ bstsvcmsgrtest/bstsvcmgrtest.cpp | 176 +++++++++++++++++++++++++++++++
+ 2 files changed, 185 insertions(+)
+ create mode 100644 bstsvcmsgrtest/Android.bp
+ create mode 100644 bstsvcmsgrtest/bstsvcmgrtest.cpp
+
+diff --git a/bstsvcmsgrtest/Android.bp b/bstsvcmsgrtest/Android.bp
+new file mode 100644
+index 0000000000..e8692ee3d7
+--- /dev/null
++++ b/bstsvcmsgrtest/Android.bp
+@@ -0,0 +1,9 @@
++cc_binary {
++    name: "bstsvcmgrtest",
++    srcs: ["bstsvcmgrtest.cpp"],
++    shared_libs: [
++        "libbinder",
++        "liblog",
++        "libutils",
++    ],
++}
+diff --git a/bstsvcmsgrtest/bstsvcmgrtest.cpp b/bstsvcmsgrtest/bstsvcmgrtest.cpp
+new file mode 100644
+index 0000000000..04a0f9999d
+--- /dev/null
++++ b/bstsvcmsgrtest/bstsvcmgrtest.cpp
+@@ -0,0 +1,176 @@
++/*
++ * Copyright (C) 2010 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ *
++ */
++
++
++#define LOG_TAG "BstServiceManagerTest"
++
++#include <cerrno>
++#include <grp.h>
++#include <libgen.h>
++#include <time.h>
++#include <unistd.h>
++
++#include <sys/syscall.h>
++#include <sys/time.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++
++#include <binder/IPCThreadState.h>
++#include <binder/ProcessState.h>
++#include <binder/IServiceManager.h>
++#include <utils/Log.h>
++
++using namespace android;
++using namespace std;
++
++String16 service("bstsvcmgrtest");
++static constexpr const char* serviceName = "bstsvcmgrtest";
++static const int DBG = false;
++
++class AddIntsService : public BBinder
++{
++  public:
++    AddIntsService();
++    virtual ~AddIntsService() {};
++    virtual status_t onTransact(uint32_t code,
++                                const Parcel& data, Parcel* reply,
++                                uint32_t flags = 0);
++
++};
++
++static int client()
++{
++    int rv = -1;
++
++    if(DBG) ALOGI("%s:%d, %s, before calling defaultServiceManager", __FILE__, __LINE__, __func__);
++    sp<IServiceManager> sm = defaultServiceManager();
++    int attempts = 1;
++
++    if(DBG) ALOGI("%s:%d, %s, after calling defaultServiceManager, sm = %p", __FILE__, __LINE__, __func__, sm.get());
++    // Attach to service
++    do {
++        sp<IBinder> binder = sm->checkService(service);
++        if (binder != 0) {
++            ALOGI("getService %s return successfully in %d attempts\n", serviceName, attempts);
++            rv = 0;
++            break;
++        }
++        ALOGW("%s service not published yet after %d attempts, retrying....\n", serviceName, attempts);
++        usleep(1000);
++        attempts++;
++    } while(attempts <= 10);
++
++    return rv;
++}
++
++int bstsvcmgrtest_main()
++{
++    int rv, status = 0;
++    pid_t pid = -1;
++
++    // Fork client, use this process as server
++    switch (pid = fork()) {
++        case 0: // Child
++            return client();
++
++        default: // Parent
++            break;
++
++        case -1: // Error
++            ALOGE("Error from fork() syscall %d, exiting now\n", errno);
++            return -1;
++    }
++
++    // Add the service
++    if(DBG) ALOGI("%s:%d, %s, before calling defaultServiceManager", __FILE__, __LINE__, __func__);
++    sp<IServiceManager> sm = defaultServiceManager();
++    if(DBG) ALOGI("%s:%d, %s, after calling defaultServiceManager, sm = %p", __FILE__, __LINE__, __func__, sm.get());
++    if ((rv = sm->addService(service,
++                    new AddIntsService())) != 0) {
++        ALOGE("addService %s failed, return value: %d, errno: %d\n", serviceName, rv, errno);
++        kill(pid, SIGKILL);
++        return -1;
++    }
++    if(DBG) ALOGI("%s:%d, %s, after successfully registered service %s", __FILE__, __LINE__, __func__, serviceName);
++    android::ProcessState::self()->startThreadPool();
++    ALOGD("service %s is now ready", serviceName);
++    // Wait for all children to end
++    do {
++        int stat;
++        ALOGI("%s:%d, %s, before calling wait", __FILE__, __LINE__, __func__);
++        rv = wait(&stat);
++        ALOGI("%s:%d, %s, after calling wait, return = %d, errno = %d", __FILE__, __LINE__, __func__, rv, errno);
++        if (rv == -1) {
++            if (errno == ECHILD) {
++                break;
++            } else {
++                ALOGE("wait FAILED, return value %d, errno %d\n", rv, errno);
++                perror(NULL);
++                kill(pid, SIGKILL);
++                return -1;
++            }
++        } else {
++            rv = WEXITSTATUS(stat);
++            ALOGI("%s:%d, %s, after calling wait, exitstatus = %d", __FILE__, __LINE__, __func__, rv);
++            if (rv != 0)
++                status = -1;
++            else
++                status = 0;
++        }
++    } while (1);
++
++    ALOGI("%s:%d, %s, before calling joinThreadPool", __FILE__, __LINE__, __func__);
++    IPCThreadState::self()->joinThreadPool();
++    ALOGI("%s:%d, %s, after calling joinThreadPool", __FILE__, __LINE__, __func__);
++    return status;
++}
++
++AddIntsService::AddIntsService() {
++};
++
++// Server function that handles parcels received from the client
++status_t AddIntsService::onTransact(uint32_t code, const Parcel &data,
++                                    Parcel* reply, uint32_t flags)
++{
++    if(DBG) ALOGD("onTransact called , code %d", code);
++    // Perform the requested operation
++    switch (code) {
++        default:
++            return BBinder::onTransact(code, data, reply, flags);
++    }
++
++    return 0;
++}
++
++
++int main()
++{
++    struct timespec req;
++
++    ALOGI("Testing if servicemanager is ready\n");
++    for (;;)
++    {
++        req.tv_nsec = 5000;
++        req.tv_sec = 0;
++        if (!bstsvcmgrtest_main())
++            break;
++        nanosleep(&req, NULL);
++    }
++    ALOGI("Servicemanager is ready\n");
++
++    return 0;
++}
+-- 
+2.34.1
+

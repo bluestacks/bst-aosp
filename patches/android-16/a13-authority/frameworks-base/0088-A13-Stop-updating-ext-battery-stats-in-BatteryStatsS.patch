@@ -1,0 +1,24 @@
+From e4b4292a291e149c792155dd082d0ce73176c065 Mon Sep 17 00:00:00 2001
+From: allen-bst <70563899+allen-bst@users.noreply.github.com>
+Date: Fri, 24 Nov 2023 15:51:37 +0800
+Subject: [PATCH 088/224] [A13] Stop updating ext battery stats in
+ BatteryStatsService. (#93)
+
+---
+ .../core/java/com/android/server/am/BatteryStatsService.java   | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/BatteryStatsService.java b/services/core/java/com/android/server/am/BatteryStatsService.java
+index 207c10c44c9b..cf67d5cf281e 100644
+--- a/services/core/java/com/android/server/am/BatteryStatsService.java
++++ b/services/core/java/com/android/server/am/BatteryStatsService.java
+@@ -1634,7 +1634,8 @@ public final class BatteryStatsService extends IBatteryStats.Stub
+                     if (mLastPowerStateFromWifi == powerState) return;
+ 
+                     mLastPowerStateFromWifi = powerState;
+-                    if (mStats.isOnBattery()) {
++                    // do not update stats
++                    if (false && mStats.isOnBattery()) {
+                         final String type =
+                                 (powerState == DataConnectionRealTimeInfo.DC_POWER_STATE_HIGH
+                                 || powerState == DataConnectionRealTimeInfo.DC_POWER_STATE_MEDIUM)

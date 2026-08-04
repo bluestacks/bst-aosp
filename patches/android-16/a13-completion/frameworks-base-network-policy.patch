@@ -1,0 +1,55 @@
+diff --git a/packages/SettingsProvider/res/values/defaults.xml b/packages/SettingsProvider/res/values/defaults.xml
+index cd62565958e8..379ffdb1d730 100644
+--- a/packages/SettingsProvider/res/values/defaults.xml
++++ b/packages/SettingsProvider/res/values/defaults.xml
+@@ -47,7 +47,7 @@
+     <!-- 0 == off, 1 == on-->
+     <integer name="def_paired_device_location_mode">1</integer>
+     <bool name="assisted_gps_enabled">false</bool>
+-    <bool name="def_netstats_enabled">true</bool>
++    <bool name="def_netstats_enabled">false</bool>
+     <bool name="def_usb_mass_storage_enabled">true</bool>
+     <bool name="def_wifi_on">false</bool>
+     <!-- 0 == never, 1 == only when plugged in, 2 == always -->
+diff --git a/services/core/java/com/android/server/net/NetworkManagementService.java b/services/core/java/com/android/server/net/NetworkManagementService.java
+index 7172a141988a..6ead749059e9 100644
+--- a/services/core/java/com/android/server/net/NetworkManagementService.java
++++ b/services/core/java/com/android/server/net/NetworkManagementService.java
+@@ -121,6 +121,7 @@ public class NetworkManagementService extends INetworkManagementService.Stub {
+ 
+     private static final String TAG = "NetworkManagement";
+     private static final boolean DBG = Log.isLoggable(TAG, Log.DEBUG);
++    private static final boolean BST_CHANGES_ENABLED = true;
+ 
+     /**
+      * Binder context for this service
+@@ -421,6 +422,11 @@ public class NetworkManagementService extends INetworkManagementService.Stub {
+      */
+     private void prepareNativeDaemon() {
+ 
++        if (BST_CHANGES_ENABLED) {
++            setFirewallEnabled(false);
++            return;
++        }
++
+         // push any existing quota or UID rules
+         synchronized (mQuotaLock) {
+ 
+diff --git a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+index 97e831e03f88..9b0790ff145c 100644
+--- a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
++++ b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+@@ -1028,12 +1028,12 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
+         try {
+             // Boost thread's priority during system server init
+             Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND);
++            mUsageStats = LocalServices.getService(UsageStatsManagerInternal.class);
+             if (!isBandwidthControlEnabled()) {
+                 Slog.w(TAG, "bandwidth controls disabled, unable to enforce policy");
+                 return;
+             }
+ 
+-            mUsageStats = LocalServices.getService(UsageStatsManagerInternal.class);
+             mAppStandby = LocalServices.getService(AppStandbyInternal.class);
+             mActivityManagerInternal = LocalServices.getService(ActivityManagerInternal.class);
+ 

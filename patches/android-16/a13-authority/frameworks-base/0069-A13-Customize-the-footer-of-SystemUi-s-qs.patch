@@ -1,0 +1,80 @@
+From 7534c8982878a3914223090e5ab6c1455dc5c31e Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Mon, 16 Oct 2023 14:47:54 +0800
+Subject: [PATCH 069/224] [A13] Customize the footer of SystemUi's qs
+
+---
+ .../domain/interactor/FooterActionsInteractor.kt    | 13 +++++++++++++
+ .../footer/ui/viewmodel/FooterActionsViewModel.kt   |  7 +++++--
+ 2 files changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt b/packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt
+index 03bb7a0f45da..193ff1f63a0c 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt
++++ b/packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt
+@@ -23,6 +23,7 @@ import android.content.Intent
+ import android.content.IntentFilter
+ import android.os.UserHandle
+ import android.provider.Settings
++import android.content.ComponentName
+ import com.android.internal.jank.InteractionJankMonitor
+ import com.android.internal.logging.MetricsLogger
+ import com.android.internal.logging.UiEventLogger
+@@ -168,13 +169,25 @@ constructor(
+         }
+ 
+         metricsLogger.action(MetricsProto.MetricsEvent.ACTION_QS_EXPANDED_SETTINGS_LAUNCH)
++        val intent = Intent().setComponent(ComponentName("com.bluestacks.settings", "com.bluestacks.settings.SettingsActivity"))
+         activityStarter.startActivity(
++            intent,
++            true, /* dismissShade */
++            expandable.activityLaunchController(
++                InteractionJankMonitor.CUJ_SHADE_APP_LAUNCH_FROM_SETTINGS_BUTTON
++            )
++        )
++        /*
++        activityStarter.startActivity(
++
+             Intent(Settings.ACTION_SETTINGS),
+             true /* dismissShade */,
+             expandable.activityLaunchController(
+                 InteractionJankMonitor.CUJ_SHADE_APP_LAUNCH_FROM_SETTINGS_BUTTON
+             ),
++
+         )
++        */
+     }
+ 
+     override fun showUserSwitcher(context: Context, expandable: Expandable) {
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt b/packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt
+index fbf32b3b99ea..095f778ad7fe 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt
++++ b/packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt
+@@ -152,7 +152,7 @@ class FooterActionsViewModel(
+ 
+     /** The model for the power button. */
+     val power: FooterActionsButtonViewModel? =
+-        if (showPowerButton) {
++        if (false) {
+             FooterActionsButtonViewModel(
+                 id = R.id.pm_lite,
+                 Icon.Resource(
+@@ -251,7 +251,9 @@ class FooterActionsViewModel(
+ 
+     private fun userSwitcherButton(
+         status: UserSwitcherStatusModel.Enabled
+-    ): FooterActionsButtonViewModel {
++    ): FooterActionsButtonViewModel? {
++        return null
++        /*
+         val icon = status.currentUserImage!!
+ 
+         return FooterActionsButtonViewModel(
+@@ -267,6 +269,7 @@ class FooterActionsViewModel(
+             backgroundColor = R.attr.offStateColor,
+             onClick = this::onUserSwitcherClicked,
+         )
++        */
+     }
+ 
+     private fun userSwitcherContentDescription(currentUser: String?): String? {

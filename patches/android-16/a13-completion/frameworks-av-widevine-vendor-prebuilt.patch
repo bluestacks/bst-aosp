@@ -1,0 +1,11 @@
+diff --git a/drm/mediadrm/plugins/widevine/default/Android.bp b/drm/mediadrm/plugins/widevine/default/Android.bp
+index 918c8ee..252ff82 100755
+--- a/drm/mediadrm/plugins/widevine/default/Android.bp
++++ b/drm/mediadrm/plugins/widevine/default/Android.bp
+@@ -1,6 +1,7 @@
+ cc_prebuilt_library_shared{
+     name : "libwvdrmengine",
++    vendor: true,
+     arch : {
+         x86 : {srcs : ["libwvdrmengine.so"]},
+         x86_64 : {srcs : ["libwvdrmengine.so"]},

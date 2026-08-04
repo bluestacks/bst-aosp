@@ -1,0 +1,92 @@
+From d7a99628fff0644fd7dbf42345f60c11b8d158fa Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 10:01:59 +0800
+Subject: [PATCH] [A16] Support BlueStacks native mouse pointer
+
+Port A13 authority commit 5b6ab0fcd46e with the pointer-icon lookup adapted to the Android 16 API split. Preserve the hidden reload binder hook used by host-facing components and suppress the guest cursor unless show-touches or bst.config.show_mouse_ptr enables it.
+---
+ core/java/android/hardware/input/IInputManager.aidl    |  1 +
+ core/java/android/hardware/input/InputManager.java     |  9 +++++++++
+ core/java/android/view/PointerIcon.java                | 10 ++++++++++
+ .../com/android/server/input/InputManagerService.java  |  5 +++++
+ 4 files changed, 25 insertions(+)
+
+diff --git a/core/java/android/hardware/input/IInputManager.aidl b/core/java/android/hardware/input/IInputManager.aidl
+index c6380040e7e1..e00c0aade93c 100644
+--- a/core/java/android/hardware/input/IInputManager.aidl
++++ b/core/java/android/hardware/input/IInputManager.aidl
+@@ -180,6 +180,7 @@ interface IInputManager {
+     // Remove the runtime association between the input port and the display port. Any existing
+     // static association for the cleared input port will be restored.
+     void removePortAssociation(in String inputPort);
++    void bstReloadPointerIcon();
+ 
+     // Add a runtime association between the input device and display, using device's descriptor.
+     void addUniqueIdAssociationByDescriptor(in String inputDeviceDescriptor,
+diff --git a/core/java/android/hardware/input/InputManager.java b/core/java/android/hardware/input/InputManager.java
+index 6b22e4e4de93..4b13c170ec66 100644
+--- a/core/java/android/hardware/input/InputManager.java
++++ b/core/java/android/hardware/input/InputManager.java
+@@ -1171,6 +1171,15 @@ public final class InputManager {
+         }
+     }
+ 
++    /** @hide */
++    public void bstReloadPointerIcon() {
++        try {
++            mIm.bstReloadPointerIcon();
++        } catch (RemoteException ex) {
++            throw ex.rethrowFromSystemServer();
++        }
++    }
++
+     /**
+      * Add a runtime association between the input port and display, by unique id. Input ports are
+      * expected to be unique.
+diff --git a/core/java/android/view/PointerIcon.java b/core/java/android/view/PointerIcon.java
+index 072bd2077ef2..f6853cdf3ef5 100644
+--- a/core/java/android/view/PointerIcon.java
++++ b/core/java/android/view/PointerIcon.java
+@@ -40,6 +40,8 @@ import android.os.Build;
+ import android.os.Parcel;
+ import android.os.Parcelable;
+ import android.os.PointerIconType;
++import android.os.SystemProperties;
++import android.provider.Settings;
+ import android.util.Log;
+ import android.util.SparseArray;
+ import android.view.flags.Flags;
+@@ -256,6 +258,14 @@ public final class PointerIcon implements Parcelable {
+             // requirement.
+             throw new IllegalArgumentException("context must not be null");
+         }
++
++        final boolean showTouches = Settings.System.getInt(context.getContentResolver(),
++                Settings.System.SHOW_TOUCHES, 0) == 1;
++        final boolean showNativeMousePointer = SystemProperties.getBoolean(
++                "bst.config.show_mouse_ptr", false);
++        if (!showTouches && !showNativeMousePointer) {
++            return getSystemIcon(TYPE_NULL);
++        }
+         return getSystemIcon(type);
+     }
+ 
+diff --git a/services/core/java/com/android/server/input/InputManagerService.java b/services/core/java/com/android/server/input/InputManagerService.java
+index dcc65a421465..0e7f47fc5487 100644
+--- a/services/core/java/com/android/server/input/InputManagerService.java
++++ b/services/core/java/com/android/server/input/InputManagerService.java
+@@ -1859,6 +1859,11 @@ public class InputManagerService extends IInputManager.Stub
+         mNative.notifyPortAssociationsChanged();
+     }
+ 
++    @Override // Binder call
++    public void bstReloadPointerIcon() {
++        mNative.reloadPointerIcons();
++    }
++
+     @Override // Binder call
+     public void addUniqueIdAssociationByPort(@NonNull String inputPort,
+             @NonNull String displayUniqueId) {
+-- 
+2.34.1
+

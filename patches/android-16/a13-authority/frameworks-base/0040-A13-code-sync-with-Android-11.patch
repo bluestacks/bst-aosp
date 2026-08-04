@@ -1,0 +1,1023 @@
+From 1a3b47c4765f72a6e9c70e38a4be8fafb52f76db Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 26 Oct 2023 11:27:27 +0800
+Subject: [PATCH 040/224] [A13] code sync with Android 11
+
+Sync BstFilter, BstHostcall services to bst-v5.14.0-5.14.0.1035
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 124 +++-
+ .../com/bluestacks/os/BstHostCallManager.java |  11 +
+ .../bluestacks/os/IBstFilterAppsService.aidl  |   9 +
+ .../bluestacks/os/IBstHostCallService.aidl    |   1 +
+ .../server/BstFilterAppsService.java          | 616 +++++++++++++++++-
+ .../bluestacks/server/BstHostCallService.java |   9 +
+ ...m_bluestacks_server_BstHostCallService.cpp |  16 +-
+ 7 files changed, 768 insertions(+), 18 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index f58e861823cf..86acde3ed8c1 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1280,6 +1280,21 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public int getCameraInitRotation(String pkgName)
++    {
++        try{
++            return mService.getCameraInitRotation(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return 0;
++        }
++    }
++
+     /**
+      * Provide app specific GlVersion value based on selected mode AGA or PGA
+      * @hide
+@@ -1378,7 +1393,7 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
+-    
++
+     /**
+      * Check if app should be force kill when closed from recent apps
+      * case ROB-2374: Adding a new entry name: forceKill
+@@ -1411,6 +1426,51 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++     /**
++     * @hide
++     */
++    public boolean isHotFixApp(String pkgName)
++    {
++        try {
++            return mService.isHotFixApp(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
++    /**
++     * @hide
++     */
++    public int getUnityFlickerPatchRequired(String pkgName)
++    {
++        try{
++            return mService.getUnityFlickerPatchRequired(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return 0;
++        }
++    }
++
++    /**
++     * @hide
++     */
++    public String getDefaultProfile(String pkgName)
++    {
++        try {
++            return mService.getDefaultProfile(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return "";
++        }
++    }
++
+     /**
+      * Gets an BstFilterAppsManager instance associated with a Context.
+      * @hide
+@@ -1434,4 +1494,66 @@ public class BstFilterAppsManager {
+             return "";
+         }
+     }
++
++    /**
++    * case ROB-9086: High fps config, Adding a new entry name: XperfMode
++    * @hide
++    */
++    public boolean isXperfMode(int uid)
++    {
++        try {
++            return mService.isXperfMode(uid);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
++    /**
++     * @hide
++     */
++    public boolean isIntelGLDispatchComputeFlushApp(String pkgName)
++    {
++        try{
++            return mService.isIntelGLDispatchComputeFlushApp(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
++    /**
++     * @hide
++     * dhdg: disable hook droid guard
++     */
++    public boolean isDhdg(int uid)
++    {
++        try {
++            return mService.isDhdg(uid);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
++    /**
++     * @hide
++     */
++    public boolean isGlNativeSyncDisabled(String pkgName)
++    {
++        try {
++            return mService.isGlNativeSyncDisabled(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index 51dbdc869c1f..00321b00f167 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -483,4 +483,15 @@ public class BstHostCallManager {
+             throw new RuntimeException(e);
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public int screenRecordingStarted(boolean started, boolean showTaps, int audioSource) {
++        try {
++            return mBstHostCallService.screenRecordingStarted(started, showTaps, audioSource);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 08238d8e8ad0..cf8b1972a4eb 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -91,4 +91,13 @@ interface IBstFilterAppsService
+     boolean isFixedDisplayRotationApp(String pkgName);
+     String getGameDefaultSetting(String pkgName);
+     boolean isHppEnabled(String pkgName);
++    boolean isHotFixApp(String pkgName);
++    boolean isGLInvalidateFramebufferFilterApp(String pkgName);
++    int getUnityFlickerPatchRequired(String pkgName);
++    String getDefaultProfile(String pkgName);
++    boolean isXperfMode(int uid);
++    boolean isIntelGLDispatchComputeFlushApp(String pkgName);
++    int getCameraInitRotation(String pkgName);
++    boolean isDhdg(int uid);
++    boolean isGlNativeSyncDisabled(String pkgName);
+ }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index b21311395238..77312bec2902 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -43,4 +43,5 @@ interface IBstHostCallService {
+     int onDifferentImagePkgClicked(String pkg);
+     int onWalletMessage(String content);
+     int onCustomAppOrientationCompleted(String pkg);
++    int screenRecordingStarted(boolean started, boolean showTaps, int audioSource);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 95e25d105708..adc1ef0149f1 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -92,7 +92,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private HashMap<Integer,String>   mInstalledArmAppList = new HashMap();
+     private Map<String, String>   mGlRendererList = new HashMap<String, String>();
+     private Map<String, String>   mGlVendorList = new HashMap<String, String>();
+-    private Map<String, String>   mMemorySizeList = new HashMap<String, String>();
++    private HashMap<String, String>   mMemorySizeList = new HashMap<String, String>();
+     private Map<String, String>   mRequiredVersionAppList = new HashMap<String, String>();
+     private Map<String, String>   mBuildSupportedAppList = new HashMap<String, String>();
+     private Map<String, String>   mGlModeAppList = new HashMap<String, String>();
+@@ -152,8 +152,10 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mUsingSwappyAppList = new TreeSet<String>();
+     private Map<String, String>   mMouseCursorStyleAppList = new HashMap<String, String>();
+     private Map<String, Integer>  mCameraSensorRotationAppList = new HashMap<String, Integer>();
++    private Map<String, Integer>  mCameraInitRotationAppList = new HashMap<String, Integer>();
+     private Set<String>           mUE4GLFlushAppList = new TreeSet<String>();
+     private HashMap<String, String>  mModelPropAppList = new HashMap<String, String>();
++    private Set<String>           mPMFAppList = new TreeSet<String>();
+     private Set<String>           mGetNowggAccountsList = new TreeSet<String>();
+     private Set<String>           mGoogleSignInReqdAppList = new TreeSet<String>();
+     private Map<String, Map<String, String>> mMouseActionConfiguredAppList = new HashMap<String, Map<String, String>>();
+@@ -161,6 +163,14 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mForceKillAppList = new TreeSet<String>();
+     private Map<String, String>   mGameDefaultSettingAppList = new HashMap<String, String>();
+     private Set<String>           mHppEnabledAppList = new TreeSet<String>();
++    private Set<String>           mHotFixAppList = new TreeSet<String>();
++    private Set<String>           mGLInvalidateFramebufferFilterAppList = new TreeSet<String>();
++    private Map<String, Integer>  mUnityFlickerAppList = new HashMap<String, Integer>();
++    private Map<String, String>   mDefaultProfileAppList = new HashMap<String, String>();
++    private Set<String>           mXperfModeList = new TreeSet<String>();
++    private Set<String>           mIntelGLDispatchComputeFlushAppList = new TreeSet<String>();
++    private Set<String>           mDhdgList = new TreeSet<String>();
++    private Set<String>           mGlNativeSyncDisabledAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -184,8 +194,16 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private static final String bstHideProcMapsFilePath = bstMiscFilePath + ".hpm";
+     // To store custom ro.product.model values for apps (error 70 issue)
+     private static final String bstModelPropFilePath = bstMiscFilePath + ".modelProp";
++    // To store packageNames for which we need fixed promon emulator detection
++    private static final String bstPMFFilePath = bstMiscFilePath + ".pmf";
+     // To store those package name, for which we are providing Vulkan support
+     private static final String vulkanAppList = configFilePath+".VulkanAppList";
++    // To maintain uid;packageName entries for apps
++    private static final String bstXcpuApps = bstMiscFilePath + ".bstXcpuApps";
++    // To maintain uid;packageName entries for apps
++    private static final String bstZeroMappedPageApps = bstMiscFilePath + ".bstZeroMappedPageApps";
++    // To maintain uid;packageName entries for apps
++    private static final String bstMemorySizeApps = bstMiscFilePath + ".bstMemorySizeApps";
+ 
+     // This is the object monitoring /data/data/.
+     private FileObserver mObserver;
+@@ -1974,6 +1992,20 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mCameraSensorRotationAppList,pkgException,cameraSensorRotation);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("cameraInit")) {
++                                    synchronized (mCameraInitRotationAppList) {
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mCameraInitRotationAppList \n");
++                                        int cameraInitRotation = Integer.parseInt(value);
++                                        mCameraInitRotationAppList.put(packageName, cameraInitRotation);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mCameraInitRotationAppList \n");
++                                                mCameraInitRotationAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mCameraInitRotationAppList,pkgException,cameraInitRotation);
++                                    }
++                                }
+                                 else if (key.equalsIgnoreCase("UE4GLFlush")) {
+                                     synchronized (mUE4GLFlushAppList) {
+                                         if (value.equalsIgnoreCase("false")) {
+@@ -2004,6 +2036,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mModelPropAppList,pkgException,value);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("pmf"))) {
++                                    synchronized (mPMFAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + "to mPMFAppList \n");
++                                        mPMFAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mPMFAppList \n");
++                                            mPMFAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mPMFAppList,pkgException);
++                                    }
++                                }
+                                 else if (key.equalsIgnoreCase("getNowggAccounts")) {
+                                     synchronized (mGetNowggAccountsList) {
+                                         if (value.equalsIgnoreCase("false")) {
+@@ -2121,6 +2169,127 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mHppEnabledAppList,pkgException);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("hotfix"))) {
++                                   synchronized (mHotFixAppList) {
++                                       if (value.equalsIgnoreCase("false")) {
++                                           packageName = "~" + packageName;
++                                       }
++                                       if (DEBUG)
++                                           Slog.d(TAG, "Adding packageName :" + packageName + " to mHotFixAppList \n");
++                                           mHotFixAppList.add(packageName);
++                                       if (packageName.startsWith("~")) {
++                                           if (DEBUG)
++                                               Slog.d(TAG, "Removing " + origPackageName + " from mHotFixAppList \n");
++                                           mHotFixAppList.remove(packageName.substring(1));
++                                       }
++                                       removePackageEntryFromList(mHotFixAppList,pkgException);
++                                   }
++                               }
++                                else if (key.equalsIgnoreCase("GLIFBFilter")) {
++                                    synchronized (mGLInvalidateFramebufferFilterAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mGLInvalidateFramebufferFilterAppList \n");
++                                        mGLInvalidateFramebufferFilterAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mGLInvalidateFramebufferFilterAppList \n");
++                                            mGLInvalidateFramebufferFilterAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mGLInvalidateFramebufferFilterAppList,pkgException);
++                                    }
++                                }
++                                else if (key.equalsIgnoreCase("UnityFlicker")) {
++                                    synchronized (mUnityFlickerAppList) {
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mUnityFlickerAppList \n");
++                                        int unityFlicker = Integer.parseInt(value);
++                                        mUnityFlickerAppList.put(packageName, unityFlicker);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mUnityFlickerAppList \n");
++                                                mUnityFlickerAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mUnityFlickerAppList,pkgException,unityFlicker);
++                                    }
++                                }
++                                else if (key.equalsIgnoreCase("DefaultProfile")) {
++                                   synchronized (mDefaultProfileAppList) {
++                                        mDefaultProfileAppList.put(packageName, value);
++                                    }
++                                    if (packageName.startsWith("~")) {
++                                        synchronized (mDefaultProfileAppList) {
++                                            mDefaultProfileAppList.remove(packageName.substring(1));
++                                        }
++                                    }
++                                    removePackageEntryFromList(mDefaultProfileAppList, pkgException, value);
++                                 }
++                                 else if (key.equalsIgnoreCase("XperfMode")) {
++                                    synchronized (mXperfModeList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mXperfModeList \n");
++                                        mXperfModeList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mXperfModeList \n");
++                                            mXperfModeList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mXperfModeList, pkgException);
++                                    }
++                                }
++                                else if (key.equalsIgnoreCase("IntelDCFlush")) {
++                                    synchronized (mIntelGLDispatchComputeFlushAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mIntelGLDispatchComputeFlushAppList \n");
++                                        mIntelGLDispatchComputeFlushAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mIntelGLDispatchComputeFlushAppList \n");
++                                            mIntelGLDispatchComputeFlushAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mIntelGLDispatchComputeFlushAppList,pkgException);
++                                    }
++                                }
++                                else if (key.equalsIgnoreCase("dhdg")) {
++                                    synchronized (mDhdgList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mDhdgList \n");
++                                        mDhdgList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mDhdgList \n");
++                                            mDhdgList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mDhdgList, pkgException);
++                                    }
++                                }
++                                else if (key.equalsIgnoreCase("GlNativeSyncDisabled")) {
++                                    synchronized (mGlNativeSyncDisabledAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mGlNativeSyncDisabledAppList \n");
++                                        mGlNativeSyncDisabledAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mGlNativeSyncDisabledAppList \n");
++                                            mGlNativeSyncDisabledAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mGlNativeSyncDisabledAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -2137,10 +2306,25 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             List<String> packages = new ArrayList<String>();
+ 
+             // Dumping package names for app needed to hide proc maps into a file
+-            writeHideProcMapsInfo(bstHideProcMapsFilePath, mHideProcMapsAppList);
++            writeTreeSetWithString(bstHideProcMapsFilePath, mHideProcMapsAppList);
+ 
+             // dump the mModelPropAppList to a persistent file for custom model property read.
+             writeMapWithStringValue(bstModelPropFilePath, mModelPropAppList);
++
++            // Dumping package names for app needed fixed promon detection into a file
++            writeTreeSetWithString(bstPMFFilePath, mPMFAppList);
++
++            // dump the mXcpuAppList to a persistent file.
++            writeTreeSetWithString(bstXcpuApps, mXcpuAppList);
++
++            // dump the mZeroMappedPageAppList to a persistent file.
++            writeTreeSetWithString(bstZeroMappedPageApps, mZeroMappedPageAppList);
++
++            // dump the mZeroMappedPageAppList to a persistent file.
++            writeMapWithStringValue(bstMemorySizeApps, mMemorySizeList);
++
++            createMemoryInfoFile(mMemorySizeList);
++
+         } catch (Exception e) {
+             Slog.e(TAG, "Exception in trying to parse CustomSizeAppList: " + e);
+             e.printStackTrace();
+@@ -2627,6 +2811,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mCameraSensorRotationAppList.clear();
+         }
+ 
++        synchronized (mCameraInitRotationAppList)
++        {
++            mCameraInitRotationAppList.clear();
++        }
++
+         synchronized (mUE4GLFlushAppList)
+         {
+             mUE4GLFlushAppList.clear();
+@@ -2637,6 +2826,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mModelPropAppList.clear();
+         }
+ 
++        synchronized (mPMFAppList)
++        {
++            mPMFAppList.clear();
++        }
++
+         synchronized (mGetNowggAccountsList)
+         {
+             mGetNowggAccountsList.clear();
+@@ -2666,7 +2860,45 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         {
+             mHppEnabledAppList.clear();
+         }
++        synchronized (mXperfModeList)
++        {
++            mXperfModeList.clear();
++        }
+ 
++        synchronized (mHotFixAppList)
++        {
++            mHotFixAppList.clear();
++        }
++
++        synchronized (mGLInvalidateFramebufferFilterAppList)
++        {
++            mGLInvalidateFramebufferFilterAppList.clear();
++        }
++
++        synchronized (mUnityFlickerAppList)
++        {
++            mUnityFlickerAppList.clear();
++        }
++
++        synchronized (mDefaultProfileAppList)
++        {
++            mDefaultProfileAppList.clear();
++        }
++
++        synchronized (mIntelGLDispatchComputeFlushAppList)
++        {
++            mIntelGLDispatchComputeFlushAppList.clear();
++        }
++
++        synchronized (mDhdgList)
++        {
++            mDhdgList.clear();
++        }
++
++        synchronized (mGlNativeSyncDisabledAppList)
++        {
++            mGlNativeSyncDisabledAppList.clear();
++        }
+ 
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+@@ -3244,20 +3476,30 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                 flattenCurrentActivity = new StringBuilder().append(activity.substring(0,index)).append(activity.substring(index+1)).toString();
+             }
+ 
+-            String storedActivity = mSoftKeyboardActivityList.get(pkg);
+-            index = storedActivity.indexOf('/');
+-            if (index != -1)
+-            {
+-                if (DEBUG) Slog.d(TAG, " orig stored activity: " + storedActivity + " pkg: " + storedActivity.substring(0, index) + " activity: " + storedActivity.substring(index+1));
+-                storedActivity = new StringBuilder().append(storedActivity.substring(0,index)).append(storedActivity.substring(index+1)).toString();
++            //ROB-10786: Let the soft configuration item support multiple activities, and each activity is separated by a comma
++            String values = mSoftKeyboardActivityList.get(pkg);
++            String[] ativityList = values.split(",");
++            if (ativityList != null) {
++                for (int i = 0; i < ativityList.length; i++) {
++                    String storedActivity = ativityList[i];
++                    index = storedActivity.indexOf('/');
++                    if (index != -1)
++                    {
++                        if (DEBUG) Slog.d(TAG, " orig stored activity: " + storedActivity + " pkg: " + storedActivity.substring(0, index) + " activity: " + storedActivity.substring(index+1));
++                        storedActivity = new StringBuilder().append(storedActivity.substring(0,index)).append(storedActivity.substring(index+1)).toString();
++                    }
++                    if (DEBUG) Slog.d(TAG, "storedActivity : " + storedActivity + " orig activity: " + activity + " flattenCurrentActivity : " + flattenCurrentActivity);
++                    if (storedActivity.equals("*"))
++                        res = true;
++                    else if (storedActivity.equalsIgnoreCase(activity))
++                        res = true;
++                    else if (storedActivity.equalsIgnoreCase(flattenCurrentActivity))
++                        res = true;
++                    if (res)
++                        break;
++                }
+             }
+-            if (DEBUG) Slog.d(TAG, "storedActivity : " + storedActivity + " orig activity: " + activity + " flattenCurrentActivity : " + flattenCurrentActivity);
+-            if (storedActivity.equals("*"))
+-                res = true;
+-            else if (storedActivity.equalsIgnoreCase(activity))
+-                res = true;
+-            else if (storedActivity.equalsIgnoreCase(flattenCurrentActivity))
+-                res = true;
++
+         }
+         if (DEBUG) Slog.d(TAG, "isSoftKeyboardRequired(" + pkg + "," + activity + ") returning " + res);
+         return res;
+@@ -4750,7 +4992,56 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+     }
+ 
+-    private void writeHideProcMapsInfo(String fileName, Set<String> appList) {
++    private void createMemoryInfoFile(HashMap<String, String> map) {
++        Iterator<HashMap.Entry<String, String>> it = map.entrySet().iterator();
++        while (it.hasNext()) {
++             HashMap.Entry<String, String> ent = it.next();
++             String memorySize = ent.getValue().toString();
++
++             String memorySizeKb = Long.toString(Long.parseLong(memorySize)/1024);
++             File newMemFile = new File("/data/downloads/.tmp/xmeminfo." + memorySize);
++             File origMemFile = new File("/etc/xmeminfo");
++             try {
++
++                 if (newMemFile.getParentFile()==null)
++                     newMemFile.getParentFile().mkdirs();
++
++                 if (newMemFile.exists() || !origMemFile.exists()) {
++                     continue;
++                 }
++                 if (!newMemFile.exists()) {
++                     newMemFile.createNewFile();
++                     if (FileUtils.setPermissions(newMemFile,
++                            FileUtils.S_IRUSR | FileUtils.S_IWUSR |
++                            FileUtils.S_IRGRP | FileUtils.S_IROTH | FileUtils.S_IWGRP | FileUtils.S_IWOTH, -1, -1) != 0) {
++                         Slog.e(TAG, "Failed to change permissions for the file");
++                     }
++
++                     BufferedReader reader = new BufferedReader(new FileReader(origMemFile));
++                     String line = "", oldtext = "";
++                     while((line = reader.readLine()) != null)
++                     {
++                         oldtext += line + "\r\n";
++                     }
++                     reader.close();
++
++                     String oldmem = "        1817980";
++                     String newMem = String.format("%1$"+oldmem.length()+ "s", memorySizeKb);
++                     String newtext = oldtext.replaceAll("MemTotal:        1817980 kB", "MemTotal:"+ newMem + " kB");
++
++                     FileWriter writer = new FileWriter(newMemFile);
++                     writer.write(newtext);
++                     writer.close();
++                 }
++             }
++             catch (Exception e) {
++                 Slog.w(TAG,"Exception in copying file " + origMemFile + " to " + newMemFile);
++                 e.printStackTrace();
++             }
++        }
++    }
++
++    private void writeTreeSetWithString(String fileName, Set<String> appList) {
+         File outputFile = new File(fileName);
+         FileWriter fw;
+         BufferedWriter out = null;
+@@ -5696,6 +5987,46 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return rotationAngle;
+     }
+ 
++    /**
++     * Check for applications to determine whether they need camera init rotation.
++     * @hide
++     */
++    public int getCameraInitRotation(String pkgName)
++    {
++        int rotationAngle = 0;
++        if (pkgName == null || pkgName.trim().length() <= 0)
++        {
++            Slog.e(TAG, "invalid arguments to getCameraInitRotationAngle, pkgName = " + pkgName);
++            return rotationAngle;
++        }
++
++        if(DEBUG) Slog.d(TAG, " Trying to look for " + pkgName + " in getCameraInitRotation AppList\n");
++        initLists();
++
++        synchronized (mCameraInitRotationAppList)
++        {
++            if (mCameraInitRotationAppList.containsKey(pkgName))
++            {
++                if(DEBUG) Slog.d(TAG, pkgName + " requires camera init rotation to  work properly");
++                rotationAngle = mCameraInitRotationAppList.get(pkgName);
++                if(DEBUG) Slog.d(TAG,"The init rotation Angle for package: " + pkgName + " is : " + rotationAngle);
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mCameraInitRotationAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if(DEBUG) Slog.d(TAG, pkgName + " requires camera init rotation to work properly");
++                    rotationAngle = mCameraInitRotationAppList.get(wildcardMatchedPackageName);
++                    if(DEBUG) Slog.d(TAG,"The init rotation Angle for package: " + pkgName + " matched with : " + wildcardMatchedPackageName + " is : " + rotationAngle);
++
++                }
++            }
++        }
++
++        return rotationAngle;
++    }
++
+     /**
+      * Check if this app requires to add glFlush() after glViewport()
+      * case ROB-4410: Adding a new entry name: UE4GLFlush
+@@ -5876,6 +6207,34 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return res;
+     }
+ 
++    /**
++     * checks if hotfix support needed for this app or not
++     * @hide
++     */
++    public boolean isHotFixApp(String pkgName)
++    {
++        initLists();
++        synchronized (mHotFixAppList)
++        {
++            if (mHotFixAppList.contains(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mHotFixAppList App List " + "\n");
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mHotFixAppList, pkgName);
++                if (wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mHotFixAppList App List " + "\n");
++                    return true;
++                }
++            }
++        }
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mHotFixAppList\n");
++        return false;
++    }
++
+ 
+      /**
+      * Check if app should be force kill when closed from recent apps
+@@ -5935,6 +6294,105 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return false;
+     }
+ 
++    /**
++     * Check if this app requires to be filtered with glInvalidateFramebuffer
++     * case ROB-9468: Adding a new entry name: GLIFBFilter
++     * @hide
++     */
++    public boolean isGLInvalidateFramebufferFilterApp(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GLIFBFilter app list\n");
++        initLists();
++
++        synchronized (mGLInvalidateFramebufferFilterAppList)
++        {
++            if (mGLInvalidateFramebufferFilterAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGLInvalidateFramebufferFilterAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in GLIFBFilter App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
++    /**
++     * this is a hack for Unity flicker issue
++     * case ROB-8684: Adding a new entry name: UnityFlicker
++     * @hide
++     */
++    public int getUnityFlickerPatchRequired(String pkgName)
++    {
++        int unityFlicker = 0;
++        if (pkgName == null || pkgName.trim().length() <= 0)
++        {
++            Slog.e(TAG, "invalid arguments to UnityFlicker, pkgName = " + pkgName);
++            return unityFlicker;
++        }
++
++        if(DEBUG) Slog.d(TAG, " Trying to look for " + pkgName + " in UnityFlicker AppList\n");
++        initLists();
++
++        synchronized (mUnityFlickerAppList)
++        {
++            if (mUnityFlickerAppList.containsKey(pkgName))
++            {
++                if(DEBUG) Slog.d(TAG, pkgName + " requires unity flicker patch to  work properly");
++                unityFlicker = mUnityFlickerAppList.get(pkgName);
++                if(DEBUG) Slog.d(TAG,"The unity flicker patch for package: " + pkgName + " is : " + unityFlicker);
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mUnityFlickerAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if(DEBUG) Slog.d(TAG, pkgName + " requires unity flicker patch to work properly");
++                    unityFlicker = mUnityFlickerAppList.get(wildcardMatchedPackageName);
++                    if(DEBUG) Slog.d(TAG,"The unity flicker patch for package: " + pkgName + " matched with : " + wildcardMatchedPackageName + " is : " + unityFlicker);
++
++                }
++            }
++        }
++
++        return unityFlicker;
++    }
++
++    /**
++     * Check if this app need flush with glDispatchCompute on intel gpu
++     * case ROB-10551: Adding a new entry name: IntelDCFlush
++     * @hide
++     */
++    public boolean isIntelGLDispatchComputeFlushApp(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in IntelDCFlush app list\n");
++        initLists();
++
++        synchronized (mIntelGLDispatchComputeFlushAppList)
++        {
++            if (mIntelGLDispatchComputeFlushAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mIntelGLDispatchComputeFlushAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in IntelDCFlush App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
+     private static class ActivityManagerServiceHolder {
+         static final ActivityManagerInternal mActivityManagerService = LocalServices.getService(ActivityManagerInternal.class);
+     };
+@@ -5972,4 +6430,130 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return res;
+     }
++
++    public String getDefaultProfile(String pkgName) {
++        if (DEBUG) Slog.d(TAG , "Trying to look for " + pkgName + " in mDefaultProfileAppList\n");
++        String res = "";
++
++        synchronized (mDefaultProfileAppList)
++        {
++            if (mDefaultProfileAppList.containsKey(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mDefaultProfileAppList\n");
++                res = mDefaultProfileAppList.get(pkgName);
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mDefaultProfileAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mDefaultProfileAppList\n");
++                    res = mDefaultProfileAppList.get(wildcardMatchedPackageName);
++                }
++            }
++        }
++        return res;
++    }
++
++    /**
++     * case ROB-9086: High fps config, Adding a new entry name: XperfMode
++     * @hide
++     */
++    public boolean isXperfMode(int uid)
++    {
++        boolean found = false;
++        uid = mapUid(uid);
++        initLists();
++
++        mPackageManager = mContext.getPackageManager();
++        if (DEBUG) Slog.d(TAG, " Trying to look for " + uid + " in mXperfModeList mPackageManager :" + mPackageManager);
++        String[] str = mPackageManager.getPackagesForUid(uid);
++        if (str == null)
++        {
++            Slog.d(TAG, "no corresponding package found for uid :" + uid + ". Returning false by default");
++            return found;
++        }
++        String pkgName = str[0];
++        if(DEBUG) Slog.d(TAG, "corresponding to uid :" + uid + "  ,found package :" + pkgName);
++
++        synchronized (mXperfModeList)
++        {
++            if (mXperfModeList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mXperfModeList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mXperfModeList App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
++    /**
++     * @hide
++     */
++    public boolean isDhdg(int uid)
++    {
++        uid = mapUid(uid);
++        initLists();
++
++        mPackageManager = mContext.getPackageManager();
++        if (DEBUG) Slog.d(TAG, " Trying to look for " + uid + " in mDhdgList mPackageManager :" + mPackageManager);
++        String[] str = mPackageManager.getPackagesForUid(uid);
++        if (str == null)
++        {
++            Slog.d(TAG, "no corresponding package found for uid :" + uid + ". Returning false by default");
++            return false;
++        }
++        String pkgName = str[0];
++        if(DEBUG) Slog.d(TAG, "corresponding to uid :" + uid + "  ,found package :" + pkgName);
++
++        synchronized (mDhdgList)
++        {
++            if (mDhdgList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mDhdgList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mDhdgList App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
++    public boolean isGlNativeSyncDisabled(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GlNativeSyncDisabled app list\n");
++        initLists();
++
++        synchronized (mGlNativeSyncDisabledAppList)
++        {
++            if (mGlNativeSyncDisabledAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGlNativeSyncDisabledAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in GlNativeSyncDisabled App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index c5db4f8d0031..9b89c8dceff1 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -353,6 +353,14 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_onCustomAppOrientationCompleted(packageName);
+     }
+ 
++    /**
++     * @hide
++     */
++    public int screenRecordingStarted(boolean started, boolean showTaps, int audioSource) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService screenRecordingStarted started : " + started + " showTaps : " + showTaps + " audioSource : " + audioSource);
++        return native_screenRecordingStarted(started, showTaps, audioSource);
++    }
++
+     /**
+      * @hide
+      */
+@@ -411,4 +419,5 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_onDifferentImagePkgClicked(String pkg);
+     private static native int native_onWalletMessage(String content);
+     private static native int native_onCustomAppOrientationCompleted(String pkg);
++    private static native int native_screenRecordingStarted(boolean started, boolean showTaps, int audioSource);
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index 7048a8a72159..66c93780ac3e 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -788,6 +788,19 @@ static jint onCustomAppOrientationCompleted(JNIEnv* env, jobject clazz, jstring
+     return 0;
+ }
+ 
++static jint screenRecordingStarted(JNIEnv* env, jobject clazz, jboolean started, jboolean showTaps, jint audioSource) {
++    if (dbg) ALOGD("%s: called screenRecordingStarted : %d showTaps : %d audioSource : %d", __func__, started, showTaps, audioSource);
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++            {
++                xerr_t rval = hcallScreenRecordingStartedRpc(started, showTaps, audioSource);
++                if (rval != XERR_SUCCESS) {
++                    ALOGE("RPC failed for %s, error %d", __func__, rval);
++                }
++                if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++            });
++    return 0;
++}
++
+ /*
+  * JNI registration.
+  */
+@@ -835,7 +848,8 @@ static const JNINativeMethod gMethods[] = {
+     { "native_onSetMouseAction", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)onSetMouseAction },
+     { "native_onUpdateQuestRules", "(Ljava/lang/String;)I", (void*)onUpdateQuestRules },
+     { "native_onDifferentImagePkgClicked", "(Ljava/lang/String;)I", (void*)onDifferentImagePkgClicked },
+-    { "native_onCustomAppOrientationCompleted", "(Ljava/lang/String;)I", (void*)onCustomAppOrientationCompleted }
++    { "native_onCustomAppOrientationCompleted", "(Ljava/lang/String;)I", (void*)onCustomAppOrientationCompleted },
++    { "native_screenRecordingStarted", "(ZZI)I", (void*)screenRecordingStarted }
+ };
+ 
+ // This function only registers the native methods

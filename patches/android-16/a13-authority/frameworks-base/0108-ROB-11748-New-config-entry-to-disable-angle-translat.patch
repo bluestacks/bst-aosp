@@ -1,0 +1,123 @@
+From a12ecb6e50c4787e7d86b8a9ccb6cea45fec246e Mon Sep 17 00:00:00 2001
+From: muzhong-bst <muzhong@bluestacks.com>
+Date: Fri, 19 Jan 2024 10:18:17 +0800
+Subject: [PATCH 108/224] ROB-11748: New config entry to disable angle
+ translation
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 16 +++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 46 +++++++++++++++++++
+ 3 files changed, 63 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 86acde3ed8c1..2f3f0fd3f624 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1556,4 +1556,20 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * Check if angle is disabled for this app or not.
++     * @hide
++     */
++    public boolean isAngleDisabled(String pkgName)
++    {
++        try {
++            return mService.isAngleDisabled(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index cf8b1972a4eb..13c883215951 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -100,4 +100,5 @@ interface IBstFilterAppsService
+     int getCameraInitRotation(String pkgName);
+     boolean isDhdg(int uid);
+     boolean isGlNativeSyncDisabled(String pkgName);
++    boolean isAngleDisabled(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index adc1ef0149f1..d190a20ed8eb 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -171,6 +171,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mIntelGLDispatchComputeFlushAppList = new TreeSet<String>();
+     private Set<String>           mDhdgList = new TreeSet<String>();
+     private Set<String>           mGlNativeSyncDisabledAppList = new TreeSet<String>();
++    private Set<String>           mAngleDisabledAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2290,6 +2291,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mGlNativeSyncDisabledAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("AngleDisabled")) {
++                                    synchronized (mAngleDisabledAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mAngleDisabledAppList \n");
++                                        mAngleDisabledAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mAngleDisabledAppList \n");
++                                            mAngleDisabledAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mAngleDisabledAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -2900,6 +2917,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mGlNativeSyncDisabledAppList.clear();
+         }
+ 
++        synchronized (mAngleDisabledAppList)
++        {
++            mAngleDisabledAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -6556,4 +6578,28 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    public boolean isAngleDisabled(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in AngleDisabled app list\n");
++        initLists();
++
++        synchronized (mAngleDisabledAppList)
++        {
++            if (mAngleDisabledAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mAngleDisabledAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in AngleDisabledAppList App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

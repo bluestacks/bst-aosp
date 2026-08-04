@@ -1,0 +1,48 @@
+From aa4684109af3a9f559b79e245dc6ee62890718d7 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Sat, 28 Oct 2023 10:07:52 +0800
+Subject: [PATCH 044/224] [A13] [BS4-3201] Ported debuggable property changes
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index e6b4a34a5315..b95eb4229122 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -95,6 +95,7 @@
+ 
+ #include "nativebridge/native_bridge.h"
+ 
++#define BST_PROPERTY_IS_DEBUGGABLE "bst.config.ro.debuggable"
+ namespace {
+ 
+ // TODO (chriswailes): Add a function to initialize native Zygote data.
+@@ -1987,6 +1988,26 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+         SetThreadName("system_server");
+     }
+ 
++    // Bug 4354, 7294: We do not want to set DEBUGGABLE flag for 3rd party apps. Some apps determine whether debug is enabled
++    // via prctl() sys call for PR_GET_DUMPABLE to determine rooted instance or eng build.
++    // We have the niceName here. Using it to modify the debugFlags value before it is released via free().
++    // Making this behaviour based on bst debuggable property set to 0, else let the default behaviour come into picture.
++    int enableDebuggable = 0;
++    int DEBUG_ENABLE_DEBUGGER = 1;
++    char debug_value[PROPERTY_VALUE_MAX];
++    if (property_get(BST_PROPERTY_IS_DEBUGGABLE, debug_value, "0")) {
++        if (strcmp(debug_value, "1") == 0)
++            enableDebuggable = 1;
++    }
++
++    if ((enableDebuggable >= 1
++            || (nice_name_ptr != nullptr && !strncmp(nice_name_ptr, "com.bluestacks", strlen("com.bluestacks")))
++            || (nice_name_ptr != nullptr && !strncmp(nice_name_ptr, "com.google.android", strlen("com.google.android")))
++            || (nice_name_ptr != nullptr && !strncmp(nice_name_ptr, "com.android", strlen("com.android")))
++            || (uid < 10000))
++            && ((runtime_flags & DEBUG_ENABLE_DEBUGGER) == 0)) {
++        runtime_flags |= DEBUG_ENABLE_DEBUGGER;
++    }
+ 
+     if (uid >= 10000 && nice_name_ptr != nullptr && !strncmp(nice_name_ptr, "com.android.vending", strlen("com.android.vending"))) {
+ 

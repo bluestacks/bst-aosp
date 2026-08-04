@@ -1,0 +1,131 @@
+From d9545d421d1689b29c8e21619638d1511dbfc22a Mon Sep 17 00:00:00 2001
+From: "jace@bluestacks.com" <jace-bst>
+Date: Tue, 18 Nov 2025 14:21:52 +0800
+Subject: [PATCH 207/224] =?UTF-8?q?Revert=20"ROB-16741:=20Add=20ForceClear?=
+ =?UTF-8?q?Gms=20entry=20to=20determine=20whether=20do=20clear=20user?=
+ =?UTF-8?q?=E2=80=A6=20(#214)"?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This reverts commit 2f31e0ae5ea0381ab9337278631f15ba497ba22d.
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ------
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 -
+ .../server/BstFilterAppsService.java          | 50 -------------------
+ 3 files changed, 66 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 740e6a36d4bb..08cf33e5fc37 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1998,19 +1998,4 @@ public class BstFilterAppsManager {
+             return 0;
+         }
+     }
+-
+-    /**
+-     * @hide
+-     */
+-    public boolean isForceClearGms(String pkgName)
+-    {
+-        try {
+-            return mService.isForceClearGms(pkgName);
+-        } catch(Exception e) {
+-            // Catching the error and returning default behavior as if entry was not
+-            // present in config.db
+-            if (DEBUG) e.printStackTrace();
+-            return false;
+-        }
+-    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 44a5e98b3df5..6aa13baa9b57 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -129,5 +129,4 @@ interface IBstFilterAppsService
+     String getVKDeviceExtIgnore(String pkgName);
+     boolean isDefaultXYDpi(String pkgName);
+     int getPScoreAbove(String pkgName);
+-    boolean isForceClearGms(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index aedf1b2961db..a15066687f66 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -202,7 +202,6 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mExtractNativeLibsAppList = new TreeSet<String>();
+     private Set<String>           mDefaultXYDpiAppList = new TreeSet<String>();
+     private Map<String, Integer>  mPScoreAboveAppList = new HashMap<String, Integer>();
+-    private Set<String>           mForceClearGmsList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2769,22 +2768,6 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mPScoreAboveAppList, pkgException, score);
+                                     }
+                                 }
+-                                else if ((key.equalsIgnoreCase("ForceClearGms"))) {
+-                                   synchronized (mForceClearGmsList) {
+-                                       if (value.equalsIgnoreCase("false")) {
+-                                           packageName = "~" + packageName;
+-                                       }
+-                                       if (DEBUG)
+-                                           Slog.d(TAG, "Adding packageName :" + packageName + " to mForceClearGmsList \n");
+-                                       mForceClearGmsList.add(packageName);
+-                                       if (packageName.startsWith("~")) {
+-                                           if (DEBUG)
+-                                               Slog.d(TAG, "Removing " + origPackageName + " from mForceClearGmsList \n");
+-                                           mForceClearGmsList.remove(packageName.substring(1));
+-                                       }
+-                                       removePackageEntryFromList(mForceClearGmsList, pkgException);
+-                                   }
+-                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3538,11 +3521,6 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mPScoreAboveAppList.clear();
+         }
+ 
+-        synchronized (mForceClearGmsList)
+-        {
+-           mForceClearGmsList.clear();
+-        }
+-
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -8094,32 +8072,4 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return score;
+     }
+-
+-    /**
+-     * determine whether to force clear GMS data and cache when a user encounters a GMS authentication error.
+-     * @hide
+-     */
+-    public boolean isForceClearGms(String pkgName)
+-    {
+-        initLists();
+-        synchronized (mForceClearGmsList)
+-        {
+-            if (mForceClearGmsList.contains(pkgName))
+-            {
+-                if (DEBUG) Slog.d(TAG, pkgName + " is in mForceClearGmsList App List " + "\n");
+-                return true;
+-            }
+-            else
+-            {
+-                String wildcardMatchedPackageName = isPackageMatchedWilcard(mForceClearGmsList, pkgName);
+-                if (wildcardMatchedPackageName != null)
+-                {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in mForceClearGmsList App List " + "\n");
+-                    return true;
+-                }
+-            }
+-        }
+-        if (DEBUG) Slog.d(TAG, pkgName + " is not in mForceClearGmsList\n");
+-        return false;
+-    }
+ }

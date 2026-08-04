@@ -1,0 +1,80 @@
+From 0a0a94889364d94dfc0a74a54f88ba09b0c61cf2 Mon Sep 17 00:00:00 2001
+From: Jason Zhou <jason.zhou@bluestacks.com>
+Date: Wed, 16 Jul 2025 15:03:15 +0800
+Subject: [PATCH 198/224] Revert "Merge pull request #203 from
+ jason-bst/bst-v5.22.85-highFpsOpt"
+
+This reverts commit a2285679d9bcf67632e3d3e438d4b0aa7536caed, reversing
+changes made to 90d05c73fe04340d3f9655c0725a9d6caa0910d8.
+---
+ core/java/android/app/ActivityThread.java      | 18 +++---------------
+ .../android/app/SharedPreferencesImpl.java     | 18 +++---------------
+ 2 files changed, 6 insertions(+), 30 deletions(-)
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 7ecd355a7084..987d872f80c9 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -6800,23 +6800,11 @@ public final class ActivityThread extends ClientTransactionHandler
+         String bstPackageName = data.info.getPackageName();
+         String appsProfile = bfam.getDefaultProfile(bstPackageName);
+         if (appsProfile != null && appsProfile.length() > 1) {
+-            int scoreAbove = 59;
+             try {
+-                int indexEqual = 0, indexComma = 0;
+-                if (appsProfile.startsWith("PScoreAbove")) {
+-                    indexEqual = appsProfile.indexOf('=');
+-                    indexComma = appsProfile.indexOf(',', indexEqual);
+-                    scoreAbove = Integer.parseInt(appsProfile.substring(indexEqual + 1, indexComma));
+-                }
+-
+-                indexEqual = appsProfile.indexOf('=', indexComma);
+-                indexComma = appsProfile.indexOf(',', indexEqual);
+-                String spFilename = appsProfile.substring(indexEqual + 1, indexComma);
+-
+-                indexEqual = appsProfile.indexOf('=', indexComma);
+-                String spKeyValueSequences = appsProfile.substring(indexEqual + 1);
++                String spFilename = appsProfile.substring(appsProfile.indexOf('=') + 1, appsProfile.indexOf(','));
++                String spKeyValueSequences = appsProfile.substring(appsProfile.indexOf(('='), spFilename.length()) + 1);
+                 File file = new File(spFilename);
+-                if (!file.exists() && SystemProperties.getInt("bst.pscore", 60) > scoreAbove) {
++                if (!file.exists()) {
+                     File parentDir = file.getParentFile();
+                     if (!parentDir.exists()) {
+                         // Creating files in the /sdcard/Android/data/ directory requires permission
+diff --git a/core/java/android/app/SharedPreferencesImpl.java b/core/java/android/app/SharedPreferencesImpl.java
+index ffd1dd6a2336..2db9ee64bd13 100644
+--- a/core/java/android/app/SharedPreferencesImpl.java
++++ b/core/java/android/app/SharedPreferencesImpl.java
+@@ -353,28 +353,16 @@ final class SharedPreferencesImpl implements SharedPreferences {
+             bfam = BstFilterAppsManager.getInstance();
+ 
+         String gameSettingString = bfam.getGameDefaultSetting(packageName);
+-        int scoreAbove = 59;
+         if (gameSettingString.length() > 1) {
+             try {
+-                int indexEqual = 0, indexComma = 0;
+-                if (gameSettingString.startsWith("PScoreAbove")) {
+-                    indexEqual = gameSettingString.indexOf('=');
+-                    indexComma = gameSettingString.indexOf(',', indexEqual);
+-                    scoreAbove = Integer.parseInt(gameSettingString.substring(indexEqual + 1, indexComma));
+-                }
+-
+-                indexEqual = gameSettingString.indexOf('=', indexComma);
+-                indexComma = gameSettingString.indexOf(',', indexEqual);
+-                spFilename = gameSettingString.substring(indexEqual + 1, indexComma);
+-
+-                indexEqual = gameSettingString.indexOf('=', indexComma);
+-                spKeyValueSequences = gameSettingString.substring(indexEqual + 1);
++                spFilename = gameSettingString.substring(gameSettingString.indexOf('=') + 1, gameSettingString.indexOf(','));
++                spKeyValueSequences = gameSettingString.substring(gameSettingString.indexOf(('='), spFilename.length()) + 1);
+             } catch (Exception e) {
+                 Log.e(TAG, "Get game setting string failed!");
+             }
+         }
+ 
+-        if (!mFile.getName().equals(spFilename) || SystemProperties.getInt("bst.pscore", 60) <= scoreAbove) {
++        if (!mFile.getName().equals(spFilename)) {
+             mBstDefaultSet = true;
+             return;
+         }

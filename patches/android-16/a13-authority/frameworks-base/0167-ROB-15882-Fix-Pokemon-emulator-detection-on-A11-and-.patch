@@ -1,0 +1,42 @@
+From 4420559c54d20b23817103a85273d67640b828af Mon Sep 17 00:00:00 2001
+From: jace-bst <88761019+jace-bst@users.noreply.github.com>
+Date: Fri, 21 Feb 2025 17:53:58 +0800
+Subject: [PATCH 167/224] ROB-15882: Fix Pokemon emulator detection on A11 and
+ A13 (#169)
+
+Co-authored-by: jace@bluestacks.com <jace-bst>
+---
+ core/java/android/content/pm/PackageParser.java             | 4 ++++
+ core/java/android/content/pm/parsing/ApkLiteParseUtils.java | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/core/java/android/content/pm/PackageParser.java b/core/java/android/content/pm/PackageParser.java
+index fa71f5d24676..4e53a0b8c49f 100644
+--- a/core/java/android/content/pm/PackageParser.java
++++ b/core/java/android/content/pm/PackageParser.java
+@@ -1712,6 +1712,10 @@ public class PackageParser {
+                     }
+                     if ("extractNativeLibs".equals(attr)) {
+                         extractNativeLibs = attrs.getAttributeBooleanValue(i, true);
++                        // ROB-15882 extract native libs for Pokemon app to avoid emulator detection.
++                        if (packageSplit.first.equals("jp.pokemon.pokemontcgp")) {
++                            extractNativeLibs = true;
++                        }
+                     }
+                     if ("useEmbeddedDex".equals(attr)) {
+                         useEmbeddedDex = attrs.getAttributeBooleanValue(i, false);
+diff --git a/core/java/android/content/pm/parsing/ApkLiteParseUtils.java b/core/java/android/content/pm/parsing/ApkLiteParseUtils.java
+index 10d6f2d6d04b..dfde22a7eda0 100644
+--- a/core/java/android/content/pm/parsing/ApkLiteParseUtils.java
++++ b/core/java/android/content/pm/parsing/ApkLiteParseUtils.java
+@@ -481,6 +481,10 @@ public class ApkLiteParseUtils {
+                         false);
+                 extractNativeLibs = parser.getAttributeBooleanValue(ANDROID_RES_NAMESPACE,
+                         "extractNativeLibs", true);
++                // ROB-15882 extract native libs for Pokemon app to avoid emulator detection.
++                if (packageSplit.first.equals("jp.pokemon.pokemontcgp")) {
++                    extractNativeLibs = true;
++                }
+                 useEmbeddedDex = parser.getAttributeBooleanValue(ANDROID_RES_NAMESPACE,
+                         "useEmbeddedDex", false);
+                 rollbackDataPolicy = parser.getAttributeIntValue(ANDROID_RES_NAMESPACE,

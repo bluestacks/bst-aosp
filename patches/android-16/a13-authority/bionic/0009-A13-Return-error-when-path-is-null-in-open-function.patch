@@ -1,0 +1,35 @@
+From 79303b8a067bc830f21fee8da596614796ca108d Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 16 Nov 2023 10:20:40 +0800
+Subject: [PATCH 09/13] [A13] Return error when path is null in open function
+
+---
+ libc/bionic/open.cpp | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libc/bionic/open.cpp b/libc/bionic/open.cpp
+index bd8685a3a..4f2488d4b 100644
+--- a/libc/bionic/open.cpp
++++ b/libc/bionic/open.cpp
+@@ -56,6 +56,10 @@ __strong_alias(creat64, creat);
+ int open(const char* pathname, int flags, ...) {
+   mode_t mode = 0;
+ 
++  // Returning ENOENT if pathname is NULL
++  if (!pathname)
++      return -1;
++
+   if (needs_mode(flags)) {
+     va_list args;
+     va_start(args, flags);
+@@ -75,6 +79,10 @@ int __open_2(const char* pathname, int flags) {
+ int openat(int fd, const char *pathname, int flags, ...) {
+   mode_t mode = 0;
+ 
++  // Returning ENOENT if pathname is NULL
++  if (!pathname)
++      return -1;
++
+   if (needs_mode(flags)) {
+     va_list args;
+     va_start(args, flags);

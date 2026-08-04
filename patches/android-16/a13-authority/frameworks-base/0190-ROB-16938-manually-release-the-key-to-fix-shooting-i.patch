@@ -1,0 +1,57 @@
+From 403f6509c8525bd01659cd76c13a848b97f5b90f Mon Sep 17 00:00:00 2001
+From: MarkJiang-bst <97725346+MarkJiang-bst@users.noreply.github.com>
+Date: Wed, 18 Jun 2025 14:37:15 +0800
+Subject: [PATCH 190/224] =?UTF-8?q?ROB-16938:=20manually=20release=20the?=
+ =?UTF-8?q?=20key=20to=20fix=20shooting=20issue=20when=20holdin=E2=80=A6?=
+ =?UTF-8?q?=20(#197)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+* ROB-16938: manually release the key to fix shooting issue when holding 'Space' or 'C' key in FreeFireMax.
+
+* ROB-16938: Code optimization
+---
+ core/java/android/view/ViewRootImpl.java | 22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/view/ViewRootImpl.java b/core/java/android/view/ViewRootImpl.java
+index 6f4a63ca0fd7..9e35970bb763 100644
+--- a/core/java/android/view/ViewRootImpl.java
++++ b/core/java/android/view/ViewRootImpl.java
+@@ -151,6 +151,7 @@ import android.os.UserHandle;
+ import android.sysprop.DisplayProperties;
+ import android.text.TextUtils;
+ import android.util.AndroidRuntimeException;
++import android.util.BstUtils;
+ import android.util.DisplayMetrics;
+ import android.util.EventLog;
+ import android.util.IndentingPrintWriter;
+@@ -6677,7 +6678,26 @@ public final class ViewRootImpl implements ViewParent,
+         }
+ 
+         private int processKeyEvent(QueuedInputEvent q) {
+-            final KeyEvent event = (KeyEvent)q.mEvent;
++            KeyEvent event = (KeyEvent)q.mEvent;
++
++            // ROB-16938: manually release the key to fix shooting issue when holding "Space' or "C' key in FreeFireMax.
++            int keyCode = event.getKeyCode();
++            int repeatCount = event.getRepeatCount();
++            if ((keyCode == KeyEvent.KEYCODE_C || keyCode == KeyEvent.KEYCODE_SPACE) && repeatCount > 0) {
++                int uid = Binder.getCallingUid();
++                if (uid >= 10000) {
++                    String packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++                    if (packageName != null && packageName.equals("com.dts.freefiremax")) {
++                        if (repeatCount == 1) {
++                            KeyEvent eventUp = KeyEvent.changeAction(event, KeyEvent.ACTION_UP);
++                            event = eventUp;
++                        }
++                        else {
++                            return FINISH_HANDLED;
++                        }
++                    }
++                }
++            }
+ 
+             if (mUnhandledKeyManager.preViewDispatch(event)) {
+                 return FINISH_HANDLED;

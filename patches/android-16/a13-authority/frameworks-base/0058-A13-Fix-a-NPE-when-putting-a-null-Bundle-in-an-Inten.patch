@@ -1,0 +1,24 @@
+From 712ef3beebaa0d6f6f9c713d26423416dd05623b Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Wed, 1 Nov 2023 17:35:49 +0800
+Subject: [PATCH 058/224] [A13] Fix a NPE when putting a null-Bundle in an
+ Intent
+
+---
+ core/java/android/content/Intent.java | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/core/java/android/content/Intent.java b/core/java/android/content/Intent.java
+index a320f1e9509c..774589b29ced 100644
+--- a/core/java/android/content/Intent.java
++++ b/core/java/android/content/Intent.java
+@@ -10607,6 +10607,9 @@ public class Intent implements Parcelable, Cloneable {
+      * @see #removeExtra
+      */
+     public @NonNull Intent putExtras(@NonNull Bundle extras) {
++        if (extras == null) {
++            return this;
++        }
+         // If the provided Bundle has not yet been unparceled then treat this as unfiltered extras.
+         if (extras.isParcelled()) {
+             mLocalFlags |= LOCAL_FLAG_UNFILTERED_EXTRAS;

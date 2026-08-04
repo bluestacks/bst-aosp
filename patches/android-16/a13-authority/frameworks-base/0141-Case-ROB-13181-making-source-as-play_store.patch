@@ -1,0 +1,22 @@
+From fd7032a168f1e7b14aa6d7111193ae705784c1c6 Mon Sep 17 00:00:00 2001
+From: Build Master <build@bluestacks.com>
+Date: Thu, 9 May 2024 22:40:26 +0530
+Subject: [PATCH 141/224] Case ROB-13181 : making source as play_store
+
+---
+ .../core/java/com/android/server/am/ActivityManagerService.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 0857d3736572..7a9eac855ceb 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -14137,7 +14137,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+                         bstIntent.setAction("com.bluestacks.home.AFFILIATE_HANDLER_HTML");
+                         bstIntent.putExtra("app_pkg", pkgName);
+                         bstIntent.putExtra("referrer_only", "true");
+-                        bstIntent.putExtra("WINDOWS_SOURCE", "packageEnqueued");
++                        bstIntent.putExtra("WINDOWS_SOURCE", "play_store");
+                         // Bst-startServiceLocked args changed from lollipop-bst
+                         mServices.startServiceLocked(null, bstIntent, null, 0, 0, false, null, null, userId);
+                     } else {

@@ -1,0 +1,38 @@
+From 325cfaa730fbde5724102f3fb63cdc0fa9b02a73 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Sat, 25 Nov 2023 21:13:18 +0800
+Subject: [PATCH 093/224] [A13]Changes to restrict user from revoking the
+ permissions of bluestacks specific packages.
+
+---
+ .../pm/permission/PermissionManagerServiceImpl.java    | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/permission/PermissionManagerServiceImpl.java b/services/core/java/com/android/server/pm/permission/PermissionManagerServiceImpl.java
+index 554e2690b878..1d4f19ba1999 100644
+--- a/services/core/java/com/android/server/pm/permission/PermissionManagerServiceImpl.java
++++ b/services/core/java/com/android/server/pm/permission/PermissionManagerServiceImpl.java
+@@ -312,6 +312,9 @@ public class PermissionManagerServiceImpl implements PermissionManagerServiceInt
+     @NonNull
+     private final OnPermissionChangeListeners mOnPermissionChangeListeners;
+ 
++    private static final boolean BST_DEBUG = SystemProperties.getInt("bst.debug.pm", 0) == 0 ? false : true;
++    private static final boolean BST_REV_PERM = SystemProperties.getInt("bst.config.bstrevperm", 1) == 0 ? false : true;
++
+     // TODO: Take a look at the methods defined in the callback.
+     // The callback was initially created to support the split between permission
+     // manager and the package manager. However, it's started to be used for other
+@@ -1488,6 +1491,13 @@ public class PermissionManagerServiceImpl implements PermissionManagerServiceInt
+     @Override
+     public void revokeRuntimePermission(String packageName, String permName, int userId,
+             String reason) {
++
++        if (BST_REV_PERM && packageName != null &&
++                (packageName.startsWith("com.bluestacks") || "com.uncube.account".equalsIgnoreCase(packageName))) {
++            if (BST_DEBUG) Log.d(TAG, "In revokeRuntimePermission: not revoking permissions for package =" + packageName + ", returning");
++            return ;
++        }
++
+         final int callingUid = Binder.getCallingUid();
+         final boolean overridePolicy =
+                 checkUidPermission(callingUid, ADJUST_RUNTIME_PERMISSIONS_POLICY)

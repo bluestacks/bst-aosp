@@ -1,0 +1,41 @@
+From 90ee78b4bd301ecadb3711e375bc2754156ac0fd Mon Sep 17 00:00:00 2001
+From: emin-bst <88364888+emin-bst@users.noreply.github.com>
+Date: Thu, 28 Aug 2025 00:26:46 -0700
+Subject: [PATCH 21/21] ROB-14838: [Reddit] Camera issues while verifying
+ Tinder profile (#22)
+
+---
+ .../camera/libcameraservice/api1/client2/Parameters.cpp   | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+ mode change 100644 => 100755 services/camera/libcameraservice/api1/client2/Parameters.cpp
+
+diff --git a/services/camera/libcameraservice/api1/client2/Parameters.cpp b/services/camera/libcameraservice/api1/client2/Parameters.cpp
+old mode 100644
+new mode 100755
+index 123cd757e8..8c41dd04d4
+--- a/services/camera/libcameraservice/api1/client2/Parameters.cpp
++++ b/services/camera/libcameraservice/api1/client2/Parameters.cpp
+@@ -1976,9 +1976,9 @@ status_t Parameters::set(const String8& paramString) {
+             newParams.get(CameraParameters::KEY_AUTO_EXPOSURE_LOCK));
+     } else if (nullptr !=
+             newParams.get(CameraParameters::KEY_AUTO_EXPOSURE_LOCK)){
+-        ALOGE("%s: Requested auto exposure lock is not supported",
++        ALOGE("%s: Requested auto exposure lock is not supported, ignoring it ...",
+               __FUNCTION__);
+-        return BAD_VALUE;
++        //return BAD_VALUE;
+     }
+ 
+     if (autoWhiteBalanceLockAvailable) {
+@@ -1986,9 +1986,9 @@ status_t Parameters::set(const String8& paramString) {
+                 newParams.get(CameraParameters::KEY_AUTO_WHITEBALANCE_LOCK));
+     } else if (nullptr !=
+            newParams.get(CameraParameters::KEY_AUTO_WHITEBALANCE_LOCK)) {
+-        ALOGE("%s: Requested auto whitebalance lock is not supported",
++        ALOGE("%s: Requested auto whitebalance lock is not supported, ignoring it ...",
+               __FUNCTION__);
+-        return BAD_VALUE;
++        //return BAD_VALUE;
+     }
+ 
+     // METERING_AREAS

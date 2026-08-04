@@ -1,0 +1,158 @@
+From 6f24c854abff60161bac0fcb06afc681529348d5 Mon Sep 17 00:00:00 2001
+From: Jason Zhou <jason.zhou@bluestacks.com>
+Date: Wed, 16 Jul 2025 15:08:55 +0800
+Subject: [PATCH 199/224] ROB-15243: add PScoreAbove in config.db
+
+"DefaultProfile" and "gameSettingDefault" uses the value of PScoreAbove.
+They take effect only when the machine's pscore is above that value.
+---
+ core/java/android/app/ActivityThread.java     |  3 +-
+ .../android/app/SharedPreferencesImpl.java    |  3 +-
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 50 +++++++++++++++++++
+ 5 files changed, 70 insertions(+), 2 deletions(-)
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 987d872f80c9..67e47cb09f50 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -6803,8 +6803,9 @@ public final class ActivityThread extends ClientTransactionHandler
+             try {
+                 String spFilename = appsProfile.substring(appsProfile.indexOf('=') + 1, appsProfile.indexOf(','));
+                 String spKeyValueSequences = appsProfile.substring(appsProfile.indexOf(('='), spFilename.length()) + 1);
++                int scoreAbove = bfam.getPScoreAbove(bstPackageName);
+                 File file = new File(spFilename);
+-                if (!file.exists()) {
++                if (!file.exists() && SystemProperties.getInt("bst.pscore", 180) > scoreAbove) {
+                     File parentDir = file.getParentFile();
+                     if (!parentDir.exists()) {
+                         // Creating files in the /sdcard/Android/data/ directory requires permission
+diff --git a/core/java/android/app/SharedPreferencesImpl.java b/core/java/android/app/SharedPreferencesImpl.java
+index 2db9ee64bd13..9132f510b2d1 100644
+--- a/core/java/android/app/SharedPreferencesImpl.java
++++ b/core/java/android/app/SharedPreferencesImpl.java
+@@ -362,7 +362,8 @@ final class SharedPreferencesImpl implements SharedPreferences {
+             }
+         }
+ 
+-        if (!mFile.getName().equals(spFilename)) {
++        int scoreAbove = bfam.getPScoreAbove(packageName);
++        if (!mFile.getName().equals(spFilename) || SystemProperties.getInt("bst.pscore", 180) <= scoreAbove) {
+             mBstDefaultSet = true;
+             return;
+         }
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index b0d3f423414a..b975da00b8b4 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1968,4 +1968,19 @@ public class BstFilterAppsManager {
+             return false;
+        }
+     }
++
++    /**
++     * @hide
++     */
++    public int getPScoreAbove(String pkgName)
++    {
++        try{
++            return mService.getPScoreAbove(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return 0;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 150f3dea1271..7374896c4f61 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -127,4 +127,5 @@ interface IBstFilterAppsService
+     boolean isEtherNetType(String pkgName);
+     String getVkHostInfo(String pkgName);
+     String getVKDeviceExtIgnore(String pkgName);
++    int getPScoreAbove(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 2f15782ff2cb..6530da03284f 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -200,6 +200,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mUE5PBDisabledAppList = new TreeSet<String>();
+     private Set<String>   	      mBptcAppList = new TreeSet<String>();
+     private Set<String>           mExtractNativeLibsAppList = new TreeSet<String>();
++    private Map<String, Integer>  mPScoreAboveAppList = new HashMap<String, Integer>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2736,6 +2737,20 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mExtractNativeLibsAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("PScoreAbove")) {
++                                    synchronized (mPScoreAboveAppList) {
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mPScoreAboveAppList \n");
++                                        int score = Integer.parseInt(value);
++                                        mPScoreAboveAppList.put(packageName, score);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mPScoreAboveAppList \n");
++                                                mPScoreAboveAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mPScoreAboveAppList, pkgException, score);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3479,6 +3494,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+            mExtractNativeLibsAppList.clear();
+         }
+ 
++        synchronized (mPScoreAboveAppList)
++        {
++            mPScoreAboveAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7971,4 +7991,34 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return res;
+     }
++
++    public int getPScoreAbove(String pkgName)
++    {
++        if(DEBUG) Slog.d(TAG, " Trying to look for " + pkgName + " in PScoreAbove AppList\n");
++        initLists();
++
++        int score = 0;
++        synchronized (mPScoreAboveAppList)
++        {
++            if (mPScoreAboveAppList.containsKey(pkgName))
++            {
++                if(DEBUG) Slog.d(TAG, pkgName + " requires PScoreAbove to change default settings");
++                score = mPScoreAboveAppList.get(pkgName);
++                if(DEBUG) Slog.d(TAG,"The PScoreAbove for package: " + pkgName + " is : " + score);
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mPScoreAboveAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if(DEBUG) Slog.d(TAG, pkgName + " requires PScoreAbove to change default settings");
++                    score = mPScoreAboveAppList.get(wildcardMatchedPackageName);
++                    if(DEBUG) Slog.d(TAG,"The PScoreAbove for package: " + pkgName + " matched with : " + wildcardMatchedPackageName + " is : " + score);
++
++                }
++            }
++        }
++
++        return score;
++    }
+ }

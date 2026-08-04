@@ -1,0 +1,2299 @@
+From bb15209c81865750681a87e371fa645797818492 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 8 Mar 2024 14:26:00 +0800
+Subject: [PATCH] [A13]ROB-11904: Support DRM widevine
+
+---
+ .../plugins/widevine/default/Android.bp       |  15 +
+ .../widevine/default/libwvdrmengine.so        | Bin 0 -> 1250188 bytes
+ .../plugins/widevine/default/readme.txt       |   4 +
+ drm/mediadrm/plugins/widevine/hidl/Android.bp |  69 ++
+ .../plugins/widevine/hidl/CryptoFactory.cpp   |  77 ++
+ .../plugins/widevine/hidl/CryptoFactory.h     |  67 ++
+ .../plugins/widevine/hidl/CryptoPlugin.cpp    | 225 ++++++
+ .../plugins/widevine/hidl/CryptoPlugin.h      |  99 +++
+ .../plugins/widevine/hidl/DrmFactory.cpp      | 117 +++
+ .../plugins/widevine/hidl/DrmFactory.h        |  80 ++
+ .../plugins/widevine/hidl/DrmPlugin.cpp       | 753 ++++++++++++++++++
+ .../plugins/widevine/hidl/DrmPlugin.h         | 262 ++++++
+ .../plugins/widevine/hidl/TypeConvert.cpp     |  78 ++
+ .../plugins/widevine/hidl/TypeConvert.h       | 135 ++++
+ drm/mediadrm/plugins/widevine/hidl/WVUUID.cpp |  26 +
+ drm/mediadrm/plugins/widevine/hidl/WVUUID.h   |  18 +
+ ...droid.hardware.drm@1.3-service.widevine.rc |  15 +
+ .../hidl/include/WVCreatePluginFactories.h    |  16 +
+ ...roid.hardware.drm@1.3-service.widevine.xml |  23 +
+ .../plugins/widevine/hidl/service.cpp         |  49 ++
+ 20 files changed, 2128 insertions(+)
+ create mode 100755 drm/mediadrm/plugins/widevine/default/Android.bp
+ create mode 100755 drm/mediadrm/plugins/widevine/default/libwvdrmengine.so
+ create mode 100755 drm/mediadrm/plugins/widevine/default/readme.txt
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/Android.bp
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/CryptoFactory.cpp
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/CryptoFactory.h
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.cpp
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.h
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/DrmFactory.cpp
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/DrmFactory.h
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/DrmPlugin.h
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/TypeConvert.cpp
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/TypeConvert.h
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/WVUUID.cpp
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/WVUUID.h
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/android.hardware.drm@1.3-service.widevine.rc
+ create mode 100644 drm/mediadrm/plugins/widevine/hidl/include/WVCreatePluginFactories.h
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/manifest_android.hardware.drm@1.3-service.widevine.xml
+ create mode 100755 drm/mediadrm/plugins/widevine/hidl/service.cpp
+
+diff --git a/drm/mediadrm/plugins/widevine/default/Android.bp b/drm/mediadrm/plugins/widevine/default/Android.bp
+new file mode 100755
+index 0000000000..1eccb47686
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/default/Android.bp
+@@ -0,0 +1,15 @@
++cc_prebuilt_library_shared{
++    name : "libwvdrmengine",
++    arch : {
++        x86 : {srcs : ["libwvdrmengine.so"]},
++        x86_64 : {srcs : ["libwvdrmengine.so"]},
++    },
++    check_elf_files: false,
++    strip: {
++        none: true,
++    },
++
++    compile_multilib: "32",
++
++    owner: "widevine",
++}
+diff --git a/drm/mediadrm/plugins/widevine/default/libwvdrmengine.so b/drm/mediadrm/plugins/widevine/default/libwvdrmengine.so
+new file mode 100755
+index 0000000000..e5447cf729
+Binary files /dev/null and b/drm/mediadrm/plugins/widevine/default/libwvdrmengine.so differ
+diff --git a/drm/mediadrm/plugins/widevine/default/readme.txt b/drm/mediadrm/plugins/widevine/default/readme.txt
+new file mode 100755
+index 0000000000..39195fb5b8
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/default/readme.txt
+@@ -0,0 +1,4 @@
++libwvdrmengine source code project need to depend on libwvlevel3.a (third-party static library), this library contains Intel IPP extension related implementation.
++So that libwvdrmengine.so can not be compiled on Android Pie/Rvc, can only be generated on Android Nougat by reducing NDK version build(such as NDK 14), and then ported to use it.
++
++PS: libwvdrmengine source code is only submitted on Android Nougat.
+diff --git a/drm/mediadrm/plugins/widevine/hidl/Android.bp b/drm/mediadrm/plugins/widevine/hidl/Android.bp
+new file mode 100755
+index 0000000000..30a5f92e8a
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/Android.bp
+@@ -0,0 +1,69 @@
++//
++// Copyright (C) 2018 The Android Open Source Project
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//      http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++//
++
++cc_defaults {
++    name: "widevine_service_defaults",
++    vendor: true,
++
++    srcs: [
++        "CryptoFactory.cpp",
++        "CryptoPlugin.cpp",
++        "DrmFactory.cpp",
++        "DrmPlugin.cpp",
++        "TypeConvert.cpp",
++        "WVUUID.cpp",
++    ],
++
++    relative_install_path: "hw",
++
++    compile_multilib: "32",
++
++    cflags: ["-Wall", "-Werror", "-Wthread-safety"],
++
++    shared_libs: [
++        "android.hardware.drm@1.0",
++        "android.hardware.drm@1.1",
++        "android.hardware.drm@1.2",
++        "android.hardware.drm@1.3",
++        "libbase",
++        "libbinder",
++        "libcutils",
++        "libcrypto",
++        "libhidlbase",
++        "libhidlmemory",
++        "libwvdrmengine",
++        "liblog",
++        "libstagefright_foundation",
++        "libutils",
++    ],
++
++    local_include_dirs: [
++        "include",
++    ],
++
++    include_dirs: [
++        "frameworks/native/include",
++        "frameworks/av/include",
++    ],
++}
++
++cc_binary {
++    name: "android.hardware.drm@1.3-service.widevine",
++    defaults: ["widevine_service_defaults"],
++    srcs: ["service.cpp"],
++    init_rc: ["android.hardware.drm@1.3-service.widevine.rc"],
++    vintf_fragments: ["manifest_android.hardware.drm@1.3-service.widevine.xml"],
++}
+diff --git a/drm/mediadrm/plugins/widevine/hidl/CryptoFactory.cpp b/drm/mediadrm/plugins/widevine/hidl/CryptoFactory.cpp
+new file mode 100755
+index 0000000000..ff81aec58d
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/CryptoFactory.cpp
+@@ -0,0 +1,77 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#define LOG_TAG "hidl_WidevineCryptoFactory"
++
++#include "CryptoPlugin.h"
++#include "CryptoFactory.h"
++#include "TypeConvert.h"
++#include "WVCreatePluginFactories.h"
++
++#include <log/log.h>
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_3 {
++namespace widevine {
++
++using ::android::hardware::drm::V1_0::Status;
++using ::android::hardware::drm::V1_2::widevine::CryptoPlugin;
++
++    CryptoFactory::CryptoFactory() {
++		mWVCryptoFactory = createCryptoFactory();
++    }
++
++    // Methods from ::android::hardware::drm::V1_0::ICryptoFactory follow.
++    Return<bool> CryptoFactory::isCryptoSchemeSupported(
++            const hidl_array<uint8_t, 16>& uuid) {
++        if (mWVCryptoFactory->isCryptoSchemeSupported(uuid.data())) {
++            return true;
++        }
++        return false;
++    }
++
++    Return<void> CryptoFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
++            const hidl_vec<uint8_t>& initData, createPlugin_cb _hidl_cb) {
++
++        if (mWVCryptoFactory->isCryptoSchemeSupported(uuid.data())) {
++            android::CryptoPlugin *legacyPlugin = NULL;
++            status_t status = mWVCryptoFactory->createPlugin(uuid.data(),
++                        initData.data(), initData.size(), &legacyPlugin);
++
++            CryptoPlugin *newPlugin = NULL;
++            if (legacyPlugin == NULL) {
++                ALOGE("Crypto legacy HAL:  failed to create crypto plugin");
++            } else {
++                newPlugin = new CryptoPlugin(legacyPlugin);
++            }
++            _hidl_cb(V1_2::widevine::toStatus(status), newPlugin);
++            return Void();
++        }
++
++        _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, NULL);
++        return Void();
++    }
++
++    ICryptoFactory* HIDL_FETCH_ICryptoFactory(const char* /* name */) {
++        return new CryptoFactory();
++    }
++
++}  // namespace widevine
++}  // namespace V1_3
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
+diff --git a/drm/mediadrm/plugins/widevine/hidl/CryptoFactory.h b/drm/mediadrm/plugins/widevine/hidl/CryptoFactory.h
+new file mode 100755
+index 0000000000..7416f7aac1
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/CryptoFactory.h
+@@ -0,0 +1,67 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#ifndef WIDEVINE_CRYPTO_FACTORY_H_
++#define WIDEVINE_CRYPTO_FACTORY_H_
++
++#include <android/hardware/drm/1.0/ICryptoPlugin.h>
++#include <android/hardware/drm/1.3/ICryptoFactory.h>
++#include <hidl/Status.h>
++#include <media/hardware/CryptoAPI.h>
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_3 {
++namespace widevine {
++
++using ::android::hardware::drm::V1_3::ICryptoFactory;
++using ::android::hardware::drm::V1_0::ICryptoPlugin;
++using ::android::hardware::hidl_array;
++using ::android::hardware::hidl_string;
++using ::android::hardware::hidl_vec;
++using ::android::hardware::Return;
++using ::android::hardware::Void;
++using ::android::sp;
++
++struct CryptoFactory : public ICryptoFactory {
++    CryptoFactory();
++    virtual ~CryptoFactory() {}
++
++    // Methods from ::android::hardware::drm::V1_0::ICryptoFactory follow.
++
++    Return<bool> isCryptoSchemeSupported(const hidl_array<uint8_t, 16>& uuid)
++            override;
++
++    Return<void> createPlugin(const hidl_array<uint8_t, 16>& uuid,
++            const hidl_vec<uint8_t>& initData, createPlugin_cb _hidl_cb)
++            override;
++
++private:
++	android::CryptoFactory* mWVCryptoFactory;
++
++    CryptoFactory(const CryptoFactory &) = delete;
++    void operator=(const CryptoFactory &) = delete;
++};
++
++extern "C" ICryptoFactory* HIDL_FETCH_ICryptoFactory(const char* name);
++
++}  // namespace widevine
++}  // namespace V1_3
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
++
++#endif  // WIDEVINE_CRYPTO_FACTORY_H_
+diff --git a/drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.cpp b/drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.cpp
+new file mode 100755
+index 0000000000..57f2bf8b2f
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.cpp
+@@ -0,0 +1,225 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#define LOG_TAG "hidl_WidevineCryptoPlugin"
++
++#include "CryptoPlugin.h"
++#include "TypeConvert.h"
++
++#include <android/hidl/memory/1.0/IMemory.h>
++#include <hidlmemory/mapping.h>
++#include <log/log.h>
++#include <media/stagefright/foundation/AString.h>
++
++using android::hardware::hidl_memory;
++using android::hidl::memory::V1_0::IMemory;
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_2 {
++namespace widevine {
++
++    // Methods from ::android::hardware::drm::V1_0::ICryptoPlugin follow
++    Return<bool> CryptoPlugin::requiresSecureDecoderComponent(
++            const hidl_string& mime) {
++        return mLegacyPlugin->requiresSecureDecoderComponent(mime.c_str());
++    }
++
++    Return<void> CryptoPlugin::notifyResolution(uint32_t width,
++            uint32_t height) {
++        mLegacyPlugin->notifyResolution(width, height);
++        return Void();
++    }
++
++    Return<Status> CryptoPlugin::setMediaDrmSession(
++            const hidl_vec<uint8_t>& sessionId) {
++        return toStatus(mLegacyPlugin->setMediaDrmSession(toVector(sessionId)));
++    }
++
++    Return<void> CryptoPlugin::setSharedBufferBase(const hidl_memory& base,
++            uint32_t bufferId) {
++        sp<IMemory> hidlMemory = mapMemory(base);
++        ALOGE_IF(hidlMemory == nullptr, "mapMemory returns nullptr");
++
++        std::lock_guard<std::mutex> shared_buffer_lock(mSharedBufferLock);
++
++        // allow mapMemory to return nullptr
++        mSharedBufferMap[bufferId] = hidlMemory;
++        return Void();
++    }
++
++    Return<void> CryptoPlugin::decrypt(bool secure,
++            const hidl_array<uint8_t, 16>& keyId,
++            const hidl_array<uint8_t, 16>& iv, Mode mode,
++            const Pattern& pattern, const hidl_vec<SubSample>& subSamples,
++            const SharedBuffer& source, uint64_t offset,
++            const DestinationBuffer& destination,
++            decrypt_cb _hidl_cb) {
++
++        std::unique_lock<std::mutex> shared_buffer_lock(mSharedBufferLock);
++        if (mSharedBufferMap.find(source.bufferId) == mSharedBufferMap.end()) {
++            _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "source decrypt buffer base not set");
++            return Void();
++        }
++
++        if (destination.type == BufferType::SHARED_MEMORY) {
++            const SharedBuffer& dest = destination.nonsecureMemory;
++            if (mSharedBufferMap.find(dest.bufferId) == mSharedBufferMap.end()) {
++                _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "destination decrypt buffer base not set");
++                return Void();
++            }
++        }
++
++        android::CryptoPlugin::Mode legacyMode;
++        switch(mode) {
++        case Mode::UNENCRYPTED:
++            legacyMode = android::CryptoPlugin::kMode_Unencrypted;
++            break;
++        case Mode::AES_CTR:
++            legacyMode = android::CryptoPlugin::kMode_AES_CTR;
++            break;
++        case Mode::AES_CBC_CTS:
++            legacyMode = android::CryptoPlugin::kMode_AES_WV;
++            break;
++        case Mode::AES_CBC:
++            legacyMode = android::CryptoPlugin::kMode_AES_CBC;
++            break;
++        }
++        android::CryptoPlugin::Pattern legacyPattern;
++        legacyPattern.mEncryptBlocks = pattern.encryptBlocks;
++        legacyPattern.mSkipBlocks = pattern.skipBlocks;
++
++        std::unique_ptr<android::CryptoPlugin::SubSample[]> legacySubSamples =
++                std::make_unique<android::CryptoPlugin::SubSample[]>(subSamples.size());
++
++        // release mSharedBufferLock
++        shared_buffer_lock.unlock();
++
++        size_t destSize = 0;
++        for (size_t i = 0; i < subSamples.size(); i++) {
++            uint32_t numBytesOfClearData = subSamples[i].numBytesOfClearData;
++            legacySubSamples[i].mNumBytesOfClearData = numBytesOfClearData;
++            uint32_t numBytesOfEncryptedData = subSamples[i].numBytesOfEncryptedData;
++            legacySubSamples[i].mNumBytesOfEncryptedData = numBytesOfEncryptedData;
++            if (__builtin_add_overflow(destSize, numBytesOfClearData, &destSize)) {
++                _hidl_cb(Status::BAD_VALUE, 0, "subsample clear size overflow");
++                return Void();
++            }
++            if (__builtin_add_overflow(destSize, numBytesOfEncryptedData, &destSize)) {
++                _hidl_cb(Status::BAD_VALUE, 0, "subsample encrypted size overflow");
++                return Void();
++            }
++        }
++
++        AString detailMessage;
++        sp<IMemory> sourceBase = mSharedBufferMap[source.bufferId];
++        if (sourceBase == nullptr) {
++            _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "source is a nullptr");
++            return Void();
++        }
++
++        if (source.offset + offset + source.size > sourceBase->getSize()) {
++            _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
++            return Void();
++        }
++
++        uint8_t *base = static_cast<uint8_t *>
++                (static_cast<void *>(sourceBase->getPointer()));
++        void *srcPtr = static_cast<void *>(base + source.offset + offset);
++
++        void *destPtr = NULL;
++        if (destination.type == BufferType::SHARED_MEMORY) {
++            const SharedBuffer& destBuffer = destination.nonsecureMemory;
++            sp<IMemory> destBase = mSharedBufferMap[destBuffer.bufferId];
++            if (destBase == nullptr) {
++                _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "destination is a nullptr");
++                return Void();
++            }
++
++            if (destBuffer.offset + destBuffer.size > destBase->getSize()) {
++                _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
++                return Void();
++            }
++
++            if (destSize > destBuffer.size) {
++                _hidl_cb(Status::BAD_VALUE, 0, "subsample sum too large");
++                return Void();
++            }
++
++            base = static_cast<uint8_t *>(static_cast<void *>(destBase->getPointer()));
++            destPtr = static_cast<void *>(base + destination.nonsecureMemory.offset);
++        } else if (destination.type == BufferType::NATIVE_HANDLE) {
++            if (!secure) {
++                _hidl_cb(Status::BAD_VALUE, 0, "native handle destination must be secure");
++                return Void();
++            }
++            native_handle_t *handle = const_cast<native_handle_t *>(
++                    destination.secureMemory.getNativeHandle());
++            destPtr = static_cast<void *>(handle);
++        } else {
++            _hidl_cb(Status::BAD_VALUE, 0, "invalid destination type");
++            return Void();
++        }
++        ssize_t result = mLegacyPlugin->decrypt(secure, keyId.data(), iv.data(),
++                legacyMode, legacyPattern, srcPtr, legacySubSamples.get(),
++                subSamples.size(), destPtr, &detailMessage);
++
++        uint32_t status;
++        uint32_t bytesWritten;
++
++        if (result >= 0) {
++            status = android::OK;
++            bytesWritten = result;
++        } else {
++            status = result;
++            bytesWritten = 0;
++        }
++
++        _hidl_cb(toStatus(status), bytesWritten, detailMessage.c_str());
++        return Void();
++    }
++
++    Return<void> CryptoPlugin::decrypt_1_2(bool secure,
++            const hidl_array<uint8_t, 16>& keyId,
++            const hidl_array<uint8_t, 16>& iv, Mode mode,
++            const Pattern& pattern, const hidl_vec<SubSample>& subSamples,
++            const SharedBuffer& source, uint64_t offset,
++            const DestinationBuffer& destination,
++            decrypt_1_2_cb _hidl_cb) {
++
++        Status status = Status::ERROR_DRM_UNKNOWN;
++        hidl_string detailedError;
++        uint32_t bytesWritten = 0;
++
++        Return<void> hResult = decrypt(
++            secure, keyId, iv, mode, pattern, subSamples, source, offset, destination,
++            [&](Status hStatus, uint32_t hBytesWritten, hidl_string hDetailedError) {
++                status = hStatus;
++                bytesWritten = hBytesWritten;
++                detailedError = hDetailedError;
++            }
++        );
++
++        status = hResult.isOk() ? status : Status::ERROR_DRM_CANNOT_HANDLE;
++        _hidl_cb(toStatus_1_2(status), bytesWritten, detailedError);
++        return Void();
++   }
++
++} // namespace widevine
++}  // namespace V1_2
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
+diff --git a/drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.h b/drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.h
+new file mode 100755
+index 0000000000..f47f7d8fbf
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.h
+@@ -0,0 +1,99 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef WIDEVINE_CRYPTO_PLUGIN_H_
++#define WIDEVINE_CRYPTO_PLUGIN_H_
++
++#include <android/hidl/memory/1.0/IMemory.h>
++#include <android/hardware/drm/1.2/ICryptoPlugin.h>
++#include <hidl/Status.h>
++#include <media/hardware/CryptoAPI.h>
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_2 {
++namespace widevine {
++
++namespace drm = ::android::hardware::drm;
++using drm::V1_0::DestinationBuffer;
++using drm::V1_0::Mode;
++using drm::V1_0::Pattern;
++using drm::V1_0::BufferType;
++using drm::V1_0::SharedBuffer;
++using drm::V1_0::Status;
++using drm::V1_0::SubSample;
++using drm::V1_2::ICryptoPlugin;
++
++using ::android::hardware::hidl_array;
++using ::android::hardware::hidl_memory;
++using ::android::hardware::hidl_string;
++using ::android::hardware::hidl_vec;
++using ::android::hardware::Return;
++using ::android::hardware::Void;
++using ::android::hidl::memory::V1_0::IMemory;
++using ::android::sp;
++
++typedef drm::V1_2::Status Status_V1_2;
++
++struct CryptoPlugin : public ICryptoPlugin {
++    CryptoPlugin(android::CryptoPlugin *plugin) : mLegacyPlugin(plugin) {}
++
++    ~CryptoPlugin() {delete mLegacyPlugin;}
++
++    // Methods from ::android::hardware::drm::V1_2::ICryptoPlugin
++    // follow.
++
++    Return<bool> requiresSecureDecoderComponent(const hidl_string& mime)
++            override;
++
++    Return<void> notifyResolution(uint32_t width, uint32_t height) override;
++
++    Return<Status> setMediaDrmSession(const hidl_vec<uint8_t>& sessionId)
++            override;
++
++    Return<void> setSharedBufferBase(const ::android::hardware::hidl_memory& base,
++        uint32_t bufferId) override;
++
++    Return<void> decrypt(bool secure, const hidl_array<uint8_t, 16>& keyId,
++            const hidl_array<uint8_t, 16>& iv, Mode mode, const Pattern& pattern,
++            const hidl_vec<SubSample>& subSamples, const SharedBuffer& source,
++            uint64_t offset, const DestinationBuffer& destination,
++            decrypt_cb _hidl_cb) override;
++
++	Return<void> decrypt_1_2(bool secure, const hidl_array<uint8_t, 16>& keyId,
++            const hidl_array<uint8_t, 16>& iv, Mode mode, const Pattern& pattern,
++            const hidl_vec<SubSample>& subSamples, const SharedBuffer& source,
++            uint64_t offset, const DestinationBuffer& destination,
++            decrypt_1_2_cb _hidl_cb) override; // use unique_lock
++
++private:
++    android::CryptoPlugin *mLegacyPlugin;
++    std::mutex mSharedBufferLock;
++    std::map<uint32_t, sp<IMemory>> mSharedBufferMap;
++
++    CryptoPlugin() = delete;
++    CryptoPlugin(const CryptoPlugin &) = delete;
++    void operator=(const CryptoPlugin &) = delete;
++};
++
++}  // namespace widevine
++}  // namespace V1_2
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
++
++#endif  // WIDEVINE_CRYPTO_PLUGIN_H_
+diff --git a/drm/mediadrm/plugins/widevine/hidl/DrmFactory.cpp b/drm/mediadrm/plugins/widevine/hidl/DrmFactory.cpp
+new file mode 100755
+index 0000000000..3b54882a54
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/DrmFactory.cpp
+@@ -0,0 +1,117 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++` *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#define LOG_TAG "hidl_WidevineDrmFactory"
++
++#include "DrmPlugin.h"
++#include "WVUUID.h"
++#include "DrmFactory.h"
++#include "TypeConvert.h"
++#include "WVCreatePluginFactories.h"
++
++#include <vector>
++#include <log/log.h>
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_3 {
++namespace widevine {
++
++using ::android::hardware::drm::V1_0::Status;
++using ::android::hardware::drm::V1_1::SecurityLevel;
++using ::android::hardware::drm::V1_2::widevine::DrmPlugin;
++
++    DrmFactory::DrmFactory() {
++        mWVDrmFactory = createDrmFactory();
++    }
++
++    // Methods from ::android::hardware::drm::V1_0::IDrmFactory follow.
++    Return<bool> DrmFactory::isCryptoSchemeSupported (
++            const hidl_array<uint8_t, 16>& uuid) {
++        if (mWVDrmFactory->isCryptoSchemeSupported(uuid.data())) {
++            return true;
++        }
++        return false;
++    }
++
++	Return<bool> DrmFactory::isCryptoSchemeSupported_1_2(const hidl_array<uint8_t, 16>& uuid,
++	                                                     const hidl_string &mimeType,
++	                                                     SecurityLevel level) {
++	    return isCryptoSchemeSupported(uuid) && isContentTypeSupported(mimeType) &&
++	            level == SecurityLevel::SW_SECURE_CRYPTO;
++	}
++
++    Return<bool> DrmFactory::isContentTypeSupported (
++            const hidl_string& mimeType) {
++        if (mWVDrmFactory->isContentTypeSupported(String8(mimeType.c_str()))) {
++            return true;
++        }
++        return false;
++    }
++
++    Return<void> DrmFactory::createPlugin(const hidl_array<uint8_t, 16>& uuid,
++            const hidl_string& /* appPackageName */, createPlugin_cb _hidl_cb) {
++        if (mWVDrmFactory->isCryptoSchemeSupported(uuid.data())) {
++            android::DrmPlugin *legacyPlugin = NULL;
++            status_t status = mWVDrmFactory->createDrmPlugin(
++                    uuid.data(), &legacyPlugin);
++
++            DrmPlugin *newPlugin = NULL;
++            if (legacyPlugin == NULL) {
++                ALOGE("Drm legacy HAL: failed to create drm plugin");
++            } else {
++                newPlugin = new DrmPlugin(legacyPlugin);
++            }
++            _hidl_cb(V1_2::widevine::toStatus(status), newPlugin);
++            return Void();
++        }
++
++        _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, NULL);
++        return Void();
++    }
++
++	Return<void> DrmFactory::getSupportedCryptoSchemes(
++        getSupportedCryptoSchemes_cb _hidl_cb) {
++	    std::vector<hidl_array<uint8_t, 16>> schemes;
++	    for (const auto &scheme : wvdrm::getSupportedCryptoSchemes()) {
++	        schemes.push_back(scheme);
++	    }
++	    _hidl_cb(schemes);
++	    return Void();
++	}
++
++	Return<void> DrmFactory::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /*args*/) {
++	    if (fd.getNativeHandle() == nullptr || fd->numFds < 1) {
++	        ALOGE("%s: missing fd for writing", __FUNCTION__);
++	        return Void();
++	    }
++
++	    FILE* out = fdopen(dup(fd->data[0]), "w");
++	    uint32_t currentSessions = 1;
++	    fprintf(out, "current open sessions: %u\n", currentSessions);
++	    fclose(out);
++	    return Void();
++	}
++
++    IDrmFactory* HIDL_FETCH_IDrmFactory(const char* /* name */) {
++        return new DrmFactory();
++    }
++
++}  // namespace widevine
++}  // namespace V1_3
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
+diff --git a/drm/mediadrm/plugins/widevine/hidl/DrmFactory.h b/drm/mediadrm/plugins/widevine/hidl/DrmFactory.h
+new file mode 100755
+index 0000000000..0796b8e860
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/DrmFactory.h
+@@ -0,0 +1,80 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#ifndef WIDEVINE_DRM_FACTORY_H_
++#define WIDEVINE_DRM_FACTORY_H_
++
++#include <android/hardware/drm/1.2/IDrmPlugin.h>
++#include <android/hardware/drm/1.3/IDrmFactory.h>
++#include <hidl/Status.h>
++#include <media/drm/DrmAPI.h>
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_3 {
++namespace widevine {
++
++using ::android::hardware::drm::V1_1::SecurityLevel;
++using ::android::hardware::drm::V1_3::IDrmFactory;
++using ::android::hardware::drm::V1_2::IDrmPlugin;
++using ::android::hardware::hidl_array;
++using ::android::hardware::hidl_handle;
++using ::android::hardware::hidl_string;
++using ::android::hardware::hidl_vec;
++using ::android::hardware::Return;
++using ::android::hardware::Void;
++using ::android::sp;
++
++struct DrmFactory : public IDrmFactory {
++    DrmFactory();
++    virtual ~DrmFactory() {}
++
++    // Methods from ::android::hardware::drm::V1_1::IDrmFactory follow.
++
++    Return<bool> isCryptoSchemeSupported(const hidl_array<uint8_t, 16>& uuid)
++            override;
++
++    Return<bool> isCryptoSchemeSupported_1_2(const hidl_array<uint8_t, 16>& uuid,
++                                             const hidl_string& mimeType,
++                                             SecurityLevel level) override;
++
++    Return<bool> isContentTypeSupported(const hidl_string &mimeType)
++            override;
++
++    Return<void> createPlugin(const hidl_array<uint8_t, 16>& uuid,
++            const hidl_string& appPackageName, createPlugin_cb _hidl_cb) override;
++
++    Return<void> getSupportedCryptoSchemes(
++            getSupportedCryptoSchemes_cb _hidl_cb) override;
++
++    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args);
++
++private:
++    android::DrmFactory* mWVDrmFactory;
++
++    DrmFactory(const DrmFactory &) = delete;
++    void operator=(const DrmFactory &) = delete;
++};
++
++extern "C" IDrmFactory* HIDL_FETCH_IDrmFactory(const char* name);
++
++}  // namespace widevine
++}  // namespace V1_3
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
++
++#endif  // WIDEVINE_DRM_FACTORY_H_
+\ No newline at end of file
+diff --git a/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp b/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp
+new file mode 100755
+index 0000000000..ad6b2c3069
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp
+@@ -0,0 +1,753 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#define LOG_TAG "hidl_WidevineDrmPlugin"
++
++#include <stdio.h>
++#include <inttypes.h>
++#include <utils/Log.h>
++#include <utils/KeyedVector.h>
++#include <utils/String8.h>
++
++#include "DrmPlugin.h"
++#include "TypeConvert.h"
++
++#define UNUSED(x) (void)(x);
++
++namespace {
++const int kSecureStopIdSize = 10;
++
++std::vector<uint8_t> uint32ToVector(uint32_t value) {
++    // 10 bytes to display max value 4294967295 + one byte null terminator
++    char buffer[kSecureStopIdSize];
++    memset(buffer, 0, kSecureStopIdSize);
++    snprintf(buffer, kSecureStopIdSize, "%" PRIu32, value);
++    return std::vector<uint8_t>(buffer, buffer + sizeof(buffer));
++}
++
++}; // unnamed namespace
++
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_2 {
++namespace widevine {
++
++    DrmPlugin::DrmPlugin(android::DrmPlugin *plugin)
++            : mLegacyPlugin(plugin),
++              mOpenSessionOkCount(0),
++              mCloseSessionOkCount(0),
++              mCloseSessionNotOpenedCount(0) {
++    }
++
++    // Methods from ::android::hardware::drm::V1_0::IDrmPlugin follow.
++    Return<void> DrmPlugin::openSession(openSession_cb _hidl_cb) {
++        Vector<uint8_t> legacySessionId;
++        status_t state = mLegacyPlugin->openSession(legacySessionId);
++        Status status = toStatus(state);
++        if (status == Status::OK) {
++            mOpenSessionOkCount++;
++            status = setSecurityLevel(toHidlVec(legacySessionId), SecurityLevel::SW_SECURE_CRYPTO);
++        }
++        _hidl_cb(status, toHidlVec(legacySessionId));
++        return Void();
++    }
++
++    Return<void> DrmPlugin::openSession_1_1(SecurityLevel securityLevel,
++            openSession_1_1_cb _hidl_cb) {
++        Vector<uint8_t> legacySessionId;
++        status_t state = mLegacyPlugin->openSession(legacySessionId);
++        Status status = toStatus(state);
++        if (status == Status::OK) {
++            mOpenSessionOkCount++;
++            status = setSecurityLevel(toHidlVec(legacySessionId), securityLevel);
++        }
++        _hidl_cb(status, toHidlVec(legacySessionId));
++        return Void();
++    }
++
++    Return<Status> DrmPlugin::closeSession(const hidl_vec<uint8_t>& sessionId) {
++        Status status = toStatus(mLegacyPlugin->closeSession(toVector(sessionId)));
++        if (status == Status::OK) {
++            mCloseSessionOkCount++;
++        } else {
++            mCloseSessionNotOpenedCount++;
++        }
++        return status;
++    }
++
++    status_t DrmPlugin::getKeyRequestCommon(const hidl_vec<uint8_t>& scope,
++            const hidl_vec<uint8_t>& initData,
++            const hidl_string& mimeType,
++            KeyType keyType,
++            const hidl_vec<KeyValue>& optionalParameters,
++            Vector<uint8_t> &request,
++            KeyRequestType_V1_1 &requestType,
++            String8 &defaultUrl) {
++
++        status_t status = android::OK;
++
++        android::DrmPlugin::KeyType legacyKeyType;
++        switch(keyType) {
++        case KeyType::OFFLINE:
++            legacyKeyType = android::DrmPlugin::kKeyType_Offline;
++            break;
++        case KeyType::STREAMING:
++            legacyKeyType = android::DrmPlugin::kKeyType_Streaming;
++            break;
++        case KeyType::RELEASE:
++            legacyKeyType = android::DrmPlugin::kKeyType_Release;
++            break;
++        default:
++            status = android::BAD_VALUE;
++            break;
++        }
++
++        if (status == android::OK) {
++            android::KeyedVector<String8, String8> legacyOptionalParameters;
++            for (size_t i = 0; i < optionalParameters.size(); i++) {
++                legacyOptionalParameters.add(String8(optionalParameters[i].key.c_str()),
++                        String8(optionalParameters[i].value.c_str()));
++            }
++
++            android::DrmPlugin::KeyRequestType legacyRequestType =
++                    android::DrmPlugin::kKeyRequestType_Unknown;
++
++            status = mLegacyPlugin->getKeyRequest(toVector(scope),
++                    toVector(initData), String8(mimeType.c_str()), legacyKeyType,
++                    legacyOptionalParameters, request, defaultUrl,
++                    &legacyRequestType);
++
++            switch(legacyRequestType) {
++            case android::DrmPlugin::kKeyRequestType_Initial:
++                requestType = KeyRequestType_V1_1::INITIAL;
++                break;
++            case android::DrmPlugin::kKeyRequestType_Renewal:
++                requestType = KeyRequestType_V1_1::RENEWAL;
++                break;
++            case android::DrmPlugin::kKeyRequestType_Release:
++                requestType = KeyRequestType_V1_1::RELEASE;
++                break;
++            case android::DrmPlugin::kKeyRequestType_Unknown:
++            default:
++                requestType = KeyRequestType_V1_1::UNKNOWN;
++                break;
++            }
++        }
++        return status;
++   }
++
++    Return<void> DrmPlugin::getKeyRequest(const hidl_vec<uint8_t>& scope,
++            const hidl_vec<uint8_t>& initData, const hidl_string& mimeType,
++            KeyType keyType, const hidl_vec<KeyValue>& optionalParameters,
++            getKeyRequest_cb _hidl_cb) {
++
++        KeyRequestType_V1_1 requestType = KeyRequestType_V1_1::UNKNOWN;
++        Vector<uint8_t> legacyRequest;
++        String8 defaultUrl;
++
++        status_t status = getKeyRequestCommon(
++                scope, initData, mimeType, keyType, optionalParameters,
++                legacyRequest, requestType, defaultUrl);
++
++        _hidl_cb(toStatus(status), toHidlVec(legacyRequest), static_cast<drm::V1_0::KeyRequestType>(requestType),
++                 defaultUrl.string());
++        return Void();
++    }
++
++    Return<void> DrmPlugin::getKeyRequest_1_1(const hidl_vec<uint8_t>& scope,
++            const hidl_vec<uint8_t>& initData, const hidl_string& mimeType,
++            KeyType keyType, const hidl_vec<KeyValue>& optionalParameters,
++            getKeyRequest_1_1_cb _hidl_cb) {
++
++        KeyRequestType_V1_1 requestType = KeyRequestType_V1_1::UNKNOWN;
++        Vector<uint8_t> legacyRequest;
++        String8 defaultUrl;
++
++        status_t status = getKeyRequestCommon(
++                scope, initData, mimeType, keyType, optionalParameters,
++                legacyRequest, requestType, defaultUrl);
++
++        _hidl_cb(toStatus(status), toHidlVec(legacyRequest), requestType,
++                 defaultUrl.string());
++        return Void();
++    }
++
++    Return<void> DrmPlugin::getKeyRequest_1_2(const hidl_vec<uint8_t>& scope,
++	        const hidl_vec<uint8_t>& initData, const hidl_string& mimeType,
++	        KeyType keyType, const hidl_vec<KeyValue>& optionalParameters,
++	        getKeyRequest_1_2_cb _hidl_cb) {
++
++        KeyRequestType_V1_1 requestType = KeyRequestType_V1_1::UNKNOWN;
++        Vector<uint8_t> legacyRequest;
++        String8 defaultUrl;
++
++        status_t status = getKeyRequestCommon(
++                scope, initData, mimeType, keyType, optionalParameters,
++                legacyRequest, requestType, defaultUrl);
++
++        _hidl_cb(toStatus_1_2(toStatus(status)), toHidlVec(legacyRequest), requestType,
++                 defaultUrl.string());
++        return Void();
++    }
++
++    Return<void> DrmPlugin::provideKeyResponse(const hidl_vec<uint8_t>& scope,
++            const hidl_vec<uint8_t>& response, provideKeyResponse_cb _hidl_cb) {
++
++        Vector<uint8_t> keySetId;
++        status_t status = mLegacyPlugin->provideKeyResponse(toVector(scope),
++                toVector(response), keySetId);
++        _hidl_cb(toStatus(status), toHidlVec(keySetId));
++        return Void();
++    }
++
++    Return<Status> DrmPlugin::removeKeys(const hidl_vec<uint8_t>& sessionId) {
++        return toStatus(mLegacyPlugin->removeKeys(toVector(sessionId)));
++    }
++
++    Return<Status> DrmPlugin::restoreKeys(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keySetId) {
++        status_t legacyStatus = mLegacyPlugin->restoreKeys(toVector(sessionId),
++                toVector(keySetId));
++        return toStatus(legacyStatus);
++    }
++
++    Return<void> DrmPlugin::queryKeyStatus(const hidl_vec<uint8_t>& sessionId,
++            queryKeyStatus_cb _hidl_cb) {
++
++        android::KeyedVector<String8, String8> legacyInfoMap;
++        status_t status = mLegacyPlugin->queryKeyStatus(toVector(sessionId),
++                legacyInfoMap);
++
++        Vector<KeyValue> infoMapVec;
++        for (size_t i = 0; i < legacyInfoMap.size(); i++) {
++            KeyValue keyValuePair;
++            keyValuePair.key = String8(legacyInfoMap.keyAt(i));
++            keyValuePair.value = String8(legacyInfoMap.valueAt(i));
++            infoMapVec.push_back(keyValuePair);
++        }
++        _hidl_cb(toStatus(status), toHidlVec(infoMapVec));
++        return Void();
++    }
++
++    Return<void> DrmPlugin::getProvisionRequest(
++            const hidl_string& certificateType,
++            const hidl_string& certificateAuthority,
++            getProvisionRequest_cb _hidl_cb) {
++
++        Vector<uint8_t> legacyRequest;
++        String8 legacyDefaultUrl;
++        status_t status = mLegacyPlugin->getProvisionRequest(
++                String8(certificateType.c_str()), String8(certificateAuthority.c_str()),
++                legacyRequest, legacyDefaultUrl);
++
++        _hidl_cb(toStatus(status), toHidlVec(legacyRequest),
++                hidl_string(legacyDefaultUrl));
++        return Void();
++    }
++
++	Return<void> DrmPlugin::getProvisionRequest_1_2(
++	        const hidl_string& certificateType,
++	        const hidl_string& certificateAuthority,
++	        getProvisionRequest_1_2_cb _hidl_cb) {
++
++		Vector<uint8_t> legacyRequest;
++        String8 legacyDefaultUrl;
++        status_t status = mLegacyPlugin->getProvisionRequest(
++                String8(certificateType.c_str()), String8(certificateAuthority.c_str()),
++                legacyRequest, legacyDefaultUrl);
++
++        _hidl_cb(toStatus_1_2(toStatus(status)), toHidlVec(legacyRequest),
++                hidl_string(legacyDefaultUrl));
++        return Void();
++	}
++
++    Return<void> DrmPlugin::provideProvisionResponse(
++            const hidl_vec<uint8_t>& response,
++            provideProvisionResponse_cb _hidl_cb) {
++
++        Vector<uint8_t> certificate;
++        Vector<uint8_t> wrappedKey;
++
++        status_t legacyStatus = mLegacyPlugin->provideProvisionResponse(
++                toVector(response), certificate, wrappedKey);
++
++        _hidl_cb(toStatus(legacyStatus), toHidlVec(certificate),
++                toHidlVec(wrappedKey));
++        return Void();
++    }
++
++    Return<void> DrmPlugin::getNumberOfSessions(getNumberOfSessions_cb _hidl_cb) {
++            uint32_t currentSessions = mOpenSessionOkCount - mCloseSessionOkCount;
++            uint32_t maxSessions = 10;
++            _hidl_cb(Status::OK, currentSessions, maxSessions);
++            return Void();
++    }
++
++    Return<void> DrmPlugin::getSecurityLevel(const hidl_vec<uint8_t>& sessionId,
++                getSecurityLevel_cb _hidl_cb) {
++        if (sessionId.size() == 0) {
++            _hidl_cb(Status::BAD_VALUE, SecurityLevel::UNKNOWN);
++            return Void();
++        }
++
++        std::vector<uint8_t> sid = stdtoVector(sessionId);
++        std::map<std::vector<uint8_t>, SecurityLevel>::iterator itr =
++                mSecurityLevel.find(sid);
++        if (itr == mSecurityLevel.end()) {
++            ALOGE("Session id not found");
++            _hidl_cb(Status::ERROR_DRM_INVALID_STATE, SecurityLevel::UNKNOWN);
++            return Void();
++        }
++
++        _hidl_cb(Status::OK, itr->second);
++        return Void();
++    }
++
++    Return<Status> DrmPlugin::setSecurityLevel(const hidl_vec<uint8_t>& sessionId,
++                SecurityLevel level) {
++        if (sessionId.size() == 0) {
++            ALOGE("Invalid empty session id");
++            return Status::BAD_VALUE;
++        }
++
++        if (level > SecurityLevel::SW_SECURE_CRYPTO) {
++            ALOGE("Cannot set security level > max");
++            return Status::ERROR_DRM_CANNOT_HANDLE;
++        }
++
++        std::vector<uint8_t> sid = stdtoVector(sessionId);
++        std::map<std::vector<uint8_t>, SecurityLevel>::iterator itr =
++                mSecurityLevel.find(sid);
++        if (itr != mSecurityLevel.end()) {
++            mSecurityLevel[sid] = level;
++        } else {
++            if (!mSecurityLevel.insert(
++                    std::pair<std::vector<uint8_t>, SecurityLevel>(sid, level)).second) {
++                ALOGE("Failed to set security level");
++                return Status::ERROR_DRM_INVALID_STATE;
++            }
++        }
++        return Status::OK;
++    }
++
++    Return<void> DrmPlugin::getMetrics(getMetrics_cb _hidl_cb) {
++        // Set the open session count metric.
++        DrmMetricGroup::Attribute openSessionOkAttribute = {
++          "status", DrmMetricGroup::ValueType::INT64_TYPE, (int64_t) Status::OK, 0.0, ""
++        };
++        DrmMetricGroup::Value openSessionMetricValue = {
++          "count", DrmMetricGroup::ValueType::INT64_TYPE, mOpenSessionOkCount, 0.0, ""
++        };
++        DrmMetricGroup::Metric openSessionMetric = {
++          "open_session", { openSessionOkAttribute }, { openSessionMetricValue }
++        };
++
++        // Set the close session count metric.
++        DrmMetricGroup::Attribute closeSessionOkAttribute = {
++          "status", DrmMetricGroup::ValueType::INT64_TYPE, (int64_t) Status::OK, 0.0, ""
++        };
++        DrmMetricGroup::Value closeSessionMetricValue = {
++          "count", DrmMetricGroup::ValueType::INT64_TYPE, mCloseSessionOkCount, 0.0, ""
++        };
++        DrmMetricGroup::Metric closeSessionMetric = {
++          "close_session", { closeSessionOkAttribute }, { closeSessionMetricValue }
++        };
++
++        // Set the close session, not opened metric.
++        DrmMetricGroup::Attribute closeSessionNotOpenedAttribute = {
++          "status", DrmMetricGroup::ValueType::INT64_TYPE,
++          (int64_t) Status::ERROR_DRM_SESSION_NOT_OPENED, 0.0, ""
++        };
++        DrmMetricGroup::Value closeSessionNotOpenedMetricValue = {
++          "count", DrmMetricGroup::ValueType::INT64_TYPE, mCloseSessionNotOpenedCount, 0.0, ""
++        };
++        DrmMetricGroup::Metric closeSessionNotOpenedMetric = {
++          "close_session", { closeSessionNotOpenedAttribute }, { closeSessionNotOpenedMetricValue }
++        };
++
++        DrmMetricGroup metrics = { { openSessionMetric, closeSessionMetric,
++                                    closeSessionNotOpenedMetric } };
++
++        _hidl_cb(Status::OK, hidl_vec<DrmMetricGroup>({metrics}));
++        return Void();
++    }
++
++    Return<void> DrmPlugin::getOfflineLicenseKeySetIds(getOfflineLicenseKeySetIds_cb _hidl_cb) {
++        std::vector<KeySetId> keySetIds;
++        _hidl_cb(Status::ERROR_DRM_UNKNOWN, keySetIds);
++        return Void();
++    }
++
++    Return<Status> DrmPlugin::removeOfflineLicense(const KeySetId& keySetId) {
++        UNUSED(keySetId);
++        return Status::BAD_VALUE;
++    }
++
++    Return<void> DrmPlugin::getOfflineLicenseState(const KeySetId& keySetId,
++            getOfflineLicenseState_cb _hidl_cb) {
++        UNUSED(keySetId);
++        _hidl_cb(Status::BAD_VALUE, OfflineLicenseState::UNKNOWN);
++        return Void();
++    }
++
++    Return<void> DrmPlugin::getSecureStops(getSecureStops_cb _hidl_cb) {
++        List<Vector<uint8_t> > legacySecureStops;
++        status_t status = mLegacyPlugin->getSecureStops(legacySecureStops);
++
++        Vector<SecureStop> secureStopsVec;
++        List<Vector<uint8_t> >::iterator iter = legacySecureStops.begin();
++
++        while (iter != legacySecureStops.end()) {
++            SecureStop secureStop;
++            secureStop.opaqueData = toHidlVec(*iter++);
++            secureStopsVec.push_back(secureStop);
++        }
++
++        _hidl_cb(toStatus(status), toHidlVec(secureStopsVec));
++        return Void();
++    }
++
++    Return<void> DrmPlugin::getSecureStop(const hidl_vec<uint8_t>& secureStopId,
++            getSecureStop_cb _hidl_cb) {
++
++        Vector<uint8_t> legacySecureStop;
++        status_t status = mLegacyPlugin->getSecureStop(toVector(secureStopId),
++                legacySecureStop);
++
++        SecureStop secureStop;
++        secureStop.opaqueData = toHidlVec(legacySecureStop);
++        _hidl_cb(toStatus(status), secureStop);
++        return Void();
++    }
++
++    Return<Status> DrmPlugin::releaseSecureStop(
++            const hidl_vec<uint8_t>& secureStopId) {
++        status_t legacyStatus =
++            mLegacyPlugin->releaseSecureStops(toVector(secureStopId));
++        return toStatus(legacyStatus);
++    }
++
++    Return<Status> DrmPlugin::releaseAllSecureStops() {
++        return toStatus(mLegacyPlugin->releaseAllSecureStops());
++    }
++
++    Return<Status> DrmPlugin::releaseSecureStops(const SecureStopRelease& ssRelease) {
++        if (ssRelease.opaqueData.size() == 0) {
++            return Status::BAD_VALUE;
++        }
++
++        Status status = Status::OK;
++        std::vector<uint8_t> input = stdtoVector(ssRelease.opaqueData);
++
++        // The format of opaqueData is shared between the server
++        // and the drm service. The clearkey implementation consists of:
++        //    count - number of secure stops
++        //    list of fixed length secure stops
++        size_t countBufferSize = sizeof(uint32_t);
++        if (input.size() < countBufferSize) {
++            // SafetyNet logging
++            android_errorWriteLog(0x534e4554, "144766455");
++            return Status::BAD_VALUE;
++        }
++        uint32_t count = 0;
++        sscanf(reinterpret_cast<char*>(input.data()), "%04" PRIu32, &count);
++
++        // Avoid divide by 0 below.
++        if (count == 0) {
++            return Status::BAD_VALUE;
++        }
++
++        size_t secureStopSize = (input.size() - countBufferSize) / count;
++        uint8_t buffer[secureStopSize];
++        size_t offset = countBufferSize; // skip the count
++        for (size_t i = 0; i < count; ++i, offset += secureStopSize) {
++            memcpy(buffer, input.data() + offset, secureStopSize);
++            std::vector<uint8_t> id(buffer, buffer + secureStopSize);
++
++            status = toStatus(mLegacyPlugin->releaseSecureStops(toVector(stdtoHidlVec(id))));
++            if (Status::OK != status) break;
++        }
++
++        return status;
++    }
++
++    Return<void> DrmPlugin::getSecureStopIds(getSecureStopIds_cb _hidl_cb) {
++        List<Vector<uint8_t> > legacySecureStops;
++        status_t status = mLegacyPlugin->getSecureStops(legacySecureStops);
++
++        uint32_t id = 0;
++        std::vector<SecureStopId> ids;
++        List<Vector<uint8_t> >::iterator iter = legacySecureStops.begin();
++
++        while (iter != legacySecureStops.end()) {
++            ++id;
++            ids.push_back(uint32ToVector(id));
++        }
++        _hidl_cb(toStatus(status), stdtoHidlVec(ids));
++        return Void();
++    }
++
++    Return<Status> DrmPlugin::removeSecureStop(const hidl_vec<uint8_t>& secureStopId) {
++        return releaseSecureStop(secureStopId);
++    }
++
++    Return<Status> DrmPlugin::removeAllSecureStops() {
++        return releaseAllSecureStops();
++    }
++
++    Return<void> DrmPlugin::getPropertyString(const hidl_string& propertyName,
++            getPropertyString_cb _hidl_cb) {
++        String8 legacyValue;
++        status_t status = mLegacyPlugin->getPropertyString(
++                String8(propertyName.c_str()), legacyValue);
++        _hidl_cb(toStatus(status), legacyValue.string());
++        return Void();
++    }
++
++    Return<void> DrmPlugin::getPropertyByteArray(const hidl_string& propertyName,
++            getPropertyByteArray_cb _hidl_cb) {
++        Vector<uint8_t> legacyValue;
++        status_t status = mLegacyPlugin->getPropertyByteArray(
++                String8(propertyName.c_str()), legacyValue);
++        _hidl_cb(toStatus(status), toHidlVec(legacyValue));
++        return Void();
++    }
++
++    Return<Status> DrmPlugin::setPropertyString(const hidl_string& propertyName,
++            const hidl_string& value) {
++        status_t legacyStatus =
++            mLegacyPlugin->setPropertyString(String8(propertyName.c_str()),
++                    String8(value.c_str()));
++        return toStatus(legacyStatus);
++    }
++
++    Return<Status> DrmPlugin::setPropertyByteArray(
++            const hidl_string& propertyName, const hidl_vec<uint8_t>& value) {
++        status_t legacyStatus =
++            mLegacyPlugin->setPropertyByteArray(String8(propertyName.c_str()),
++                    toVector(value));
++        return toStatus(legacyStatus);
++    }
++
++    Return<Status> DrmPlugin::setCipherAlgorithm(
++            const hidl_vec<uint8_t>& sessionId, const hidl_string& algorithm) {
++        status_t legacyStatus =
++            mLegacyPlugin->setCipherAlgorithm(toVector(sessionId),
++                String8(algorithm.c_str()));
++        return toStatus(legacyStatus);
++    }
++
++    Return<Status> DrmPlugin::setMacAlgorithm(
++            const hidl_vec<uint8_t>& sessionId, const hidl_string& algorithm) {
++        status_t legacyStatus =
++            mLegacyPlugin->setMacAlgorithm(toVector(sessionId),
++                String8(algorithm.c_str()));
++        return toStatus(legacyStatus);
++    }
++
++    Return<void> DrmPlugin::encrypt(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keyId, const hidl_vec<uint8_t>& input,
++            const hidl_vec<uint8_t>& iv, encrypt_cb _hidl_cb) {
++
++        Vector<uint8_t> legacyOutput;
++        status_t status = mLegacyPlugin->encrypt(toVector(sessionId),
++                toVector(keyId), toVector(input), toVector(iv), legacyOutput);
++        _hidl_cb(toStatus(status), toHidlVec(legacyOutput));
++        return Void();
++    }
++
++    Return<void> DrmPlugin::decrypt(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keyId, const hidl_vec<uint8_t>& input,
++            const hidl_vec<uint8_t>& iv, decrypt_cb _hidl_cb) {
++
++        Vector<uint8_t> legacyOutput;
++        status_t status = mLegacyPlugin->decrypt(toVector(sessionId),
++                toVector(keyId), toVector(input), toVector(iv), legacyOutput);
++        _hidl_cb(toStatus(status), toHidlVec(legacyOutput));
++        return Void();
++    }
++
++    Return<void> DrmPlugin::sign(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keyId, const hidl_vec<uint8_t>& message,
++            sign_cb _hidl_cb) {
++        Vector<uint8_t> legacySignature;
++        status_t status = mLegacyPlugin->sign(toVector(sessionId),
++                toVector(keyId), toVector(message), legacySignature);
++        _hidl_cb(toStatus(status), toHidlVec(legacySignature));
++        return Void();
++    }
++
++    Return<void> DrmPlugin::verify(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keyId, const hidl_vec<uint8_t>& message,
++            const hidl_vec<uint8_t>& signature, verify_cb _hidl_cb) {
++
++        bool match;
++        status_t status = mLegacyPlugin->verify(toVector(sessionId),
++                toVector(keyId), toVector(message), toVector(signature),
++                match);
++        _hidl_cb(toStatus(status), match);
++        return Void();
++    }
++
++    Return<void> DrmPlugin::signRSA(const hidl_vec<uint8_t>& sessionId,
++            const hidl_string& algorithm, const hidl_vec<uint8_t>& message,
++            const hidl_vec<uint8_t>& wrappedKey, signRSA_cb _hidl_cb) {
++
++        Vector<uint8_t> legacySignature;
++        status_t status = mLegacyPlugin->signRSA(toVector(sessionId),
++                String8(algorithm.c_str()), toVector(message), toVector(wrappedKey),
++                legacySignature);
++        _hidl_cb(toStatus(status), toHidlVec(legacySignature));
++        return Void();
++    }
++
++    Return<void> DrmPlugin::setListener(const sp<IDrmPluginListener>& listener) {
++        mListener = listener;
++        mListenerV1_2 = IDrmPluginListener_V1_2::castFrom(listener);
++        mLegacyPlugin->setListener(listener == NULL ? NULL : this);
++        return Void();
++    }
++
++    Return<void> DrmPlugin::sendEvent(EventType eventType,
++            const hidl_vec<uint8_t>& sessionId, const hidl_vec<uint8_t>& data) {
++        if (mListenerV1_2 != NULL) {
++            mListenerV1_2->sendEvent(eventType, sessionId, data);
++        } else if (mListener != NULL) {
++            mListener->sendEvent(eventType, sessionId, data);
++        }
++        return Void();
++    }
++
++    Return<void> DrmPlugin::sendExpirationUpdate(
++            const hidl_vec<uint8_t>& sessionId, int64_t expiryTimeInMS) {
++        if (mListenerV1_2 != NULL) {
++            mListenerV1_2->sendExpirationUpdate(sessionId, expiryTimeInMS);
++        } else if (mListener != NULL) {
++            mListener->sendExpirationUpdate(sessionId, expiryTimeInMS);
++        }
++        return Void();
++    }
++
++    Return<void> DrmPlugin::sendKeysChange(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<KeyStatus>& keyStatusList, bool hasNewUsableKey) {
++        if (mListenerV1_2 != NULL) {
++            mListenerV1_2->sendKeysChange(sessionId, keyStatusList, hasNewUsableKey);
++        } else if (mListener != NULL) {
++            mListener->sendKeysChange(sessionId, keyStatusList, hasNewUsableKey);
++        }
++        return Void();
++    }
++
++    Return<void> DrmPlugin::sendKeysChange_1_2(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<KeyStatus_V1_2>& keyStatusList, bool hasNewUsableKey) {
++        if (mListenerV1_2 != nullptr) {
++            mListenerV1_2->sendKeysChange_1_2(sessionId, keyStatusList, hasNewUsableKey);
++        }
++        return Void();
++    }
++
++    Return<void> DrmPlugin::sendSessionLostState(
++            const hidl_vec<uint8_t>& sessionId) {
++        if (mListenerV1_2 != NULL) {
++            mListenerV1_2->sendSessionLostState(sessionId);
++        }
++        return Void();
++    }
++
++
++    // Methods from android::DrmPluginListener
++    void DrmPlugin::sendEvent(android::DrmPlugin::EventType legacyEventType,
++            int /*unused*/, Vector<uint8_t> const *sessionId,
++            Vector<uint8_t> const *data) {
++
++        EventType eventType;
++        bool sendEvent = true;
++        switch(legacyEventType) {
++        case android::DrmPlugin::kDrmPluginEventProvisionRequired:
++            eventType = EventType::PROVISION_REQUIRED;
++            break;
++        case android::DrmPlugin::kDrmPluginEventKeyNeeded:
++            eventType = EventType::KEY_NEEDED;
++            break;
++        case android::DrmPlugin::kDrmPluginEventKeyExpired:
++            eventType = EventType::KEY_EXPIRED;
++            break;
++        case android::DrmPlugin::kDrmPluginEventVendorDefined:
++            eventType = EventType::VENDOR_DEFINED;
++            break;
++        case android::DrmPlugin::kDrmPluginEventSessionReclaimed:
++            eventType = EventType::SESSION_RECLAIMED;
++            break;
++        default:
++            sendEvent = false;
++            break;
++        }
++        if (sendEvent) {
++            Vector<uint8_t> emptyVector;
++            mListener->sendEvent(eventType,
++                    toHidlVec(sessionId == NULL ? emptyVector: *sessionId),
++                    toHidlVec(data == NULL ? emptyVector: *data));
++        }
++    }
++
++    void DrmPlugin::sendExpirationUpdate(Vector<uint8_t> const *sessionId,
++            int64_t expiryTimeInMS) {
++        mListener->sendExpirationUpdate(toHidlVec(*sessionId), expiryTimeInMS);
++    }
++
++    void DrmPlugin::sendKeysChange(Vector<uint8_t> const *sessionId,
++            Vector<android::DrmPlugin::KeyStatus> const *legacyKeyStatusList,
++            bool hasNewUsableKey) {
++
++        Vector<KeyStatus> keyStatusVec;
++        for (size_t i = 0; i < legacyKeyStatusList->size(); i++) {
++            const android::DrmPlugin::KeyStatus &legacyKeyStatus =
++                legacyKeyStatusList->itemAt(i);
++
++            KeyStatus keyStatus;
++
++            switch(legacyKeyStatus.mType) {
++            case android::DrmPlugin::kKeyStatusType_Usable:
++                keyStatus.type = KeyStatusType::USABLE;
++                break;
++            case android::DrmPlugin::kKeyStatusType_Expired:
++                keyStatus.type = KeyStatusType::EXPIRED;
++                break;
++            case android::DrmPlugin::kKeyStatusType_OutputNotAllowed:
++                keyStatus.type = KeyStatusType::OUTPUTNOTALLOWED;
++                break;
++            case android::DrmPlugin::kKeyStatusType_StatusPending:
++                keyStatus.type = KeyStatusType::STATUSPENDING;
++                break;
++            case android::DrmPlugin::kKeyStatusType_InternalError:
++            default:
++                keyStatus.type = KeyStatusType::INTERNALERROR;
++                break;
++            }
++
++            keyStatus.keyId = toHidlVec(legacyKeyStatus.mKeyId);
++            keyStatusVec.push_back(keyStatus);
++        }
++        mListener->sendKeysChange(toHidlVec(*sessionId),
++                toHidlVec(keyStatusVec), hasNewUsableKey);
++    }
++
++}  // namespace widevine
++}  // namespace V1_2
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
+diff --git a/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.h b/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.h
+new file mode 100755
+index 0000000000..40138326bf
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.h
+@@ -0,0 +1,262 @@
++ /*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef WIDEVINE_DRM_PLUGIN_H_
++#define WIDEVINE_DRM_PLUGIN_H_
++
++#include <android/hardware/drm/1.2/IDrmPlugin.h>
++#include <android/hardware/drm/1.2/IDrmPluginListener.h>
++
++#include <map>
++#include <stdio.h>
++#include <utils/List.h>
++#include <hidl/Status.h>
++#include <media/drm/DrmAPI.h>
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_2 {
++namespace widevine {
++
++namespace drm = ::android::hardware::drm;
++using drm::V1_0::EventType;
++using drm::V1_0::IDrmPluginListener;
++using drm::V1_0::KeyRequestType;
++using drm::V1_0::KeyStatus;
++using drm::V1_0::KeyStatusType;
++using drm::V1_0::KeyType;
++using drm::V1_0::KeyValue;
++using drm::V1_0::SecureStop;
++using drm::V1_0::SecureStopId;
++using drm::V1_0::SessionId;
++using drm::V1_0::Status;
++using drm::V1_1::DrmMetricGroup;
++using drm::V1_1::HdcpLevel;
++using drm::V1_1::SecureStopRelease;
++using drm::V1_1::SecurityLevel;
++using drm::V1_2::IDrmPlugin;
++using drm::V1_2::KeySetId;
++using drm::V1_2::OfflineLicenseState;
++
++using ::android::hardware::hidl_array;
++using ::android::hardware::hidl_string;
++using ::android::hardware::hidl_vec;
++using ::android::hardware::Return;
++using ::android::hardware::Void;
++using ::android::sp;
++
++typedef drm::V1_1::KeyRequestType KeyRequestType_V1_1;
++typedef drm::V1_2::IDrmPluginListener IDrmPluginListener_V1_2;
++typedef drm::V1_2::KeyStatus KeyStatus_V1_2;
++typedef drm::V1_2::KeyStatusType KeyStatusType_V1_2;
++typedef drm::V1_2::Status Status_V1_2;
++typedef drm::V1_2::HdcpLevel HdcpLevel_V1_2;
++
++struct DrmPlugin : public IDrmPlugin, android::DrmPluginListener {
++
++    DrmPlugin(android::DrmPlugin *plugin);
++    ~DrmPlugin() {delete mLegacyPlugin;}
++
++    // Methods from ::android::hardware::drm::V1_1::IDrmPlugin follow.
++    Return<void> openSession(openSession_cb _hidl_cb) override;
++    Return<void> openSession_1_1(SecurityLevel securityLevel,
++            openSession_1_1_cb _hidl_cb) override;
++
++    Return<Status> closeSession(const hidl_vec<uint8_t>& sessionId) override;
++
++    Return<void> getKeyRequest(const hidl_vec<uint8_t>& scope,
++            const hidl_vec<uint8_t>& initData, const hidl_string& mimeType,
++            KeyType keyType, const hidl_vec<KeyValue>& optionalParameters,
++            getKeyRequest_cb _hidl_cb) override;
++
++    Return<void> getKeyRequest_1_1(const hidl_vec<uint8_t>& scope,
++            const hidl_vec<uint8_t>& initData, const hidl_string& mimeType,
++            KeyType keyType, const hidl_vec<KeyValue>& optionalParameters,
++            getKeyRequest_1_1_cb _hidl_cb) override;
++
++	Return<void> getKeyRequest_1_2(const hidl_vec<uint8_t>& scope,
++	        const hidl_vec<uint8_t>& initData, const hidl_string& mimeType,
++	        KeyType keyType, const hidl_vec<KeyValue>& optionalParameters,
++	        getKeyRequest_1_2_cb _hidl_cb) override;
++
++    Return<void> provideKeyResponse(const hidl_vec<uint8_t>& scope,
++            const hidl_vec<uint8_t>& response, provideKeyResponse_cb _hidl_cb) override;
++
++    Return<Status> removeKeys(const hidl_vec<uint8_t>& sessionId) override;
++
++    Return<Status> restoreKeys(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keySetId) override;
++
++    Return<void> queryKeyStatus(const hidl_vec<uint8_t>& sessionId,
++            queryKeyStatus_cb _hidl_cb) override;
++
++    Return<void> getProvisionRequest(const hidl_string& certificateType,
++            const hidl_string& certificateAuthority,
++            getProvisionRequest_cb _hidl_cb) override;
++
++	Return<void> getProvisionRequest_1_2(const hidl_string& certificateType,
++        const hidl_string& certificateAuthority,
++        getProvisionRequest_1_2_cb _hidl_cb) override;
++
++    Return<void> provideProvisionResponse(const hidl_vec<uint8_t>& response,
++            provideProvisionResponse_cb _hidl_cb) override;
++
++    Return<void> getHdcpLevels(getHdcpLevels_cb _hidl_cb) {
++        HdcpLevel connectedLevel = HdcpLevel::HDCP_NONE;
++        HdcpLevel maxLevel = HdcpLevel::HDCP_NO_OUTPUT;
++        _hidl_cb(Status::OK, connectedLevel, maxLevel);
++        return Void();
++    }
++
++    Return<void> getHdcpLevels_1_2(getHdcpLevels_1_2_cb _hidl_cb) {
++        HdcpLevel_V1_2 connectedLevel = HdcpLevel_V1_2::HDCP_NONE;
++        HdcpLevel_V1_2 maxLevel = HdcpLevel_V1_2::HDCP_NO_OUTPUT;
++        _hidl_cb(Status_V1_2::OK, connectedLevel, maxLevel);
++        return Void();
++    }
++
++    Return<void> getNumberOfSessions(getNumberOfSessions_cb _hidl_cb) override;
++
++    Return<void> getSecurityLevel(const hidl_vec<uint8_t>& sessionId,
++            getSecurityLevel_cb _hidl_cb) override;
++
++    Return<void> getMetrics(getMetrics_cb _hidl_cb) override;
++
++    Return<void> getOfflineLicenseKeySetIds(getOfflineLicenseKeySetIds_cb _hidl_cb) override;
++
++    Return<Status> removeOfflineLicense(const KeySetId &keySetId) override;
++
++    Return<void> getOfflineLicenseState(const KeySetId &keySetId,
++            getOfflineLicenseState_cb _hidl_cb) override;
++
++    Return<void> getSecureStops(getSecureStops_cb _hidl_cb) override;
++
++    Return<void> getSecureStop(const hidl_vec<uint8_t>& secureStopId,
++            getSecureStop_cb _hidl_cb) override;
++
++	Return<Status> releaseSecureStop(const hidl_vec<uint8_t>& secureStopId)
++            override;
++
++    Return<Status> releaseAllSecureStops() override;
++
++    Return<Status> releaseSecureStops(const SecureStopRelease& ssRelease);
++
++    Return<void> getSecureStopIds(getSecureStopIds_cb _hidl_cb);
++
++    Return<Status> removeSecureStop(const hidl_vec<uint8_t>& secureStopId);
++
++    Return<Status> removeAllSecureStops();
++
++    Return<void> getPropertyString(const hidl_string& propertyName,
++            getPropertyString_cb _hidl_cb) override;
++
++    Return<void> getPropertyByteArray(const hidl_string& propertyName,
++            getPropertyByteArray_cb _hidl_cb) override;
++
++    Return<Status> setPropertyString(const hidl_string& propertyName,
++            const hidl_string& value) override;
++
++    Return<Status> setPropertyByteArray(const hidl_string& propertyName,
++            const hidl_vec<uint8_t>& value) override;
++
++    Return<Status> setCipherAlgorithm(const hidl_vec<uint8_t>& sessionId,
++            const hidl_string& algorithm) override;
++
++    Return<Status> setMacAlgorithm(const hidl_vec<uint8_t>& sessionId,
++            const hidl_string& algorithm) override;
++
++    Return<void> encrypt(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keyId, const hidl_vec<uint8_t>& input,
++            const hidl_vec<uint8_t>& iv, encrypt_cb _hidl_cb) override;
++
++    Return<void> decrypt(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keyId, const hidl_vec<uint8_t>& input,
++            const hidl_vec<uint8_t>& iv, decrypt_cb _hidl_cb) override;
++
++    Return<void> sign(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keyId, const hidl_vec<uint8_t>& message,
++            sign_cb _hidl_cb) override;
++
++    Return<void> verify(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<uint8_t>& keyId, const hidl_vec<uint8_t>& message,
++            const hidl_vec<uint8_t>& signature, verify_cb _hidl_cb) override;
++
++    Return<void> signRSA(const hidl_vec<uint8_t>& sessionId,
++            const hidl_string& algorithm, const hidl_vec<uint8_t>& message,
++            const hidl_vec<uint8_t>& wrappedkey, signRSA_cb _hidl_cb) override;
++
++    Return<void> setListener(const sp<IDrmPluginListener>& listener) override;
++
++    Return<void> sendEvent(EventType eventType,
++            const hidl_vec<uint8_t>& sessionId, const hidl_vec<uint8_t>& data)
++            override;
++
++    Return<void> sendExpirationUpdate(const hidl_vec<uint8_t>& sessionId,
++            int64_t expiryTimeInMS) override;
++
++    Return<void> sendKeysChange(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<KeyStatus>& keyStatusList, bool hasNewUsableKey) override;
++
++	Return<void> sendKeysChange_1_2(const hidl_vec<uint8_t>& sessionId,
++            const hidl_vec<KeyStatus_V1_2>& keyStatusList, bool hasNewUsableKey) override;
++
++	Return<void> sendSessionLostState(const hidl_vec<uint8_t>& sessionId)  override;
++
++    // Methods from android::DrmPluginListener follow
++    virtual void sendEvent(android::DrmPlugin::EventType eventType, int extra,
++            Vector<uint8_t> const *sessionId, Vector<uint8_t> const *data);
++
++    virtual void sendExpirationUpdate(Vector<uint8_t> const *sessionId,
++            int64_t expiryTimeInMS);
++
++    virtual void sendKeysChange(Vector<uint8_t> const *sessionId,
++            Vector<android::DrmPlugin::KeyStatus> const *keyStatusList,
++            bool hasNewUsableKey);
++
++private:
++    Return<Status> setSecurityLevel(const hidl_vec<uint8_t>& sessionId,
++            SecurityLevel level);
++
++    status_t getKeyRequestCommon(const hidl_vec<uint8_t>& scope,
++            const hidl_vec<uint8_t>& initData,
++            const hidl_string& mimeType,
++            KeyType keyType,
++            const hidl_vec<KeyValue>& optionalParameters,
++            Vector<uint8_t> &request,
++            KeyRequestType_V1_1 &requestType,
++            String8 &defaultUrl);
++
++    std::map<std::vector<uint8_t>, SecurityLevel> mSecurityLevel;
++    android::DrmPlugin *mLegacyPlugin;
++    sp<IDrmPluginListener> mListener;
++    sp<IDrmPluginListener_V1_2> mListenerV1_2;
++    int64_t mOpenSessionOkCount;
++    int64_t mCloseSessionOkCount;
++    int64_t mCloseSessionNotOpenedCount;
++
++    DrmPlugin() = delete;
++    DrmPlugin(const DrmPlugin &) = delete;
++    void operator=(const DrmPlugin &) = delete;
++};
++
++}  // namespace widevine
++}  // namespace V1_2
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
++
++#endif  // WIDEVINE_DRM_PLUGIN_H_
+diff --git a/drm/mediadrm/plugins/widevine/hidl/TypeConvert.cpp b/drm/mediadrm/plugins/widevine/hidl/TypeConvert.cpp
+new file mode 100755
+index 0000000000..d576844b86
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/TypeConvert.cpp
+@@ -0,0 +1,78 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#define LOG_TAG "hidl_WidevineTypeConvert"
++
++#include "TypeConvert.h"
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_2 {
++namespace widevine {
++
++Status toStatus(status_t legacyStatus) {
++    Status status;
++    switch(legacyStatus) {
++    case android::OK:
++        status = Status::OK;
++        break;
++    case android::ERROR_DRM_NO_LICENSE:
++        status = Status::ERROR_DRM_NO_LICENSE;
++        break;
++    case android::ERROR_DRM_LICENSE_EXPIRED:
++        status = Status::ERROR_DRM_LICENSE_EXPIRED;
++        break;
++    case android::ERROR_DRM_SESSION_NOT_OPENED:
++        status = Status::ERROR_DRM_SESSION_NOT_OPENED;
++        break;
++    case android::ERROR_DRM_CANNOT_HANDLE:
++        status = Status::ERROR_DRM_CANNOT_HANDLE;
++        break;
++    case android::ERROR_DRM_TAMPER_DETECTED:
++        status = Status::ERROR_DRM_INVALID_STATE;
++        break;
++    case android::BAD_VALUE:
++        status = Status::BAD_VALUE;
++        break;
++    case android::ERROR_DRM_NOT_PROVISIONED:
++        status = Status::ERROR_DRM_NOT_PROVISIONED;
++        break;
++    case android::ERROR_DRM_RESOURCE_BUSY:
++        status = Status::ERROR_DRM_RESOURCE_BUSY;
++        break;
++    case android::ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION:
++        status = Status::ERROR_DRM_INSUFFICIENT_OUTPUT_PROTECTION;
++        break;
++    case android::ERROR_DRM_DEVICE_REVOKED:
++        status = Status::ERROR_DRM_DEVICE_REVOKED;
++        break;
++    case android::ERROR_DRM_DECRYPT:
++        status = Status::ERROR_DRM_DECRYPT;
++        break;
++    default:
++        ALOGW("Unable to convert legacy status: %d, defaulting to UNKNOWN",
++            legacyStatus);
++        status = Status::ERROR_DRM_UNKNOWN;
++        break;
++    }
++    return status;
++}
++
++}  // namespace widevine
++}  // namespace V1_2
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
+diff --git a/drm/mediadrm/plugins/widevine/hidl/TypeConvert.h b/drm/mediadrm/plugins/widevine/hidl/TypeConvert.h
+new file mode 100755
+index 0000000000..aa3d85a8f7
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/TypeConvert.h
+@@ -0,0 +1,135 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_HARDWARE_DRM_V1_2_TYPECONVERT
++#define ANDROID_HARDWARE_DRM_V1_2_TYPECONVERT
++
++#include <android/hardware/drm/1.2/types.h>
++#include <media/stagefright/MediaErrors.h>
++#include <utils/Vector.h>
++
++namespace android {
++namespace hardware {
++namespace drm {
++namespace V1_2 {
++namespace widevine {
++
++using ::android::hardware::drm::V1_0::Status;
++using ::android::hardware::hidl_vec;
++
++typedef ::android::hardware::drm::V1_2::Status Status_V1_2;
++
++template<typename T> const hidl_vec<T> toHidlVec(const Vector<T> &Vector) {
++    hidl_vec<T> vec;
++    vec.setToExternal(const_cast<T *>(Vector.array()), Vector.size());
++    return vec;
++}
++
++template<typename T> hidl_vec<T> toHidlVec(Vector<T> &Vector) {
++    hidl_vec<T> vec;
++    vec.setToExternal(Vector.editArray(), Vector.size());
++    return vec;
++}
++
++template<typename T> const Vector<T> toVector(const hidl_vec<T> &vec) {
++    Vector<T> vector;
++    vector.appendArray(vec.data(), vec.size());
++    return *const_cast<const Vector<T> *>(&vector);
++}
++
++template<typename T> Vector<T> toVector(hidl_vec<T> &vec) {
++    Vector<T> vector;
++    vector.appendArray(vec.data(), vec.size());
++    return vector;
++}
++
++template<typename T, size_t SIZE> const Vector<T> toVector(
++        const hidl_array<T, SIZE> &array) {
++    Vector<T> vector;
++    vector.appendArray(array.data(), array.size());
++    return vector;
++}
++
++template<typename T, size_t SIZE> Vector<T> toVector(
++        hidl_array<T, SIZE> &array) {
++    Vector<T> vector;
++    vector.appendArray(array.data(), array.size());
++    return vector;
++}
++
++
++template<typename T> const hidl_vec<T> stdtoHidlVec(const std::vector<T> &vec) {
++    hidl_vec<T> hVec;
++    hVec.setToExternal(const_cast<T *>(vec.data()), vec.size());
++    return hVec;
++}
++
++template<typename T> hidl_vec<T> stdtoHidlVec(std::vector<T> &vec) {
++    hidl_vec<T> hVec;
++    hVec.setToExternal(vec.data(), vec.size());
++    return hVec;
++}
++
++template<typename T> const std::vector<T> stdtoVector(const hidl_vec<T> &hVec) {
++    std::vector<T> vec;
++    vec.assign(hVec.data(), hVec.data() + hVec.size());
++    return *const_cast<const std::vector<T> *>(&vec);
++}
++
++template<typename T> std::vector<T> stdtoVector(hidl_vec<T> &hVec) {
++    std::vector<T> vec;
++    vec.assign(hVec.data(), hVec.data() + hVec.size());
++    return vec;
++}
++
++template<typename T, size_t SIZE> const std::vector<T> stdtoVector(
++        const hidl_array<T, SIZE> &hArray) {
++    std::vector<T> vec;
++    vec.assign(hArray.data(), hArray.data() + hArray.size());
++    return vec;
++}
++
++template<typename T, size_t SIZE> std::vector<T> stdtoVector(
++        hidl_array<T, SIZE> &hArray) {
++    std::vector<T> vec;
++    vec.assign(hArray.data(), hArray.data() + hArray.size());
++    return vec;
++}
++
++Status toStatus(status_t legacyStatus);
++
++inline Status toStatus_1_0(Status_V1_2 status) {
++  switch (status) {
++    case Status_V1_2::ERROR_DRM_INSUFFICIENT_SECURITY:
++    case Status_V1_2::ERROR_DRM_FRAME_TOO_LARGE:
++    case Status_V1_2::ERROR_DRM_SESSION_LOST_STATE:
++      return Status::ERROR_DRM_UNKNOWN;
++    default:
++      return static_cast<Status>(status);
++  }
++}
++
++inline Status_V1_2 toStatus_1_2(Status status) {
++    return static_cast<Status_V1_2>(status);
++}
++
++}  // namespace widevine
++}  // namespace V1_2
++}  // namespace drm
++}  // namespace hardware
++}  // namespace android
++
++#endif // ANDROID_HARDWARE_DRM_V1_1_TYPECONVERT
+\ No newline at end of file
+diff --git a/drm/mediadrm/plugins/widevine/hidl/WVUUID.cpp b/drm/mediadrm/plugins/widevine/hidl/WVUUID.cpp
+new file mode 100755
+index 0000000000..feebb03345
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/WVUUID.cpp
+@@ -0,0 +1,26 @@
++//
++// Copyright 2013 Google Inc. All Rights Reserved.
++//
++
++#include "WVUUID.h"
++
++#include <string.h>
++
++namespace wvdrm {
++
++std::vector<std::array<uint8_t, 16>> getSupportedCryptoSchemes() {
++    const std::array<uint8_t, 16> kWidevineUUID{
++        0xED,0xEF,0x8B,0xA9,0x79,0xD6,0x4A,0xCE,
++        0xA3,0xC8,0x27,0xDC,0xD5,0x1D,0x21,0xED
++    };
++
++    // To be used in mpd to specify drm scheme for players
++    const std::array<uint8_t, 16> kOldNetflixWidevineUUID{
++        0x29,0x70,0x1F,0xE4,0x3C,0xC7,0x4A,0x34,
++        0x8C,0x5B,0xAE,0x90,0xC7,0x43,0x9A,0x47
++    };
++
++    return {kWidevineUUID, kOldNetflixWidevineUUID};
++}
++
++} // namespace wvdrm
+diff --git a/drm/mediadrm/plugins/widevine/hidl/WVUUID.h b/drm/mediadrm/plugins/widevine/hidl/WVUUID.h
+new file mode 100755
+index 0000000000..9b4c62914e
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/WVUUID.h
+@@ -0,0 +1,18 @@
++//
++// Copyright 2013 Google Inc. All Rights Reserved.
++//
++
++#ifndef WV_UUID_H_
++#define WV_UUID_H_
++
++#include <array>
++#include <cstdint>
++#include <vector>
++
++namespace wvdrm {
++
++std::vector<std::array<uint8_t, 16>> getSupportedCryptoSchemes();
++
++} // namespace wvdrm
++
++#endif // WV_UUID_H_
+diff --git a/drm/mediadrm/plugins/widevine/hidl/android.hardware.drm@1.3-service.widevine.rc b/drm/mediadrm/plugins/widevine/hidl/android.hardware.drm@1.3-service.widevine.rc
+new file mode 100755
+index 0000000000..04becb5dea
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/android.hardware.drm@1.3-service.widevine.rc
+@@ -0,0 +1,15 @@
++service vendor.drm-widevine-hal-1-3 /vendor/bin/hw/android.hardware.drm@1.3-service.widevine
++    interface android.hardware.drm@1.0::ICryptoFactory widevine
++    interface android.hardware.drm@1.0::IDrmFactory widevine
++    interface android.hardware.drm@1.1::ICryptoFactory widevine
++    interface android.hardware.drm@1.1::IDrmFactory widevine
++    interface android.hardware.drm@1.2::ICryptoFactory widevine
++    interface android.hardware.drm@1.2::IDrmFactory widevine
++    interface android.hardware.drm@1.3::ICryptoFactory widevine
++    interface android.hardware.drm@1.3::IDrmFactory widevine
++    class hal
++    disabled
++    user media
++    group media mediadrm drmrpc
++    ioprio rt 4
++    writepid /dev/cpuset/foreground/tasks
+diff --git a/drm/mediadrm/plugins/widevine/hidl/include/WVCreatePluginFactories.h b/drm/mediadrm/plugins/widevine/hidl/include/WVCreatePluginFactories.h
+new file mode 100644
+index 0000000000..2d36336616
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/include/WVCreatePluginFactories.h
+@@ -0,0 +1,16 @@
++//
++// Copyright 2013 Google Inc. All Rights Reserved.
++//
++
++#ifndef WV_CREATE_PLUGIN_FACTORIES_H_
++#define WV_CREATE_PLUGIN_FACTORIES_H_
++
++#include "media/drm/DrmAPI.h"
++#include "media/hardware/CryptoAPI.h"
++
++extern "C" {
++  android::DrmFactory* createDrmFactory();
++  android::CryptoFactory* createCryptoFactory();
++}
++
++#endif // WV_CREATE_PLUGIN_FACTORIES_H_
+diff --git a/drm/mediadrm/plugins/widevine/hidl/manifest_android.hardware.drm@1.3-service.widevine.xml b/drm/mediadrm/plugins/widevine/hidl/manifest_android.hardware.drm@1.3-service.widevine.xml
+new file mode 100755
+index 0000000000..f6f2d88545
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/manifest_android.hardware.drm@1.3-service.widevine.xml
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2019 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<manifest version="1.0" type="device">
++    <hal format="hidl">
++        <name>android.hardware.drm</name>
++        <transport>hwbinder</transport>
++        <fqname>@1.3::ICryptoFactory/widevine</fqname>
++        <fqname>@1.3::IDrmFactory/widevine</fqname>
++    </hal>
++</manifest>
+diff --git a/drm/mediadrm/plugins/widevine/hidl/service.cpp b/drm/mediadrm/plugins/widevine/hidl/service.cpp
+new file mode 100755
+index 0000000000..5a4ef7b0d4
+--- /dev/null
++++ b/drm/mediadrm/plugins/widevine/hidl/service.cpp
+@@ -0,0 +1,49 @@
++/*
++ * Copyright 2018 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#define LOG_TAG "android.hardware.drm@1.3-service.widevine"
++
++#include <CryptoFactory.h>
++#include <DrmFactory.h>
++
++#include <android-base/logging.h>
++#include <binder/ProcessState.h>
++#include <hidl/HidlTransportSupport.h>
++
++using ::android::hardware::configureRpcThreadpool;
++using ::android::hardware::joinRpcThreadpool;
++using ::android::sp;
++
++using android::hardware::drm::V1_3::ICryptoFactory;
++using android::hardware::drm::V1_3::IDrmFactory;
++using android::hardware::drm::V1_3::widevine::CryptoFactory;
++using android::hardware::drm::V1_3::widevine::DrmFactory;
++
++
++int main(int /* argc */, char** /* argv */) {
++    ALOGD("android.hardware.drm@1.3-service.widevine starting...");
++    sp<IDrmFactory> drmFactory = new DrmFactory;
++    sp<ICryptoFactory> cryptoFactory = new CryptoFactory;
++
++    configureRpcThreadpool(8, true /* callerWillJoin */);
++
++    // Setup hwbinder service
++    CHECK_EQ(drmFactory->registerAsService("widevine"), android::NO_ERROR)
++        << "Failed to register Widevine Factory HAL";
++    CHECK_EQ(cryptoFactory->registerAsService("widevine"), android::NO_ERROR)
++        << "Failed to register Widevine Crypto  HAL";
++
++    joinRpcThreadpool();
++}
+-- 
+2.34.1
+

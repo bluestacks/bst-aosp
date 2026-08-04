@@ -1,0 +1,17 @@
+diff --git a/src/com/android/server/connectivity/NetworkMonitor.java b/src/com/android/server/connectivity/NetworkMonitor.java
+index 05a892e..6260445 100644
+--- a/src/com/android/server/connectivity/NetworkMonitor.java
++++ b/src/com/android/server/connectivity/NetworkMonitor.java
+@@ -132,2 +132,3 @@ import android.os.RemoteException;
+ import android.os.SystemClock;
++import android.os.SystemProperties;
+ import android.provider.Settings;
+@@ -2424,3 +2425,8 @@ public class NetworkMonitor extends StateMachine {
+     private static boolean getIsCaptivePortalCheckEnabled(@NonNull Context context,
+             @NonNull Dependencies dependencies) {
++        if ("nxt_cn".equals(SystemProperties.get("bst.oem", ""))
++                || "CN".equalsIgnoreCase(SystemProperties.get("bst.country", ""))) {
++            return false;
++        }
++
+         String symbol = CAPTIVE_PORTAL_MODE;

@@ -1,0 +1,25 @@
+From 619f7a1eab0a9f229351778e1b1153955a04d426 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 14:27:54 +0800
+Subject: [PATCH] [A16] Report Play Store affiliate installs
+
+---
+ .../core/java/com/android/server/am/BroadcastController.java    | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/BroadcastController.java b/services/core/java/com/android/server/am/BroadcastController.java
+index 607e6f600b8c..6eeba1d20c2a 100644
+--- a/services/core/java/com/android/server/am/BroadcastController.java
++++ b/services/core/java/com/android/server/am/BroadcastController.java
+@@ -893,7 +893,7 @@ class BroadcastController {
+                     affiliateIntent.setAction("com.bluestacks.home.AFFILIATE_HANDLER_HTML");
+                     affiliateIntent.putExtra("app_pkg", packageName);
+                     affiliateIntent.putExtra("referrer_only", "true");
+-                    affiliateIntent.putExtra("WINDOWS_SOURCE", "packageEnqueued");
++                    affiliateIntent.putExtra("WINDOWS_SOURCE", "play_store");
+                     mService.mServices.startServiceLocked(null, affiliateIntent, null, 0,
+                             SYSTEM_UID, false, "android", null, userId,
+                             BackgroundStartPrivileges.NONE);
+-- 
+2.34.1
+

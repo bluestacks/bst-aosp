@@ -1,0 +1,228 @@
+From 256a00581cc0600246a467d9844315fbb40443a4 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Wed, 28 Feb 2024 13:31:54 +0800
+Subject: [PATCH 111/224] [A13] [ROB-12002] Add config entry fbscreenlock
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../com/android/server/wm/DisplayContent.java | 77 ++++++++++++++++---
+ .../server/BstFilterAppsService.java          | 51 ++++++++++++
+ 4 files changed, 134 insertions(+), 10 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 2f3f0fd3f624..05090384677c 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -182,6 +182,21 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public boolean isFbScreenLockApp(String pkgName)
++    {
++        try {
++            return mService.isFbScreenLockApp(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
+     /**
+      * @hide
+      */
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 13c883215951..dc1ce7123929 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -101,4 +101,5 @@ interface IBstFilterAppsService
+     boolean isDhdg(int uid);
+     boolean isGlNativeSyncDisabled(String pkgName);
+     boolean isAngleDisabled(String pkgName);
++    boolean isFbScreenLockApp(String pkgName);
+ }
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index e13594a11d7e..ba7c120436c4 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -4998,18 +4998,41 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+                 && (ignoreFrozen || mDisplayPolicy.isScreenOnFully());
+     }
+ 
+-    int getBstOrientation(int req) {
++    // Get callingPackageName screen orientation
++    int getBstOrientationImp2(int req) {
+         int bstOrientationValue = req;
+-        String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
+-        if ("com.foxnextgames.m3".equals(topPackageName)) {
+-            return SCREEN_ORIENTATION_UNSPECIFIED ;
+-        }
+ 
+-        //Whatsapp reply interface is set to portrait so that the input box can be displayed normally
+-        String topActivityName = android.os.SystemProperties.get("bst.config.top_activity_name",null);
+-        if ("com.whatsapp/.status.playback.StatusReplyActivity".equals(topActivityName)) {
+-            return SCREEN_ORIENTATION_PORTRAIT;
+-        }
++        String callingPackage = android.os.SystemProperties.get("bst.config.calling_package", "null");
++
++        if (mBstFilterApps.isSmallScreenApp(callingPackage)) {
++            //config: small (forcing protrait mode)
++            bstOrientationValue = SCREEN_ORIENTATION_PORTRAIT;
++        } else if (mBstFilterApps.isPortraitDisabled(callingPackage)) {
++            //config: full (forcing landscape mode)
++            bstOrientationValue = SCREEN_ORIENTATION_LANDSCAPE;
++        } else if (req == SCREEN_ORIENTATION_SENSOR_LANDSCAPE
++                || req == SCREEN_ORIENTATION_USER_LANDSCAPE
++                || req == SCREEN_ORIENTATION_REVERSE_LANDSCAPE) {
++            bstOrientationValue = SCREEN_ORIENTATION_LANDSCAPE;
++        } else if (req == SCREEN_ORIENTATION_SENSOR_PORTRAIT
++                || req == SCREEN_ORIENTATION_USER_PORTRAIT
++                || req == SCREEN_ORIENTATION_REVERSE_PORTRAIT) {
++            bstOrientationValue = SCREEN_ORIENTATION_PORTRAIT;
++        } else if (req == SCREEN_ORIENTATION_SENSOR
++                || req == SCREEN_ORIENTATION_FULL_SENSOR
++                || req == SCREEN_ORIENTATION_FULL_USER
++                || req == SCREEN_ORIENTATION_USER
++                || req == SCREEN_ORIENTATION_NOSENSOR) {
++            bstOrientationValue = SCREEN_ORIENTATION_UNSPECIFIED;
++                }
++        return bstOrientationValue;
++    }
++
++    // Get topPackageName screen orientation
++    int getBstOrientationImp(int req) {
++        int bstOrientationValue = req;
++
++        String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
+         if (mBstFilterApps.isSmallScreenApp(topPackageName)) {
+             //config: small (forcing protrait mode)
+             bstOrientationValue = SCREEN_ORIENTATION_PORTRAIT;
+@@ -5034,6 +5057,40 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+         return bstOrientationValue;
+     }
+ 
++    private static volatile boolean isLockScreen = false;
++    private static volatile int sLockScreenOrientation = SCREEN_ORIENTATION_LANDSCAPE;
++    int getBstOrientation(int req) {
++        int bstOrientationValue = req;
++
++        String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
++        if ("com.foxnextgames.m3".equals(topPackageName)) {
++            return SCREEN_ORIENTATION_UNSPECIFIED ;
++        }
++
++        // Whatsapp reply interface is set to portrait so that the input box can be displayed normally
++        String topActivityName = android.os.SystemProperties.get("bst.config.top_activity_name", null);
++        if ("com.whatsapp/.status.playback.StatusReplyActivity".equals(topActivityName)) {
++            return SCREEN_ORIENTATION_PORTRAIT;
++        }
++
++        // ROB-12002 When the game starts Facebook login, the screen orientation of the Facebook login interface is consistent with the screen orientation of the game.
++        String callingPackage = android.os.SystemProperties.get("bst.config.calling_package", "null");
++        boolean fbscreenlock = mBstFilterApps.isFbScreenLockApp(callingPackage);
++        if (!"com.facebook.katana".equals(topPackageName) && !"com.google.android.gms/.auth.api.credentials.ui.CredentialPickerActivity".equals(topActivityName)) isLockScreen = false;
++        if ((isLockScreen || fbscreenlock) && ("com.facebook.katana".equals(topPackageName) || "com.google.android.gms/.auth.api.credentials.ui.CredentialPickerActivity".equals(topActivityName))) {
++            if (!isLockScreen) {
++                isLockScreen = true;
++                sLockScreenOrientation = getBstOrientationImp2(req);
++            }
++
++            return sLockScreenOrientation;
++        }
++
++        bstOrientationValue = getBstOrientationImp(req);
++
++        return bstOrientationValue;
++    }
++
+     static final class TaskForResizePointSearchResult implements Predicate<Task> {
+         private Task taskForResize;
+         private int x;
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index d190a20ed8eb..d82e0484ae77 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -104,6 +104,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mCustomDpiAppList = new TreeSet<String>();
+     private Set<String>           mClearInstallAppList = new TreeSet<String>();
+     private Set<String>           mAmdInstallAppList = new TreeSet<String>();
++    private Set<String>           mFbScreenLockAppList = new TreeSet<String>();
+     private Set<String>   	      mPvrtcAppList = new TreeSet<String>();
+     private Set<String>   	      mS3tcAppList = new TreeSet<String>();
+     private Set<String>   	      mGlv1notimplAppList = new TreeSet<String>();
+@@ -978,6 +979,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mMarketRequiredAppList,pkgException);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("fbscreenlock"))) {
++                                    synchronized (mFbScreenLockAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to FbScreenLockAppList \n");
++                                        mFbScreenLockAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from FbScreenLockAppList \n");
++                                            mFbScreenLockAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mFbScreenLockAppList,pkgException);
++                                    }
++                                }
+                                 else if ((key.equalsIgnoreCase("pvrtc"))) {
+                                     synchronized (mPvrtcAppList) {
+                                         if (value.equalsIgnoreCase("false")) {
+@@ -2456,6 +2473,12 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mS3tcAppList.clear();
+         }
+ 
++        /* clear old mFbScreenLockAppList */
++        synchronized (mFbScreenLockAppList)
++        {
++            mFbScreenLockAppList.clear();
++        }
++
+         /* clear old mPvrtcAppList */
+         synchronized (mPvrtcAppList)
+         {
+@@ -3217,6 +3240,34 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         readFileThread.start();
+     }
+ 
++    /**
++     * @hide
++     */
++    public boolean isFbScreenLockApp(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in FbScreenLock app list\n");
++        initLists();
++
++        synchronized (mFbScreenLockAppList)
++        {
++            if (mFbScreenLockAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mFbScreenLockAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in FbScreenLock App List\n");
++                    return true;
++                }
++            }
++        }
++
++        return false;
++    }
++
+     /**
+      * Our primitive pvrtc app  check
+      * @hide

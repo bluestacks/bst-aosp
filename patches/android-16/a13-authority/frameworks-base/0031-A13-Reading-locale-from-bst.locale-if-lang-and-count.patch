@@ -1,0 +1,48 @@
+From 850970af8180fe9164fa2d5cd007a8d4ca056a78 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 12 Oct 2023 14:36:25 +0800
+Subject: [PATCH 031/224] [A13] Reading locale from bst.locale if lang and
+ country code is not set
+
+---
+ core/jni/AndroidRuntime.cpp | 20 +++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/AndroidRuntime.cpp b/core/jni/AndroidRuntime.cpp
+index eba6cca76389..981506ec27b4 100644
+--- a/core/jni/AndroidRuntime.cpp
++++ b/core/jni/AndroidRuntime.cpp
+@@ -465,6 +465,18 @@ const std::string readLocale()
+         return out;
+     }
+ 
++    // If language and country code value is not currently set,
++    // read its value from bst.locale value, if its valid
++    //ALOGD("Reading from persist.sys.language and country property returns NULL, reading bst.locale properties now");
++    const std::string bstLocale = GetProperty("bst.locale", "");
++    size_t _pos = bstLocale.find("-");
++    // Checking if "-" is present, language and country code is non-empty.
++    if (_pos != std::string::npos && _pos != (bstLocale.length()-1)
++            && !bstLocale.substr(0, _pos).empty() && !bstLocale.substr(_pos+1).empty()) {
++        ALOGD("Setting bstLocale %s", bstLocale.c_str());
++        return bstLocale;
++    }
++
+     const std::string productLocale = GetProperty("ro.product.locale", "");
+     if (!productLocale.empty()) {
+         return productLocale;
+@@ -475,7 +487,13 @@ const std::string readLocale()
+     const std::string productLanguage = GetProperty("ro.product.locale.language", "en");
+     const std::string productRegion = GetProperty("ro.product.locale.region", "US");
+ 
+-    return productLanguage + "-" + productRegion;
++    if (!productLanguage.empty() && !productRegion.empty()) {
++        return productLanguage + "-" + productRegion;
++    } else {
++        // As neither language, country code value nor bst.locale value is set
++        // setting it to default value i.e. en-US
++        return "en-US";
++    }
+ }
+ 
+ void AndroidRuntime::addOption(const char* optionString, void* extraInfo)

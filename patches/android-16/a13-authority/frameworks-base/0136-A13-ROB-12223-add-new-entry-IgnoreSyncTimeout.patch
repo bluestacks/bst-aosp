@@ -1,0 +1,123 @@
+From a5853b36b720f05de9c11906cedd8fd78f819521 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 25 Apr 2024 17:43:51 +0800
+Subject: [PATCH 136/224] [A13]ROB-12223: add new entry IgnoreSyncTimeout
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 14 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 49 +++++++++++++++++++
+ 3 files changed, 64 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 75382ac6beab..22e077d91638 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1723,4 +1723,18 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public boolean isIgnoreSyncTimeout(String pkgName)
++    {
++        try {
++            return mService.isIgnoreSyncTimeout(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index e91e1d560bb0..aa7520e3909d 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -111,4 +111,5 @@ interface IBstFilterAppsService
+     int getFixedSurfaceRotationRequired(String pkgName);
+     String getIapSetting(String pkgName);
+     boolean isGlMapBufferRangeHost(String pkgName);
++    boolean isIgnoreSyncTimeout(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 7dd88712d51e..787306dd7330 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -184,6 +184,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Map<String, Integer>  mIapSettingPkgIndexMap = new HashMap<String, Integer>();
+     private Object                mIapSettingLock = new Object();
+     private Set<String>           mGlMapBufferRangeHostAppList = new TreeSet<String>();
++    private Set<String>           mIgnoreSyncTimeoutAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2469,6 +2470,23 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mTexTargetCheckDisabledAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("IgnoreSyncTimeout")) {
++                                    synchronized (mIgnoreSyncTimeoutAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mIgnoreSyncTimeoutAppList \n");
++
++                                        mIgnoreSyncTimeoutAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mIgnoreSyncTimeoutAppList \n");
++                                            mIgnoreSyncTimeoutAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mIgnoreSyncTimeoutAppList,pkgException);
++                                    }
++                                }
+                                 else if (key.equalsIgnoreCase("fixedSurfaceRotation")) {
+                                     synchronized (mFixedSurfaceRotationAppList) {
+                                         if (DEBUG)
+@@ -3161,6 +3179,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mGlMapBufferRangeHostAppList.clear();
+         }
+ 
++        synchronized (mIgnoreSyncTimeoutAppList)
++        {
++            mIgnoreSyncTimeoutAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7147,4 +7170,30 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return false;
+     }
+ 
++    /**
++     * @hide
++     */
++    public boolean isIgnoreSyncTimeout(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in IgnoreSyncTimeout app list\n");
++        initLists();
++
++        synchronized (mIgnoreSyncTimeoutAppList)
++        {
++            if (mIgnoreSyncTimeoutAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mIgnoreSyncTimeoutAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in IgnoreSyncTimeout App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

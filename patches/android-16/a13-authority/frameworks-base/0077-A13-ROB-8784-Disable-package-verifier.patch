@@ -1,0 +1,23 @@
+From 0306ecbc9fe9291a167a8f0a7deadebce0f5a709 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Mon, 20 Nov 2023 10:17:59 +0800
+Subject: [PATCH 077/224] [A13] [ROB-8784] Disable package verifier
+
+Skipping the verification can save time for apk installation.
+---
+ .../core/java/com/android/server/pm/VerificationParams.java     | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/VerificationParams.java b/services/core/java/com/android/server/pm/VerificationParams.java
+index 7423bf65c6a5..16fa5325313d 100644
+--- a/services/core/java/com/android/server/pm/VerificationParams.java
++++ b/services/core/java/com/android/server/pm/VerificationParams.java
+@@ -83,7 +83,7 @@ final class VerificationParams extends HandlerParams {
+     /**
+      * Whether verification is enabled by default.
+      */
+-    private static final boolean DEFAULT_VERIFY_ENABLE = true;
++    private static final boolean DEFAULT_VERIFY_ENABLE = false;
+ 
+     /**
+      * Whether integrity verification is enabled by default.

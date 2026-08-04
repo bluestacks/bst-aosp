@@ -1,0 +1,472 @@
+From 1c4e428b17cbc6ad818556b1d06ec712e9df8e50 Mon Sep 17 00:00:00 2001
+From: hongquan-bst <hongquan.zhang@bluestacks.com>
+Date: Wed, 6 Aug 2025 18:01:42 +0800
+Subject: [PATCH 201/224] Case ROB-16097:Explore if any config entries can be
+ made global. change 5 global setting from false to true, GLPB GLUBPerf GLMBRH
+ TTCDisabled iagf.
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   |  10 +-
+ .../server/BstFilterAppsService.java          | 195 ++++++++++--------
+ 2 files changed, 110 insertions(+), 95 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 08307587b52b..3cf13274578d 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1497,7 +1497,7 @@ public class BstFilterAppsManager {
+             // Catching the error and returning default behavior as if entry was not
+             // present in config.db
+             if (DEBUG) e.printStackTrace();
+-            return false;
++            return true;
+         }
+     }
+ 
+@@ -1512,7 +1512,7 @@ public class BstFilterAppsManager {
+             // Catching the error and returning default behavior as if entry was not
+             // present in config.db
+             if (DEBUG) e.printStackTrace();
+-            return false;
++            return true;
+         }
+     }
+ 
+@@ -1691,7 +1691,7 @@ public class BstFilterAppsManager {
+             // Catching the error and returning default behavior as if entry was not
+             // present in config.db
+             if (DEBUG) e.printStackTrace();
+-            return false;
++            return true;
+         }
+     }
+ 
+@@ -1734,7 +1734,7 @@ public class BstFilterAppsManager {
+             // Catching the error and returning default behavior as if entry was not
+             // present in config.db
+             if (DEBUG) e.printStackTrace();
+-            return false;
++            return true;
+         }
+     }
+ 
+@@ -1889,7 +1889,7 @@ public class BstFilterAppsManager {
+             // Catching the error and returning default behavior as if entry was not
+             // present in config.db
+             if (DEBUG) e.printStackTrace();
+-            return false;
++            return true;
+         }
+     }
+ 
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 851180d4b80a..b4c3afb8daba 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -174,17 +174,17 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mGlNativeSyncDisabledAppList = new TreeSet<String>();
+     private Set<String>           mAngleDisabledAppList = new TreeSet<String>();
+ 	private Set<String>           mOneStorePayAppList = new TreeSet<String>();
+-    private Set<String>           mGLProgramBinaryAppList = new TreeSet<String>();
+-    private Set<String>           mGLUnmapBufferPerfAppList = new TreeSet<String>();
++    private Set<String>           mGLProgramBinaryDisabledAppList = new TreeSet<String>();
++    private Set<String>           mGLUnmapBufferPerfDisabledAppList = new TreeSet<String>();
+     private Map<String, String>   mGLShaderWorkaroundList = new HashMap<String, String>();
+     private Set<String>           mDrmEnabledAppList = new TreeSet<String>();
+     private Set<String>           mEtherNetTypeAppList = new TreeSet<String>();
+-    private Set<String>           mTexTargetCheckDisabledAppList = new TreeSet<String>();
++    private Set<String>           mTexTargetCheckAppList = new TreeSet<String>();
+     private Map<String, Integer>  mFixedSurfaceRotationAppList = new HashMap<String, Integer>();
+     private List<String>          mIapSettingList = new ArrayList<String>();
+     private Map<String, Integer>  mIapSettingPkgIndexMap = new HashMap<String, Integer>();
+     private Object                mIapSettingLock = new Object();
+-    private Set<String>           mGlMapBufferRangeHostAppList = new TreeSet<String>();
++    private Set<String>           mGlMapBufferRangeHostDisabledAppList = new TreeSet<String>();
+     private Set<String>           mIgnoreSyncTimeoutAppList = new TreeSet<String>();
+     private Set<String>           mGLVBOCacheDisableAppList = new TreeSet<String>();
+     private Set<String>           mBlockEditWhenComposingAppList = new TreeSet<String>();
+@@ -194,7 +194,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Map<String, String>   mVKDeviceExtIgnoreList = new HashMap<String, String>();
+     private Set<String>           mEGLSurfaceIgnoreAppList = new TreeSet<String>();
+     private Set<String>           mHardKeyBoardAppList = new TreeSet<String>();
+-    private Set<String>           mIntelAutoGLFlushAppList = new TreeSet<String>();
++    private Set<String>           mIntelAutoGLFlushDisabledAppList = new TreeSet<String>();
+     private Set<String>           mRotateDisabledAppList = new TreeSet<String>();
+     private Map<String, Boolean>  mUnreal5AppMap = new HashMap<String, Boolean>();
+     private Set<String>           mUE5PBDisabledAppList = new TreeSet<String>();
+@@ -2402,35 +2402,35 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("GLPB")) {
+-                                    synchronized (mGLProgramBinaryAppList) {
+-                                        if (value.equalsIgnoreCase("false")) {
++                                    synchronized (mGLProgramBinaryDisabledAppList) {
++                                        if (value.equalsIgnoreCase("true")) {
+                                             packageName = "~" + packageName;
+                                         }
+                                         if (DEBUG)
+-                                            Slog.d(TAG, "Adding " + packageName + " to mGLProgramBinaryAppList \n");
+-                                        mGLProgramBinaryAppList.add(packageName);
++                                            Slog.d(TAG, "Adding " + packageName + " to mGLProgramBinaryDisabledAppList \n");
++                                        mGLProgramBinaryDisabledAppList.add(packageName);
+                                         if (packageName.startsWith("~")) {
+                                             if (DEBUG)
+-                                                Slog.d(TAG, "Removing " + origPackageName + " from mGLProgramBinaryAppList \n");
+-                                            mGLProgramBinaryAppList.remove(packageName.substring(1));
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mGLProgramBinaryDisabledAppList \n");
++                                            mGLProgramBinaryDisabledAppList.remove(packageName.substring(1));
+                                         }
+-                                        removePackageEntryFromList(mGLProgramBinaryAppList,pkgException);
++                                        removePackageEntryFromList(mGLProgramBinaryDisabledAppList,pkgException);
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("GLUBPerf")) {
+-                                    synchronized (mGLUnmapBufferPerfAppList) {
+-                                        if (value.equalsIgnoreCase("false")) {
++                                    synchronized (mGLUnmapBufferPerfDisabledAppList) {
++                                        if (value.equalsIgnoreCase("true")) {
+                                             packageName = "~" + packageName;
+                                         }
+                                         if (DEBUG)
+-                                            Slog.d(TAG, "Adding " + packageName + " to mGLUnmapBufferPerfAppList \n");
+-                                        mGLUnmapBufferPerfAppList.add(packageName);
++                                            Slog.d(TAG, "Adding " + packageName + " to mGLUnmapBufferPerfDisabledAppList \n");
++                                        mGLUnmapBufferPerfDisabledAppList.add(packageName);
+                                         if (packageName.startsWith("~")) {
+                                             if (DEBUG)
+-                                                Slog.d(TAG, "Removing " + origPackageName + " from mGLUnmapBufferPerfAppList \n");
+-                                            mGLUnmapBufferPerfAppList.remove(packageName.substring(1));
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mGLUnmapBufferPerfDisabledAppList \n");
++                                            mGLUnmapBufferPerfDisabledAppList.remove(packageName.substring(1));
+                                         }
+-                                        removePackageEntryFromList(mGLUnmapBufferPerfAppList,pkgException);
++                                        removePackageEntryFromList(mGLUnmapBufferPerfDisabledAppList,pkgException);
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("GLShaderWorkaround")) {
+@@ -2480,19 +2480,19 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("TTCDisabled")) {
+-                                    synchronized (mTexTargetCheckDisabledAppList) {
+-                                        if (value.equalsIgnoreCase("false")) {
++                                    synchronized (mTexTargetCheckAppList) {
++                                        if (value.equalsIgnoreCase("true")) {
+                                             packageName = "~" + packageName;
+                                         }
+                                         if (DEBUG)
+-                                            Slog.d(TAG, "Adding " + packageName + " to mTexTargetCheckDisabledAppList \n");
+-                                        mTexTargetCheckDisabledAppList.add(packageName);
++                                            Slog.d(TAG, "Adding " + packageName + " to mTexTargetCheckAppList \n");
++                                        mTexTargetCheckAppList.add(packageName);
+                                         if (packageName.startsWith("~")) {
+                                             if (DEBUG)
+-                                                Slog.d(TAG, "Removing " + origPackageName + " from mTexTargetCheckDisabledAppList \n");
+-                                            mTexTargetCheckDisabledAppList.remove(packageName.substring(1));
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mTexTargetCheckAppList \n");
++                                            mTexTargetCheckAppList.remove(packageName.substring(1));
+                                         }
+-                                        removePackageEntryFromList(mTexTargetCheckDisabledAppList,pkgException);
++                                        removePackageEntryFromList(mTexTargetCheckAppList,pkgException);
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("IgnoreSyncTimeout")) {
+@@ -2527,19 +2527,19 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("GLMBRH")) {
+-                                    synchronized (mGlMapBufferRangeHostAppList) {
+-                                        if (value.equalsIgnoreCase("false")) {
++                                    synchronized (mGlMapBufferRangeHostDisabledAppList) {
++                                        if (value.equalsIgnoreCase("true")) {
+                                             packageName = "~" + packageName;
+                                         }
+                                         if (DEBUG)
+-                                            Slog.d(TAG, "Adding " + packageName + " to mGlMapBufferRangeHostAppList \n");
+-                                        mGlMapBufferRangeHostAppList.add(packageName);
++                                            Slog.d(TAG, "Adding " + packageName + " to mGlMapBufferRangeHostDisabledAppList \n");
++                                        mGlMapBufferRangeHostDisabledAppList.add(packageName);
+                                         if (packageName.startsWith("~")) {
+                                             if (DEBUG)
+-                                                Slog.d(TAG, "Removing " + origPackageName + " from mGlMapBufferRangeHostAppList \n");
+-                                            mGlMapBufferRangeHostAppList.remove(packageName.substring(1));
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mGlMapBufferRangeHostDisabledAppList \n");
++                                            mGlMapBufferRangeHostDisabledAppList.remove(packageName.substring(1));
+                                         }
+-                                        removePackageEntryFromList(mGlMapBufferRangeHostAppList,pkgException);
++                                        removePackageEntryFromList(mGlMapBufferRangeHostDisabledAppList,pkgException);
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("GLVBOCacheDisable")) {
+@@ -2651,19 +2651,19 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("iagf")) {
+-                                    synchronized (mIntelAutoGLFlushAppList) {
+-                                        if (value.equalsIgnoreCase("false")) {
++                                    synchronized (mIntelAutoGLFlushDisabledAppList) {
++                                        if (value.equalsIgnoreCase("true")) {
+                                             packageName = "~" + packageName;
+                                         }
+                                         if (DEBUG)
+-                                            Slog.d(TAG, "Adding " + packageName + " to mIntelAutoGLFlushAppList \n");
+-                                        mIntelAutoGLFlushAppList.add(packageName);
++                                            Slog.d(TAG, "Adding " + packageName + " to mIntelAutoGLFlushDisabledAppList \n");
++                                        mIntelAutoGLFlushDisabledAppList.add(packageName);
+                                         if (packageName.startsWith("~")) {
+                                             if (DEBUG)
+-                                                Slog.d(TAG, "Removing " + origPackageName + " from mIntelAutoGLFlushAppList \n");
+-                                            mIntelAutoGLFlushAppList.remove(packageName.substring(1));
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mIntelAutoGLFlushDisabledAppList \n");
++                                            mIntelAutoGLFlushDisabledAppList.remove(packageName.substring(1));
+                                         }
+-                                        removePackageEntryFromList(mIntelAutoGLFlushAppList,pkgException);
++                                        removePackageEntryFromList(mIntelAutoGLFlushDisabledAppList,pkgException);
+                                     }
+                                 }
+                                 else if ((key.equalsIgnoreCase("RotateDisabled"))) {
+@@ -3356,14 +3356,14 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mOneStorePayAppList.clear();
+         }
+ 
+-        synchronized (mGLProgramBinaryAppList)
++        synchronized (mGLProgramBinaryDisabledAppList)
+         {
+-            mGLProgramBinaryAppList.clear();
++            mGLProgramBinaryDisabledAppList.clear();
+         }
+ 
+-        synchronized (mGLUnmapBufferPerfAppList)
++        synchronized (mGLUnmapBufferPerfDisabledAppList)
+         {
+-            mGLUnmapBufferPerfAppList.clear();
++            mGLUnmapBufferPerfDisabledAppList.clear();
+         }
+ 
+         //clear old GLShaderWorkaroundList
+@@ -3382,9 +3382,9 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mEtherNetTypeAppList.clear();
+         }
+ 
+-        synchronized (mTexTargetCheckDisabledAppList)
++        synchronized (mTexTargetCheckAppList)
+         {
+-            mTexTargetCheckDisabledAppList.clear();
++            mTexTargetCheckAppList.clear();
+         }
+ 
+         synchronized (mFixedSurfaceRotationAppList)
+@@ -3392,9 +3392,9 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mFixedSurfaceRotationAppList.clear();
+         }
+ 
+-        synchronized (mGlMapBufferRangeHostAppList)
++        synchronized (mGlMapBufferRangeHostDisabledAppList)
+         {
+-            mGlMapBufferRangeHostAppList.clear();
++            mGlMapBufferRangeHostDisabledAppList.clear();
+         }
+ 
+         synchronized (mIgnoreSyncTimeoutAppList)
+@@ -3442,9 +3442,9 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mHardKeyBoardAppList.clear();
+         }
+ 
+-        synchronized (mIntelAutoGLFlushAppList)
++        synchronized (mIntelAutoGLFlushDisabledAppList)
+         {
+-            mIntelAutoGLFlushAppList.clear();
++            mIntelAutoGLFlushDisabledAppList.clear();
+         }
+ 
+         synchronized (mRotateDisabledAppList)
+@@ -7007,26 +7007,29 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+      */
+     public boolean isGLProgramBinaryApp(String pkgName)
+     {
+-        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GLProgramBinary app list\n");
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mGLProgramBinaryDisabledAppList\n");
+         initLists();
+ 
+-        synchronized (mGLProgramBinaryAppList)
++        synchronized (mGLProgramBinaryDisabledAppList)
+         {
+-            if (mGLProgramBinaryAppList.contains(pkgName))
++            if (mGLProgramBinaryDisabledAppList.contains(pkgName))
+             {
+-                return true;
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mGLProgramBinaryDisabledAppList\n");
++                return false;
+             }
+             else
+             {
+-                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGLProgramBinaryAppList, pkgName);
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGLProgramBinaryDisabledAppList, pkgName);
+                 if(wildcardMatchedPackageName != null)
+                 {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in GLProgramBinary App List\n");
+-                    return true;
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mGLProgramBinaryDisabledAppList\n");
++                    return false;
+                 }
+             }
+         }
+-        return false;
++
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mGLProgramBinaryDisabledAppList\n");
++        return true;
+     }
+ 
+     /**
+@@ -7036,26 +7039,29 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+      */
+     public boolean isGLUnmapBufferPerfApp(String pkgName)
+     {
+-        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GLUnmapBufferPerf app list\n");
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mGLUnmapBufferPerfDisabledAppList\n");
+         initLists();
+ 
+-        synchronized (mGLUnmapBufferPerfAppList)
++        synchronized (mGLUnmapBufferPerfDisabledAppList)
+         {
+-            if (mGLUnmapBufferPerfAppList.contains(pkgName))
++            if (mGLUnmapBufferPerfDisabledAppList.contains(pkgName))
+             {
+-                return true;
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mGLUnmapBufferPerfDisabledAppList\n");
++                return false;
+             }
+             else
+             {
+-                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGLUnmapBufferPerfAppList, pkgName);
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGLUnmapBufferPerfDisabledAppList, pkgName);
+                 if(wildcardMatchedPackageName != null)
+                 {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in GLUnmapBufferPerf App List\n");
+-                    return true;
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mGLUnmapBufferPerfDisabledAppList\n");
++                    return false;
+                 }
+             }
+         }
+-        return false;
++
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mGLUnmapBufferPerfDisabledAppList\n");
++        return true;
+     }
+ 
+     /**
+@@ -7364,26 +7370,29 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+ 
+     public boolean isTexTargetCheckDisabled(String pkgName)
+     {
+-        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in TexTargetCheckDisabled app list\n");
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mTexTargetCheckAppList\n");
+         initLists();
+ 
+-        synchronized (mTexTargetCheckDisabledAppList)
++        synchronized (mTexTargetCheckAppList)
+         {
+-            if (mTexTargetCheckDisabledAppList.contains(pkgName))
++            if (mTexTargetCheckAppList.contains(pkgName))
+             {
+-                return true;
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mTexTargetCheckAppList\n");
++                return false;
+             }
+             else
+             {
+-                String wildcardMatchedPackageName = isPackageMatchedWilcard(mTexTargetCheckDisabledAppList, pkgName);
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mTexTargetCheckAppList, pkgName);
+                 if(wildcardMatchedPackageName != null)
+                 {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in TexTargetCheckDisabled App List\n");
+-                    return true;
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mTexTargetCheckAppList\n");
++                    return false;
+                 }
+             }
+         }
+-        return false;
++
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mTexTargetCheckAppList\n");
++        return true;
+     }
+ 
+     /**
+@@ -7467,26 +7476,29 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+      */
+     public boolean isGlMapBufferRangeHost(String pkgName)
+     {
+-        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GlMapBufferRangeHost app list\n");
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mGlMapBufferRangeHostDisabledAppList\n");
+         initLists();
+ 
+-        synchronized (mGlMapBufferRangeHostAppList)
++        synchronized (mGlMapBufferRangeHostDisabledAppList)
+         {
+-            if (mGlMapBufferRangeHostAppList.contains(pkgName))
++            if (mGlMapBufferRangeHostDisabledAppList.contains(pkgName))
+             {
+-                return true;
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mGlMapBufferRangeHostDisabledAppList\n");
++                return false;
+             }
+             else
+             {
+-                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGlMapBufferRangeHostAppList, pkgName);
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGlMapBufferRangeHostDisabledAppList, pkgName);
+                 if(wildcardMatchedPackageName != null)
+                 {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in GlMapBufferRangeHost App List\n");
+-                    return true;
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mGlMapBufferRangeHostDisabledAppList\n");
++                    return false;
+                 }
+             }
+         }
+-        return false;
++
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mGlMapBufferRangeHostDisabledAppList\n");
++        return true;
+     }
+ 
+     /**
+@@ -7746,26 +7758,29 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+      */
+     public boolean isIntelAutoGLFlushApp(String pkgName)
+     {
+-        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in IntelAutoGLFlush app list\n");
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mIntelAutoGLFlushDisabledAppList\n");
+         initLists();
+ 
+-        synchronized (mIntelAutoGLFlushAppList)
++        synchronized (mIntelAutoGLFlushDisabledAppList)
+         {
+-            if (mIntelAutoGLFlushAppList.contains(pkgName))
++            if (mIntelAutoGLFlushDisabledAppList.contains(pkgName))
+             {
+-                return true;
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mIntelAutoGLFlushDisabledAppList\n");
++                return false;
+             }
+             else
+             {
+-                String wildcardMatchedPackageName = isPackageMatchedWilcard(mIntelAutoGLFlushAppList, pkgName);
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mIntelAutoGLFlushDisabledAppList, pkgName);
+                 if(wildcardMatchedPackageName != null)
+                 {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in IntelAutoGLFlush App List\n");
+-                    return true;
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mIntelAutoGLFlushDisabledAppList\n");
++                    return false;
+                 }
+             }
+         }
+-        return false;
++
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mIntelAutoGLFlushDisabledAppList\n");
++        return true;
+     }
+ 
+     /**

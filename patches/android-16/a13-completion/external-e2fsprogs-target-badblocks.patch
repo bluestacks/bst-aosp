@@ -1,0 +1,27 @@
+From d1bad9cd14446d8b131b8de59a6e8655a4b4f6d4 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 20:44:49 +0800
+Subject: [PATCH] [A16] Restore the target badblocks tool
+
+---
+ misc/Android.bp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/misc/Android.bp b/misc/Android.bp
+index aeb8f112..fff68d15 100644
+--- a/misc/Android.bp
++++ b/misc/Android.bp
+@@ -214,8 +214,9 @@ cc_library_static {
+ //########################################################################
+ // Build badblocks
+ 
+-cc_binary_host {
++cc_binary {
+     name: "badblocks",
++    host_supported: true,
+     defaults: ["e2fsprogs-defaults"],
+ 
+     srcs: ["badblocks.c"],
+-- 
+2.34.1
+

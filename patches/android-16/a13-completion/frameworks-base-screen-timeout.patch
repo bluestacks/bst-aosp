@@ -1,0 +1,26 @@
+From 9e477356edc5255ae92162c9975470ed3cf6e081 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 10:35:57 +0800
+Subject: [PATCH] [A16] Keep the BlueStacks screen awake by default
+
+Port A13 authority commit 76ca09fba31d to the Android 16 ScreenTimeoutConstants split. Use Integer.MAX_VALUE before SettingsProvider supplies the android_x86_64 overlay timeout.
+---
+ .../java/com/android/server/power/ScreenTimeoutConstants.java   | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/power/ScreenTimeoutConstants.java b/services/core/java/com/android/server/power/ScreenTimeoutConstants.java
+index 2ae13e4c1d69..8cd577e6ba34 100644
+--- a/services/core/java/com/android/server/power/ScreenTimeoutConstants.java
++++ b/services/core/java/com/android/server/power/ScreenTimeoutConstants.java
+@@ -31,7 +31,7 @@ import java.io.PrintWriter;
+ public final class ScreenTimeoutConstants {
+     // Default timeout in milliseconds.  This is only used until the settings
+     // provider populates the actual default value (R.integer.def_screen_off_timeout).
+-    public static final int DEFAULT_SCREEN_OFF_TIMEOUT = 15 * 1000;
++    public static final int DEFAULT_SCREEN_OFF_TIMEOUT = Integer.MAX_VALUE;
+ 
+     private static final int DEFAULT_SLEEP_TIMEOUT = -1;
+ 
+-- 
+2.34.1
+

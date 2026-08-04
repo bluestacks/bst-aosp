@@ -1,0 +1,24 @@
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index c5cd4f49e1cc..87c47f487e4e 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -5340,6 +5340,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+             mHandler.sendMessageDelayed(nmsg, mConstants.POWER_CHECK_INTERVAL);
+             // Tell anyone interested that we are done booting!
+             SystemProperties.set("sys.boot_completed", "1");
++            SystemProperties.set("bst.config.boot_completed", "1");
+             SystemProperties.set("dev.bootcomplete", "1");
+ 
+             // Start PSI monitoring in LMKD if it was skipped earlier.
+diff --git a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
+index 9ce58f47fe87..f24cf8dfe8da 100644
+--- a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
++++ b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
+@@ -6931,6 +6931,7 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
+             synchronized (mGlobalLock) {
+                 updateEventDispatchingLocked(booted);
+             }
++            SystemProperties.set("bst.config.screen_enabled", "1");
+         }
+ 
+         @Override

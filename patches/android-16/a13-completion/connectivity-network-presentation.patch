@@ -1,0 +1,230 @@
+From 2f0481f305cadd2280cee75506be803219ad6629 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 02:46:06 +0800
+Subject: [PATCH] [A16] Restore App Player network presentation
+
+Sources: A13 packages/modules/Connectivity eb7ce30646385250ec05e673aafedee4c33363b5, 6bbe6af294c67c9af56f4d3e7c8a4553f2b6483f, and the network-agent portion of d86f187aea77c164213462d377884fa3473d1e47.
+
+Purpose: present the emulated Ethernet link as Wi-Fi by default, allow BstFilterAppsService to request true Ethernet presentation, and report the Wi-Fi legacy network type when bst.config.modify_network is enabled.
+
+Adaptation: A16 parses transport configuration in EthernetConfigParser and creates NetworkAgentConfig in a refactored factory. Query the already-started BlueStacks binder service at config parse time and expose the property check through Dependencies for deterministic tests.
+
+Necessity: the previous A16 merge contained only the static-IP part of d86f187; transport and legacy-type behavior was absent.
+
+Performance: adds one binder query per configured Ethernet interface during startup and one property read on provisioning; neither is a packet-path cost.
+
+Security: changes network identity visible to apps and policy code by design; no new privilege or external input surface is introduced.
+
+Validation: FrameworksNetTests build completed 2341/2341; ConnectivityUnitTestsLib compiled and contains dedicated Wi-Fi transport and legacy-type tests; service jar readback contains bstfilterapps, isEtherNetType, and bst.config.modify_network.
+---
+ .../ethernet/EthernetNetworkFactory.java      | 23 ++++++++---
+ .../server/ethernet/EthernetTracker.java      | 40 +++++++++++++++----
+ .../ethernet/EthernetNetworkFactoryTest.java  |  9 +++++
+ .../server/ethernet/EthernetTrackerTest.java  |  7 ++++
+ 4 files changed, 67 insertions(+), 12 deletions(-)
+
+diff --git a/service-t/src/com/android/server/ethernet/EthernetNetworkFactory.java b/service-t/src/com/android/server/ethernet/EthernetNetworkFactory.java
+index 00c70e190d..a30aa0074d 100644
+--- a/service-t/src/com/android/server/ethernet/EthernetNetworkFactory.java
++++ b/service-t/src/com/android/server/ethernet/EthernetNetworkFactory.java
+@@ -48,6 +48,7 @@ import android.net.shared.ProvisioningConfiguration;
+ import android.os.ConditionVariable;
+ import android.os.Handler;
+ import android.os.Looper;
++import android.os.SystemProperties;
+ import android.text.TextUtils;
+ import android.util.AndroidRuntimeException;
+ import android.util.ArraySet;
+@@ -79,6 +80,7 @@ public class EthernetNetworkFactory {
+     final static boolean DBG = true;
+ 
+     private static final String NETWORK_TYPE = "Ethernet";
++    private static final String BST_NETWORK_TYPE = "WIFI";
+ 
+     private final ConcurrentHashMap<String, NetworkInterfaceState> mTrackingInterfaces =
+             new ConcurrentHashMap<>();
+@@ -88,6 +90,10 @@ public class EthernetNetworkFactory {
+     final Dependencies mDeps;
+ 
+     public static class Dependencies {
++        public boolean isBstNetworkPresentationEnabled() {
++            return SystemProperties.getInt("bst.config.modify_network", 1) > 0;
++        }
++
+         public void makeIpClient(Context context, String iface, IpClientCallbacks callbacks) {
+             IpClientUtil.makeIpClient(context, iface, callbacks);
+         }
+@@ -676,11 +682,18 @@ public class EthernetNetworkFactory {
+             final NetworkCapabilities capabilities;
+             if (mMode == Mode.GLOBAL) {
+                 // Only configure legacy config options for global mode.
+-                networkAgentConfig = new NetworkAgentConfig.Builder()
+-                        .setLegacyType(mLegacyType)
+-                        .setLegacyTypeName(NETWORK_TYPE)
+-                        .setLegacyExtraInfo(mPort.getMacAddress().toString())
+-                        .build();
++                if (mDeps.isBstNetworkPresentationEnabled()) {
++                    networkAgentConfig = new NetworkAgentConfig.Builder()
++                            .setLegacyType(ConnectivityManager.TYPE_WIFI)
++                            .setLegacyTypeName(BST_NETWORK_TYPE)
++                            .build();
++                } else {
++                    networkAgentConfig = new NetworkAgentConfig.Builder()
++                            .setLegacyType(mLegacyType)
++                            .setLegacyTypeName(NETWORK_TYPE)
++                            .setLegacyExtraInfo(mPort.getMacAddress().toString())
++                            .build();
++                }
+                 capabilities = mCapabilities;
+             } else {
+                 networkAgentConfig = new NetworkAgentConfig.Builder().build();
+diff --git a/service-t/src/com/android/server/ethernet/EthernetTracker.java b/service-t/src/com/android/server/ethernet/EthernetTracker.java
+index 5ba2096432..09b8ec246f 100644
+--- a/service-t/src/com/android/server/ethernet/EthernetTracker.java
++++ b/service-t/src/com/android/server/ethernet/EthernetTracker.java
+@@ -21,6 +21,7 @@ import static android.net.EthernetManager.ETHERNET_STATE_ENABLED;
+ import static android.net.NetworkCapabilities.TRANSPORT_ETHERNET;
+ import static android.net.NetworkCapabilities.TRANSPORT_LOWPAN;
+ import static android.net.NetworkCapabilities.TRANSPORT_VPN;
++import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
+ import static android.net.NetworkCapabilities.TRANSPORT_WIFI_AWARE;
+ import static android.net.TestNetworkManager.TEST_TAP_PREFIX;
+ import static android.net.EthernetManager.TEST_INTERFACE_MODE_NONE;
+@@ -72,8 +73,10 @@ import com.android.net.module.util.netlink.RtNetlinkLinkMessage;
+ import com.android.net.module.util.netlink.StructIfinfoMsg;
+ import com.android.net.module.util.netlink.StructNlMsgHdr;
+ import com.android.server.connectivity.ConnectivityResources;
++import com.bluestacks.os.IBstFilterAppsService;
+ 
+ import java.io.FileDescriptor;
++import java.lang.reflect.Method;
+ import java.net.InetAddress;
+ import java.net.NetworkInterface;
+ import java.net.SocketException;
+@@ -848,7 +851,8 @@ public class EthernetTracker {
+      */
+     private void parseEthernetConfig(String configString) {
+         final EthernetConfigParser config =
+-                new EthernetConfigParser(configString, mDeps.isAtLeastB());
++                new EthernetConfigParser(configString, mDeps.isAtLeastB(),
++                        EthernetConfigParser.shouldExposeEthernetTransport());
+         mNetworkCapabilities.put(config.mIface, config.mCaps);
+ 
+         if (null != config.mIpConfig) {
+@@ -1057,9 +1061,12 @@ public class EthernetTracker {
+             return builder.build();
+         }
+ 
+-        private static int parseTransportType(@Nullable String transportString) {
++        private static int parseTransportType(@Nullable String transportString,
++                boolean exposeEthernetTransport) {
++            final int defaultTransport = exposeEthernetTransport
++                    ? TRANSPORT_ETHERNET : TRANSPORT_WIFI;
+             if (TextUtils.isEmpty(transportString)) {
+-                return TRANSPORT_ETHERNET;
++                return defaultTransport;
+             }
+ 
+             final int parsedTransport;
+@@ -1067,11 +1074,11 @@ public class EthernetTracker {
+                 parsedTransport = Integer.valueOf(transportString);
+             } catch (NumberFormatException e) {
+                 Log.e(TAG, "Failed to parse transport type", e);
+-                return TRANSPORT_ETHERNET;
++                return defaultTransport;
+             }
+ 
+             if (!NetworkCapabilities.isValidTransport(parsedTransport)) {
+-                return TRANSPORT_ETHERNET;
++                return defaultTransport;
+             }
+ 
+             switch (parsedTransport) {
+@@ -1079,12 +1086,26 @@ public class EthernetTracker {
+                 case TRANSPORT_WIFI_AWARE:
+                 case TRANSPORT_LOWPAN:
+                     Log.e(TAG, "Unsupported transport type '" + parsedTransport + "'");
+-                    return TRANSPORT_ETHERNET;
++                    return defaultTransport;
+                 default:
+                     return parsedTransport;
+             }
+         }
+ 
++        private static boolean shouldExposeEthernetTransport() {
++            try {
++                // ServiceManager and the BlueStacks service name are hidden from this module.
++                final Class<?> serviceManager = Class.forName("android.os.ServiceManager");
++                final Method getService = serviceManager.getMethod("getService", String.class);
++                final IBstFilterAppsService bstFilter = IBstFilterAppsService.Stub.asInterface(
++                        (android.os.IBinder) getService.invoke(null, "bstfilterapps"));
++                return bstFilter != null && bstFilter.isEtherNetType("system_server");
++            } catch (Exception e) {
++                Log.w(TAG, "Unable to query BlueStacks Ethernet presentation", e);
++                return false;
++            }
++        }
++
+         @Nullable
+         private static IpConfiguration parseStaticIpConfiguration(String staticIpConfig) {
+             if (TextUtils.isEmpty(staticIpConfig)) return null;
+@@ -1133,12 +1154,17 @@ public class EthernetTracker {
+         }
+ 
+         EthernetConfigParser(String configString, boolean bplus) {
++            this(configString, bplus, true);
++        }
++
++        EthernetConfigParser(String configString, boolean bplus, boolean exposeEthernetTransport) {
+             Objects.requireNonNull(configString, "EthernetConfigParser requires non-null config");
+             final String[] t = configString.split(";", /* limit of tokens */ 4);
+             mIface = t[0];
+ 
+             final NetworkCapabilities nc = parseCapabilities(t.length > 1 ? t[1] : null, bplus);
+-            final int transportType = parseTransportType(t.length > 3 ? t[3] : null);
++            final int transportType = parseTransportType(
++                    t.length > 3 ? t[3] : null, exposeEthernetTransport);
+             nc.addTransportType(transportType);
+             mCaps = nc;
+ 
+diff --git a/tests/unit/java/com/android/server/ethernet/EthernetNetworkFactoryTest.java b/tests/unit/java/com/android/server/ethernet/EthernetNetworkFactoryTest.java
+index e62b2fcfea..e9d0a58d63 100644
+--- a/tests/unit/java/com/android/server/ethernet/EthernetNetworkFactoryTest.java
++++ b/tests/unit/java/com/android/server/ethernet/EthernetNetworkFactoryTest.java
+@@ -395,6 +395,15 @@ public class EthernetNetworkFactoryTest {
+                 ConnectivityManager.TYPE_NONE);
+     }
+ 
++    @Test
++    public void testBstNetworkPresentationUsesWifiLegacyType() throws Exception {
++        when(mDeps.isBstNetworkPresentationEnabled()).thenReturn(true);
++        initEthernetNetworkFactory();
++
++        createVerifyAndRemoveProvisionedInterface(NetworkCapabilities.TRANSPORT_ETHERNET,
++                ConnectivityManager.TYPE_WIFI);
++    }
++
+     @Test
+     public void testReachabilityLoss() throws Exception {
+         initEthernetNetworkFactory();
+diff --git a/tests/unit/java/com/android/server/ethernet/EthernetTrackerTest.java b/tests/unit/java/com/android/server/ethernet/EthernetTrackerTest.java
+index 7b6985e522..160ff2edf4 100644
+--- a/tests/unit/java/com/android/server/ethernet/EthernetTrackerTest.java
++++ b/tests/unit/java/com/android/server/ethernet/EthernetTrackerTest.java
+@@ -227,6 +227,13 @@ public class EthernetTrackerTest {
+         assertThat(p.mCaps).isEqualTo(nc);
+     }
+ 
++    @Test
++    public void testNetworkCapabilityParsing_bstPresentationUsesWifi() {
++        final EthernetConfigParser p = new EthernetConfigParser(
++                "eth0;", true /* isAtLeastB */, false /* exposeEthernetTransport */);
++        assertThat(p.mCaps.hasSingleTransport(NetworkCapabilities.TRANSPORT_WIFI)).isTrue();
++    }
++
+     @Test
+     public void testInterfaceNameParsing() {
+         EthernetConfigParser p = new EthernetConfigParser("eth12", false /*isAtLeastB*/);
+-- 
+2.34.1
+

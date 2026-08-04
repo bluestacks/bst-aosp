@@ -1,0 +1,27 @@
+From 2d13d37b2dc06dc1fa8faa41d920cc7252f01a3f Mon Sep 17 00:00:00 2001
+From: "yongda.yang" <yongda.yang@bluestacks.com>
+Date: Tue, 20 May 2025 10:44:03 +0800
+Subject: [PATCH 186/224] ROB-16419:Fix gamepad L2 and R2 do not respond
+
+---
+ data/keyboards/Generic.kl | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+ mode change 100644 => 100755 data/keyboards/Generic.kl
+
+diff --git a/data/keyboards/Generic.kl b/data/keyboards/Generic.kl
+old mode 100644
+new mode 100755
+index 64ea9c3f1e40..25cc2781a3e4
+--- a/data/keyboards/Generic.kl
++++ b/data/keyboards/Generic.kl
+@@ -430,8 +430,8 @@ axis 0x05 RZ
+ axis 0x06 THROTTLE
+ axis 0x07 RUDDER
+ axis 0x08 WHEEL
+-axis 0x09 GAS
+-axis 0x0a BRAKE
++axis 0x09 RTRIGGER
++axis 0x0a LTRIGGER
+ axis 0x10 HAT_X
+ axis 0x11 HAT_Y
+ 

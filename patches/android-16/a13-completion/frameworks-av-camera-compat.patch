@@ -1,0 +1,129 @@
+From 0cbd76021f2969956b0662515f4fc8a31fc54565 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 22:07:49 +0800
+Subject: [PATCH] [A16] Complete camera compatibility behavior
+
+---
+ .../StagefrightRecorder.cpp                   |  4 +++-
+ .../StagefrightRecorder.h                     |  1 +
+ .../camera/libcameraservice/CameraService.cpp | 19 ++++++++++++++++++-
+ .../common/CameraProviderManager.cpp          | 11 +++++++++++
+ 4 files changed, 33 insertions(+), 2 deletions(-)
+
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.cpp b/media/libmediaplayerservice/StagefrightRecorder.cpp
+index 2aba3261e7..49d8f20174 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.cpp
++++ b/media/libmediaplayerservice/StagefrightRecorder.cpp
+@@ -382,6 +382,7 @@ status_t StagefrightRecorder::setVideoFrameRate(int frames_per_second) {
+ 
+     // Additional check on the frame rate will be performed later
+     mFrameRate = frames_per_second;
++    mUserSetupFrameRate = true;
+ 
+     return OK;
+ }
+@@ -1971,7 +1972,7 @@ status_t StagefrightRecorder::setupCameraSource(
+ 
+     // When frame rate is not set, the actual frame rate will be set to
+     // the current frame rate being used.
+-    if (mFrameRate == -1) {
++    if (mFrameRate == -1 || !mUserSetupFrameRate) {
+         int32_t frameRate = 0;
+         CHECK ((*cameraSource)->getFormat()->findInt32(
+                     kKeyFrameRate, &frameRate));
+@@ -2532,6 +2533,7 @@ status_t StagefrightRecorder::reset() {
+     mCameraSourceTimeLapse = NULL;
+     mMetaDataStoredInVideoBuffers = kMetadataBufferTypeInvalid;
+     mEncoderProfiles = MediaProfiles::getInstance();
++    mUserSetupFrameRate = false;
+     mRotationDegrees = 0;
+     mLatitudex10000 = -3600000;
+     mLongitudex10000 = -3600000;
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.h b/media/libmediaplayerservice/StagefrightRecorder.h
+index ee5a1d530b..998ba67987 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.h
++++ b/media/libmediaplayerservice/StagefrightRecorder.h
+@@ -180,6 +180,7 @@ private:
+     sp<MediaCodecSource> mVideoEncoderSource;
+ 
+     bool mStarted;
++    bool mUserSetupFrameRate;
+     // Needed when GLFrames are encoded.
+     // An <MediaSurfaceType> pointer, currently changing from an IGBP to a Surface
+     // will be sent to the client side using which the
+diff --git a/services/camera/libcameraservice/CameraService.cpp b/services/camera/libcameraservice/CameraService.cpp
+index 063f9be774..0d5d59ca8d 100644
+--- a/services/camera/libcameraservice/CameraService.cpp
++++ b/services/camera/libcameraservice/CameraService.cpp
+@@ -77,7 +77,6 @@
+ #include <binder/IServiceManager.h>
+ #include <binder/IActivityManager.h>
+ #include <camera/CameraUtils.h>
+-#include <binder/IPCThreadState.h>
+ #include <binder/BstFilterAppsManager.h>
+ #include <binder/BstUtilsManager.h>
+ #include <camera/StringUtils.h>
+@@ -1282,6 +1281,17 @@ Status CameraService::getCameraInfo(int cameraId, const CameraCompatibilityInfo&
+                 "CameraId is not valid");
+     }
+ 
++    int bstPid = android::IPCThreadState::self()->getCallingPid();
++    android::BstUtilsManager bstUtil;
++    android::String16 bstPkg = bstUtil.getAppNameFromPid(bstPid);
++    android::BstFilterAppsManager bstFilter;
++    int32_t bstAngle = bstFilter.getCameraSensorRotation(bstPkg);
++    char angleValue[PROPERTY_VALUE_MAX] = {};
++    snprintf(angleValue, sizeof(angleValue), "%d", bstAngle);
++    android::String8 bstPkg8(bstPkg);
++    property_set("bst.config.camera_sensor_rotation", angleValue);
++    property_set("bst.config.camera_pkgname_name", bstPkg8.c_str());
++
+     Status ret = Status::ok();
+     int portraitRotation;
+     status_t err = mCameraProviderManager->getCameraInfo(
+@@ -1292,6 +1302,8 @@ Status CameraService::getCameraInfo(int cameraId, const CameraCompatibilityInfo&
+                 strerror(-err), err);
+         logServiceError(std::string("Error retrieving camera info from device ")
+                 + std::to_string(cameraId), ERROR_INVALID_OPERATION);
++    } else if (bstAngle > 0) {
++        cameraInfo->orientation = bstAngle % 1000 % 360;
+     }
+ 
+     return ret;
+@@ -1506,6 +1518,11 @@ std::pair<int, IPCTransport> CameraService::getDeviceVersion(const std::string&
+             android::String16 bstPkg = bstUtil.getAppNameFromPid(bstPid);
+             android::BstFilterAppsManager bstFilter;
+             int32_t bstAngle = bstFilter.getCameraSensorRotation(bstPkg);
++            char angleValue[PROPERTY_VALUE_MAX] = {};
++            snprintf(angleValue, sizeof(angleValue), "%d", bstAngle);
++            android::String8 bstPkg8(bstPkg);
++            property_set("bst.config.camera_sensor_rotation", angleValue);
++            property_set("bst.config.camera_pkgname_name", bstPkg8.c_str());
+             if (bstAngle > 0) {
+                 *orientation = bstAngle % 1000 % 360;
+             }
+diff --git a/services/camera/libcameraservice/common/CameraProviderManager.cpp b/services/camera/libcameraservice/common/CameraProviderManager.cpp
+index f82c53a721..5e53add85c 100644
+--- a/services/camera/libcameraservice/common/CameraProviderManager.cpp
++++ b/services/camera/libcameraservice/common/CameraProviderManager.cpp
+@@ -3232,6 +3232,17 @@ status_t CameraProviderManager::ProviderInfo::DeviceInfo3::getCameraCharacterist
+         }
+     }
+ 
++    int pid = IPCThreadState::self()->getCallingPid();
++    BstUtilsManager bstUtils;
++    String16 packageName = bstUtils.getAppNameFromPid(pid);
++    BstFilterAppsManager bstFilter;
++    int32_t bstAngle = bstFilter.getCameraSensorRotation(packageName);
++    if (bstAngle > 0) {
++        int32_t sensorOrientation = bstAngle % 1000 % 360;
++        characteristics->update(
++                ANDROID_SENSOR_ORIENTATION, &sensorOrientation, 1);
++    }
++
+     return OK;
+ }
+ 
+-- 
+2.34.1
+

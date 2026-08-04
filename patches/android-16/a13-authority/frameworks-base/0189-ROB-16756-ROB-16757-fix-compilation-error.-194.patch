@@ -1,0 +1,44 @@
+From 5f4438218dfdf3bd4159caba813bf0b1df03edd2 Mon Sep 17 00:00:00 2001
+From: michael-bst <michael@bluestacks.com>
+Date: Mon, 26 May 2025 18:32:44 +0800
+Subject: [PATCH 189/224] ROB-16756,ROB-16757: fix compilation error. (#194)
+
+---
+ core/java/android/view/InputDevice.java | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/core/java/android/view/InputDevice.java b/core/java/android/view/InputDevice.java
+index c99357893a1f..4940432a4096 100755
+--- a/core/java/android/view/InputDevice.java
++++ b/core/java/android/view/InputDevice.java
+@@ -28,9 +28,12 @@ import android.hardware.input.InputDeviceIdentifier;
+ import android.hardware.input.InputManager;
+ import android.hardware.lights.LightsManager;
+ import android.os.Build;
++import android.os.Binder;
+ import android.os.NullVibrator;
+ import android.os.Parcel;
+ import android.os.Parcelable;
++import android.os.Process;
++import android.os.ServiceManager;
+ import android.os.Vibrator;
+ import android.os.VibratorManager;
+ import android.util.BstUtils;
+@@ -44,6 +47,8 @@ import java.lang.annotation.RetentionPolicy;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
++import com.bluestacks.os.IBstFilterAppsService;
++
+ /**
+  * Describes the capabilities of a particular input device.
+  * <p>
+@@ -95,6 +100,8 @@ public final class InputDevice implements Parcelable {
+     @GuardedBy("mMotionRanges")
+     private LightsManager mLightsManager;
+ 
++    private static final String TAG = "InputDevice";
++
+     /**
+      * A mask for input source classes.
+      *

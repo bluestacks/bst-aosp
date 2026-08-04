@@ -1,0 +1,24 @@
+From 6f242cafabcd7271ecd78cc72d99498fbf988da5 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 02:47:32 +0800
+Subject: [PATCH] [A16] Update China captive portal policy
+
+Advance packages/modules/Connectivity to b3f8ca2c95e4c5f4211b8e6bccb0a0a7d9e92ed6.
+
+Sources: A13 33b855c9022604cec5944afbbffad06ff85eb50e and f082bfff816777d3b0133e249038aac079dcbd43.
+
+The component restores the nxt_cn captive portal default on the A16 NetworkAgentInfo-aware code path. Layer 1 build and compiled-jar readback passed; runtime portal behavior remains unverified.
+---
+ packages/modules/Connectivity | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/modules/Connectivity b/packages/modules/Connectivity
+index ce5d67f..b3f8ca2 160000
+--- a/packages/modules/Connectivity
++++ b/packages/modules/Connectivity
+@@ -1 +1 @@
+-Subproject commit ce5d67fa66f1f56450a22f274ccc39a6207108a6
++Subproject commit b3f8ca2c95e4c5f4211b8e6bccb0a0a7d9e92ed6
+-- 
+2.34.1
+

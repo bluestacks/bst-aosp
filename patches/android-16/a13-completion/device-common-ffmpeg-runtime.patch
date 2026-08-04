@@ -1,0 +1,37 @@
+From f4310badf5516fb071592c8ec567acb7ce7c0d5c Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 21:50:45 +0800
+Subject: [PATCH] [A16] Enable the FFmpeg media runtime
+
+---
+ device.mk        | 2 +-
+ media_codecs.xml | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/device.mk b/device.mk
+index e9630d7..004a3a0 100755
+--- a/device.mk
++++ b/device.mk
+@@ -22,7 +22,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
+     keyguard.no_require_sim=true \
+     ro.com.android.dataroaming=true \
+     media.sf.hwaccel=1 \
+-    media.sf.omx-plugin= \
++    media.sf.omx-plugin=libffmpeg_omx.so \
+     media.sf.extractor-plugin= \
+     debug.stagefright.ccodec=0 \
+     debug.stagefright.omx_default_rank.sw-audio=1 \
+diff --git a/media_codecs.xml b/media_codecs.xml
+index ba6575f..627f6a7 100755
+--- a/media_codecs.xml
++++ b/media_codecs.xml
+@@ -81,5 +81,5 @@ Only the three quirks included above are recognized at this point:
+     <Include href="media_codecs_c2.xml" />
+     <Include href="media_codecs_google_audio.xml" />
+     <Include href="media_codecs_google_video.xml" />
+-    <!-- <Include href="media_codecs_ffmpeg.xml" /> -->
++    <Include href="media_codecs_ffmpeg.xml" />
+ </MediaCodecs>
+-- 
+2.34.1
+

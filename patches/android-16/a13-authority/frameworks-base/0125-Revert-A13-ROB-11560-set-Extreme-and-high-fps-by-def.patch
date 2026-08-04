@@ -1,0 +1,41 @@
+From a496d7d06c6ec880145fc5b2f8e74da91953b3b5 Mon Sep 17 00:00:00 2001
+From: henry-bst <67732349+henry-bst@users.noreply.github.com>
+Date: Tue, 12 Mar 2024 14:33:22 +0800
+Subject: [PATCH 125/224] Revert "[A13] ROB-11560 set Extreme and high fps by
+ default for martial egame"
+
+---
+ core/java/android/app/SharedPreferencesImpl.java | 13 -------------
+ 1 file changed, 13 deletions(-)
+
+diff --git a/core/java/android/app/SharedPreferencesImpl.java b/core/java/android/app/SharedPreferencesImpl.java
+index ba83578f2e55..4a034a2f93bc 100644
+--- a/core/java/android/app/SharedPreferencesImpl.java
++++ b/core/java/android/app/SharedPreferencesImpl.java
+@@ -433,15 +433,6 @@ final class SharedPreferencesImpl implements SharedPreferences {
+         }
+     }
+ 
+-
+-    // ROB-11613 set 60 fps by default for Dungeon Hunter
+-    private int bstPatchForDungeonHunterGetInt(String key,Integer v) {
+-        if ((v == null) && mFile.getName().equals("com.goatgames.dhs.gb.gp.v2.playerprefs.xml")) {
+-            if(key.startsWith("HighFPS60")) return 1;
+-        }
+-        return 0;
+-    }
+-
+     @Override
+     public int getInt(String key, int defValue) {
+         //If the value is present in the list then we will disable the game settings for the package by default it will be on.
+@@ -458,10 +449,6 @@ final class SharedPreferencesImpl implements SharedPreferences {
+             }
+ 
+             Integer v = (Integer)mMap.get(key);
+-
+-            int dhsRet = bstPatchForDungeonHunterGetInt(key, v);
+-            if(dhsRet > 0) return dhsRet;
+-
+             return v != null ? v : defValue;
+         }
+     }

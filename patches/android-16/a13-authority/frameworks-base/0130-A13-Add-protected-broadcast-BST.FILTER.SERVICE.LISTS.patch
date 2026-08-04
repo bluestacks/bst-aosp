@@ -1,0 +1,22 @@
+From 5061e037d2777e433657ffd19ace64c0dc39fca4 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Sat, 16 Mar 2024 20:10:45 +0800
+Subject: [PATCH 130/224] [A13] Add protected-broadcast
+ BST.FILTER.SERVICE.LISTS_CHANGED
+
+---
+ core/res/AndroidManifest.xml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index 8ec47c185895..a74fbbafe283 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -579,6 +579,7 @@
+     <protected-broadcast android:name="EventConditionProvider.EVALUATE" />
+     <protected-broadcast android:name="SnoozeHelper.EVALUATE" />
+     <protected-broadcast android:name="wifi_scan_available" />
++    <protected-broadcast android:name="BST.FILTER.SERVICE.LISTS_CHANGED" />
+ 
+     <protected-broadcast android:name="action.cne.started" />
+     <protected-broadcast android:name="android.content.jobscheduler.JOB_DEADLINE_EXPIRED" />

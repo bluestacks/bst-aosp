@@ -1,0 +1,27 @@
+From 9b031cbdb9161506a200f415113f0cc5102a0140 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 21:51:45 +0800
+Subject: [PATCH] [A16] Complete the FFmpeg runtime port
+
+---
+ device/generic/common | 2 +-
+ frameworks/av         | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/device/generic/common b/device/generic/common
+index 76b4525..f4310ba 160000
+--- a/device/generic/common
++++ b/device/generic/common
+@@ -1 +1 @@
+-Subproject commit 76b4525dc9473485221c2e6b80b6dddb11fa4b38
++Subproject commit f4310badf5516fb071592c8ec567acb7ce7c0d5c
+diff --git a/frameworks/av b/frameworks/av
+index 150806e..baf5110 160000
+--- a/frameworks/av
++++ b/frameworks/av
+@@ -1 +1 @@
+-Subproject commit 150806ec0f95a55a059f81528f9c5695847787b2
++Subproject commit baf511039a8385af9f599e70076f0731dd4b7682
+-- 
+2.34.1
+

@@ -1,0 +1,110 @@
+From d6cafca43709d7df696306a8aecf7480d10ce79e Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Fri, 10 Jan 2025 17:41:16 +0800
+Subject: [PATCH 162/224] [A13] Adding hcall to be called from
+ bstcommandprocessor
+
+---
+ .../com/bluestacks/os/BstHostCallManager.java  | 11 +++++++++++
+ .../com/bluestacks/os/IBstHostCallService.aidl |  1 +
+ .../bluestacks/server/BstHostCallService.java  |  9 +++++++++
+ ...om_bluestacks_server_BstHostCallService.cpp | 18 ++++++++++++++++++
+ 4 files changed, 39 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index 1154f4eeed19..b456712749b8 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -429,6 +429,17 @@ public class BstHostCallManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public int onGetNowggAccount(String accountInfoJson) {
++        try {
++            return mBstHostCallService.onGetNowggAccount(accountInfoJson);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
++
+     /**
+      * @hide
+      */
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index c675fae4fdaf..218690cc36bc 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -37,6 +37,7 @@ interface IBstHostCallService {
+     int affiliateTrackingCompleted(String pkg);
+     int onNowggAccountAdded(String accountInfoJson);
+     int onNowggAccountRemoved(String accountName);
++    int onGetNowggAccount(String accountInfoJson);
+     int onSetMouseAction(String pkg, String activity, String action);
+     int onInstallApkCompleted(int status, String apkFileName, String errorString, String attemptId, String packageName);
+     int onUpdateQuestRules(String rules);
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index af5bcc4ea084..2e9cfcfda908 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -329,6 +329,14 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_onNowggAccountRemoved(accountName);
+     }
+ 
++    /**
++     * @hide
++     */
++    public int onGetNowggAccount(String accountInfoJson) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService onGetNowggAccount");
++        return native_onGetNowggAccount(accountInfoJson);
++    }
++
+     /**
+      * @hide
+      */
+@@ -487,6 +495,7 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_affiliateTrackingCompleted(String pkg);
+     private static native int native_onNowggAccountAdded(String accountInfoJson);
+     private static native int native_onNowggAccountRemoved(String accountName);
++    private static native int native_onGetNowggAccount(String accountInfoJson);
+     private static native int native_onSetMouseAction(String packageName, String activity, String action);
+     private static native int native_onInstallApkCompleted(int status, String apkFileName, String errorString, String attemptId, String packageName);
+     private static native int native_onUpdateQuestRules(String rules);
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index dca65d80baa6..e82a3db28703 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -684,6 +684,23 @@ static jint onNowggAccountRemoved(JNIEnv* env, jobject clazz, jstring accountNam
+     return 0;
+ }
+ 
++static jint onGetNowggAccount(JNIEnv* env, jobject clazz, jstring accountInfoJsonStr) {
++    if (dbg) ALOGD("%s: called", __func__);
++    string accountInfoJson = getStringFromJstring(env, clazz, accountInfoJsonStr);
++
++    if (accountInfoJson.empty()) return -1;
++
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallAvailableNowggAccountsRpc(0, accountInfoJson.c_str());
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
++
+ static jint onSetMouseAction(JNIEnv* env, jobject clazz, jstring pkgStr, jstring activityStr, jstring actionStr) {
+     if (dbg) ALOGD("%s: called", __func__);
+ 
+@@ -974,6 +991,7 @@ static const JNINativeMethod gMethods[] = {
+     { "native_affiliateTrackingCompleted", "(Ljava/lang/String;)I", (void*)affiliateTrackingCompleted },
+     { "native_onNowggAccountAdded", "(Ljava/lang/String;)I", (void*)onNowggAccountAdded },
+     { "native_onNowggAccountRemoved", "(Ljava/lang/String;)I", (void*)onNowggAccountRemoved },
++    { "native_onGetNowggAccount", "(Ljava/lang/String;)I", (void*)onGetNowggAccount },
+     { "native_onSetMouseAction", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)onSetMouseAction },
+     { "native_onInstallApkCompleted", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)onInstallApkCompleted },
+     { "native_onSetMouseAction", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)onSetMouseAction },

@@ -1,0 +1,112 @@
+From e337053f1991e4165c594debeecd032c53f76145 Mon Sep 17 00:00:00 2001
+From: emin-bst <88364888+emin-bst@users.noreply.github.com>
+Date: Thu, 12 Feb 2026 14:31:39 +0800
+Subject: [PATCH 219/224] ROB-18148: No audio when playing Instagram DM videos
+ on BlueStacks (#227)
+
+---
+ core/java/android/app/Activity.java           | 38 +++++++++++++++++++
+ .../server/input/InputManagerService.java     | 14 +++++++
+ 2 files changed, 52 insertions(+)
+ mode change 100644 => 100755 core/java/android/app/Activity.java
+ mode change 100644 => 100755 services/core/java/com/android/server/input/InputManagerService.java
+
+diff --git a/core/java/android/app/Activity.java b/core/java/android/app/Activity.java
+old mode 100644
+new mode 100755
+index f69c3da396ea..76fa0709a57b
+--- a/core/java/android/app/Activity.java
++++ b/core/java/android/app/Activity.java
+@@ -73,6 +73,7 @@ import android.graphics.Color;
+ import android.graphics.drawable.Drawable;
+ import android.graphics.drawable.Icon;
+ import android.media.AudioManager;
++import android.media.AudioSystem;
+ import android.media.session.MediaController;
+ import android.net.Uri;
+ import android.os.BadParcelableException;
+@@ -2064,6 +2065,8 @@ public class Activity extends ContextThemeWrapper
+         notifyContentCaptureManagerIfNeeded(CONTENT_CAPTURE_RESUME);
+ 
+         mCalled = true;
++
++        setVolumeForInstagram();
+     }
+ 
+     /**
+@@ -2127,6 +2130,41 @@ public class Activity extends ContextThemeWrapper
+         }
+     }
+ 
++    /**
++     * When playing Instagram DM videos on Android phone, it is also silent by default.
++     * We need to manually adjust the volume key each time before you can hear any sound.
++     *
++     * Therefore, this function is designed to simulate the input of volume key event,
++     * ensuring that the sound will automatically play each time DM video is opened.
++     */
++    void setVolumeForInstagram() {
++        if (Process.myUid() >= 10000
++                && getComponentName().getPackageName().equals("com.instagram.android")
++                && getComponentName().getClassName().equals("com.instagram.modal.TransparentModalActivity")) {
++            new Thread(new Runnable() {
++                @Override
++                public void run() {
++                    int keyCode = KeyEvent.KEYCODE_VOLUME_UP;
++                    boolean restore = true;
++                    AudioManager audioManager = getSystemService(AudioManager.class);
++                    if (audioManager != null) {
++                        if (audioManager.getStreamVolume(AudioSystem.STREAM_MUSIC) == 0) {
++                            restore = false;
++                        } else if (audioManager.getStreamVolume(AudioSystem.STREAM_MUSIC) == audioManager.getStreamMaxVolume(AudioSystem.STREAM_MUSIC)) {
++                            keyCode = KeyEvent.KEYCODE_VOLUME_DOWN;
++                        }
++                    }
++
++                    mInstrumentation.sendKeyDownUpSync(keyCode);
++                    if (restore) {
++                        keyCode = (keyCode == KeyEvent.KEYCODE_VOLUME_UP) ? KeyEvent.KEYCODE_VOLUME_DOWN : KeyEvent.KEYCODE_VOLUME_UP;
++                        mInstrumentation.sendKeyDownUpSync(keyCode);
++                    }
++                }
++            }).start();
++        }
++    }
++
+     void setVoiceInteractor(IVoiceInteractor voiceInteractor) {
+         if (mVoiceInteractor != null) {
+             final Request[] requests = mVoiceInteractor.getActiveRequests();
+diff --git a/services/core/java/com/android/server/input/InputManagerService.java b/services/core/java/com/android/server/input/InputManagerService.java
+old mode 100644
+new mode 100755
+index ee989df3947c..7bb28ce2e01a
+--- a/services/core/java/com/android/server/input/InputManagerService.java
++++ b/services/core/java/com/android/server/input/InputManagerService.java
+@@ -91,6 +91,7 @@ import android.provider.Settings;
+ import android.provider.Settings.SettingNotFoundException;
+ import android.text.TextUtils;
+ import android.util.ArrayMap;
++import android.util.BstUtils;
+ import android.util.Log;
+ import android.util.Slog;
+ import android.util.SparseArray;
+@@ -2801,6 +2802,19 @@ public class InputManagerService extends IInputManager.Stub
+             return true;
+         }
+ 
++        /**
++         * Because android.permission.INJECT_EVENTS can only be granted to system apps,
++         * third-party applications cannot add it during installation.
++         *
++         * Instead, we will bypass the permission check here.
++         */
++        if (Binder.getCallingUid() >= 10000 && permission.equals("android.permission.INJECT_EVENTS")) {
++            String callingApp = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++            if (callingApp != null && callingApp.equals("com.instagram.android")) {
++                return true;
++            }
++        }
++
+         if (checkInstrumentationSource) {
+             final ActivityManagerInternal ami =
+                     LocalServices.getService(ActivityManagerInternal.class);

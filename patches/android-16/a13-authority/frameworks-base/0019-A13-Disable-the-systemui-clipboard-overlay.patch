@@ -1,0 +1,40 @@
+From e48800cdf0406c5299e281a4079c112c94e544cf Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 14 Sep 2023 17:04:02 +0800
+Subject: [PATCH 019/224] [A13] Disable the systemui clipboard overlay
+
+---
+ .../systemui/clipboardoverlay/ClipboardListener.java        | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java b/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java
+index 805a20a6d965..e5db28ba7632 100644
+--- a/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java
++++ b/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java
+@@ -92,7 +92,7 @@ public class ClipboardListener implements
+     @Override
+     public void start() {
+         if (mDeviceConfig.getBoolean(
+-                DeviceConfig.NAMESPACE_SYSTEMUI, CLIPBOARD_OVERLAY_ENABLED, true)) {
++                DeviceConfig.NAMESPACE_SYSTEMUI, CLIPBOARD_OVERLAY_ENABLED, false)) {
+             mClipboardManager.addPrimaryClipChangedListener(this);
+         }
+     }
+@@ -145,6 +145,9 @@ public class ClipboardListener implements
+     @VisibleForTesting
+     static boolean shouldSuppressOverlay(ClipData clipData, String clipSource,
+             boolean isEmulator) {
++        // The clipboard overlay is not required in app-player
++        return true;
++        /*
+         if (!(isEmulator || SHELL_PACKAGE.equals(clipSource))) {
+             return false;
+         }
+@@ -152,6 +155,7 @@ public class ClipboardListener implements
+             return false;
+         }
+         return clipData.getDescription().getExtras().getBoolean(EXTRA_SUPPRESS_OVERLAY, false);
++        */
+     }
+ 
+     boolean shouldShowToast(ClipData clipData) {

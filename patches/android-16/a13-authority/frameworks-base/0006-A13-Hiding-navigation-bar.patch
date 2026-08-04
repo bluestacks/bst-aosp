@@ -1,0 +1,35 @@
+From 33b824b1578600e5f1798acb95d822f3ee39583e Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Wed, 30 Aug 2023 11:17:45 +0800
+Subject: [PATCH 006/224] [A13] Hiding navigation bar
+
+---
+ .../core/java/com/android/server/wm/DisplayPolicy.java    | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayPolicy.java b/services/core/java/com/android/server/wm/DisplayPolicy.java
+index 0bb4022d9289..f2094540891a 100644
+--- a/services/core/java/com/android/server/wm/DisplayPolicy.java
++++ b/services/core/java/com/android/server/wm/DisplayPolicy.java
+@@ -184,6 +184,8 @@ public class DisplayPolicy {
+     /** Use the transit animation in style resource (see {@link #selectAnimation}). */
+     static final int ANIMATION_STYLEABLE = 0;
+ 
++    private static final boolean mBstHideNavigationBar = (SystemProperties.getInt("bst.enable_navigationbar", 0) == 0 ? true : false);
++
+     private static final int[] SHOW_TYPES_FOR_SWIPE = {ITYPE_NAVIGATION_BAR, ITYPE_STATUS_BAR,
+             ITYPE_CLIMATE_BAR, ITYPE_EXTRA_NAVIGATION_BAR};
+     private static final int[] SHOW_TYPES_FOR_PANIC = {ITYPE_NAVIGATION_BAR};
+@@ -652,6 +654,12 @@ public class DisplayPolicy {
+             mHasNavigationBar = mDisplayContent.supportsSystemDecorations();
+         }
+ 
++        if (mBstHideNavigationBar) {
++            mHasNavigationBar = false;
++        } else {
++            mHasNavigationBar = true;
++        }
++
+         mRefreshRatePolicy = new RefreshRatePolicy(mService,
+                 mDisplayContent.getDisplayInfo(),
+                 mService.mHighRefreshRateDenylist);

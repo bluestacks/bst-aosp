@@ -1,0 +1,70 @@
+From 5f7c0b5f311086e553314dfb288d7a41d776cfd6 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Fri, 22 Mar 2024 11:20:51 +0800
+Subject: [PATCH 132/224] [A13] Making sure the runtime permissions are granted
+ or upgraded in system upgrading scenario
+
+---
+ .../android/server/pm/PackageManagerService.java   | 14 ++++++++++++++
+ .../core/java/com/android/server/pm/Settings.java  |  2 +-
+ 2 files changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 2685bb77de6f..2b2d079e2302 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -365,6 +365,8 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+     // Flags to disable permission revoke for bluestacks apps.
+     private static final boolean BST_DEBUG = SystemProperties.getInt("bst.debug.pm", 0) == 0 ? false : true;
+     private static final String bstDefaultAppPermissionsFile = "/data/downloads/.dp/apps.xml";
++    private File firstBootAfterUpgradeFile = new File("/data/downloads/.first_boot_after_upgrade_for_pm");
++    private static boolean isFirstBootAfterUpgrade = false;
+ 
+     // List of installed packages which are blacklisted with uninstall action for current version.
+     private static Set<String> bstUninstallPkgList = new HashSet<String>();
+@@ -1751,6 +1753,8 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+         mInstaller = injector.getInstaller();
+         mEnableFreeCacheV2 = SystemProperties.getBoolean("fw.free_cache_v2", true);
+ 
++        isFirstBootAfterUpgrade =  firstBootAfterUpgradeFile.exists();
++
+         // Create sub-components that provide services / data. Order here is important.
+         t.traceBegin("createSubComponents");
+ 
+@@ -2296,6 +2300,11 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+         setUpInstantAppInstallerActivityLP(getInstantAppInstallerLPr());
+     }
+ 
++    public static boolean  bstIsFirstBootAfterUpgrade() {
++        // check if player is first boot after upgrade
++        return isFirstBootAfterUpgrade;
++    }
++
+     public boolean isFirstBoot() {
+         // allow instant applications
+         return mFirstBoot;
+@@ -4296,6 +4305,11 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+ 
+         // Prune unused static shared libraries which have been cached a period of time
+         schedulePruneUnusedStaticSharedLibraries(false /* delay */);
++
++        if (firstBootAfterUpgradeFile.exists()) {
++            boolean deleted = firstBootAfterUpgradeFile.delete();
++            if (BST_DEBUG) Slog.w(TAG, "deleted file: " + firstBootAfterUpgradeFile.getName() + ": " + deleted);
++        }
+     }
+ 
+     //TODO: b/111402650
+diff --git a/services/core/java/com/android/server/pm/Settings.java b/services/core/java/com/android/server/pm/Settings.java
+index 9093b853f2c5..5ea67d67ea26 100644
+--- a/services/core/java/com/android/server/pm/Settings.java
++++ b/services/core/java/com/android/server/pm/Settings.java
+@@ -5496,7 +5496,7 @@ public final class Settings implements Watchable, Snappable {
+ 
+         public boolean isPermissionUpgradeNeeded(int userId) {
+             synchronized (mLock) {
+-                return mPermissionUpgradeNeeded.get(userId, true);
++                return mPermissionUpgradeNeeded.get(userId, true) || PackageManagerService.bstIsFirstBootAfterUpgrade();
+             }
+         }
+ 

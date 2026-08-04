@@ -1,0 +1,248 @@
+From c6cef2744507a5d50e1c8f3a10472a28df6d62b6 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Mon, 20 Nov 2023 10:58:12 +0800
+Subject: [PATCH 078/224] [A13] ROB-8737: Added hook sharedpreference setting
+ of game configured in config.db
+
+---
+ .../android/app/SharedPreferencesImpl.java    | 151 ++++++++++++++++++
+ 1 file changed, 151 insertions(+)
+
+diff --git a/core/java/android/app/SharedPreferencesImpl.java b/core/java/android/app/SharedPreferencesImpl.java
+index 1ebf56550e03..4a034a2f93bc 100644
+--- a/core/java/android/app/SharedPreferencesImpl.java
++++ b/core/java/android/app/SharedPreferencesImpl.java
+@@ -22,17 +22,21 @@ import android.compat.annotation.ChangeId;
+ import android.compat.annotation.EnabledSince;
+ import android.compat.annotation.UnsupportedAppUsage;
+ import android.content.SharedPreferences;
++import android.os.Binder;
+ import android.os.Build;
+ import android.os.FileUtils;
+ import android.os.Looper;
++import android.os.SystemProperties;
+ import android.system.ErrnoException;
+ import android.system.Os;
+ import android.system.StructStat;
+ import android.system.StructTimespec;
++import android.util.BstUtils;
+ import android.util.Log;
+ 
+ import com.android.internal.annotations.GuardedBy;
+ import com.android.internal.util.ExponentiallyBucketedHistogram;
++import com.android.internal.util.MemInfoReader;
+ import com.android.internal.util.XmlUtils;
+ 
+ import dalvik.system.BlockGuard;
+@@ -56,6 +60,7 @@ import java.util.Set;
+ import java.util.WeakHashMap;
+ import java.util.concurrent.CountDownLatch;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
+ final class SharedPreferencesImpl implements SharedPreferences {
+     private static final String TAG = "SharedPreferencesImpl";
+     private static final boolean DEBUG = false;
+@@ -85,6 +90,9 @@ final class SharedPreferencesImpl implements SharedPreferences {
+     private final Object mLock = new Object();
+     private final Object mWritingToDiskLock = new Object();
+ 
++    @GuardedBy("mLock")
++    private String packageName = null;
++
+     @GuardedBy("mLock")
+     private Map<String, Object> mMap;
+     @GuardedBy("mLock")
+@@ -118,6 +126,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
+     @GuardedBy("mWritingToDiskLock")
+     private final ExponentiallyBucketedHistogram mSyncTimes = new ExponentiallyBucketedHistogram(16);
+     private int mNumSync = 0;
++    private BstFilterAppsManager bfam = null;
+ 
+     @UnsupportedAppUsage
+     SharedPreferencesImpl(File file, int mode) {
+@@ -297,8 +306,15 @@ final class SharedPreferencesImpl implements SharedPreferences {
+     @Override
+     @Nullable
+     public String getString(String key, @Nullable String defValue) {
++        if (packageName == null || "zygote".equals(packageName)) {
++            packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++        }
++
+         synchronized (mLock) {
+             awaitLoadedLocked();
++            if (packageName != null) {
++                setBstGameDefaultSetting(packageName);
++            }
+             String v = (String)mMap.get(key);
+             return v != null ? v : defValue;
+         }
+@@ -314,34 +330,169 @@ final class SharedPreferencesImpl implements SharedPreferences {
+         }
+     }
+ 
++    /**
++     * ROB-8737: Modify shared preferences by config.db. The config string is as following:
++     * "gameSettingDefault": "path=com.gamamobi.nikke.v2.playerprefs.xml,value=<int:TARGET_FRAME_RATE:1><int:IS_CUSTOM_MODE:4>",
++     * path: the name the sharedpreference name
++     * value: support multiply value set.
++     */
++    private void setBstGameDefaultSetting(String packageName) {
++        String spFilename = "";
++        String spKeyValueSequences = "";
++        int len = 0;
++        String oneSetting = "";
++
++        if (!"1".equals(SystemProperties.get("sys.boot_completed")))
++            return;
++
++
++        if (bfam == null)
++            bfam = BstFilterAppsManager.getInstance();
++
++        String gameSettingString = bfam.getGameDefaultSetting(packageName);
++        if (gameSettingString.length() > 1) {
++            try {
++                spFilename = gameSettingString.substring(gameSettingString.indexOf('=') + 1, gameSettingString.indexOf(','));
++                spKeyValueSequences = gameSettingString.substring(gameSettingString.indexOf(('='), spFilename.length()) + 1);
++            } catch (Exception e) {
++                Log.e(TAG, "Get game setting string failed!");
++            }
++        }
++
++        if (!mFile.getName().equals(spFilename))
++            return;
++
++        while (len < spKeyValueSequences.length())
++        {
++            oneSetting = spKeyValueSequences.substring(spKeyValueSequences.indexOf('<', len));
++            oneSetting = oneSetting.substring(1, oneSetting.indexOf('>'));
++            len += oneSetting.length() + 2;
++            String type = oneSetting.substring(0, oneSetting.indexOf(':'));
++            String entry_value = oneSetting.substring(oneSetting.indexOf(':') + 1);
++            String entry = entry_value.substring(0, entry_value.indexOf(':'));
++            String value = entry_value.substring(entry_value.indexOf(':') + 1);
++
++            switch(type)
++            {
++                case "int":
++                    Integer iv = (Integer)mMap.get(entry);
++                    if (iv == null) {
++                        Editor editor = edit();
++                        int data = Integer.parseInt(value);
++                        if (entry.equals("HighFPS") && (packageName.equals("com.dts.freefireth"))) {
++                            MemInfoReader minfo = new MemInfoReader();
++                            minfo.readMemInfo();
++                            long totalMemMb = minfo.getTotalSize()/(1024*1024);
++                            if (totalMemMb <= 1433)
++                                continue;
++                        }
++
++                        editor.putInt(entry, data);
++                        editor.commit();
++                    }
++                    break;
++                case "string":
++                    String sv = (String)mMap.get(entry);
++                    if (sv == null) {
++                        Editor editor = edit();
++                        String data = value;
++                        editor.putString(entry, data);
++                        editor.apply();
++                    }
++                    break;
++                case "bool":
++                    Boolean bv = (Boolean)mMap.get(entry);
++                    if (bv == null) {
++                        Editor editor = edit();
++                        Boolean data = Boolean.parseBoolean(value);
++                        editor.putBoolean(entry, data);
++                        editor.apply();
++                    }
++                    break;
++                case "float":
++                    Float fv = (Float)mMap.get(entry);
++                    if (fv == null) {
++                        Editor editor = edit();
++                        float data = Float.parseFloat(value);
++                        editor.putFloat(entry, data);
++                        editor.apply();
++                    }
++                    break;
++                case "long":
++                    Long lv = (Long)mMap.get(entry);
++                    if (lv == null) {
++                        Editor editor = edit();
++                        long data = Long.parseLong(value);
++                        editor.putLong(entry, data);
++                        editor.apply();
++                    }
++                    break;
++                default:
++                    break;
++            }
++        }
++    }
++
+     @Override
+     public int getInt(String key, int defValue) {
++        //If the value is present in the list then we will disable the game settings for the package by default it will be on.
++        //For package com.dts.freefireth, we will modify the keys.
++        if (packageName == null || "zygote".equals(packageName)) {
++            packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++        }
++
+         synchronized (mLock) {
+             awaitLoadedLocked();
++            // Bug BS4-10646: We do some customization on the first run.
++            if (packageName != null) {
++                setBstGameDefaultSetting(packageName);
++            }
++
+             Integer v = (Integer)mMap.get(key);
+             return v != null ? v : defValue;
+         }
+     }
+     @Override
+     public long getLong(String key, long defValue) {
++        if (packageName == null || "zygote".equals(packageName)) {
++            packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++        }
++
+         synchronized (mLock) {
+             awaitLoadedLocked();
++
++            if (packageName != null) {
++                setBstGameDefaultSetting(packageName);
++            }
+             Long v = (Long)mMap.get(key);
+             return v != null ? v : defValue;
+         }
+     }
+     @Override
+     public float getFloat(String key, float defValue) {
++        if (packageName == null || "zygote".equals(packageName)) {
++            packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++        }
+         synchronized (mLock) {
+             awaitLoadedLocked();
++
++            if (packageName != null) {
++                setBstGameDefaultSetting(packageName);
++            }
+             Float v = (Float)mMap.get(key);
+             return v != null ? v : defValue;
+         }
+     }
+     @Override
+     public boolean getBoolean(String key, boolean defValue) {
++        if (packageName == null || "zygote".equals(packageName)) {
++            packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++        }
+         synchronized (mLock) {
+             awaitLoadedLocked();
++            if (packageName != null) {
++                setBstGameDefaultSetting(packageName);
++            }
+             Boolean v = (Boolean)mMap.get(key);
+             return v != null ? v : defValue;
+         }

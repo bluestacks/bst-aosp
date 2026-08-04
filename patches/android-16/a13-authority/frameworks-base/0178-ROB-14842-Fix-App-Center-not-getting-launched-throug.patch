@@ -1,0 +1,66 @@
+From 5c72c1d5c29d4865cd0bf9bb8c1f2537118c50b1 Mon Sep 17 00:00:00 2001
+From: jace-bst <88761019+jace-bst@users.noreply.github.com>
+Date: Thu, 3 Apr 2025 15:02:35 +0800
+Subject: [PATCH 178/224] =?UTF-8?q?ROB-14842:=20Fix=20App=20Center=20not?=
+ =?UTF-8?q?=20getting=20launched=20through=20monkey=20in=20Tira=E2=80=A6?=
+ =?UTF-8?q?=20(#183)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+* ROB-14842: Fix App Center not getting launched through monkey in Tiramisu64
+
+Co-authored-by: jace@bluestacks.com <jace-bst>
+---
+ .../java/com/android/server/pm/ComputerEngine.java     | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
+index 9d2436b9ac73..3d59ae6a7b49 100644
+--- a/services/core/java/com/android/server/pm/ComputerEngine.java
++++ b/services/core/java/com/android/server/pm/ComputerEngine.java
+@@ -1000,7 +1000,7 @@ public class ComputerEngine implements Computer {
+         if (packageName != null && packageName.startsWith("com.bluestacks")  && Binder.getCallingUid() != Process.SYSTEM_UID) {
+             int pid = Binder.getCallingPid();
+             int uid = Binder.getCallingUid();
+-            String callingApp = "";
++            String callingApp = null;
+             if (uid >= 10000)
+                 callingApp = BstUtils.getAppNameFromPid(pid);
+             boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(uid, callingApp);
+@@ -1813,7 +1813,7 @@ public class ComputerEngine implements Computer {
+             int callingUid) {
+         int pid = Binder.getCallingPid();
+         int uid = Binder.getCallingUid();
+-        String callingApp = "";
++        String callingApp = null;
+         if (uid >= 10000)
+             callingApp = BstUtils.getAppNameFromPid(pid);
+         boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(uid, callingApp);
+@@ -1851,7 +1851,7 @@ public class ComputerEngine implements Computer {
+         final boolean listApex = (flags & MATCH_APEX) != 0;
+         final boolean listFactory = (flags & MATCH_FACTORY_ONLY) != 0;
+         int pid = Binder.getCallingPid();
+-        String callingApp = "";
++        String callingApp = null;
+         if (callingUid >= 10000)
+             callingApp = BstUtils.getAppNameFromPid(pid);
+         boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(callingUid, callingApp);
+@@ -3742,7 +3742,7 @@ public class ComputerEngine implements Computer {
+         //put check here for returning false if some other application asks for com.bluestacks.* is available
+         int pid = Binder.getCallingPid();
+         int uid = Binder.getCallingUid();
+-        String callingApp = "";
++        String callingApp = null;
+         if (uid >= 10000)
+             callingApp = BstUtils.getAppNameFromPid(pid);
+         boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(uid, callingApp);
+@@ -4770,7 +4770,7 @@ public class ComputerEngine implements Computer {
+                 "get installed application info");
+ 
+         int pid = Binder.getCallingPid();
+-        String callingApp = "";
++        String callingApp = null;
+         if (callingUid >= 10000)
+             callingApp = BstUtils.getAppNameFromPid(pid);
+         boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(callingUid, callingApp);

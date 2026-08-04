@@ -1,0 +1,39 @@
+From 6443d21a351b50b343ea7f037cb045585c4d0f26 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 02:30:04 +0800
+Subject: [PATCH] [A16] Stop the PRNG seeder early-init service
+
+Source: A13 system/security ef05d6c885bc1a74ff8bf37d322b0b9c1d86d31a.
+
+Purpose: preserve the App Player boot policy for guests without a hardware random device by omitting prng_seeder.rc from the installed service set.
+
+Adaptation: A16 moved init_rc into prng_seeder_defaults; disable that single property while retaining the binary, Microdroid variant, source, and tests.
+
+Necessity: both AOSP16 and the current Android-16 tree still registered the early-init service, so the A13 boot-time customization was missing.
+
+Performance: removes a daemon that can wait on unavailable entropy during early boot; no steady-state cost is added.
+
+Security: removes this daemon reseed path; the decision is inherited from A13 and assumes the VM kernel CRNG has an independent entropy source. Boot and entropy readback remain required.
+
+Validation: prng_seeder and 32/64 test binaries built; independent install-tree readback confirms the binary remains and system/etc/init/prng_seeder.rc is absent.
+---
+ prng_seeder/Android.bp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/prng_seeder/Android.bp b/prng_seeder/Android.bp
+index b56a405c..2ff763b1 100644
+--- a/prng_seeder/Android.bp
++++ b/prng_seeder/Android.bp
+@@ -33,7 +33,8 @@ rust_defaults {
+         "libtokio",
+     ],
+ 
+-    init_rc: ["prng_seeder.rc"],
++    // App Player has no hardware RNG; do not start this early-init service.
++    // init_rc: ["prng_seeder.rc"],
+ }
+ 
+ rust_binary {
+-- 
+2.34.1
+

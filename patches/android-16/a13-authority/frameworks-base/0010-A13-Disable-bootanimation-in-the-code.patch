@@ -1,0 +1,32 @@
+From 2ffa5928b5ae1db3a349e71bae55b3fe8e6e81c8 Mon Sep 17 00:00:00 2001
+From: muzhong-bst <muzhong@bluestacks.com>
+Date: Thu, 7 Sep 2023 15:59:06 +0800
+Subject: [PATCH 010/224] [A13] Disable bootanimation in the code
+
+---
+ cmds/bootanimation/BootAnimationUtil.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/cmds/bootanimation/BootAnimationUtil.cpp b/cmds/bootanimation/BootAnimationUtil.cpp
+index 4f56e5a88c4c..2b860247be16 100644
+--- a/cmds/bootanimation/BootAnimationUtil.cpp
++++ b/cmds/bootanimation/BootAnimationUtil.cpp
+@@ -42,6 +42,10 @@ static const std::vector<std::string> PLAY_SOUND_BOOTREASON_BLACKLIST {
+ 
+ 
+ bool bootAnimationDisabled() {
++    // Disabling bootanimation by default
++    return true;
++
++    /*
+     char value[PROPERTY_VALUE_MAX];
+     property_get("debug.sf.nobootanimation", value, "0");
+     if (atoi(value) > 0) {
+@@ -57,6 +61,7 @@ bool bootAnimationDisabled() {
+     }
+ 
+     return false;
++    */
+ }
+ 
+ void waitForSurfaceFlinger() {

@@ -1,0 +1,161 @@
+From a23bc9079a6295ad637546a227b015a00ac4bdad Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Wed, 15 Nov 2023 14:26:28 +0800
+Subject: [PATCH 04/13] [A13] Add config.db entry xprop (#3)
+
+---
+ libc/bionic/system_property_set.cpp          | 95 ++++++++++++++++++++
+ libc/system_properties/system_properties.cpp | 21 ++++-
+ 2 files changed, 115 insertions(+), 1 deletion(-)
+
+diff --git a/libc/bionic/system_property_set.cpp b/libc/bionic/system_property_set.cpp
+index 212aafcc1..111eac70c 100644
+--- a/libc/bionic/system_property_set.cpp
++++ b/libc/bionic/system_property_set.cpp
+@@ -307,3 +307,98 @@ int __system_property_set(const char* key, const char* value) {
+     return 0;
+   }
+ }
++
++int match_uid_helper(const char *path, uid_t val, int buff_length) {
++#define MAX_UID_LENGTH     10
++
++  int debug = 0;
++  char buff[buff_length];
++  unsigned long present_uid = -1;
++
++  FILE* fp = fopen(path, "r");
++  if (fp == NULL) {
++    if (debug) async_safe_format_log(ANDROID_LOG_WARN, "libc", "match_uid_helper error opening file [%s] for myuid = %u\n", path, val);
++    return 0;
++  }
++
++  // now we open the marker file and iterate through the file to get the uid entries, and match it with our required value.
++  while (fgets(buff, buff_length, fp)) {
++    char *p;
++    present_uid = strtoul(buff, &p, MAX_UID_LENGTH);
++    if (val == present_uid) {
++      if (debug) async_safe_format_log(ANDROID_LOG_WARN, "libc", "Found matching entry of %lu\n", present_uid);
++      // we have a match, return here itself.
++      fclose(fp);
++      return 1;
++    }
++  }
++
++  // we reached here means we have parsed the file and did not get a match, returning 0.
++  fclose(fp);
++  return 0;
++}
++
++/* Helper function to return modified ro.secure/ro.debuggable system property values if calling app is not of bluestacks/android/google.
++ * Bug 7294: Puzzle and Dragons crash on launch as it tries to read ro.debuggable values.
++ * Also, if arm apps try to run getprop or read system property for CPU ABI values.
++ * For such apps, we will return the ARM ABIs irrespective of actual values.
++ * Apps like com.xlcw.hxct.mgdd.m4399,com.lxd.SehzAresunique.m4399 read these values
++ */
++int bst_hack_system_property(const char *name, char *value)
++{
++#define APP_WITH_ABI2                      "/data/downloads/.tmp/.bstABI2Apps"
++#define APP_WITH_ABI2_SHOWDEFAULTCPUABI    "/data/downloads/.tmp/.bstxABIApps"
++#if defined(__LP64__)
++#define CPU_ABI                            "arm64-v8a"
++#else
++#define CPU_ABI                            "armeabi-v7a"
++#endif
++#define CPU_ABI_LIST_32                    "armeabi-v7a,armeabi"
++#if defined(__LP64__)
++#define CPU_ABI_LIST_64                    "arm64-v8a"
++#endif
++#define MAX_BUFF_LENGTH                    64
++
++  int debug = 0;
++  int len = 0;
++  int is_uid_match = 0, is_show_abi_uid = 0;
++  uid_t myuid = getuid();
++
++  if (myuid >= 10000 && name != NULL && strstr(name,"cpu.abi")) {
++    is_uid_match = match_uid_helper(APP_WITH_ABI2, myuid, MAX_BUFF_LENGTH);
++
++    // Some china apps like com.netease.TCYM.uc; com.youzu.wzqj.ad.baidu; com.zmxyol.union.baidu installed in arm mode
++    // crash when we return arm specific cpu.abi values.
++    // Hence returning default abi values to such apps based on a marker file under /data/downloads if their Uid entry is present in the same.
++    is_show_abi_uid = match_uid_helper(APP_WITH_ABI2_SHOWDEFAULTCPUABI, myuid, MAX_BUFF_LENGTH);
++
++    if (debug) async_safe_format_log(ANDROID_LOG_WARN, "libc", "app uid %u rying to read: %s  is_uid_match:%d  is_show_abi_uid: %d\n", myuid, name, is_uid_match, is_show_abi_uid);
++
++    if (is_uid_match == 1) {
++      // Case 14627: Modifying ro.dalvik.vm.native.bridge to arm value '0' for arm apps.
++      // This fixes the illegal env detection in security sdk G-presto integrated in this app.
++      if (is_show_abi_uid == 0) {
++        if (!strcmp(name, "ro.product.cpu.abi")) {
++          // changing value as arm app is reading ro.product.cpu.abi
++          len = strlen(CPU_ABI);
++          memcpy(value, CPU_ABI, len+1);
++        } else if (!strcmp(name, "ro.product.cpu.abilist") || !strcmp(name, "ro.product.cpu.abilist32")) {
++          // changing value as arm app is reading ro.product.cpu.abilist
++          len = strlen(CPU_ABI_LIST_32);
++          memcpy(value, CPU_ABI_LIST_32, len+1);
++        }
++#if defined(__LP64__)
++        else if (!strcmp(name, "ro.product.cpu.abilist64")) {
++          // changing value as arm app is reading ro.product.cpu.abilist64
++          len = strlen(CPU_ABI_LIST_64);
++          memcpy(value, CPU_ABI_LIST_64, len+1);
++        }
++#endif
++        else if (debug) {
++          async_safe_format_log(ANDROID_LOG_WARN, "libc", "trying to read unknown property: %s : %u\n", name, myuid);
++        }
++      }
++    }
++  }
++  return len;
++}
+diff --git a/libc/system_properties/system_properties.cpp b/libc/system_properties/system_properties.cpp
+index 1cb15c3df..2cbd62c6c 100644
+--- a/libc/system_properties/system_properties.cpp
++++ b/libc/system_properties/system_properties.cpp
+@@ -50,6 +50,8 @@
+ #define SERIAL_DIRTY(serial) ((serial)&1)
+ #define SERIAL_VALUE_LEN(serial) ((serial) >> 24)
+ 
++extern int bst_hack_system_property(const char *name, char *value);
++
+ static bool is_dir(const char* pathname) {
+   struct stat info;
+   if (stat(pathname, &info) == -1) {
+@@ -142,9 +144,17 @@ static bool is_read_only(const char* name) {
+ 
+ uint32_t SystemProperties::ReadMutablePropertyValue(const prop_info* pi, char* value) {
+   // We assume the memcpy below gets serialized by the acquire fence.
+-  uint32_t new_serial = load_const_atomic(&pi->serial, memory_order_acquire);
++  uint32_t new_serial;
+   uint32_t serial;
+   unsigned int len;
++  int bstval;
++
++  bstval = bst_hack_system_property(pi->name, value);
++  if (bstval > 0){
++    return bstval;
++  }
++
++  new_serial = load_const_atomic(&pi->serial, memory_order_acquire);
+   for (;;) {
+     serial = new_serial;
+     len = SERIAL_VALUE_LEN(serial);
+@@ -201,6 +211,15 @@ void SystemProperties::ReadCallback(const prop_info* pi,
+   // Read only properties don't need to copy the value to a temporary buffer, since it can never
+   // change.  We use relaxed memory order on the serial load for the same reason.
+   if (is_read_only(pi->name)) {
++    char bst_buf[PROP_VALUE_MAX];
++    int bstval = bst_hack_system_property(pi->name, bst_buf);
++    if (bstval > 0)
++    {
++      uint32_t serial = load_const_atomic(&pi->serial, memory_order_relaxed);
++      callback(cookie, pi->name, bst_buf, serial);
++      return;
++    }
++
+     uint32_t serial = load_const_atomic(&pi->serial, memory_order_relaxed);
+     if (pi->is_long()) {
+       callback(cookie, pi->name, pi->long_value(), serial);

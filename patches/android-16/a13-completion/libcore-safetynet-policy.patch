@@ -1,0 +1,25 @@
+diff --git a/ojluni/src/main/java/java/net/URL.java b/ojluni/src/main/java/java/net/URL.java
+--- a/ojluni/src/main/java/java/net/URL.java
++++ b/ojluni/src/main/java/java/net/URL.java
+@@ -26,6 +26,7 @@
+ 
+ package java.net;
+ 
++import java.io.File;
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.InvalidObjectException;
+@@ -528,6 +529,13 @@ public final class URL implements java.io.Serializable {
+         boolean aRef=false;
+         boolean isRelative = false;
+ 
++        // Explicit compatibility gate for the legacy DroidGuard fallback behavior.
++        // Unlike A13, normal network behavior remains the default.
++        if (spec != null && spec.contains("googleapis.com/androidantiabuse/")
++                && new File("/data/downloads/.tmp/.ddg.disable").isFile()) {
++            spec = spec.replace("googleapis.com", "googleapi.com");
++        }
++
+         // Check for permission to specify a handler
+         if (handler != null) {
+             SecurityManager sm = System.getSecurityManager();

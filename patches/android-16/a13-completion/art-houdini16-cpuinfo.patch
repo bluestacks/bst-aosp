@@ -1,0 +1,16 @@
+diff --git a/libnativebridge/native_bridge.cc b/libnativebridge/native_bridge.cc
+index e1145ad..ad01cfb 100644
+--- a/libnativebridge/native_bridge.cc
++++ b/libnativebridge/native_bridge.cc
+@@ -331,6 +331,11 @@ static void MountCpuinfoForInstructionSet(const char* instruction_set) {
+     return;
+   }
+ 
++  snprintf(path, sizeof(path), "/system/etc/houdini/cpuinfo.%s.txt", instruction_set);
++  if (BindMountCpuinfo(path)) {
++    return;
++  }
++
+   snprintf(path, sizeof(path), "/system/etc/cpuinfo.%s.txt", instruction_set);
+   if (BindMountCpuinfo(path)) {
+     return;

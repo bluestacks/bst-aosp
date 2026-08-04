@@ -1,0 +1,511 @@
+From b59e3681addcf4c17b253982d50bd56e4a5af80a Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 5 Sep 2023 10:29:40 +0800
+Subject: [PATCH 009/224] [A13] Support orientation change
+
+---
+ .../server/policy/PhoneWindowManager.java     |  6 ++
+ .../server/policy/WindowManagerPolicy.java    |  2 +
+ .../com/android/server/wm/DisplayContent.java | 40 +++++++++-
+ .../android/server/wm/DisplayRotation.java    | 51 +++++++++---
+ .../server/wm/DisplayWindowSettings.java      |  2 +-
+ .../android/server/wm/TaskDisplayArea.java    | 10 ++-
+ .../com/android/server/wm/WindowAnimator.java |  9 +++
+ .../server/wm/WindowManagerDebugConfig.java   |  2 +
+ .../server/wm/WindowManagerService.java       | 80 ++++++++++++++++++-
+ .../server/wm/WindowOrientationListener.java  |  8 ++
+ 10 files changed, 194 insertions(+), 16 deletions(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index adc74e6cab5d..d0e2f1f7450e 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -5005,6 +5005,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+         }
+     }
+ 
++    @Override
++    public void setBstProposedRotation(int proposedRotation) {
++        mDefaultDisplayRotation.setUserRotation(WindowManagerPolicy.USER_ROTATION_LOCKED, proposedRotation);
++        mDefaultDisplayRotation.callOnProposedRotationChanged();
++    }
++
+     void sendCloseSystemWindows() {
+         PhoneWindow.sendCloseSystemWindows(mContext, null);
+     }
+diff --git a/services/core/java/com/android/server/policy/WindowManagerPolicy.java b/services/core/java/com/android/server/policy/WindowManagerPolicy.java
+index 77007fa229a2..a516e4c91b9f 100644
+--- a/services/core/java/com/android/server/policy/WindowManagerPolicy.java
++++ b/services/core/java/com/android/server/policy/WindowManagerPolicy.java
+@@ -1136,6 +1136,8 @@ public interface WindowManagerPolicy extends WindowManagerPolicyConstants {
+      */
+     void startKeyguardExitAnimation(long startTime, long fadeoutDuration);
+ 
++    public void setBstProposedRotation(int proposedRotation);
++
+     /**
+      * Called when System UI has been started.
+      */
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index 830d2e891dc2..34244a36f892 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -40,7 +40,7 @@ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAP
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSET;
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+-import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER;
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT;
+ import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+@@ -2153,6 +2153,8 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+                 }
+             }
+         }
++
++        mWmService.sendOrientationToHostAsync(mWmService.getDefaultDisplayRotation());
+     }
+ 
+     void configureDisplayPolicy() {
+@@ -4992,6 +4994,42 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+                 && (ignoreFrozen || mDisplayPolicy.isScreenOnFully());
+     }
+ 
++    int getBstOrientation(int req) {
++        int bstOrientationValue = req;
++        String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
++        if ("com.foxnextgames.m3".equals(topPackageName)) {
++            return SCREEN_ORIENTATION_UNSPECIFIED ;
++        }
++
++        //Whatsapp reply interface is set to portrait so that the input box can be displayed normally
++        String topActivityName = android.os.SystemProperties.get("bst.config.top_activity_name",null);
++        if ("com.whatsapp/.status.playback.StatusReplyActivity".equals(topActivityName)) {
++            return SCREEN_ORIENTATION_PORTRAIT;
++        }
++        if (mBstFilterApps.isSmallScreenApp(topPackageName)) {
++            //config: small (forcing protrait mode)
++            bstOrientationValue = SCREEN_ORIENTATION_PORTRAIT;
++        } else if (mBstFilterApps.isPortraitDisabled(topPackageName)) {
++            //config: full (forcing landscape mode)
++            bstOrientationValue = SCREEN_ORIENTATION_LANDSCAPE;
++        } else if (req == SCREEN_ORIENTATION_SENSOR_LANDSCAPE
++                || req == SCREEN_ORIENTATION_USER_LANDSCAPE
++                || req == SCREEN_ORIENTATION_REVERSE_LANDSCAPE) {
++            bstOrientationValue = SCREEN_ORIENTATION_LANDSCAPE;
++        } else if (req == SCREEN_ORIENTATION_SENSOR_PORTRAIT
++                || req == SCREEN_ORIENTATION_USER_PORTRAIT
++                || req == SCREEN_ORIENTATION_REVERSE_PORTRAIT) {
++            bstOrientationValue = SCREEN_ORIENTATION_PORTRAIT;
++        } else if (req == SCREEN_ORIENTATION_SENSOR
++                || req == SCREEN_ORIENTATION_FULL_SENSOR
++                || req == SCREEN_ORIENTATION_FULL_USER
++                || req == SCREEN_ORIENTATION_USER
++                || req == SCREEN_ORIENTATION_NOSENSOR) {
++            bstOrientationValue = SCREEN_ORIENTATION_UNSPECIFIED;
++        }
++        return bstOrientationValue;
++    }
++
+     static final class TaskForResizePointSearchResult implements Predicate<Task> {
+         private Task taskForResize;
+         private int x;
+diff --git a/services/core/java/com/android/server/wm/DisplayRotation.java b/services/core/java/com/android/server/wm/DisplayRotation.java
+index e6d8b3db4564..844adb50d3b8 100644
+--- a/services/core/java/com/android/server/wm/DisplayRotation.java
++++ b/services/core/java/com/android/server/wm/DisplayRotation.java
+@@ -58,6 +58,7 @@ import android.os.UserHandle;
+ import android.provider.Settings;
+ import android.util.ArraySet;
+ import android.util.Slog;
++import android.util.Log;
+ import android.util.TimeUtils;
+ import android.util.proto.ProtoOutputStream;
+ import android.view.DisplayAddress;
+@@ -86,6 +87,7 @@ import java.util.Set;
+  */
+ public class DisplayRotation {
+     private static final String TAG = TAG_WITH_CLASS_NAME ? "DisplayRotation" : TAG_WM;
++    private static final boolean BST_DEBUG_ORIENTATION = SystemProperties.getInt("bst.debug.orientation", 0) > 0 ? true : false;
+ 
+     private static class RotationAnimationPair {
+         @AnimRes
+@@ -210,7 +212,7 @@ public class DisplayRotation {
+      * regardless of all other states (including app requested orientation). {@code true} the
+      * display rotation should be fixed to user specified rotation, {@code false} otherwise.
+      */
+-    private int mFixedToUserRotation = IWindowManager.FIXED_TO_USER_ROTATION_DEFAULT;
++    private int mFixedToUserRotation = IWindowManager.FIXED_TO_USER_ROTATION_DISABLED;
+ 
+     private int mDemoHdmiRotation;
+     private int mDemoRotation;
+@@ -323,9 +325,15 @@ public class DisplayRotation {
+ 
+     void configure(int width, int height) {
+         final Resources res = mContext.getResources();
++        // BST Changes: We just consider two values for rotation 0/1
++        // After this change the possible value that can be returned
++        // in rotationForOrientationLw will be 0 or 1
+         if (width > height) {
+             mLandscapeRotation = Surface.ROTATION_0;
+             mSeascapeRotation = Surface.ROTATION_180;
++            mPortraitRotation = Surface.ROTATION_90;
++            mUpsideDownRotation = Surface.ROTATION_270;
++            /*
+             if (res.getBoolean(R.bool.config_reverseDefaultRotation)) {
+                 mPortraitRotation = Surface.ROTATION_90;
+                 mUpsideDownRotation = Surface.ROTATION_270;
+@@ -333,9 +341,13 @@ public class DisplayRotation {
+                 mPortraitRotation = Surface.ROTATION_270;
+                 mUpsideDownRotation = Surface.ROTATION_90;
+             }
++            */
+         } else {
+             mPortraitRotation = Surface.ROTATION_0;
+             mUpsideDownRotation = Surface.ROTATION_180;
++            mLandscapeRotation = Surface.ROTATION_90;
++            mSeascapeRotation = Surface.ROTATION_270;
++            /*
+             if (res.getBoolean(R.bool.config_reverseDefaultRotation)) {
+                 mLandscapeRotation = Surface.ROTATION_270;
+                 mSeascapeRotation = Surface.ROTATION_90;
+@@ -343,6 +355,7 @@ public class DisplayRotation {
+                 mLandscapeRotation = Surface.ROTATION_90;
+                 mSeascapeRotation = Surface.ROTATION_270;
+             }
++            */
+         }
+ 
+         // For demo purposes, allow the rotation of the HDMI display to be controlled.
+@@ -842,8 +855,7 @@ public class DisplayRotation {
+         mDisplayContent.updateOrientation();
+     }
+ 
+-    @VisibleForTesting
+-    void setUserRotation(int userRotationMode, int userRotation) {
++    public void setUserRotation(int userRotationMode, int userRotation) {
+         if (isDefaultDisplay) {
+             // We'll be notified via settings listener, so we don't need to update internal values.
+             final ContentResolver res = mContext.getContentResolver();
+@@ -865,6 +877,7 @@ public class DisplayRotation {
+             mUserRotation = userRotation;
+             changed = true;
+         }
++
+         mDisplayWindowSettings.setUserRotation(mDisplayContent, userRotationMode,
+                 userRotation);
+         if (changed) {
+@@ -1134,13 +1147,10 @@ public class DisplayRotation {
+             return mUserRotation;
+         }
+ 
+-        int sensorRotation = mOrientationListener != null
+-                ? mOrientationListener.getProposedRotation() // may be -1
+-                : -1;
+-        mLastSensorRotation = sensorRotation;
+-        if (sensorRotation < 0) {
+-            sensorRotation = lastRotation;
+-        }
++        // Not using sensorRotation as we are not taking values from accelerometer so instead using lastRotation.
++        int sensorRotation = lastRotation;
++        if (BST_DEBUG_ORIENTATION)
++            Log.d(TAG, "rotationForOrientation: mUserRotationMode  " + mUserRotationMode + " sensorRotation "  + sensorRotation );
+ 
+         final int lidState = mDisplayPolicy.getLidState();
+         final int dockMode = mDisplayPolicy.getDockMode();
+@@ -1211,6 +1221,10 @@ public class DisplayRotation {
+                 || orientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                 || orientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                 || orientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) {
++
++            if (BST_DEBUG_ORIENTATION)
++                Log.d(TAG, "rotationForOrientation: USER_ROTATION_FREE mUserRotationMode  " + mUserRotationMode) ;
++
+             // Otherwise, use sensor only if requested by the application or enabled
+             // by default for USER or UNSPECIFIED modes.  Does not apply to NOSENSOR.
+             if (sensorRotation != Surface.ROTATION_180
+@@ -1219,6 +1233,8 @@ public class DisplayRotation {
+                     || orientation == ActivityInfo.SCREEN_ORIENTATION_FULL_USER) {
+                 preferredRotation = sensorRotation;
+             } else {
++                // Taking preferredRotation as lastRotation as we want to use the lastRotation
++                // and not the Natural orientation for cases when requested orientation is NO_SENSOR or BEHIND
+                 preferredRotation = lastRotation;
+             }
+         } else if (mUserRotationMode == WindowManagerPolicy.USER_ROTATION_LOCKED
+@@ -1239,9 +1255,15 @@ public class DisplayRotation {
+         } else {
+             // No overriding preference.
+             // We will do exactly what the application asked us to do.
+-            preferredRotation = -1;
++            if (BST_DEBUG_ORIENTATION)
++                Log.d(TAG, "rotationForOrientation default : preferredRotation is lastRotation mUserRotationMode  " + mUserRotationMode + " sensorRotation "  + sensorRotation + " mUserRotation " + mUserRotation);
++            preferredRotation = lastRotation;
+         }
+ 
++        if (BST_DEBUG_ORIENTATION)
++            Log.d(TAG, "rotationForOrientation: mUserRotationMode  " + mUserRotationMode + " sensorRotation "  + sensorRotation + " preferredRotation " + preferredRotation);
++
++
+         switch (orientation) {
+             case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
+                 // Return portrait unless overridden.
+@@ -1296,6 +1318,8 @@ public class DisplayRotation {
+             default:
+                 // For USER, UNSPECIFIED, NOSENSOR, SENSOR and FULL_SENSOR,
+                 // just return the preferred orientation we already calculated.
++                if (BST_DEBUG_ORIENTATION)
++                    Log.d(TAG, "rotationForOrientationLw: in default mUserRotationMode  " + mUserRotationMode + " sensorRotation "  + sensorRotation + " preferredRotation " + preferredRotation);
+                 if (preferredRotation >= 0) {
+                     return preferredRotation;
+                 }
+@@ -1444,6 +1468,11 @@ public class DisplayRotation {
+         }
+     }
+ 
++    public void callOnProposedRotationChanged()
++    {
++        mOrientationListener.callOnProposedRotationChanged();
++    }
++
+     private static String allowAllRotationsToString(int allowAll) {
+         switch (allowAll) {
+             case -1:
+diff --git a/services/core/java/com/android/server/wm/DisplayWindowSettings.java b/services/core/java/com/android/server/wm/DisplayWindowSettings.java
+index c1b6496338a4..a3357544de16 100644
+--- a/services/core/java/com/android/server/wm/DisplayWindowSettings.java
++++ b/services/core/java/com/android/server/wm/DisplayWindowSettings.java
+@@ -265,7 +265,7 @@ class DisplayWindowSettings {
+         final int userRotation = settings.mUserRotation != null
+                 ? settings.mUserRotation : Surface.ROTATION_0;
+         final int mFixedToUserRotation = settings.mFixedToUserRotation != null
+-                ? settings.mFixedToUserRotation : IWindowManager.FIXED_TO_USER_ROTATION_DEFAULT;
++                ? settings.mFixedToUserRotation : IWindowManager.FIXED_TO_USER_ROTATION_DISABLED;
+         dc.getDisplayRotation().restoreSettings(userRotationMode, userRotation,
+                 mFixedToUserRotation);
+ 
+diff --git a/services/core/java/com/android/server/wm/TaskDisplayArea.java b/services/core/java/com/android/server/wm/TaskDisplayArea.java
+index 8ad76a3eb327..2cf7f1c6075a 100644
+--- a/services/core/java/com/android/server/wm/TaskDisplayArea.java
++++ b/services/core/java/com/android/server/wm/TaskDisplayArea.java
+@@ -35,6 +35,7 @@ import static com.android.server.wm.ActivityTaskManagerService.TAG_ROOT_TASK;
+ import static com.android.server.wm.DisplayContent.alwaysCreateRootTask;
+ import static com.android.server.wm.WindowManagerDebugConfig.DEBUG_ROOT_TASK;
+ import static com.android.server.wm.WindowManagerDebugConfig.TAG_WM;
++import static com.android.server.wm.WindowManagerDebugConfig.BST_DEBUG_ORIENTATION;
+ 
+ import android.annotation.ColorInt;
+ import android.annotation.Nullable;
+@@ -636,7 +637,14 @@ final class TaskDisplayArea extends DisplayArea<WindowContainer> {
+     @Override
+     @ScreenOrientation
+     int getOrientation(@ScreenOrientation int candidate) {
+-        final int orientation = super.getOrientation(candidate);
++        int orientation = super.getOrientation(candidate);
++        // BST Changes: START
++        if (BST_DEBUG_ORIENTATION) Slog.d(TAG_WM, "App requested orientation: " + orientation);
++        // Check the orientation that we want to enforce and use that value instead.
++        orientation = mDisplayContent.getBstOrientation(orientation);
++        if (BST_DEBUG_ORIENTATION) Slog.d(TAG_WM, "Changing requested orientation to: " + orientation);
++        // BST Changes: END
++
+         if (!canSpecifyOrientation(orientation)) {
+             mLastOrientationSource = null;
+             // We only respect orientation of the focused TDA, which can be a child of this TDA.
+diff --git a/services/core/java/com/android/server/wm/WindowAnimator.java b/services/core/java/com/android/server/wm/WindowAnimator.java
+index 4a43f4f73eda..caad72712aab 100644
+--- a/services/core/java/com/android/server/wm/WindowAnimator.java
++++ b/services/core/java/com/android/server/wm/WindowAnimator.java
+@@ -26,6 +26,7 @@ import static com.android.server.wm.WindowContainer.AnimationFlags.TRANSITION;
+ import static com.android.server.wm.WindowManagerDebugConfig.DEBUG_WINDOW_TRACE;
+ import static com.android.server.wm.WindowManagerDebugConfig.TAG_WITH_CLASS_NAME;
+ import static com.android.server.wm.WindowManagerDebugConfig.TAG_WM;
++import static com.android.server.wm.WindowSurfacePlacer.SET_UPDATE_ROTATION;
+ 
+ import android.content.Context;
+ import android.os.Trace;
+@@ -33,6 +34,7 @@ import android.util.Slog;
+ import android.util.SparseArray;
+ import android.util.TimeUtils;
+ import android.view.Choreographer;
++import android.view.Surface;
+ import android.view.SurfaceControl;
+ 
+ import com.android.internal.protolog.common.ProtoLog;
+@@ -99,6 +101,13 @@ public class WindowAnimator {
+         service.mAnimationHandler.runWithScissors(
+                 () -> mChoreographer = Choreographer.getSfInstance(), 0 /* timeout */);
+ 
++        /*
++         * Setting default orientation after bootup,
++         * this fixes orientation issues which occur when host's and guest's
++         * orientations go out of sync due to a sudden system_server/zygote crash
++         */
++        mService.sendOrientationToHostAsync(Surface.ROTATION_0);
++
+         mAnimationFrameCallback = frameTimeNs -> {
+             synchronized (mService.mGlobalLock) {
+                 mAnimationFrameCallbackScheduled = false;
+diff --git a/services/core/java/com/android/server/wm/WindowManagerDebugConfig.java b/services/core/java/com/android/server/wm/WindowManagerDebugConfig.java
+index 42b556f77ab6..4ca982ddb4ab 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerDebugConfig.java
++++ b/services/core/java/com/android/server/wm/WindowManagerDebugConfig.java
+@@ -56,4 +56,6 @@ public class WindowManagerDebugConfig {
+     static final boolean SHOW_STACK_CRAWLS = false;
+     static final boolean DEBUG_WINDOW_CROP = false;
+     static final boolean DEBUG_UNKNOWN_APP_VISIBILITY = false;
++
++    static final boolean BST_DEBUG_ORIENTATION = android.os.SystemProperties.getInt("bst.debug.orientation", 0) > 0 ? true : false;
+ }
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 8effb3e37528..61c3b8c8e5ae 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -237,6 +237,7 @@ import android.util.EventLog;
+ import android.util.MergedConfiguration;
+ import android.util.Pair;
+ import android.util.Slog;
++import android.util.Log;
+ import android.util.SparseBooleanArray;
+ import android.util.TimeUtils;
+ import android.util.TypedValue;
+@@ -2062,7 +2063,82 @@ public class WindowManagerService extends IWindowManager.Stub
+     }
+ 
+     public void setBstProposedRotation(int proposedRotation) {
+-        // mPolicy.setBstProposedRotation(proposedRotation);
++        mPolicy.setBstProposedRotation(proposedRotation);
++    }
++
++    /* This function is used to change DPI value of portrait apps at runtime. */
++    private void changeDisplayDensity(int density) {
++         boolean isCustomDpiApp = false;
++         String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
++         isCustomDpiApp = mBstFilterApps.isCustomDpiApp(topPackageName);
++
++         if (!isCustomDpiApp && density > 0)
++         {
++             Slog.i(TAG, "Not Changing default density value for app : " + topPackageName + " isCustomDpiApp: " + isCustomDpiApp + " density : " + density);
++             return;
++         }
++
++         if (density > 0 && (density < 120 || density > 320)) {
++             Slog.i(TAG, "Invalid density value : " + density);
++             return;
++         }
++
++         try {
++             int initialDensity = getInitialDisplayDensity(Display.DEFAULT_DISPLAY);
++             int currDensity = getBaseDisplayDensity(Display.DEFAULT_DISPLAY);
++
++            /*
++             if (BST_DEBUG_ORIENTATION)
++                Slog.d(TAG, "initialDensity = " + initialDensity + " currDensity = " + currDensity + " requested density = " + density);
++            */
++
++             if (density < 0 && initialDensity != currDensity)
++             {
++                 Slog.i(TAG, "resetting default display density");
++                 clearForcedDisplayDensityForUser(Display.DEFAULT_DISPLAY, UserHandle.USER_CURRENT);
++             }
++             else if (density > 0 && currDensity != density)
++             {
++                 Slog.i(TAG, "setting density from " + currDensity + " to " + density);
++                 setForcedDisplayDensityForUser(Display.DEFAULT_DISPLAY, density, UserHandle.USER_CURRENT);
++             }
++         } catch (Exception e) {
++             Slog.i(TAG, "Exception in changing setting density to " + density);
++             e.printStackTrace();
++         }
++     }
++
++    /**
++     * Send Orientation update to HOST
++     */
++    public void sendOrientationToHostAsync(final int rotation) {
++        try {
++
++            Slog.d(TAG, "sendOrientationToHostAsync: calling BstHostCallManagerService onOrientationChange method, orientation: " + rotation);
++            int rval = mBstHostCallManagerService.onOrientationChange(rotation);
++            Slog.d(TAG, "sendOrientationToHostAsync: BstHostCallManagerService onOrientationChange method returned: " + rval);
++            if (rval != 0) {
++                Slog.i(TAG, "Failed to send Host Orientation request -- WindowsFrontend: " + rval);
++            } else {
++                //TODO: Need to handle dpi only for portrait mode apps.
++                /*
++                if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
++                    int initialDensity = getInitialDisplayDensity(Display.DEFAULT_DISPLAY);
++                    if (initialDensity <= 192) {
++                        // Portrait app on mdpi, change system DPI to 240 for better readability
++                        changeDisplayDensity(240);
++                    }
++                } else {
++                    // Switching back to Landscape app, resetting DPI value
++                    changeDisplayDensity(-1);
++                }
++                */
++            }
++        } catch (Exception exc) {
++            Log.e(TAG, "Cannot send orientation to host: " + exc.getMessage());
++            exc.printStackTrace();
++        }
++        return;
+     }
+ 
+     void removeWindow(Session session, IWindow client) {
+@@ -4317,7 +4393,6 @@ public class WindowManagerService extends IWindowManager.Stub
+         Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "updateRotation");
+ 
+         final long origId = Binder.clearCallingIdentity();
+-
+         try {
+             synchronized (mGlobalLock) {
+                 boolean layoutNeeded = false;
+@@ -4339,6 +4414,7 @@ public class WindowManagerService extends IWindowManager.Stub
+                             || displayContent.mTransitionController.isCollecting());
+                     // Even if alwaysSend, we are waiting for a transition or remote to provide
+                     // updated configuration, so we can't update configuration yet.
++
+                     if (!pendingRemoteDisplayChange) {
+                         // The layout-needed flag will be set if there is a rotation change, so
+                         // only set it if the caller requests to force relayout.
+diff --git a/services/core/java/com/android/server/wm/WindowOrientationListener.java b/services/core/java/com/android/server/wm/WindowOrientationListener.java
+index 3e165e442d79..7204e762efd4 100644
+--- a/services/core/java/com/android/server/wm/WindowOrientationListener.java
++++ b/services/core/java/com/android/server/wm/WindowOrientationListener.java
+@@ -87,6 +87,7 @@ public abstract class WindowOrientationListener {
+     private final Context mContext;
+ 
+     private final Object mLock = new Object();
++    private static int mBstProposedRotation = 0;
+ 
+     /**
+      * Creates a new WindowOrientationListener.
+@@ -245,6 +246,10 @@ public abstract class WindowOrientationListener {
+         }
+     }
+ 
++    public void callOnProposedRotationChanged() {
++        onProposedRotationChanged(mBstProposedRotation);
++    }
++
+     /**
+      * Gets the proposed rotation.
+      *
+@@ -254,12 +259,15 @@ public abstract class WindowOrientationListener {
+      * @return The proposed rotation, or -1 if unknown.
+      */
+     public int getProposedRotation() {
++        return mBstProposedRotation;
++        /*
+         synchronized (mLock) {
+             if (mEnabled) {
+                 return mOrientationJudge.getProposedRotationLocked();
+             }
+             return -1;
+         }
++        */
+     }
+ 
+     /**

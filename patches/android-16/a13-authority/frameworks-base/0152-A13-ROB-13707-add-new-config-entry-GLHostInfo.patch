@@ -1,0 +1,129 @@
+From 2925d4250fbd66fe413f04581dbce5d0b36586e5 Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Mon, 30 Sep 2024 12:11:45 +0800
+Subject: [PATCH 152/224] [A13] ROB-13707, add new config entry GLHostInfo
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 16 +++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 48 +++++++++++++++++++
+ 3 files changed, 65 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index d605f8bab8b9..8113a45a2b4b 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1767,4 +1767,20 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * Provide app specific GLHostInfo value if entry exists in config.db
++     * @hide
++     */
++    public String getGLHostInfo(String pkgName)
++    {
++        try {
++            return mService.getGLHostInfo(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return "";
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index c727708915c4..2ef91be399b9 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -114,4 +114,5 @@ interface IBstFilterAppsService
+     boolean isIgnoreSyncTimeout(String pkgName);
+     boolean isGLVBOCacheDisableApp(String pkgName);
+     boolean isBlockEditWhenComposing(String pkgName);
++    String getGLHostInfo(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 2301e902f675..528e02b84980 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -187,6 +187,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mIgnoreSyncTimeoutAppList = new TreeSet<String>();
+     private Set<String>           mGLVBOCacheDisableAppList = new TreeSet<String>();
+     private Set<String>           mBlockEditWhenComposingAppList = new TreeSet<String>();
++    private Map<String, String>   mGLHostInfoList = new HashMap<String, String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2551,6 +2552,17 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mBlockEditWhenComposingAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("GLHostInfo")) {
++                                    synchronized (mGLHostInfoList) {
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + ";" + value + " to GLHostInfoList \n");
++                                        mGLHostInfoList.put(packageName, value);
++                                        if (packageName.startsWith("~")) {
++                                            mGLHostInfoList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mGLHostInfoList,pkgException,value);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3222,11 +3234,17 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         {
+             mGLVBOCacheDisableAppList.clear();
+         }
++
+         synchronized (mBlockEditWhenComposingAppList)
+         {
+             mBlockEditWhenComposingAppList.clear();
+         }
+ 
++        synchronized (mGLHostInfoList)
++        {
++           mGLHostInfoList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7295,4 +7313,34 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * getGLHostInfo value for app
++     * @hide
++     */
++    public String getGLHostInfo(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GLHostInfo list\n");
++        initLists();
++        String res = "";
++        synchronized (mGLHostInfoList)
++        {
++            if (mGLHostInfoList.containsKey(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in GLHostInfo List\n");
++                res = mGLHostInfoList.get(pkgName);
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGLHostInfoList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in GLHostInfo List\n");
++                    res = mGLHostInfoList.get(wildcardMatchedPackageName);
++                }
++            }
++        }
++        return res;
++    }
++
+ }

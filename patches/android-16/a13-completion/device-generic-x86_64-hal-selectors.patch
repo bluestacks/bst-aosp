@@ -1,0 +1,18 @@
+diff --git a/android_x86_64.mk b/android_x86_64.mk
+index 745d4c8..f9fe4aa 100644
+--- a/android_x86_64.mk
++++ b/android_x86_64.mk
+@@ -24,7 +24,12 @@ PRODUCT_PACKAGES += \
+ 
+ PRODUCT_PROPERTY_OVERRIDES += \
+     ro.hardware.gralloc=bst \
+-    ro.hardware.egl=emulation
++    ro.hardware.egl=emulation \
++    ro.hardware.audio.primary=bst \
++    ro.hardware.camera=bst \
++    ro.hardware.lights=bst \
++    ro.hardware.memtrack=bst \
++    ro.hardware.power=bst
+ 
+ # Preserve the validated AOSP16 qvirt policy on the Windows product. Android
+ # 16 enforces this globally; keeping it here documents the board-level source.

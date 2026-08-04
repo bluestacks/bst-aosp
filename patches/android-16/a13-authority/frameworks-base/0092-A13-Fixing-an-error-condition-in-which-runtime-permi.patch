@@ -1,0 +1,38 @@
+From 32e00be272f0c2ed5fd6e471856d4bad31f5c1ef Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Sat, 25 Nov 2023 21:03:33 +0800
+Subject: [PATCH 092/224] [A13]Fixing an error condition, in which
+ runtime-permissions.xml gets corrupted
+
+We try to delete the file, this file is created again, In case of exception this results in boot failure, as this exception propogates upwards and PackageManagerService fails to start resulting in crash of system server
+---
+ .../core/java/com/android/server/pm/Settings.java | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/services/core/java/com/android/server/pm/Settings.java b/services/core/java/com/android/server/pm/Settings.java
+index cfd029346340..9093b853f2c5 100644
+--- a/services/core/java/com/android/server/pm/Settings.java
++++ b/services/core/java/com/android/server/pm/Settings.java
+@@ -5815,10 +5815,19 @@ public final class Settings implements Watchable, Snappable {
+                     final TypedXmlPullParser parser = Xml.resolvePullParser(in);
+                     parseLegacyRuntimePermissions(parser, userId, packageStates, sharedUsers);
+ 
+-                } catch (XmlPullParserException | IOException e) {
++                } catch (XmlPullParserException e) {
++                    // In case of xml parse exception, we try to delete the file, this file is
++                    // created again. In case of exception this results in boot failure, as this
++                    // exception propogates upwards and PackageManagerService fails to start,
++                    // resulting in crash of system server.
++                    Slog.e(PackageManagerService.TAG,"Failed parsing permissions file: "
++                            + permissionsFile);
++                    e.printStackTrace();
++                    deleteUserRuntimePermissionsFile(userId);
++                } catch (IOException e) {
+                     throw new IllegalStateException("Failed parsing permissions file: "
+-                            + permissionsFile, e);
+-                } finally {
++                            + permissionsFile , e);
++                }finally {
+                     IoUtils.closeQuietly(in);
+                 }
+             }

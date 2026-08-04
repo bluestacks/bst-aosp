@@ -1,0 +1,27 @@
+From 9fd68594cac52e33aa449c1ef447c9584ec9137b Mon Sep 17 00:00:00 2001
+From: "yongda.yang" <yongda.yang@bluestacks.com>
+Date: Fri, 28 Mar 2025 16:59:02 +0800
+Subject: [PATCH 177/224] ROB-15980:Fix RuneScape text is zoomed out.
+
+---
+ core/java/android/content/res/ResourcesImpl.java | 4 ++++
+ 1 file changed, 4 insertions(+)
+ mode change 100644 => 100755 core/java/android/content/res/ResourcesImpl.java
+
+diff --git a/core/java/android/content/res/ResourcesImpl.java b/core/java/android/content/res/ResourcesImpl.java
+old mode 100644
+new mode 100755
+index 128086b4f31f..52523b24c721
+--- a/core/java/android/content/res/ResourcesImpl.java
++++ b/core/java/android/content/res/ResourcesImpl.java
+@@ -196,6 +196,10 @@ public class ResourcesImpl {
+     DisplayMetrics getDisplayMetrics() {
+         if (DEBUG_CONFIG) Slog.v(TAG, "Returning DisplayMetrics: " + mMetrics.widthPixels
+                 + "x" + mMetrics.heightPixels + " " + mMetrics.density);
++        String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
++        if(topPackageName != null && topPackageName.equals("com.jagex.runescape.android")) {
++            mMetrics.xdpi = mMetrics.ydpi = mMetrics.densityDpi;
++        }
+         return mMetrics;
+     }
+ 

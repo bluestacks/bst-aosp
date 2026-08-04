@@ -1,0 +1,141 @@
+From ca629bb1f72b0a1d6a17f68588f7aa89d53ab0b2 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Mon, 20 Nov 2023 17:46:20 +0800
+Subject: [PATCH 096/224] [A13] 6203 Not populating bluestacks package specific
+ info when some 3rd
+
+---
+ .../com/android/server/IntentResolver.java    | 13 +++++
+ .../pm/resolution/ComponentResolver.java      | 53 +++++++++++++++++++
+ 2 files changed, 66 insertions(+)
+
+diff --git a/services/core/java/com/android/server/IntentResolver.java b/services/core/java/com/android/server/IntentResolver.java
+index c375c73124da..8cbbe89384bf 100644
+--- a/services/core/java/com/android/server/IntentResolver.java
++++ b/services/core/java/com/android/server/IntentResolver.java
+@@ -593,6 +593,10 @@ public abstract class IntentResolver<F, R extends Object> {
+      */
+     protected abstract boolean isPackageForFilter(String packageName, F filter);
+ 
++    protected boolean isBluestacksFilter(F Filter, List<R> dest) {
++        return false;
++    }
++
+     protected abstract F[] newArray(int size);
+ 
+     @SuppressWarnings("unchecked")
+@@ -805,6 +809,15 @@ public abstract class IntentResolver<F, R extends Object> {
+             int match;
+             if (debug) Slog.v(TAG, "Matching against filter " + filter);
+ 
++            // try to retrieve initially if some app is querying intent info for bluestacks specific package
++            // return value:
++            // false: when not asking for bluestacks specific info
++            // true: when asking for bluestacks specific info
++            if (isBluestacksFilter(filter, dest)) {
++                if (debug) Slog.v(TAG, "querying for bluestack info filter: " + filter);
++                continue;
++            }
++
+             if (excludingStopped && isFilterStopped(computer.getPackageStateInternal(packageName),
+                     userId)) {
+                 if (debug) {
+diff --git a/services/core/java/com/android/server/pm/resolution/ComponentResolver.java b/services/core/java/com/android/server/pm/resolution/ComponentResolver.java
+index 7baec6217e2e..914a4242589c 100644
+--- a/services/core/java/com/android/server/pm/resolution/ComponentResolver.java
++++ b/services/core/java/com/android/server/pm/resolution/ComponentResolver.java
+@@ -25,6 +25,7 @@ import android.annotation.NonNull;
+ import android.annotation.Nullable;
+ import android.annotation.UserIdInt;
+ import android.content.ComponentName;
++import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
+ import android.content.pm.ActivityInfo;
+@@ -37,6 +38,7 @@ import android.content.pm.ResolveInfo;
+ import android.content.pm.ServiceInfo;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.DebugUtils;
+ import android.util.Log;
+ import android.util.LogPrinter;
+@@ -67,6 +69,12 @@ import com.android.server.pm.snapshot.PackageDataSnapshot;
+ import com.android.server.utils.Snappable;
+ import com.android.server.utils.SnapshotCache;
+ 
++import android.os.Binder;
++import android.os.Process;
++import android.os.ServiceManager;
++import static android.os.Trace.TRACE_TAG_PACKAGE_MANAGER;
++import android.os.Trace;
++
+ import java.io.PrintWriter;
+ import java.util.ArrayList;
+ import java.util.Collection;
+@@ -78,6 +86,8 @@ import java.util.Objects;
+ import java.util.Set;
+ import java.util.function.Function;
+ 
++import com.bluestacks.os.IBstFilterAppsService;
++
+ /** Resolves all Android component types [activities, services, providers and receivers]. */
+ public class ComponentResolver extends ComponentResolverLocked implements
+         Snappable<ComponentResolverApi> {
+@@ -86,6 +96,8 @@ public class ComponentResolver extends ComponentResolverLocked implements
+     private static final boolean DEBUG_FILTERS = false;
+     private static final boolean DEBUG_SHOW_INFO = false;
+ 
++    static IBstFilterAppsService mBstfilter;
++
+     // Convenience function to report that this object has changed.
+     private void onChanged() {
+         dispatchChange(this);
+@@ -1073,6 +1085,47 @@ public class ComponentResolver extends ComponentResolverLocked implements
+             return true;
+         }
+ 
++        @Override
++        protected boolean isBluestacksFilter(Pair<ParsedActivity, ParsedIntentInfo> filter, List<ResolveInfo> dest) {
++
++            Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "isBluestacksFilter");
++
++            ParsedActivity parsedActivity = filter.first;
++            String packageName = parsedActivity.getPackageName();
++            int uid = Binder.getCallingUid();
++            // This function is to tell IntentResolver if this check has filter for intents related to bluestacks packages
++            // being queried by some app. If yes, we return true to prevent bluestacks packages from being listed.
++
++            if (uid >= 10000 && packageName != null && packageName.startsWith("com.bluestacks")) {
++                if (uid != Process.SYSTEM_UID) {
++                    int pid = Binder.getCallingPid();
++                    String callingPackage = BstUtils.getAppNameFromPid(pid);
++                    boolean isHideFromPkg = false;
++
++                    try {
++                        if (mBstfilter == null)
++                            mBstfilter = IBstFilterAppsService.Stub.asInterface(ServiceManager.getService(Context.BST_FILTER_APPS));
++                        isHideFromPkg = mBstfilter.isHideBstActivityInfo(callingPackage);
++                    } catch (Exception e) {
++                        e.printStackTrace();
++                    }
++
++                    if (isHideFromPkg) {
++                        boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(uid, callingPackage);
++
++                        if (DEBUG_SHOW_INFO)
++                            Log.v(TAG, "pkg: " + callingPackage + " asking for: " + parsedActivity.getName() + "  pkg:" + packageName);
++
++                        if (BstUtils.hideBlueStacksPkg(packageName, isAppPrivileged)) {
++                            return true;
++                        }
++                    }
++                }
++            }
++            Trace.traceEnd(TRACE_TAG_PACKAGE_MANAGER);
++            return false;
++        }
++
+         @Override
+         protected Pair<ParsedActivity, ParsedIntentInfo>[] newArray(int size) {
+             //noinspection unchecked

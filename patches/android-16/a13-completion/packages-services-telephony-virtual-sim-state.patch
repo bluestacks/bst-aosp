@@ -1,0 +1,28 @@
+From 5d2c366658ee6222d1d7d1fc8d71f17937e78e06 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Sat, 1 Aug 2026 19:24:46 +0800
+Subject: [PATCH] [A16] Report the virtual SIM as ready
+
+---
+ src/com/android/phone/PhoneInterfaceManager.java | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/com/android/phone/PhoneInterfaceManager.java b/src/com/android/phone/PhoneInterfaceManager.java
+index 1e3695c4a..edbd4546d 100644
+--- a/src/com/android/phone/PhoneInterfaceManager.java
++++ b/src/com/android/phone/PhoneInterfaceManager.java
+@@ -12382,6 +12382,11 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
+                     PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION, "getSimStateForSlotIndex");
+         }
+ 
++        if (slotIndex == 0
++                && SystemProperties.getBoolean("bst.config.enable_telephony", true)) {
++            return IccCardConstants.State.READY.ordinal();
++        }
++
+         IccCardConstants.State simState;
+         if (slotIndex < 0) {
+             simState = IccCardConstants.State.UNKNOWN;
+-- 
+2.34.1
+

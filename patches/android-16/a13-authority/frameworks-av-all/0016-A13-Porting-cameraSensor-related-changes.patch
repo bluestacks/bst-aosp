@@ -1,0 +1,90 @@
+From fb533516826a5bfadaece13a0612f7af5eb3b508 Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Thu, 9 Nov 2023 10:15:49 +0800
+Subject: [PATCH 16/21] [A13] Porting cameraSensor related changes
+
+---
+ .../camera/libcameraservice/CameraService.cpp | 15 ++++++++++++-
+ .../common/CameraProviderManager.cpp          | 22 +++++++++++++++++++
+ 2 files changed, 36 insertions(+), 1 deletion(-)
+
+diff --git a/services/camera/libcameraservice/CameraService.cpp b/services/camera/libcameraservice/CameraService.cpp
+index 3f8a0317e1..276450e111 100644
+--- a/services/camera/libcameraservice/CameraService.cpp
++++ b/services/camera/libcameraservice/CameraService.cpp
+@@ -78,6 +78,10 @@
+ #include "utils/CameraThreadState.h"
+ #include "utils/CameraServiceProxyWrapper.h"
+ 
++#include <binder/IPCThreadState.h>
++#include <binder/BstFilterAppsManager.h>
++#include <binder/BstUtilsManager.h>
++
+ namespace {
+     const char* kPermissionServiceName = "permission";
+ }; // namespace anonymous
+@@ -711,6 +715,15 @@ Status CameraService::getCameraInfo(int cameraId, bool overrideToPortrait,
+                 "CameraId is not valid");
+     }
+ 
++    int pid = IPCThreadState::self()->getCallingPid();
++    BstUtilsManager butilmanager;
++    String16 pkgname = butilmanager.getAppNameFromPid(pid);
++    BstFilterAppsManager bfam;
++    char angle[PROPERTY_VALUE_MAX] = {0};
++    sprintf(angle, "%d", bfam.getCameraSensorRotation(pkgname));
++    property_set("bst.config.camera_sensor_rotation", angle);
++    property_set("bst.config.camera_pkgname_name", String8(pkgname).string());
++
+     Status ret = Status::ok();
+     int portraitRotation;
+     status_t err = mCameraProviderManager->getCameraInfo(
+@@ -722,7 +735,7 @@ Status CameraService::getCameraInfo(int cameraId, bool overrideToPortrait,
+         logServiceError(String8::format("Error retrieving camera info from device %d",cameraId),
+             ERROR_INVALID_OPERATION);
+     }
+-
++    cameraInfo->orientation = atoi(angle) % 1000 % 360;
+     return ret;
+ }
+ 
+diff --git a/services/camera/libcameraservice/common/CameraProviderManager.cpp b/services/camera/libcameraservice/common/CameraProviderManager.cpp
+index 3132787608..7f1880edbb 100644
+--- a/services/camera/libcameraservice/common/CameraProviderManager.cpp
++++ b/services/camera/libcameraservice/common/CameraProviderManager.cpp
+@@ -44,6 +44,11 @@
+ #include "api2/HeicCompositeStream.h"
+ #include "device3/ZoomRatioMapper.h"
+ 
++#include <binder/IPCThreadState.h>
++#include <binder/BstFilterAppsManager.h>
++#include <binder/BstUtilsManager.h>
++
++
+ namespace android {
+ 
+ using namespace ::android::hardware::camera;
+@@ -2406,6 +2411,23 @@ status_t CameraProviderManager::ProviderInfo::DeviceInfo3::getCameraCharacterist
+         }
+     }
+ 
++    int pid = IPCThreadState::self()->getCallingPid();
++    BstUtilsManager butilmanager;
++    String16 pkgname = butilmanager.getAppNameFromPid(pid);
++    BstFilterAppsManager bfam;
++    int32_t angle = bfam.getCameraSensorRotation(pkgname);
++    int32_t android_sensor_orientation[] = {(angle % 1000 % 360)};
++    if (android_sensor_orientation[0] > 0)  {
++        auto orientation =
++            mCameraCharacteristics.find(ANDROID_SENSOR_ORIENTATION);
++        if (orientation.count == 1) {
++           // CameraMetadata* pMetadata = &mCameraCharacteristics;
++           characteristics->update((uint32_t)ANDROID_SENSOR_ORIENTATION,
++            (const int32_t *)android_sensor_orientation,
++             (size_t)ARRAY_SIZE(android_sensor_orientation));
++        }
++    }
++
+     return OK;
+ }
+ 

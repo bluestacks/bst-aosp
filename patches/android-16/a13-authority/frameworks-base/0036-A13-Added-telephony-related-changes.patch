@@ -1,0 +1,406 @@
+From ea9b2779bfbc07734c989aac1147ba1cc09bc0a2 Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Mon, 23 Oct 2023 17:00:49 +0800
+Subject: [PATCH 036/224] [A13] Added telephony related changes
+
+---
+ .../java/android/telephony/ServiceState.java  |   4 +
+ .../telephony/SubscriptionManager.java        |  23 +++
+ .../android/telephony/TelephonyManager.java   | 172 ++++++++++++++++--
+ 3 files changed, 180 insertions(+), 19 deletions(-)
+
+diff --git a/telephony/java/android/telephony/ServiceState.java b/telephony/java/android/telephony/ServiceState.java
+index 6fe9bf97c5c3..3bbf04ef8369 100644
+--- a/telephony/java/android/telephony/ServiceState.java
++++ b/telephony/java/android/telephony/ServiceState.java
+@@ -366,6 +366,7 @@ public class ServiceState implements Parcelable {
+     private String mOperatorAlphaShortRaw;
+     private boolean mIsDataRoamingFromRegistration;
+     private boolean mIsIwlanPreferred;
++    private static boolean BST_CHANGES_ENABLED = (android.os.SystemProperties.getInt("bst.config.modify_nwtype", 1) > 0 ? true : false);
+ 
+     /**
+      * get String description of roaming type
+@@ -1772,6 +1773,9 @@ public class ServiceState implements Parcelable {
+      */
+     @TestApi
+     public @NetworkType int getDataNetworkType() {
++        if (BST_CHANGES_ENABLED) {
++            return TelephonyManager.NETWORK_TYPE_LTE;
++        }
+         final NetworkRegistrationInfo iwlanRegInfo = getNetworkRegistrationInfo(
+                 NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WLAN);
+         final NetworkRegistrationInfo wwanRegInfo = getNetworkRegistrationInfo(
+diff --git a/telephony/java/android/telephony/SubscriptionManager.java b/telephony/java/android/telephony/SubscriptionManager.java
+index 79fc0e8db6c3..5ce9cc27f7be 100644
+--- a/telephony/java/android/telephony/SubscriptionManager.java
++++ b/telephony/java/android/telephony/SubscriptionManager.java
+@@ -54,6 +54,7 @@ import android.os.Looper;
+ import android.os.ParcelUuid;
+ import android.os.Process;
+ import android.os.RemoteException;
++import android.os.SystemProperties;
+ import android.provider.Telephony.SimInfo;
+ import android.telephony.euicc.EuiccManager;
+ import android.telephony.ims.ImsMmTelManager;
+@@ -99,6 +100,9 @@ public class SubscriptionManager {
+     private static final boolean DBG = false;
+     private static final boolean VDBG = false;
+ 
++    /** @hide */
++    public static final boolean BST_TELEPHONY_CHANGES_ENABLED = true;
++
+     /** An invalid subscription identifier */
+     public static final int INVALID_SUBSCRIPTION_ID = -1;
+ 
+@@ -2124,6 +2128,10 @@ public class SubscriptionManager {
+      * subscriptionId doesn't have an associated slot index.
+      */
+     public static int getSlotIndex(int subscriptionId) {
++        if (BST_TELEPHONY_CHANGES_ENABLED && subscriptionId == 1) {
++            return 0;
++        }
++
+         return sSlotIndexCache.query(subscriptionId);
+     }
+ 
+@@ -2163,6 +2171,10 @@ public class SubscriptionManager {
+     /** @hide */
+     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
+     public static int getPhoneId(int subId) {
++        if (BST_TELEPHONY_CHANGES_ENABLED && subId == 1) {
++            return 0;
++        }
++
+         return sPhoneIdCache.query(subId);
+     }
+ 
+@@ -2184,6 +2196,10 @@ public class SubscriptionManager {
+      * @return the "system" default subscription id.
+      */
+     public static int getDefaultSubscriptionId() {
++        if (BST_TELEPHONY_CHANGES_ENABLED) {
++            return 1;
++        }
++
+         return sDefaultSubIdCache.query(null);
+     }
+ 
+@@ -2450,6 +2466,13 @@ public class SubscriptionManager {
+         return phoneId >= 0 && phoneId < TelephonyManager.getDefault().getActiveModemCount();
+     }
+ 
++    /**
++     * @hide
++     */
++    public static int getBstDefaultSubId() {
++        return 1;
++    }
++
+     /** @hide */
+     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
+     public static void putPhoneIdAndSubIdExtra(Intent intent, int phoneId) {
+diff --git a/telephony/java/android/telephony/TelephonyManager.java b/telephony/java/android/telephony/TelephonyManager.java
+index ecd8c7a3d917..e65ce485d329 100644
+--- a/telephony/java/android/telephony/TelephonyManager.java
++++ b/telephony/java/android/telephony/TelephonyManager.java
+@@ -71,6 +71,8 @@ import android.os.RemoteException;
+ import android.os.ResultReceiver;
+ import android.os.SystemProperties;
+ import android.os.WorkSource;
++import android.graphics.Bitmap;
++import android.graphics.BitmapFactory;
+ import android.provider.Settings.SettingNotFoundException;
+ import android.service.carrier.CarrierIdentifier;
+ import android.service.carrier.CarrierService;
+@@ -126,7 +128,14 @@ import com.android.internal.telephony.OperatorInfo;
+ import com.android.internal.telephony.PhoneConstants;
+ import com.android.internal.telephony.RILConstants;
+ import com.android.internal.telephony.SmsApplication;
++import com.android.internal.telephony.TelephonyPermissions;
+ import com.android.telephony.Rlog;
++import android.util.BstUtils;
++import android.provider.Settings.Secure;
++import java.security.MessageDigest;
++
++import static android.Manifest.permission.READ_PHONE_STATE;
++import static android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE;
+ 
+ import java.io.IOException;
+ import java.io.InputStream;
+@@ -181,6 +190,10 @@ import java.util.stream.IntStream;
+ public class TelephonyManager {
+     private static final String TAG = "TelephonyManager";
+ 
++    private static final boolean DBG = true;
++    /** @hide */
++    public static final boolean BST_TELEPHONY_CHANGES_ENABLED = true;
++
+     private TelephonyRegistryManager mTelephonyRegistryMgr;
+     /**
+      * To expand the error codes for {@link TelephonyManager#updateAvailableNetworks} and
+@@ -190,6 +203,12 @@ public class TelephonyManager {
+     @EnabledAfter(targetSdkVersion = Build.VERSION_CODES.Q)
+     private static final long CALLBACK_ON_MORE_ERROR_CODE_CHANGE = 130595455L;
+ 
++    private static final String PROPERTY_OPERATOR_ALPHA = "gsm.operator.alpha";
++    private static final String PROPERTY_OPERATOR_NUMERIC = "gsm.operator.numeric";
++    private static final String PROPERTY_ICC_OPERATOR_ALPHA = "gsm.sim.operator.alpha";
++    private static final String PROPERTY_ICC_OPERATOR_ISO_COUNTRY = "gsm.sim.operator.iso-country";
++    private static final String PROPERTY_ICC_OPERATOR_NUMERIC = "gsm.sim.operator.numeric";
++
+     /**
+      * The key to use when placing the result of {@link #requestModemActivityInfo(ResultReceiver)}
+      * into the ResultReceiver Bundle.
+@@ -345,6 +364,9 @@ public class TelephonyManager {
+     private SubscriptionManager mSubscriptionManager;
+     private TelephonyScanManager mTelephonyScanManager;
+ 
++    /** @hide */
++    public static  SubscriptionInfo mBstSubscriptionInfo = null;
++
+     /** Cached service handles, cleared by resetServiceHandles() at death */
+     private static final Object sCacheLock = new Object();
+ 
+@@ -430,6 +452,10 @@ public class TelephonyManager {
+         mContext = mergeAttributionAndRenouncedPermissions(context.getApplicationContext(),
+             context);
+         mSubscriptionManager = SubscriptionManager.from(mContext);
++        if (mBstSubscriptionInfo == null && mContext != null) {
++            Log.d(TAG, "creating subscriptionInfo Record, context : " + mContext);
++            createSubInfoInstance();
++        }
+     }
+ 
+     /** @hide */
+@@ -441,6 +467,39 @@ public class TelephonyManager {
+ 
+     private static TelephonyManager sInstance = new TelephonyManager();
+ 
++    // This function creates an instance of SubscriptionInfo which is the only Subscription Record we have.
++    // This record is returned every time we call getActiveSubscriptionInfoList and getAllSubInfoList functions.
++    private void createSubInfoInstance() {
++        int mId = 1;
++        Bitmap mIcon = null;
++        String mIccId = null;
++        try {
++            mIccId = BstUtils.getBstSimSerialNumber();
++        } catch(Exception ex) {
++            mIccId = null;
++        }
++        int mSimSlotIndex = 0;
++        CharSequence mDisplayName = "SIM 1";
++        CharSequence mCarrierName = getNetworkOperatorName();
++        int mNameSource = 0;
++        int mIconTint = -16777216;
++        String mNumber = null;
++        int mRoaming = 0;
++        String mNetworkOperator = getNetworkOperator();
++        int mcc = Integer.parseInt(mNetworkOperator.substring(0, 3));
++        int mnc = Integer.parseInt(mNetworkOperator.substring(3, mNetworkOperator.length()));
++        String mMcc = Integer.toString(mcc);
++        String mMnc = Integer.toString(mnc);
++        String mCountryIso = getNetworkCountryIso();
++        mIcon = BitmapFactory.decodeResource(mContext.getResources(),
++                com.android.internal.R.drawable.ic_sim_card_multi_24px_clr);
++        //Log.d(TAG, "The values are : mId = " + mId + ", mIccId = " + mIccId + ", mSimSlotIndex = "  + mSimSlotIndex + ", mDisplayName = " + mDisplayName + ", mCarrierName = "  + mCarrierName + ", mNameSource = " + mNameSource + ", mIconTint = " + mIconTint   + ", mNumber = " + mNumber + ", mRoaming = " + mRoaming + ", mMcc = " + mMcc + ", mMnc = " + mMnc + ", mCountryIso = " + mCountryIso);
++        mBstSubscriptionInfo = new SubscriptionInfo(mId, mIccId, mSimSlotIndex, mDisplayName,
++                mCarrierName, mNameSource, mIconTint, mNumber, mRoaming, mIcon, mMcc, mMnc, mCountryIso, false, null, null);
++        if (DBG) Log.d(TAG, "mBstSubscriptionInfo = " + mBstSubscriptionInfo);
++        return;
++    }
++
+     /** @hide
+     /* @deprecated - use getSystemService as described above */
+     @Deprecated
+@@ -1985,7 +2044,20 @@ public class TelephonyManager {
+             android.Manifest.permission.READ_BASIC_PHONE_STATE})
+     @Nullable
+     public String getDeviceSoftwareVersion() {
+-        return getDeviceSoftwareVersion(getSlotIndex());
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getDeviceSoftwareVersion(getSlotIndex());
++        } else {
++            /* Since Bluestacks don't have any GSM or CDMA chips, we are faking this value and
++             * sending the response as "01"
++             * */
++            String callingPackage = mContext.getOpPackageName();
++            int uid = Binder.getCallingUid();
++            int pid = Binder.getCallingPid();
++            if (mContext != null && !TelephonyPermissions.checkReadPhoneState(mContext, mSubId, pid, uid, callingPackage, null, "getDeviceSoftwareVersion")) {
++                return null;
++            }
++            return "01";
++        }
+     }
+ 
+     /**
+@@ -2483,16 +2555,23 @@ public class TelephonyManager {
+     @Deprecated
+     @RequiresPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+     public List<NeighboringCellInfo> getNeighboringCellInfo() {
+-        try {
+-            ITelephony telephony = getITelephony();
+-            if (telephony == null)
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            try {
++                ITelephony telephony = getITelephony();
++                if (telephony == null)
++                    return null;
++                return telephony.getNeighboringCellInfo(mContext.getOpPackageName(),
++                        mContext.getAttributionTag());
++            } catch (RemoteException ex) {
+                 return null;
+-            return telephony.getNeighboringCellInfo(mContext.getOpPackageName(),
+-                    mContext.getAttributionTag());
+-        } catch (RemoteException ex) {
+-            return null;
+-        } catch (NullPointerException ex) {
+-            return null;
++            } catch (NullPointerException ex) {
++                return null;
++            }
++        } else {
++            //XXX - Retuning empty cell info, to match this behavior with
++            //real phone
++            ArrayList<NeighboringCellInfo> cells = new ArrayList();
++            return (List <NeighboringCellInfo>) cells;
+         }
+     }
+ 
+@@ -2706,7 +2785,11 @@ public class TelephonyManager {
+      */
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+     public String getNetworkOperatorName() {
+-        return getNetworkOperatorName(getSubId());
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getNetworkOperatorName(getSubId());
++        } else {
++            return SystemProperties.get(PROPERTY_OPERATOR_ALPHA, "T-Mobile");
++        }
+     }
+ 
+     /**
+@@ -2734,7 +2817,11 @@ public class TelephonyManager {
+      */
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+     public String getNetworkOperator() {
+-        return getNetworkOperatorForPhone(getPhoneId());
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getNetworkOperatorForPhone(getPhoneId());
++        } else {
++            return SystemProperties.get(PROPERTY_OPERATOR_NUMERIC, "310260");
++        }
+     }
+ 
+     /**
+@@ -2849,7 +2936,11 @@ public class TelephonyManager {
+      */
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+     public String getNetworkCountryIso() {
+-        return getNetworkCountryIso(getSlotIndex());
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getNetworkCountryIso(getSlotIndex());
++        } else {
++            return SystemProperties.get(PROPERTY_ICC_OPERATOR_ISO_COUNTRY, "us");
++        }
+     }
+ 
+     /**
+@@ -3476,7 +3567,12 @@ public class TelephonyManager {
+      */
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION)
+     public boolean hasIccCard() {
+-        return hasIccCard(getSlotIndex());
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return hasIccCard(getSlotIndex());
++        } else {
++            //XXX - return this value even though we don't have ICC card
++            return true;
++        }
+     }
+ 
+     /**
+@@ -3808,7 +3904,11 @@ public class TelephonyManager {
+      */
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION)
+     public String getSimOperator() {
+-        return getSimOperatorNumeric();
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getSimOperatorNumeric();
++        } else {
++            return SystemProperties.get(PROPERTY_ICC_OPERATOR_NUMERIC, "310260");
++        }
+     }
+ 
+     /**
+@@ -3893,7 +3993,11 @@ public class TelephonyManager {
+      */
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION)
+     public String getSimOperatorName() {
+-        return getSimOperatorNameForPhone(getPhoneId());
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getSimOperatorNameForPhone(getPhoneId());
++        } else {
++            return SystemProperties.get(PROPERTY_ICC_OPERATOR_ALPHA, "");
++        }
+     }
+ 
+     /**
+@@ -3931,7 +4035,11 @@ public class TelephonyManager {
+      */
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION)
+     public String getSimCountryIso() {
+-        return getSimCountryIsoForPhone(getPhoneId());
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getSimCountryIsoForPhone(getPhoneId());
++        } else {
++            return SystemProperties.get(PROPERTY_ICC_OPERATOR_ISO_COUNTRY, "");
++        }
+     }
+ 
+     /**
+@@ -5029,7 +5137,21 @@ public class TelephonyManager {
+             android.Manifest.permission.READ_PHONE_NUMBERS
+     })
+     public String getLine1Number() {
+-        return getLine1Number(getSubId());
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getLine1Number(getSubId());
++        } else {
++            // Creating fake MSISDN number over here as we don't have real hardware
++            // Sample MSISD    CC + NDC + Serial Num
++            // Returning an empty string over here as this field is not MUST set and
++            // depends upon provider to provider
++            String callingPackage = mContext.getOpPackageName();
++            int uid = Binder.getCallingUid();
++            int pid = Binder.getCallingPid();
++            if (mContext != null && !TelephonyPermissions.checkReadPhoneNumber(mContext, mSubId, pid, uid, callingPackage, null, "getLine1Number")) {
++                return null;
++            }
++            return "";
++        }
+     }
+ 
+     /**
+@@ -5913,7 +6035,19 @@ public class TelephonyManager {
+     @RequiresPermission(android.Manifest.permission.READ_PHONE_STATE)
+     @RequiresFeature(PackageManager.FEATURE_TELEPHONY_CALLING)
+     public String getVoiceMailAlphaTag() {
+-        return getVoiceMailAlphaTag(getSubId());
++        if (!BST_TELEPHONY_CHANGES_ENABLED) {
++            return getVoiceMailAlphaTag(getSubId());
++        } else {
++            //Returning dummy voice mail tag, to match BlueStacks behavior with
++            //real phone
++            String callingPackage = mContext.getOpPackageName();
++            int uid = Binder.getCallingUid();
++            int pid = Binder.getCallingPid();
++            if (mContext != null && !TelephonyPermissions.checkReadPhoneState(mContext, mSubId, pid, uid, callingPackage, null, "getVoiceMailAlphaTag")) {
++                return null;
++            }
++            return "Voicemail";
++        }
+     }
+ 
+     /**

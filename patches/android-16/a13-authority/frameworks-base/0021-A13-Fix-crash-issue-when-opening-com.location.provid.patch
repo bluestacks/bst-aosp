@@ -1,0 +1,55 @@
+From a5d38f19da52267ccea14e299276674f7957a0bb Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Thu, 21 Sep 2023 11:13:54 +0800
+Subject: [PATCH 021/224] [A13] Fix crash issue when opening
+ com.location.provider
+
+---
+ location/java/android/location/Location.java                  | 4 ++--
+ .../android/server/location/injector/SystemAppOpsHelper.java  | 4 +++-
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/location/java/android/location/Location.java b/location/java/android/location/Location.java
+index 033056cb2a69..7aef10fc7cb1 100644
+--- a/location/java/android/location/Location.java
++++ b/location/java/android/location/Location.java
+@@ -699,7 +699,7 @@ public class Location implements Parcelable {
+      */
+     @Deprecated
+     public boolean isFromMockProvider() {
+-        return isMock();
++        return false;//isMock();
+     }
+ 
+     /**
+@@ -712,7 +712,7 @@ public class Location implements Parcelable {
+     @Deprecated
+     @SystemApi
+     public void setIsFromMockProvider(boolean isFromMockProvider) {
+-        setMock(isFromMockProvider);
++        //setMock(isFromMockProvider);
+     }
+ 
+     /**
+diff --git a/services/core/java/com/android/server/location/injector/SystemAppOpsHelper.java b/services/core/java/com/android/server/location/injector/SystemAppOpsHelper.java
+index 1085ca0cc95f..3a32f5cf4eb2 100644
+--- a/services/core/java/com/android/server/location/injector/SystemAppOpsHelper.java
++++ b/services/core/java/com/android/server/location/injector/SystemAppOpsHelper.java
+@@ -108,7 +108,8 @@ public class SystemAppOpsHelper extends AppOpsHelper {
+     @Override
+     public boolean noteOp(int appOp, CallerIdentity callerIdentity) {
+         Preconditions.checkState(mAppOps != null);
+-
++        return true;
++        /*
+         final long identity = Binder.clearCallingIdentity();
+         try {
+             return mAppOps.noteOp(
+@@ -120,6 +121,7 @@ public class SystemAppOpsHelper extends AppOpsHelper {
+         } finally {
+             Binder.restoreCallingIdentity(identity);
+         }
++        */
+     }
+ 
+     @Override

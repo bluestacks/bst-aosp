@@ -1,0 +1,44 @@
+From f650003d0cf05b92d3ed0621b3322279a5f7c1ae Mon Sep 17 00:00:00 2001
+From: michael-bst <michael@bluestacks.com>
+Date: Fri, 24 Oct 2025 10:55:52 +0800
+Subject: [PATCH 203/224] ROB-17750: fix ncsoft emulator detection issue.
+ (#211)
+
+---
+ core/java/android/view/InputDevice.java | 20 +-------------------
+ 1 file changed, 1 insertion(+), 19 deletions(-)
+
+diff --git a/core/java/android/view/InputDevice.java b/core/java/android/view/InputDevice.java
+index 4940432a4096..28df8222f9a9 100755
+--- a/core/java/android/view/InputDevice.java
++++ b/core/java/android/view/InputDevice.java
+@@ -1229,28 +1229,10 @@ public final class InputDevice implements Parcelable {
+         return 0;
+     }
+ 
+-    private String getModifiedDeviceName() {
+-        if (Binder.getCallingUid() < 10000) {
+-            return mName;
+-        }
+-
+-        int pid = Binder.getCallingPid();
+-        String callingApp = BstUtils.getAppNameFromPid(pid);
+-        String modifiedDeviceName = "Synaptics";
+-
+-        if ((mName.toLowerCase().startsWith("bluestacks") || mName.toLowerCase().startsWith("virtualbox")
+-             || mName.toLowerCase().contains("keyboard") || mName.toLowerCase().contains("mouse"))) {
+-                if (callingApp != null && callingApp.contains("lineage2m")) {
+-                    return modifiedDeviceName + "-" + mId;
+-                }
+-        }
+-        return mName;
+-    }
+-
+     @Override
+     public String toString() {
+         StringBuilder description = new StringBuilder();
+-        description.append("Input Device ").append(mId).append(": ").append(getModifiedDeviceName()).append("\n");
++        description.append("Input Device ").append(mId).append(": ").append(getName()).append("\n");
+         description.append("  Descriptor: ").append(mDescriptor).append("\n");
+         description.append("  Generation: ").append(mGeneration).append("\n");
+         description.append("  Location: ").append(mIsExternal ? "external" : "built-in").append("\n");

@@ -1,0 +1,135 @@
+From 004eac79a86f2548bea80ca85e564118626c01c0 Mon Sep 17 00:00:00 2001
+From: hill-bst <71632041+hill-bst@users.noreply.github.com>
+Date: Tue, 10 Feb 2026 17:36:02 +0800
+Subject: [PATCH 218/224] [ROB-18620] Surport NDK translation (#212) (#226)
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp   | 40 +++++++++++++++++++
+ .../server/BstFilterAppsService.java          | 28 +++++++++++++
+ 2 files changed, 68 insertions(+)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index ea85e17a1018..7635eb8ec57b 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -2019,6 +2019,33 @@ static std::string isPackageMatchedWildcard(const std::string& wildcardPkgName,
+     return "";
+ }
+ 
++bool bst_is_ndk_translation_app(const char *calling_pkg)
++{
++#define NDK_TRANSLAION_FILE_PATH "/data/downloads/.tmp/.bstNdkTranslationApps"
++    char *file_buf, *temp, *token;
++    loff_t file_size  = 0;
++    bool ret = false;
++
++    file_buf = _bst_read_small_file(NDK_TRANSLAION_FILE_PATH, &file_size);
++    if (!file_buf || !calling_pkg)
++        goto out;
++
++    // Read app name line by line
++    temp = file_buf;
++    while ((token = strsep(&temp, ";")) != NULL && strlen(token) > 0) {
++        if (strcmp(token, calling_pkg) == 0) {
++            ret = true;
++            break;
++        }
++    }
++
++out:
++    if (file_buf)
++        free(file_buf);
++
++    return ret;
++}
++
+ bool bst_get_memorysize_app(const char *calling_pkg, char *pbuf, int bufsize)
+ {
+ #define MEMORYSIZE_FILE_PATH "/data/downloads/.tmp/.bstMemorySizeApps"
+@@ -2171,6 +2198,19 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+                 ALOGW("Failed to bind-mount %s as /proc/cpuinfo: %s", cpuinfo_path, strerror(errno));
+             }
+         }
++
++        if (uid >= 10000 && bst_is_ndk_translation_app(g_pkgname)) {
++            // Mounting ndk_translation arm64 libs for apps for which "ndk" entry is present in config.db
++            char ndk_translation_arm_path[32] = "/system/lib64/arm64_ndk";
++            if (TEMP_FAILURE_RETRY(mount(ndk_translation_arm_path,        // Source.
++                                    "/system/lib64/arm64", // Target.
++                                    nullptr,               // FS type.
++                                    MS_BIND,               // Mount flags: bind mount.
++                                    nullptr)) == -1) {     // "Data."
++                ALOGW("Failed to bind-mount %s as /system/lib64/arm64: %s", ndk_translation_arm_path, strerror(errno));
++            }
++        }
++
+     }
+ 
+     if (is_system_server) {
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index e62c82e0358b..61676036be5c 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -129,6 +129,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>   	      mAGAGl3AppList = new TreeSet<String>();
+     private HashMap<String, String>  mNSleepSecList = new HashMap<String, String>();
+     private Set<String>  	      mXcpuAppList = new TreeSet<String>();
++    private Set<String>  	      mNdkTranslationAppList = new TreeSet<String>();
+     private Set<String>   	      mAstcAppList = new TreeSet<String>();
+     private Set<String>   	      mPatchRelocAppList = new TreeSet<String>();
+     private Map<String, String>   mPgaGlVersionList = new HashMap<String, String>();
+@@ -235,6 +236,8 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     // To maintain uid;packageName entries for apps
+     private static final String bstXcpuApps = bstMiscFilePath + ".bstXcpuApps";
+     // To maintain uid;packageName entries for apps
++    private static final String bstNdkTranslationApps = bstMiscFilePath + ".bstNdkTranslationApps";
++    // To maintain uid;packageName entries for apps
+     private static final String bstZeroMappedPageApps = bstMiscFilePath + ".bstZeroMappedPageApps";
+     // To maintain uid;packageName entries for apps
+     private static final String bstMemorySizeApps = bstMiscFilePath + ".bstMemorySizeApps";
+@@ -1720,6 +1723,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mXcpuAppList,pkgException);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("ndk"))) {
++                                    synchronized (mNdkTranslationAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to NdkTranslationAppList \n");
++                                        mNdkTranslationAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from NdkTranslationAppList \n");
++                                            mNdkTranslationAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mNdkTranslationAppList,pkgException);
++                                    }
++                                }
+                                 else if ((key.equalsIgnoreCase("astc"))) {
+                                     synchronized (mAstcAppList) {
+                                         if (value.equalsIgnoreCase("false")) {
+@@ -2830,6 +2849,9 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             // dump the mXcpuAppList to a persistent file.
+             writeTreeSetWithString(bstXcpuApps, mXcpuAppList);
+ 
++            // dump the mNdkTranslationAppList to a persistent file.
++            writeTreeSetWithString(bstNdkTranslationApps, mNdkTranslationAppList);
++
+             // dump the mZeroMappedPageAppList to a persistent file.
+             writeTreeSetWithString(bstZeroMappedPageApps, mZeroMappedPageAppList);
+ 
+@@ -3160,6 +3182,12 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+            mXcpuAppList.clear();
+         }
+ 
++        //clear old NdkTranslationAppList
++        synchronized (mNdkTranslationAppList)
++        {
++           mNdkTranslationAppList.clear();
++        }
++
+         /* clear old mAstcAppList */
+         synchronized (mAstcAppList)
+         {

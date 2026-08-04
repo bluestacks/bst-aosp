@@ -1,0 +1,37 @@
+From ce5d67fa66f1f56450a22f274ccc39a6207108a6 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 02:46:57 +0800
+Subject: [PATCH] [A16] Unroll DSCP policy matching
+
+Source: A13 packages/modules/Connectivity 56a3aff5be6304f88eba2fcdee09cde8ad42fd5c.
+
+Purpose: preserve the App Player optimization that fully unrolls the bounded DSCP policy scan, reducing eBPF verifier work when the policy program is loaded.
+
+Adaptation: apply the pragma to A16 bpf/progs/dscpPolicy.c, where the A13 bpf_progs/dscp_policy.c loop moved and was otherwise refactored.
+
+Necessity: the A16 merge did not contain this directive, so the A13 BPF loading optimization was absent.
+
+Performance: trades a larger generated BPF instruction stream for lower verifier loop-analysis cost; the per-packet matching semantics and MAX_POLICIES bound are unchanged.
+
+Security: no policy acceptance or packet mutation semantics change.
+
+Validation: dscpPolicy.o compiled with -Werror; APEX and system copies are byte-identical with SHA-256 6796c9c678c6134130bf8e8cd549081783c4264dd2fd687f5541b8e7f8ff74f2.
+---
+ bpf/progs/dscpPolicy.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/bpf/progs/dscpPolicy.c b/bpf/progs/dscpPolicy.c
+index 8b98b78a3c..4dec1810e2 100644
+--- a/bpf/progs/dscpPolicy.c
++++ b/bpf/progs/dscpPolicy.c
+@@ -162,6 +162,7 @@ static inline __always_inline void match_policy(struct __sk_buff* skb, const boo
+     uint64_t best_score = 0;
+     int8_t new_dscp = -1;  // meaning no mutation
+ 
++#pragma unroll
+     for (register uint64_t i = 0; i < MAX_POLICIES; i++) {
+         // Using a uint64 in for loop prevents infinite loop during BPF load,
+         // but the key is uint32, so convert back.
+-- 
+2.34.1
+

@@ -1,0 +1,23 @@
+From 5c509c6e1185ce0a5681c664337c9b501b589b3d Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Sat, 25 Nov 2023 21:21:24 +0800
+Subject: [PATCH 095/224] [A13] Allowing all apps to query com.android.vending
+ && gg.now.billing.service2
+
+---
+ core/res/res/values/config.xml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index 276420390979..0b21a7aeb02e 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -1745,6 +1745,8 @@
+     <string-array name="config_forceQueryablePackages" translatable="false">
+         <item>com.android.settings</item>
+         <item>com.android.providers.settings</item>
++        <item>com.android.vending</item>
++        <item>gg.now.billing.service2</item>
+         <!-- Add packages here -->
+     </string-array>
+ 

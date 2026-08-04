@@ -1,0 +1,52 @@
+From e29170951312050239b479b68ead5d81c7f6a784 Mon Sep 17 00:00:00 2001
+From: hill-bst <71632041+hill-bst@users.noreply.github.com>
+Date: Fri, 22 Aug 2025 15:28:00 +0800
+Subject: [PATCH] Merge pull request #17 from hill-bst/bst-v5.22.100-gmsPatch
+
+[ROB-17315] safetynet detection
+---
+ runtime/jni/jni_internal.cc | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+ mode change 100644 => 100755 runtime/jni/jni_internal.cc
+
+diff --git a/runtime/jni/jni_internal.cc b/runtime/jni/jni_internal.cc
+old mode 100644
+new mode 100755
+index b881419e84..645575bc3c
+--- a/runtime/jni/jni_internal.cc
++++ b/runtime/jni/jni_internal.cc
+@@ -2557,6 +2557,10 @@ class JNI {
+     return env->NewByteArray(0);
+   }
+ 
++  static jbyteArray hooked_ssNative2(JNIEnv* env, jobject jo ATTRIBUTE_UNUSED, jlong handle ATTRIBUTE_UNUSED, jobjectArray arr ATTRIBUTE_UNUSED, jobject bundle ATTRIBUTE_UNUSED) {
++    return env->NewByteArray(0);
++  }
++
+   /**
+   * check if droidguard hook is disabled.
+   */
+@@ -2713,14 +2717,18 @@ class JNI {
+         // ROB-8705: hook com.google.ccc.abuse.droidguard.DroidGuard.ssNative() and return an empty byte array
+         // to temporary fix device incompatible error .
+         constexpr const char pat[] = "byte[] com.google.ccc.abuse.droidguard.DroidGuard.ssNative(long, java.lang.String[])";
++        constexpr const char pat2[] = "byte[] com.google.ccc.abuse.droidguard.DroidGuard.ssNative(long, java.lang.String[], android.os.Bundle)";
+         constexpr auto patlen = sizeof(pat) - 1;
++        constexpr auto patlen2 = sizeof(pat2) - 1;
+ 
+         const auto& str = m->PrettyMethod();
+         const bool is_equal = str.size() == patlen && memcmp(str.data(), pat, patlen) == 0;
+-        if (is_equal) {
++        const bool is_equal2 = str.size() == patlen2 && memcmp(str.data(), pat2, patlen2) == 0;
++        if (is_equal || is_equal2) {
+           static bool enable_hook = !bst_is_dhdg(env, getuid());
+           if (enable_hook) {
+-            fnPtr = (const void*)hooked_ssNative;
++            if (is_equal) fnPtr = (const void*)hooked_ssNative;
++            if (is_equal2) fnPtr = (const void*)hooked_ssNative2;
+           }
+         }
+       }
+-- 
+2.34.1
+

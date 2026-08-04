@@ -1,0 +1,65 @@
+From 63d2d5dd4d754df03194962da0cc05913df37413 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 20:32:38 +0800
+Subject: [PATCH 1/2] [A16] Restore the FFmpeg media packages
+
+---
+ packages.mk | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/packages.mk b/packages.mk
+index 0fbd7e6..195818b 100755
+--- a/packages.mk
++++ b/packages.mk
+@@ -76,12 +76,12 @@ PRODUCT_PACKAGES += \
+     hciconfig \
+     hcitool \
+ 
+-# Stagefright FFMPEG plugins (A16 需 libva/链接适配，打 ISO 时先关闭)
+-# PRODUCT_PACKAGES += \
+-#     i965_drv_video \
+-#     libffmpeg_extractor \
+-#     libffmpeg_omx \
+-#     media_codecs_ffmpeg.xml
++# Stagefright FFMPEG plugins
++PRODUCT_PACKAGES += \
++    i965_drv_video \
++    libffmpeg_extractor \
++    libffmpeg_omx \
++    media_codecs_ffmpeg.xml
+ 
+ # BS-A16: Use com.uncube.launcher3 as default home app.
+ # Remove AOSP Launcher3 to avoid HOME activity conflict on first boot.
+@@ -120,4 +120,3 @@ PRODUCT_HOST_PACKAGES := \
+ PRODUCT_PACKAGES_DEBUG := \
+     com.bluestacks.BstCommandProcessor \
+     com.bluestacks.settings \
+-
+-- 
+2.34.1
+
+
+From 76b4525dc9473485221c2e6b80b6dddb11fa4b38 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 20:44:49 +0800
+Subject: [PATCH 2/2] [A16] Package badblocks in the guest image
+
+---
+ packages.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/packages.mk b/packages.mk
+index 195818b..4fbad25 100755
+--- a/packages.mk
++++ b/packages.mk
+@@ -58,6 +58,7 @@ PRODUCT_PACKAGES += \
+     wpa_supplicant.conf \
+ 
+ PRODUCT_PACKAGES += \
++    badblocks \
+     e2fsck \
+     fsck.exfat \
+     fsck.f2fs \
+-- 
+2.34.1
+

@@ -1,0 +1,59 @@
+From a27e7747610d957ad59ef3b17c8a81aefecf4d3b Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 28 Nov 2023 10:17:11 +0800
+Subject: [PATCH 097/224] [A13] ROB-8174: Instagram: Video/reels flips upside
+ down issue
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 31 +++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index a44a5b638b0d..404939c98f96 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -1844,6 +1844,28 @@ static void BindMountStorageDirs(JNIEnv* env, jobjectArray pkg_data_info_list,
+   }
+ }
+ 
++static int BstPatchForInstagram(const char* pkgname) {
++    if (pkgname != NULL) {
++        if (!strcmp(pkgname, "com.instagram.android")) {
++            DIR* dir = opendir("/data/data/com.instagram.android/databases");
++            if (!dir) {
++                return 0;
++            }
++
++            struct dirent* entry;
++            while ((entry = readdir(dir)) != nullptr) {
++                const char* name = entry->d_name;
++                if(strstr(name, "reel_media")) {
++                    property_set("instagram_reel_media", "1");
++                    break;
++                }
++            }
++            closedir(dir);
++        }
++    }
++    return 0;
++}
++
+ static char g_pkgname[256];
+ 
+ static inline void init_pkgname(const char* app_data_dir_in)
+@@ -2054,6 +2076,15 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+         }
+     }
+ 
++    if (uid >= 10000) {
++        int size = (pkg_data_info_list != nullptr) ? env->GetArrayLength(pkg_data_info_list) : 0;
++        if (size > 0) {
++            jstring package_str = (jstring) (env->GetObjectArrayElement(pkg_data_info_list, 0));
++            std::string packageName = extract_fn(package_str).value();
++            BstPatchForInstagram(packageName.c_str());
++      }
++    }
++
+     /*
+      * If SetGid is called from bluestacks wrapper function, no need to call it again.
+      * Our wrapper function will add READPROC(3009) group to process group list

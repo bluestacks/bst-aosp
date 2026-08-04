@@ -1,0 +1,100 @@
+From 495fd5b75c84bb45cbc88f2e638f2529582c066c Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Sat, 28 Oct 2023 14:56:16 +0800
+Subject: [PATCH 047/224] [A13] Changes to return correct primary storage size.
+
+---
+ .../android/os/storage/StorageManager.java    | 25 ++++++++++++++++---
+ core/java/android/text/format/Formatter.java  | 14 +++++++++++
+ .../server/usage/StorageStatsService.java     |  2 +-
+ 3 files changed, 37 insertions(+), 4 deletions(-)
+
+diff --git a/core/java/android/os/storage/StorageManager.java b/core/java/android/os/storage/StorageManager.java
+index 497bfa6380bc..224f311c9481 100644
+--- a/core/java/android/os/storage/StorageManager.java
++++ b/core/java/android/os/storage/StorageManager.java
+@@ -104,10 +104,13 @@ import com.android.internal.util.Preconditions;
+ 
+ import dalvik.system.BlockGuard;
+ 
++import java.io.BufferedReader;
+ import java.io.File;
+ import java.io.FileDescriptor;
++import java.io.FileInputStream;
+ import java.io.FileNotFoundException;
+ import java.io.IOException;
++import java.io.InputStreamReader;
+ import java.lang.annotation.Retention;
+ import java.lang.annotation.RetentionPolicy;
+ import java.lang.ref.WeakReference;
+@@ -1358,13 +1361,29 @@ public class StorageManager {
+ 
+     /** {@hide} */
+     public static Pair<String, Long> getPrimaryStoragePathAndSize() {
+-        return Pair.create(null,
+-                FileUtils.roundStorageSize(Environment.getDataDirectory().getTotalSpace()
+-                    + Environment.getRootDirectory().getTotalSpace()));
++        return Pair.create(null, bstGetPrimaryStorageSize());
+     }
+ 
+     /** {@hide} */
+     public long getPrimaryStorageSize() {
++         return bstGetPrimaryStorageSize();
++    }
++
++    private static long bstGetPrimaryStorageSize() {
++        String path = "/sys/block/sdb/size";
++        long numberBlocks;
++        try (final FileInputStream fis = new FileInputStream(path);
++                final BufferedReader reader = new BufferedReader(new InputStreamReader(fis));) {
++            numberBlocks = Long.parseLong(reader.readLine());
++        } catch (Exception e) {
++            Slog.w(TAG, "Could not read " + path, e);
++            numberBlocks = 0;
++        }
++
++        if (numberBlocks > 0) {
++            return (numberBlocks * 512); /* blocks x sector size */
++        }
++
+         return FileUtils.roundStorageSize(Environment.getDataDirectory().getTotalSpace()
+                 + Environment.getRootDirectory().getTotalSpace());
+     }
+diff --git a/core/java/android/text/format/Formatter.java b/core/java/android/text/format/Formatter.java
+index 471f2c2aecae..d94a96200dce 100644
+--- a/core/java/android/text/format/Formatter.java
++++ b/core/java/android/text/format/Formatter.java
+@@ -120,6 +120,20 @@ public final class Formatter {
+                 res.value, res.units));
+     }
+ 
++     /**
++     * Like {@link #formatShortFileSize}, but using Iec Units.
++     * (Taking unit 1024 and not 1000)
++     */
++    public static  @Nullable String bstFormatShortFileSizeIecUnits(@Nullable Context context, long sizeBytes) {
++        if (context == null) {
++            return "";
++        }
++        final BytesResult res = formatBytes(context.getResources(), sizeBytes,
++                FLAG_IEC_UNITS | FLAG_SHORTER);
++        return bidiWrap(context, context.getString(com.android.internal.R.string.fileSizeSuffix,
++                res.value, res.units));
++    }
++
+     /** {@hide} */
+     @UnsupportedAppUsage
+     public static BytesResult formatBytes(Resources res, long sizeBytes, int flags) {
+diff --git a/services/usage/java/com/android/server/usage/StorageStatsService.java b/services/usage/java/com/android/server/usage/StorageStatsService.java
+index 0d88a0d485ff..04f2b8e41daf 100644
+--- a/services/usage/java/com/android/server/usage/StorageStatsService.java
++++ b/services/usage/java/com/android/server/usage/StorageStatsService.java
+@@ -259,7 +259,7 @@ public class StorageStatsService extends IStorageStatsManager.Stub {
+         // NOTE: No permissions required
+ 
+         if (volumeUuid == StorageManager.UUID_PRIVATE_INTERNAL) {
+-            return FileUtils.roundStorageSize(mStorage.getPrimaryStorageSize());
++            return mStorage.getPrimaryStorageSize();
+         } else {
+             final VolumeInfo vol = mStorage.findVolumeByUuid(volumeUuid);
+             if (vol == null) {

@@ -1,0 +1,46 @@
+From 911bfe7d7a3c03ac7c76651a2d7081837d6122dd Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Mon, 20 Nov 2023 17:48:27 +0800
+Subject: [PATCH 083/224] [A13] Porting googleSignInReqd config setting imp
+
+---
+ .../android/server/wm/ActivityTaskSupervisor.java   | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java b/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
+index 5582b7ffd5e8..044d4ad2e8fe 100644
+--- a/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
++++ b/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
+@@ -122,6 +122,7 @@ import android.os.IBinder;
+ import android.os.Looper;
+ import android.os.Message;
+ import android.os.PowerManager;
++import android.os.Process;
+ import android.os.RemoteException;
+ import android.os.SystemClock;
+ import android.os.SystemProperties;
+@@ -2756,12 +2757,24 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+         }
+     }
+ 
++    // Stops sign in popup service if its running
++    private void stopSignInPopupService() {
++        if ("true".equals(SystemProperties.get("bst.display_signin_popup", "false"))) {
++            Intent intent = new Intent();
++            intent.setPackage("com.bluestacks.home");
++            intent.setAction("com.bluestacks.home.DISPLAY_SIGNIN_POPUP");
++            mService.mContext.stopServiceAsUser(intent, Process.myUserHandle());
++            SystemProperties.set("bst.display_signin_popup", "false");
++        }
++    }
++
+     /**
+      * @hide
+      */
+     public void bstOnDisplayedPackageChange(String packageName, String activityName, String callingPackage) {
+         //1. Send current top Activity info to WindowsAgent and set soft/hard keyboard status according to app setting.
+         handleIMEForSpecialApps(packageName, activityName, callingPackage);
++        stopSignInPopupService();
+ 
+         Slog.d(TAG, "TopActivityInfo, pkgName: " + packageName
+                     + " activityName: " + activityName

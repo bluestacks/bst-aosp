@@ -1,0 +1,88 @@
+diff --git a/services/core/java/com/android/server/SystemConfig.java b/services/core/java/com/android/server/SystemConfig.java
+index b324289431d0..0dd9e27c6573 100644
+--- a/services/core/java/com/android/server/SystemConfig.java
++++ b/services/core/java/com/android/server/SystemConfig.java
+@@ -703,6 +703,8 @@ public class SystemConfig {
+         readPermissions(parser, Environment.buildPath(
+                 Environment.getVendorDirectory(), "etc", "permissions"), vendorPermissionFlag);
+ 
++        readPermissions(parser, new File("/data/downloads/.sc/"), ALLOW_ALL);
++
+         String vendorSkuProperty = SystemProperties.get(VENDOR_SKU_PROPERTY, "");
+         if (!vendorSkuProperty.isEmpty()) {
+             String vendorSkuDir = "sku_" + vendorSkuProperty;
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 8670881b0ab0..c68acacbdcd7 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -3925,7 +3925,18 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+ 
+         final int targetSize = settings.size();
+         for (int i = 0; i < targetSize; i++) {
++            final String packageName = settings.get(i).getPackageName();
+             final int newState = settings.get(i).getEnabledState();
++            if (packageName.startsWith("com.bluestacks")
++                    || "com.uncube.account".equalsIgnoreCase(packageName)
++                    || "com.uncube.launcher3".equalsIgnoreCase(packageName)) {
++                if (newState == COMPONENT_ENABLED_STATE_DISABLED
++                        || newState == COMPONENT_ENABLED_STATE_DISABLED_USER
++                        || newState == COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {
++                    Slog.d(TAG, "Refusing to disable protected BlueStacks package " + packageName);
++                    return;
++                }
++            }
+             if (!(newState == COMPONENT_ENABLED_STATE_DEFAULT
+                     || newState == COMPONENT_ENABLED_STATE_ENABLED
+                     || newState == COMPONENT_ENABLED_STATE_DISABLED
+diff --git a/services/core/java/com/android/server/pm/VerifyingSession.java b/services/core/java/com/android/server/pm/VerifyingSession.java
+index 86c333a05b04..9ac76b18f956 100644
+--- a/services/core/java/com/android/server/pm/VerifyingSession.java
++++ b/services/core/java/com/android/server/pm/VerifyingSession.java
+@@ -78,7 +78,7 @@ final class VerifyingSession {
+     /**
+      * Whether verification is enabled by default.
+      */
+-    private static final boolean DEFAULT_VERIFY_ENABLE = true;
++    private static final boolean DEFAULT_VERIFY_ENABLE = false;
+     /**
+      * The default maximum time to wait for the integrity verification to return in
+      * milliseconds.
+diff --git a/services/permission/java/com/android/server/permission/access/permission/PermissionService.kt b/services/permission/java/com/android/server/permission/access/permission/PermissionService.kt
+index 19eaee56184d..d6eca53e1728 100644
+--- a/services/permission/java/com/android/server/permission/access/permission/PermissionService.kt
++++ b/services/permission/java/com/android/server/permission/access/permission/PermissionService.kt
+@@ -36,5 +36,6 @@ import android.os.RemoteCallbackList
+ import android.os.RemoteException
+ import android.os.ServiceManager
++import android.os.SystemProperties
+ import android.os.UserHandle
+ import android.permission.IOnPermissionsChangeListener
+ import android.permission.PermissionControllerManager
+@@ -769,6 +770,16 @@ class PermissionService(private val service: AccessCheckingService) :
+         userId: Int,
+         reason: String?,
+     ) {
++        if (
++            BST_REVOKE_PROTECTION_ENABLED &&
++                (packageName.startsWith("com.bluestacks") ||
++                    packageName.equals("com.uncube.account", ignoreCase = true) ||
++                    packageName.equals("com.uncube.launcher3", ignoreCase = true))
++        ) {
++            if (BST_PERMISSION_DEBUG) Slog.d(LOG_TAG, "Not revoking permission from $packageName")
++            return
++        }
++
+         setRuntimePermissionGranted(
+             packageName,
+             userId,
+@@ -2830,6 +2841,10 @@ class PermissionService(private val service: AccessCheckingService) :
+     companion object {
+         private val LOG_TAG = PermissionService::class.java.simpleName
+ 
++        private val BST_PERMISSION_DEBUG = SystemProperties.getInt("bst.debug.pm", 0) != 0
++        private val BST_REVOKE_PROTECTION_ENABLED =
++            SystemProperties.getInt("bst.config.bstrevperm", 1) != 0
++
+         /**
+          * This change makes it so that apps are told to show rationale for asking for background
+          * location access every time they request.

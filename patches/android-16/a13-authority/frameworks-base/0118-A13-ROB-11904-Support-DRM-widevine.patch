@@ -1,0 +1,129 @@
+From a7ddfae8cf3070ff44fc17723a29cba04b9de27d Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 7 Mar 2024 13:46:42 +0800
+Subject: [PATCH 118/224] [A13]ROB-11904: Support DRM widevine
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 16 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 53 +++++++++++++++++++
+ 3 files changed, 70 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 2fa35437af39..9566f79fd3bd 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1648,4 +1648,20 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isDrmEnabled(String pkgName)
++    {
++        try {
++            return mService.isDrmEnabled(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 28ce0de96bcb..1640f884fd52 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -106,4 +106,5 @@ interface IBstFilterAppsService
+     boolean isGLProgramBinaryApp(String pkgName);
+     boolean isGLUnmapBufferPerfApp(String pkgName);
+     String getGLShaderWorkaround(String pkgName);
++    boolean isDrmEnabled(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 3a76518d32ea..ce3949b01cc7 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -177,6 +177,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mGLProgramBinaryAppList = new TreeSet<String>();
+     private Set<String>           mGLUnmapBufferPerfAppList = new TreeSet<String>();
+     private Map<String, String>   mGLShaderWorkaroundList = new HashMap<String, String>();
++    private Set<String>           mDrmEnabledAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2388,6 +2389,23 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mGLShaderWorkaroundList,pkgException,value);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("drm"))) {
++                                    synchronized (mDrmEnabledAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding packageName :" + packageName + " to mDrmEnabledAppList\n");
++
++                                        mDrmEnabledAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mDrmEnabledAppList\n");
++                                                mDrmEnabledAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mDrmEnabledAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3030,6 +3048,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+            mGLShaderWorkaroundList.clear();
+         }
+ 
++        synchronized (mDrmEnabledAppList)
++        {
++            mDrmEnabledAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -6854,4 +6877,34 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         if (DEBUG) Slog.d(TAG, pkgName + " is not in mOneStorePayAppList App List\n");
+         return false;
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isDrmEnabled(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mDrmEnabledAppList app list\n");
++        initLists();
++
++        synchronized (mDrmEnabledAppList)
++        {
++            if (mDrmEnabledAppList.contains(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mDrmEnabledAppList App List\n");
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mDrmEnabledAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mDrmEnabledAppList App List\n");
++                    return true;
++                }
++            }
++        }
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mDrmEnabledAppList App List\n");
++        return false;
++    }
++
+ }

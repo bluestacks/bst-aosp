@@ -1,0 +1,69 @@
+From 7ac9438d727a7654d17357155551f49f9f116b5e Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Mon, 3 Aug 2026 19:50:03 +0800
+Subject: [PATCH] [A16] Restore Facebook login orientation lock
+
+Port A13 256a00581cc0 onto the Android 16 orientation pipeline. Reuse the existing fbscreenlock service contract and retain the launching game orientation while Facebook or the Google credential picker is visible.
+---
+ .../com/android/server/wm/DisplayContent.java | 35 +++++++++++++++++--
+ 1 file changed, 33 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index c6acfd73a4c6..bb1a8f3866b0 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -3025,6 +3025,9 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+         return orientation;
+     }
+ 
++    private static volatile boolean sBstLoginScreenOrientationLocked;
++    private static volatile int sBstLoginScreenOrientation = SCREEN_ORIENTATION_LANDSCAPE;
++
+     /** Applies the BlueStacks per-app orientation policy to an app request. */
+     @ScreenOrientation
+     int getBstOrientation(@ScreenOrientation int requestedOrientation) {
+@@ -3040,11 +3043,39 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+             return SCREEN_ORIENTATION_PORTRAIT;
+         }
+ 
++        // Keep Facebook and the Google credential picker aligned with the game that launched them.
++        final boolean isLoginScreen = "com.facebook.katana".equals(topPackage)
++                || "com.google.android.gms/.auth.api.credentials.ui.CredentialPickerActivity"
++                        .equals(topActivity);
++        if (!isLoginScreen) {
++            sBstLoginScreenOrientationLocked = false;
++        }
++
++        final String callingPackage = android.os.SystemProperties.get(
++                "bst.config.calling_package", "");
++        final boolean shouldLockLoginScreen = mWmService.mBstFilterApps != null
++                && mWmService.mBstFilterApps.isFbScreenLockApp(callingPackage);
++        if (isLoginScreen
++                && (sBstLoginScreenOrientationLocked || shouldLockLoginScreen)) {
++            if (!sBstLoginScreenOrientationLocked) {
++                sBstLoginScreenOrientationLocked = true;
++                sBstLoginScreenOrientation = getBstOrientationForPackage(
++                        requestedOrientation, callingPackage);
++            }
++            return sBstLoginScreenOrientation;
++        }
++
++        return getBstOrientationForPackage(requestedOrientation, topPackage);
++    }
++
++    @ScreenOrientation
++    private int getBstOrientationForPackage(@ScreenOrientation int requestedOrientation,
++            String packageName) {
+         if (mWmService.mBstFilterApps != null) {
+-            if (mWmService.mBstFilterApps.isSmallScreenApp(topPackage)) {
++            if (mWmService.mBstFilterApps.isSmallScreenApp(packageName)) {
+                 return SCREEN_ORIENTATION_PORTRAIT;
+             }
+-            if (mWmService.mBstFilterApps.isPortraitDisabled(topPackage)) {
++            if (mWmService.mBstFilterApps.isPortraitDisabled(packageName)) {
+                 return SCREEN_ORIENTATION_LANDSCAPE;
+             }
+         }
+-- 
+2.34.1
+

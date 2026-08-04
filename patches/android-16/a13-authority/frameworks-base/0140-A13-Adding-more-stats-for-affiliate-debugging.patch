@@ -1,0 +1,664 @@
+From 507819b7d8fee50894d4e9489c1f21def3a59fc8 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 26 Apr 2024 18:00:56 +0800
+Subject: [PATCH 140/224] [A13] Adding more stats for affiliate debugging
+
+---
+ core/java/android/os/BaseBundle.java | 241 ++++++++++++++++++++++-----
+ core/java/android/util/BstUtils.java | 105 ++++++++----
+ 2 files changed, 273 insertions(+), 73 deletions(-)
+
+diff --git a/core/java/android/os/BaseBundle.java b/core/java/android/os/BaseBundle.java
+index f4384d65ca0c..ad1fae1d389f 100644
+--- a/core/java/android/os/BaseBundle.java
++++ b/core/java/android/os/BaseBundle.java
+@@ -40,6 +40,9 @@ import java.io.File;
+ import java.io.FileInputStream;
+ import java.io.FileReader;
+ import java.io.FileWriter;
++import android.os.FileUtils;
++import java.io.PrintWriter;
++import java.io.StringWriter;
+ import java.io.ObjectInputStream;
+ import java.lang.Math;
+ import java.lang.ref.WeakReference;
+@@ -91,6 +94,9 @@ public class BaseBundle {
+     private static HashMap<String, ArrayList<Long>> mBstInstallTimeList = new HashMap<String, ArrayList<Long>>();
+     //stores the actual and the modified values.
+     private static HashMap<String, String> mBstReferralModDataList = new HashMap<String, String>();
++    //stores if we have sent the stat for that package, so that we don't send the stat again and again
++    private static HashMap<String, Boolean> mBstStatSendList = new HashMap<String, Boolean>();
++
+     //It stores the referral data for stat.
+      private static final String affiliateFilePath = "/data/downloads/.aff/";
+ 
+@@ -101,6 +107,10 @@ public class BaseBundle {
+     private static final String bstInstallTimeListPath = affiliateFilePath + ".pit";
+     //It stores the list containing referral related data.
+     private static final String bstAppReferralListPath = affiliateFilePath + ".fl";
++    //It stores data for event app_install_referrer_request
++    private static final String bstAppInstallReferrerReqStatPath = affiliateFilePath + ".airr";
++
++    private static final int mBstAffiliateTestingValue = SystemProperties.getInt("bst.debug.affiliate.test", 0);
+ 
+     /**
+      * Set global variable indicating that any Bundles parsed in this process should be "defused".
+@@ -1308,24 +1318,39 @@ public class BaseBundle {
+     // then referrer_click_timestamp_seconds and install_begin_timestamp_seconds should be computed accordingly.
+     private String bstAffiliateHack(String key, String orig_value) {
+         String value = orig_value;
++        JSONObject miscdata = new JSONObject();
++        String packageName = null;
+         try {
+             if ("referrer_click_timestamp_seconds".equals(key)
+                     || "referrer_click_timestamp_server_seconds".equals(key)
+                     || "install_begin_timestamp_seconds".equals(key)
+                     || "install_begin_timestamp_server_seconds".equals(key)
+                     || "install_referrer".equals(key)) {
+-
+                 /** Initialize all the variables */
+-                int maxDelayInstallBegin = 5;
+-                long firstInstallTime = 0L;
+-                String statFilePath = null;
+-                JSONObject referralDataObj = new JSONObject();
+-                ArrayList<Long> pkgInstallTimeData = null;
+-                boolean addMiscData = false;
+-                JSONObject miscdata = new JSONObject();
+-
+                 int pid = Binder.getCallingPid();
+-                String packageName = BstUtils.getAppNameFromPid(pid);
++                packageName = BstUtils.getAppNameFromPid(pid);
++               //sending event app_install_referrer_request by saving to file and read by FileObserver in BstCommandProcessor
++                if (key.equals("install_referrer") && SystemProperties.getInt("bst.feature.send_offer_stats", 0) >= 2) {
++                    File installReferrerStatFile = new File(bstAppInstallReferrerReqStatPath);
++                    JSONObject object = new JSONObject();
++                    object.put("event_name", "app_install_referrer_request");
++                    object.put("pkg_name", packageName);
++                    object.put("orig_install_referrer", value);
++                    object.put("current_system_time", System.currentTimeMillis()/1000);
++                    object.put("boot_system_time", (System.currentTimeMillis() - SystemClock.elapsedRealtime())/1000);
++                    HashMap<String, String> map = new HashMap<String, String>();
++                    map.put("data", object.toString());
++                    boolean result = BstUtils.writeListToFile(map, bstAppInstallReferrerReqStatPath);
++                }
++                int maxDelayInstallBegin            = 5;
++                long firstInstallTime               = 0L;
++                String statFilePath                 = null;
++                JSONObject referralDataObj          = new JSONObject();
++                ArrayList<Long> pkgInstallTimeData  = null;
++                boolean addMiscData                 = false;
++
++                if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "PackageName : " + packageName);
++                miscdata.put("pkgName", packageName);
+ 
+                 /** Loading the lists */
+                 mBstReferralInstallTimeList = (HashMap<String,String>) BstUtils.loadListFromFile(bstAppReferralListPath, mBstReferralInstallTimeList);
+@@ -1338,11 +1363,29 @@ public class BaseBundle {
+                 long origInstallBeginServer = Long.parseLong(mMap.get("install_begin_timestamp_server_seconds").toString());
+                 long origInstallBegin = Long.parseLong(mMap.get("install_begin_timestamp_seconds").toString());
+ 
++                miscdata.put("origInstallReferrer", origInstallReferrer);
++                miscdata.put("origReferrerClick", origReferrerClick);
++                miscdata.put("origReferrerClickServer", origReferrerClickServer);
++                miscdata.put("origInstallBegin", origInstallBegin);
++                miscdata.put("origInstallBeginServer", origInstallBeginServer);
++
+                 /** Check if we want to modify the referrer values for the package */
+                 String response = BstUtils.bstModifyReferrerApiValues(packageName, pid, mBstReferralInstallTimeList, mBstInstallTimeList, origInstallReferrer);
+                 JSONObject respObj = new JSONObject(response);
++                miscdata.put("bstUtil-Response", response);
++
++                //modifyReferrerValues is always true for affiliate apps
+                 boolean modifyReferrerValues = respObj.optBoolean("success", false);
+-                boolean sendOtherStat = respObj.optBoolean("sendStat", false);
++
++                //sendOtherStat is true if we are not modifying values due to some reason.
++                boolean sendOtherStat = false;
++                if (!modifyReferrerValues) {
++                    // If referrer is not present then send stat only if bst.feature.send_offer_stats is greater than 0.
++                    if (SystemProperties.getInt("bst.feature.send_offer_stats", 0) <= 0 && respObj.optString("reason", "").equals("referrerNotPresent"))
++                        sendOtherStat = false;
++                    else
++                        sendOtherStat = true;
++                }
+ 
+                 if (BST_DEBUG) {
+                     Log.d(BST_REFERRAL_TAG, "package = " + packageName + ", key = " + key + ", modifyValues = " + modifyReferrerValues);
+@@ -1356,24 +1399,35 @@ public class BaseBundle {
+                 long modInstallBeginServer = origInstallBeginServer;
+                 long modInstallBegin = origInstallBegin;
+ 
+-                if (!modifyReferrerValues && !sendOtherStat) {
+-                    // Not modifying referrer values.
+-                    return orig_value;
+-                } else if (modifyReferrerValues) {
++                if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "modifyReferrerValues : " + modifyReferrerValues
++                        + " sendOtherStat : " + sendOtherStat);
++
++                // we need to modify the values
++                if (modifyReferrerValues) {
+                     String referralData = mBstReferralInstallTimeList.getOrDefault(packageName, "{}");
+                     referralDataObj = new JSONObject(referralData);
+ 
+                     String modDataFilePath = referralDataObj.optString("mod_data_file_path", "");
++
+                     File modDataFile = new File(modDataFilePath);
+                     String modDataJson = null;
++
++                    if (mBstAffiliateTestingValue == 9) {
++                        modDataFile = null;
++                    }
++
+                     if (modDataFile == null || !modDataFile.exists()) {
+-                        if (BST_DEBUG) Log.w(BST_REFERRAL_TAG, "Modified data file " + modDataFilePath + ", does not exist");
++                        if (BST_DEBUG) Log.w(BST_REFERRAL_TAG, "Modified data file " + modDataFilePath + ", does not exist, returning with orig_value : " + orig_value);
++                        miscdata.put("error", "file doesn't exist " + modDataFilePath);
++                        miscdata.put("referrer_source", "gplay_other_install_referrer");
++                        sendOtherReferrerStat(packageName, miscdata);
+                         return orig_value;
+                     }
+ 
+                     mBstReferralModDataList = (HashMap<String, String>) BstUtils.loadListFromFile(modDataFilePath, mBstReferralModDataList);
+                     modDataJson = mBstReferralModDataList.getOrDefault(packageName, null);
+ 
++                    // Check if final values are already present or not, if present use them.
+                     if (modDataJson != null) {
+                         if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "Modified data json is already populated for package : " + packageName + ", not recalculating values");
+                         JSONObject modDataJsonObj = new JSONObject(modDataJson);
+@@ -1383,55 +1437,115 @@ public class BaseBundle {
+                         modInstallBeginServer = modDataJsonObj.optLong("mod_install_begin_timestamp_server_seconds", 0L);
+                         modInstallBegin = modDataJsonObj.optLong("mod_install_begin_timestamp_seconds", 0L);
+                     } else {
++                        // final values are not present
+                         if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "Modified data json not present in file for packageName: " + packageName);
+ 
+                         modInstallReferrer = referralDataObj.optString("referrer", "");
+ 
+-                        modReferrerClick = referralDataObj.optLong("mod_referrer_click_timestamp", 0L);           // click time as recorded by our HomeService
+-                        modReferrerClickServer = modReferrerClick + (origReferrerClickServer - origReferrerClick);
++                        modReferrerClick = referralDataObj.optLong("mod_referrer_click_timestamp", 0L); // final URL click time as recorded by our HomeService
++                        // Server timings could be different because of local clock is not synchronized with NTP, so treat server timings separately from local timings.
++                        long clockTimeAdjustment = origInstallBeginServer - origInstallBegin;
++                        if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "clockTimeAdjustment : " + clockTimeAdjustment);
++                        modReferrerClickServer = modReferrerClick + clockTimeAdjustment;
+ 
+                         pkgInstallTimeData = mBstInstallTimeList.getOrDefault(packageName, new ArrayList<Long>());
+                         if (pkgInstallTimeData.size() > 0)
+                             firstInstallTime = pkgInstallTimeData.get(0);
+ 
+-                        /** Adding value Delta to maxOfModReferrerClickTimestamps to get install_begin_timestamp_seconds or
+-                         * install_begin_timestamp_server_seconds (depending on whichever is less)
+-                         * Delta is minimum of 25% of difference b/w
+-                         * install_complete_timestamp and maxOfModReferrerClickTimestamps and maxDelayInstallBegin
+-                         * Delta value will always be between
+-                         * maxOfModReferrerClickTimestamps and install_complete_timestamp */
+-
+-                        //Check if we need to modify modInstallBegin & modInstallBeginServer
+-                        long maxOfModReferrerClickTimestamps = Math.max(modReferrerClick, modReferrerClickServer);
+-                        long minOfOrigInstallBeginTimestamps = Math.min(origInstallBegin, origInstallBeginServer);
++                        // Not check modReferrerClickServer timing, as that could be different if local client machine is not in sync. with NTP
++                        // In that case, we can't compare local time (firstInstallTime) with server time (modReferrerClickServer)
++                        if (mBstAffiliateTestingValue == 10) {
++                            firstInstallTime = modReferrerClick - 10;
++                        }
+ 
+-                        if (modReferrerClick > firstInstallTime || modReferrerClickServer > firstInstallTime) {
+-                            if (BST_DEBUG) Log.w(BST_REFERRAL_TAG, "Not modifying values as one of the values modReferrerClick(" + modReferrerClick + ") and modReferrerClickServer(" + modReferrerClickServer + ") is greater than firstInstallTime(" + firstInstallTime + ")");
++                        if (modReferrerClick > firstInstallTime) {
++                            if (BST_DEBUG) Log.w(BST_REFERRAL_TAG, "Not modifying values as modReferrerClick(" + modReferrerClick + ") is greater than firstInstallTime(" + firstInstallTime + ")");
++                            miscdata.put("error", "modReferrerClick > firstInstallTime");
++                            miscdata.put("modReferrerClick", modReferrerClick);
++                            miscdata.put("firstInstallTime", firstInstallTime);
++                            miscdata.put("clockTimeAdjustment", clockTimeAdjustment);
++                            miscdata.put("modInstallReferrer", modInstallReferrer);
++                            miscdata.put("modReferrerClickServer", modReferrerClickServer);
++                            miscdata.put("referrer_source", "gplay_other_install_referrer");
++                            sendOtherReferrerStat(packageName, miscdata);
+                             return orig_value;
+                         }
+ 
+-
+-                        if (minOfOrigInstallBeginTimestamps > maxOfModReferrerClickTimestamps) {
+-                            modInstallBeginServer = origInstallBeginServer;
++                        if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "origInstallBegin : " + origInstallBegin
++                                + " modReferrerClick : " + modReferrerClick);
++                        // Check if install begin (download started) after final url hit time or not?
++                        if (origInstallBegin > modReferrerClick) {
+                             modInstallBegin = origInstallBegin;
++                            modInstallBeginServer = origInstallBeginServer;
+                         } else {
+-                            long delta = (long) Math.ceil((firstInstallTime - maxOfModReferrerClickTimestamps) / (double) 4);
++                            long delta = (long) Math.ceil((firstInstallTime - modReferrerClick) / (double) 4);
+                             long delayInstallBegin = Math.min(delta, maxDelayInstallBegin);
+-                            if (origInstallBeginServer < origInstallBegin) {
+-                                modInstallBeginServer = maxOfModReferrerClickTimestamps + delayInstallBegin;
+-                                modInstallBegin = modInstallBeginServer + (origInstallBegin - origInstallBeginServer);
+-                            } else {
+-                                modInstallBegin = maxOfModReferrerClickTimestamps + delayInstallBegin;
+-                                modInstallBeginServer = modInstallBegin + (origInstallBeginServer - origInstallBegin);
++                            modInstallBegin = modReferrerClick + delayInstallBegin;
++                            modInstallBeginServer = modInstallBegin + clockTimeAdjustment;
++                            if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "delta : " + delta + " delayInstallBegin : " + delayInstallBegin + " modInstallBegin : " + modInstallBegin + " modInstallBeginServer : " + modInstallBeginServer);
++
++                            if (mBstAffiliateTestingValue == 11) {
++                                firstInstallTime = modInstallBegin - 10;
+                             }
+ 
+-                            long maxOfModInstallBeginTimestamps = Math.max(modInstallBegin, modInstallBeginServer);
+-                            if (maxOfModInstallBeginTimestamps >= firstInstallTime) {
+-                                if (BST_DEBUG) Log.w(BST_REFERRAL_TAG, "Not modifying values as maxOfModInstallBeginTimestamps(" + maxOfModInstallBeginTimestamps + ") is greater than or equal to firstInstallTime(" + firstInstallTime + ")");
++                            if (modInstallBegin >= firstInstallTime) {
++                                if (BST_DEBUG) Log.w(BST_REFERRAL_TAG, "Not modifying values as modInstallBegin(" + modInstallBegin + ") is greater than or equal to firstInstallTime(" + firstInstallTime + ") returning with orig_value : " + orig_value);
++                                miscdata.put("error", "modInstallBegin(" + modInstallBegin + ") is more than firstInstallTime(" + firstInstallTime + ")");
++                                miscdata.put("modReferrerClick", modReferrerClick);
++                                miscdata.put("firstInstallTime", firstInstallTime);
++                                miscdata.put("clockTimeAdjustment", clockTimeAdjustment);
++                                miscdata.put("modInstallReferrer", modInstallReferrer);
++                                miscdata.put("modReferrerClickServer", modReferrerClickServer);
++                                miscdata.put("delta", delta);
++                                miscdata.put("delayInstallBegin", delayInstallBegin);
++                                miscdata.put("modInstallBegin", modInstallBegin);
++                                miscdata.put("modInstallBeginServer", modInstallBeginServer);
++                                miscdata.put("referrer_source", "gplay_other_install_referrer");
++                                sendOtherReferrerStat(packageName, miscdata);
+                                 return orig_value;
+                             }
+                         }
+ 
++                        if (mBstAffiliateTestingValue == 12) {
++                            modInstallBegin = modReferrerClick - 10;
++                        }
++
++                        if( firstInstallTime <= modInstallBegin ||  modInstallBegin <= modReferrerClick || firstInstallTime <= modReferrerClick) {
++                            // basic condition don't met
++                            if (BST_DEBUG) Log.w(BST_REFERRAL_TAG, "Basic check failed, firstInstallTime : " + firstInstallTime + " modInstallBegin : " + modInstallBegin + " modReferrerClick : " + modReferrerClick + " orig_value : " + orig_value);
++                            miscdata.put("error", "firstInstallTime <= modInstallBegin || modInstallBegin <= modReferrerClick || firstInstallTime <= modReferrerClick");
++                            miscdata.put("modReferrerClick", modReferrerClick);
++                            miscdata.put("firstInstallTime", firstInstallTime);
++                            miscdata.put("clockTimeAdjustment", clockTimeAdjustment);
++                            miscdata.put("modInstallReferrer", modInstallReferrer);
++                            miscdata.put("modReferrerClickServer", modReferrerClickServer);
++                            miscdata.put("modInstallBegin", modInstallBegin);
++                            miscdata.put("modInstallBeginServer", modInstallBeginServer);
++                            miscdata.put("referrer_source", "gplay_other_install_referrer");
++                            sendOtherReferrerStat(packageName, miscdata);
++                            return orig_value;
++                        }
++
++                        if (mBstAffiliateTestingValue == 13) {
++                            modInstallBeginServer = modReferrerClickServer - 10;
++                        }
++
++                        // similarly check for server timing.
++                        if(modReferrerClickServer > modInstallBeginServer) {
++                            if (BST_DEBUG) Log.w(BST_REFERRAL_TAG, "Server basic check failed, modReferrerClickServer : " + modReferrerClickServer + " modInstallBeginServer : " + modInstallBeginServer + " returning with : " + orig_value);
++                            miscdata.put("error", "modReferrerClickServer > modInstallBeginServer");
++                            miscdata.put("modReferrerClick", modReferrerClick);
++                            miscdata.put("firstInstallTime", firstInstallTime);
++                            miscdata.put("clockTimeAdjustment", clockTimeAdjustment);
++                            miscdata.put("modInstallReferrer", modInstallReferrer);
++                            miscdata.put("modReferrerClickServer", modReferrerClickServer);
++                            miscdata.put("modInstallBegin", modInstallBegin);
++                            miscdata.put("modInstallBeginServer", modInstallBeginServer);
++                            miscdata.put("referrer_source", "gplay_other_install_referrer");
++                            sendOtherReferrerStat(packageName, miscdata);
++                            return orig_value;
++                        }
++
+                         JSONObject modDataJsonObj = new JSONObject();
+                         modDataJsonObj.put("install_referrer", origInstallReferrer);
+                         modDataJsonObj.put("referrer_click_timestamp_server_seconds", origReferrerClickServer);
+@@ -1444,6 +1558,9 @@ public class BaseBundle {
+                         modDataJsonObj.put("mod_referrer_click_timestamp_seconds", modReferrerClick);
+                         modDataJsonObj.put("mod_install_begin_timestamp_server_seconds", modInstallBeginServer);
+                         modDataJsonObj.put("mod_install_begin_timestamp_seconds", modInstallBegin);
++
++                        if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "modDataJsonObj : " + modDataJsonObj.toString());
++
+                         mBstReferralModDataList.put(packageName, modDataJsonObj.toString());
+                         if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "Modified data json object for package " + packageName + " is " + mBstReferralModDataList);
+                         BstUtils.writeListToFile(mBstReferralModDataList, modDataFilePath);
+@@ -1471,13 +1588,18 @@ public class BaseBundle {
+                     }
+                 } else if (sendOtherStat) {
+                     if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "Sending other_install_referrer stat for package = " + packageName + ", key = " + key + ", reason = " + respObj.optString("reason", ""));
++                    if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "referralDataObj : " + referralDataObj.toString());
+                     boolean otherInstallReferrerStatSent =
+                         Boolean.valueOf(referralDataObj.optBoolean("gplay_other_install_referrer_stat", true));    // install begin stat sent status
+                     if (!otherInstallReferrerStatSent) {
+                         addMiscData = true;
+                         statFilePath = bstOtherInstallReferrerPath;
+-                        miscdata = respObj;
+-
++                        miscdata.put("referrer_source", "gplay_other_install_referrer");
++                    } else if (referralDataObj.length() == 0 && !mBstStatSendList.containsKey(packageName)) {
++                        if (BST_DEBUG) Log.d(BST_REFERRAL_TAG, "sending stats as obj length is 0");
++                        mBstStatSendList.put(packageName, true);
++                        addMiscData = true;
++                        statFilePath = bstOtherInstallReferrerPath;
+                         miscdata.put("referrer_source", "gplay_other_install_referrer");
+                     }
+                 }
+@@ -1500,6 +1622,10 @@ public class BaseBundle {
+                         }
+                     }
+ 
++                    if (mBstAffiliateTestingValue == 14) {
++                        throw new Exception("Exception based on debug affiliate value");
++                    }
++
+                     miscdata.put("mod_install_referrer", modInstallReferrer);
+                     miscdata.put("request_begin_time", referralDataObj.optLong("request_begin_time", 0L));
+                     miscdata.put("first_url_hit_time", referralDataObj.optLong("first_url_hit_time", 0L));
+@@ -1515,12 +1641,36 @@ public class BaseBundle {
+                 }
+             }
+         } catch (Exception ex) {
++            StringWriter sw = new StringWriter();
++            PrintWriter pw = new PrintWriter(sw);
++            ex.printStackTrace(pw);
++            try {
++                miscdata.put("exception", sw.toString());
++            } catch (Exception e) {
++                e.printStackTrace();
++            }
++
++            sendOtherReferrerStat(packageName, miscdata);
+             Log.w(BST_REFERRAL_TAG, "Exception in handling affiliate request : " + ex.getMessage());
+             if (BST_DEBUG) ex.printStackTrace();
++
+         }
+         return value;
+     }
+ 
++    void sendOtherReferrerStat(String pkgName, JSONObject miscData)
++    {
++        try {
++            if (!mBstStatSendList.containsKey(pkgName)) {
++                mBstStatSendList.put(pkgName, true);
++                miscData.put("package", pkgName);
++                bstSendStatToCloud(pkgName, miscData.toString(), bstOtherInstallReferrerPath);
++            }
++        } catch(Exception e) {
++            e.printStackTrace();
++        }
++    }
++
+     /**
+      * Returns the value associated with the given key, or defaultValue if
+      * no mapping of the desired type exists for the given key.
+@@ -2181,6 +2331,7 @@ public class BaseBundle {
+     //It sends the stat to cloud. It will write packageName;referral to file.
+     //The file being Observed in BstCommandProcessor will trigger an event which will send the event to cloud.
+     private void bstSendStatToCloud(String packageName, String data, String filePath) {
++        Log.d(BST_REFERRAL_TAG, "send stat to cloud : " + packageName + "  data : " + data + "  filePath : " + filePath);
+         BufferedWriter bw = null;
+         String to_encode = data;
+         try {
+diff --git a/core/java/android/util/BstUtils.java b/core/java/android/util/BstUtils.java
+index f2d6489a917c..e8df0efb6049 100644
+--- a/core/java/android/util/BstUtils.java
++++ b/core/java/android/util/BstUtils.java
+@@ -18,6 +18,8 @@ import java.io.FileReader;
+ import java.io.IOException;
+ import java.io.ObjectInputStream;
+ import java.io.ObjectOutputStream;
++import java.io.PrintWriter;
++import java.io.StringWriter;
+ import java.util.ArrayList;
+ import java.util.HashMap;
+ import java.util.HashSet;
+@@ -31,6 +33,7 @@ public final class BstUtils {
+     private static final boolean DEBUG_BST_REFERRAL = DEBUG || android.os.SystemProperties.getInt("bst.debug.referral", 0) > 0 ? true : false;
+     private static final boolean DEBUG_PACKAGE_INFO = DEBUG || android.os.SystemProperties.getInt("bst.debug.packageinfo", 0) > 0 ? true : false;
+     private static final boolean BST_SHOW_APPS = SystemProperties.getInt("bst.debug.bst_show_apps", 0) == 0 ? false : true;
++    private static final int mBstAffiliateTestingValue = SystemProperties.getInt("bst.debug.affiliate.test", 0);
+     private static String savedPackageName = null;
+     private static int savedPid = 0;
+     private static String bstSimSerialNumber = null;
+@@ -45,8 +48,10 @@ public final class BstUtils {
+     public static String readFile(String file)
+     {
+         final StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskReads();
++        BufferedReader reader = null;
++        String retStr = null;
+         try {
+-            BufferedReader reader = new BufferedReader( new FileReader (file));
++            reader = new BufferedReader( new FileReader (file));
+             String line  = null;
+             StringBuilder stringBuilder = new StringBuilder();
+             String ls = System.getProperty("line.separator");
+@@ -54,18 +59,24 @@ public final class BstUtils {
+                 stringBuilder.append( line );
+                 stringBuilder.append( ls );
+             }
+-            return stringBuilder.toString();
++            retStr = stringBuilder.toString();
+         }
+         catch (Exception e) {
+             if (DEBUG) {
+                 Slog.e(TAG, "Exception in readFile : " + file );
+                 e.printStackTrace();
+             }
+-            return null;
+         }
+         finally {
++            try {
++                if (reader != null)
++                    reader.close();
++            } catch (Exception e) {
++                e.printStackTrace();
++            }
+             StrictMode.setThreadPolicy(oldPolicy);
+         }
++        return retStr;
+     }
+ 
+     /*
+@@ -123,9 +134,14 @@ public final class BstUtils {
+ 
+         try {
+             response.put("success", false);
++
++            if (mBstAffiliateTestingValue == 1) {
++                packageName = null;
++            }
++
++            // Package name check
+             if (packageName == null || packageName.trim().length() < 1) {
+                 reason = "Invalid argument: packageName";
+-                response.put("sendStat", true);
+                 response.put("reason", reason);
+ 
+                 if(DEBUG_BST_REFERRAL) Log.w(TAG_BST_REFERRAL, "Not modifying values (pid: " + pid + ")" + ", reason = " + reason);
+@@ -133,19 +149,26 @@ public final class BstUtils {
+                 return response.toString();
+             }
+ 
++            // Referrer app or not?
+             String referralData = mBstReferralInstallTimeList.getOrDefault(packageName, "{}");
+             JSONObject referralDataObj = new JSONObject(referralData);
+             referral = referralDataObj.optString("referrer", "");
+             referrerPresent = (referralData != null && referral != null && referral.trim().length() > 0) ? true : false; // If referrerPresent
++
++            if (mBstAffiliateTestingValue == 2) {
++                referrerPresent = false;
++            }
++
++            if (DEBUG_BST_REFERRAL) Log.d(TAG_BST_REFERRAL, "referrerPresent : " + referrerPresent);
+             if (!referrerPresent) {
+                 if (DEBUG_BST_REFERRAL) Log.d(TAG_BST_REFERRAL, "Not doing any modification for packageName = " + packageName + " referralData is NULL");
+-                response.put("sendStat", false);
++                response.put("reason", "referrerNotPresent");
+                 return response.toString();
+             }
+ 
++            // Third party referrer or organic?
+             if (thirdPartyReferred(packageName)) {
+-                reason = "third party referred"; 
+-                response.put("sendStat", true);
++                reason = "third party referred";
+                 response.put("reason", reason);
+ 
+                 if (DEBUG_BST_REFERRAL) Log.w(TAG_BST_REFERRAL, "Not modifying values for package " + packageName + ", reason = " + reason);
+@@ -153,11 +176,16 @@ public final class BstUtils {
+                 return response.toString();
+             }
+ 
++            // install time check
+             ArrayList<Long> pkgInstallTimeData = mBstInstallTimeList.get(packageName);
++
++            if (mBstAffiliateTestingValue == 4) {
++                pkgInstallTimeData = null;
++            }
++
+             if (pkgInstallTimeData == null || pkgInstallTimeData.size() < 2) {
+                 // should never reach here for affiliated app installed by us
+-                reason = "install time data not present";
+-                response.put("sendStat", true);
++                reason = "install time data not present : it should not reach here";
+                 response.put("reason", reason);
+ 
+                 if(DEBUG_BST_REFERRAL) Log.w(TAG_BST_REFERRAL, "Not modifying values for packageName: " + packageName + "(" + pid + "), possibly not an affiliated app, reason = " + reason);
+@@ -169,31 +197,37 @@ public final class BstUtils {
+             isUpdated = pkgInstallTimeData.get(1) > 0 ? true : false;
+             if (DEBUG_BST_REFERRAL) Log.d(TAG_BST_REFERRAL, "packageName = " + packageName + " isUpdated = " + isUpdated + " firstInstallTime = " + firstInstallTime);
+ 
++            // First install or app update scenario?
+             if (isUpdated) {
+                 if (DEBUG_BST_REFERRAL) Log.d(TAG_BST_REFERRAL, "Not doing any modification for packageName = " + packageName + " package is updated, isUpdated = " + isUpdated);
+-                response.put("sendStat", false);
++                response.put("reason", "package is updated");
+                 return response.toString();
+             }
+ 
+             /** BlueStacks have offer for this package. */
+-            bstClickTime = referralDataObj.optLong("mod_referrer_click_timestamp", 0L); // click time as recorded by our HomeService
++            bstClickTime = referralDataObj.optLong("mod_referrer_click_timestamp", 0L); // final click time as recorded by our HomeService
+             skipReferral = referralDataObj.optBoolean("skip_referrer", false);          // true if referral is to be skipped.
+             source  = referralDataObj.optString("calling_source", "");                  // calling Source
+ 
+             if (DEBUG_BST_REFERRAL) Log.d(TAG_BST_REFERRAL, "Referrer data: packageName = " + packageName + ", referrerPresent = " + referrerPresent + ", skipReferral = " + skipReferral + ", bstClickTime = " + bstClickTime + ", firstInstallTime = " + firstInstallTime + ", current time = " + System.currentTimeMillis() / 1000 + ", source = " + source);
++            if (mBstAffiliateTestingValue == 5) {
++                skipReferral = true;
++            }
++            // Skip referral flag present or not in cloud?
+             if (skipReferral) {
+-                reason = "skipReferral true";
+-                response.put("sendStat", true);
++                reason = "skipReferral true packageName : " + packageName;
+                 response.put("reason", reason);
+ 
+                 if (DEBUG_BST_REFERRAL) Log.w(TAG_BST_REFERRAL, "Not doing any modification for packageName = " + packageName + ", reason = " + reason);
+                 return response.toString();
+             }
+ 
++            if (mBstAffiliateTestingValue == 6) {
++                bstClickTime = 0;
++            }
++            // basic check for final URL hit time
+             if (bstClickTime <= 0) {
+-                reason = "Invalid final_url_hit_time (bstClickTime)";
+-                response.put("sendStat", true);
+-
++                reason = "Invalid final_url_hit_time (bstClickTime) " + bstClickTime;
+                 response.put("reason", reason);
+ 
+                 if (DEBUG_BST_REFERRAL) Log.w(TAG_BST_REFERRAL, "Not doing any modification for packageName = " + packageName + ", reason = " + reason);
+@@ -201,18 +235,25 @@ public final class BstUtils {
+                 return response.toString();
+             }
+ 
+-            // referrer_click_timestamp_seconds <= referrer_click_timestamp_server_seconds (referrer_click_timestamp_seconds + (0/1)) < install_begin_timestamp_seconds <= install_begin_timestamp_server_seconds (install_begin_timestamp_seconds + (0/1)) < packageInstallTime
++            if (mBstAffiliateTestingValue == 7) {
++                bstClickTime = firstInstallTime - 1;
++            }
++
++            // referrer_click_timestamp_seconds < install_begin_timestamp_seconds < packageInstallTime
+             if ((firstInstallTime - bstClickTime) < 3) {
+-                reason = "firstInstallTime close to finalUrlHitTime";
+-                response.put("sendStat", true);
++                reason = "firstInstallTime : " + firstInstallTime + " close to bstClickTime : " + bstClickTime;
+                 response.put("reason", reason);
+ 
+                 if (DEBUG_BST_REFERRAL) Log.w(TAG_BST_REFERRAL, "Not doing any modification for packageName = " + packageName + ", firstInstallTime = " + firstInstallTime + ", current time = " + System.currentTimeMillis() / 1000 + ", reason = " + reason);
+                 return response.toString();
+             }
+ 
++            if (mBstAffiliateTestingValue == 8) {
++                throw new Exception("Exception based on debug affiliate value");
++            }
+ 
+-            if (source.equals("packageEnqueued") && installReferrerValue != null && installReferrerValue.contains("not%20set")) {
++            if (source.equals("packageEnqueued") && installReferrerValue != null
++                    && installReferrerValue.contains("not%20set")) {
+                 if (DEBUG_BST_REFERRAL) Log.w(TAG_BST_REFERRAL, "GoogleAd? packageName = " + packageName + ", reason = installed via googleAd: actual_install_referrer = " + installReferrerValue);
+             }
+ 
+@@ -222,23 +263,29 @@ public final class BstUtils {
+         } catch (Exception ex) {
+             Log.w(TAG_BST_REFERRAL, "Exception while checking if we should modify the referral values: " + ex.getMessage());
+             if (DEBUG_BST_REFERRAL) ex.printStackTrace();
+-            return "{\"success\": \"false\",\"sendStat\":\"true\",\"reason\": \"exception: " + ex.getMessage() + " \"}";
++            StringWriter sw = new StringWriter();
++            PrintWriter pw = new PrintWriter(sw);
++            ex.printStackTrace(pw);
++            return "{\"success\": \"false\",\"reason\": \"exception: " + ex.getMessage() + sw.toString() + " \"}";
+         }
+     }
+ 
+     /* This function checks if referrer for the package is already present.
+-     * If true we will not send the click event and will not drop the 
++     * If true we will not send the click event and will not drop the
+      * original INSTALL_REFERRER intent.
+      * @hide
+      */
+     public static boolean thirdPartyReferred(String pkgName) {
+-        if (pkgName == null)
+-            return false;
+         HashSet<String> bstReferrerPresent = new HashSet<String>();
+         bstReferrerPresent  = (HashSet<String>) loadListFromFile("/data/downloads/.aff/.prf", bstReferrerPresent);
+-        boolean bstThirdPartyReferrerPresent = ((bstReferrerPresent != null && bstReferrerPresent.contains(pkgName)) 
++        boolean bstThirdPartyReferrerPresent = ((bstReferrerPresent != null && bstReferrerPresent.contains(pkgName))
+                 || pkgName.equals(SystemProperties.get("bst.config.referrerpackage")));
+         if (DEBUG_BST_REFERRAL) Log.d(TAG_BST_REFERRAL, "pkgName = " + pkgName + ", bstThirdPartyReferrerPresent = " + bstThirdPartyReferrerPresent);
++
++        if (mBstAffiliateTestingValue == 3) {
++            bstThirdPartyReferrerPresent = true;
++        }
++
+         return bstThirdPartyReferrerPresent;
+     }
+ 
+@@ -295,7 +342,7 @@ public final class BstUtils {
+      * Helper function to write listObject to file fileName
+      * @hide
+      */
+-    public static void writeListToFile(Object listObject, String fileName) {
++    public static boolean  writeListToFile(Object listObject, String fileName) {
+         FileOutputStream fos = null;
+         ByteArrayOutputStream fileOut = null;
+         ObjectOutputStream out = null;
+@@ -315,9 +362,10 @@ public final class BstUtils {
+                         FileUtils.S_IRUSR | FileUtils.S_IWUSR |
+                         FileUtils.S_IRGRP | FileUtils.S_IROTH, -1, -1) != 0) {
+                 Log.e(TAG, "Failed to change permissions for the file");
+-                return;
++                return false;
+             }
+             if (DEBUG_BST_REFERRAL) Log.d(TAG, "Serialized appreferral data is saved in " + fileName);
++            return true;
+         } catch (Exception ex) {
+             ex.printStackTrace();
+         } finally {
+@@ -332,8 +380,9 @@ public final class BstUtils {
+             catch (IOException ex) {
+                 ex.printStackTrace();
+             }
++            if (DEBUG_BST_REFERRAL) Log.d(TAG, "ListDump: " + listObject);
+         }
+-        if (DEBUG_BST_REFERRAL) Log.d(TAG, "ListDump: " + listObject);
++        return false;
+     }
+ 
+     /**

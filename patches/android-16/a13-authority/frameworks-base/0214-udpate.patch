@@ -1,0 +1,814 @@
+From d59dd7ba73267584e7decb35d32483f6bd05909e Mon Sep 17 00:00:00 2001
+From: wei-bst <wei@bluestacks.com>
+Date: Thu, 8 Jan 2026 19:11:04 +0800
+Subject: [PATCH 214/224] udpate
+
+---
+ core/java/android/util/BstUtils.java          | 148 ++++++++++++++++++
+ .../accessibility/AccessibilityManager.java   |  82 +---------
+ .../providers/settings/SettingsProvider.java  | 123 +++------------
+ .../providers/settings/SettingsService.java   |  89 +----------
+ .../AccessibilityManagerService.java          |  83 +---------
+ .../com/android/server/pm/ComputerEngine.java | 107 +------------
+ 6 files changed, 183 insertions(+), 449 deletions(-)
+
+diff --git a/core/java/android/util/BstUtils.java b/core/java/android/util/BstUtils.java
+index 3b19f53968ba..70119abba9bb 100755
+--- a/core/java/android/util/BstUtils.java
++++ b/core/java/android/util/BstUtils.java
+@@ -1,6 +1,8 @@
+ package android.util;
+ 
++import android.accessibilityservice.AccessibilityServiceInfo;
+ import android.content.Context;
++import android.content.pm.ResolveInfo;
+ import android.os.Binder;
+ import android.os.FileUtils;
+ import android.os.Process;
+@@ -25,6 +27,7 @@ import java.io.StringWriter;
+ import java.util.ArrayList;
+ import java.util.HashMap;
+ import java.util.HashSet;
++import java.util.List;
+ 
+ import org.json.JSONObject;
+ 
+@@ -34,6 +37,8 @@ public final class BstUtils {
+     private static final String TAG = "BstUtils";
+     private static final String TAG_BST_REFERRAL = "BstUtils-Affiliate";
+     private static final boolean DEBUG = false;
++    private static final boolean HIDE_ACCESSIBILITY_SERVICES =
++            SystemProperties.getBoolean("bst.config.hide_accessibility_services", true);
+     private static final boolean DEBUG_BST_REFERRAL = DEBUG || android.os.SystemProperties.getInt("bst.debug.referral", 0) > 0 ? true : false;
+     private static final boolean DEBUG_PACKAGE_INFO = DEBUG || android.os.SystemProperties.getInt("bst.debug.packageinfo", 0) > 0 ? true : false;
+     private static final boolean BST_SHOW_APPS = SystemProperties.getInt("bst.debug.bst_show_apps", 0) == 0 ? false : true;
+@@ -465,4 +470,147 @@ public final class BstUtils {
+         }
+         return 0;
+     }
++
++    /**
++     * Filter out hidden accessibility services from the list
++     * This method hides specified services from third-party applications
++     */
++    public static List<AccessibilityServiceInfo> filterHiddenServices(
++            List<AccessibilityServiceInfo> services, int callingUid) {
++        if (!HIDE_ACCESSIBILITY_SERVICES || services == null || services.isEmpty()) {
++            return services;
++        }
++
++        // If caller is not third-party, return original list
++        if (callingUid < Process.FIRST_APPLICATION_UID) {
++            if (DEBUG) {
++                Slog.i(TAG,
++                        "filterHiddenServices: system caller detected, skipping filter for UID: "
++                                + callingUid);
++            }
++            return services;
++        }
++
++        if (DEBUG) {
++            Slog.i(TAG, "filterHiddenServices: filtering for third-party caller UID: " + callingUid
++                    + ", input count: " + services.size());
++        }
++
++        List<AccessibilityServiceInfo> filteredServices = new ArrayList<>();
++        int filteredCount = 0;
++
++        for (AccessibilityServiceInfo service : services) {
++            try {
++                ResolveInfo resolveInfo = service.getResolveInfo();
++                if (resolveInfo == null || resolveInfo.serviceInfo == null) {
++                    filteredServices.add(service);
++                    continue;
++                }
++
++                String packageName = resolveInfo.serviceInfo.packageName;
++
++                if (packageName.startsWith("gg.now.") || packageName.startsWith("com.bluestacks.")) {
++                    if (DEBUG) {
++                        Slog.i(TAG, "Hiding accessibility service from third-party app: "
++                                + packageName + " for UID: " + callingUid);
++                    }
++                    filteredCount++;
++                } else {
++                    filteredServices.add(service);
++                }
++            } catch (Exception e) {
++                Slog.e(TAG, "Error while filtering accessibility service, allowing service", e);
++                filteredServices.add(service);
++            }
++        }
++
++        if (DEBUG) {
++            Slog.i(TAG, "filterHiddenServices: filtered " + filteredCount
++                    + " services, remaining: " + filteredServices.size()
++                    + " for UID: " + callingUid);
++        }
++
++        return filteredServices;
++    }
++
++    public static String filterHiddenServices(String enabledServices, int callingUid) {
++        if (!HIDE_ACCESSIBILITY_SERVICES || enabledServices == null || enabledServices.isEmpty()) {
++            return enabledServices;
++        }
++
++        if (callingUid < Process.FIRST_APPLICATION_UID) {
++            if (DEBUG) {
++                Slog.i(TAG,
++                        "filterHiddenServices: system caller detected, skipping filter for UID: "
++                                + callingUid);
++            }
++            return enabledServices;
++        }
++
++        String[] services = enabledServices.split(":");
++        StringBuilder filtered = new StringBuilder();
++
++        for (String service : services) {
++            if (service.isEmpty() || service.startsWith("gg.now.")
++                    || service.startsWith("com.bluestacks.")) {
++                continue;
++            }
++
++            if (filtered.length() > 0) {
++                filtered.append(':');
++            }
++            filtered.append(service);
++        }
++
++        if (DEBUG) {
++            Slog.i(TAG, "filterHiddenServices: final accessibility services: " + filtered);
++        }
++
++        return filtered.toString();
++    }
++
++    public static List<ResolveInfo> applyAccessibilityServiceFilter(
++            List<ResolveInfo> resolveInfos, int callingUid) {
++        if (!HIDE_ACCESSIBILITY_SERVICES || resolveInfos == null || resolveInfos.isEmpty()) {
++            return resolveInfos;
++        }
++
++        if (DEBUG) {
++            Slog.d(TAG, "applyAccessibilityServiceFilter called by UID: " + callingUid
++                    + ", input count: " + resolveInfos.size());
++        }
++
++        if (callingUid < Process.FIRST_APPLICATION_UID) {
++            if (DEBUG) {
++                Slog.d(TAG, "Caller is system UID: " + callingUid);
++            }
++            return resolveInfos;
++        }
++
++        int filteredCount = 0;
++        for (int i = resolveInfos.size() - 1; i >= 0; i--) {
++            final ResolveInfo info = resolveInfos.get(i);
++            if (info != null && info.serviceInfo != null) {
++                String packageName = info.serviceInfo.packageName;
++                String serviceName = info.serviceInfo.name;
++
++                if (packageName.startsWith("gg.now.") || packageName.startsWith("com.bluestacks.")) {
++                    String fullServiceName = packageName + "/" + serviceName;
++                    if (DEBUG) {
++                        Slog.d(TAG, "Filtering out hidden accessibility service: " + fullServiceName
++                                + " for UID: " + callingUid);
++                    }
++                    resolveInfos.remove(i);
++                    filteredCount++;
++                }
++            }
++        }
++
++        if (DEBUG) {
++            Slog.d(TAG, "applyAccessibilityServiceFilter filtered " + filteredCount
++                    + " services, remaining: " + resolveInfos.size() + " for UID: " + callingUid);
++        }
++
++        return resolveInfos;
++    }
+ }
+diff --git a/core/java/android/view/accessibility/AccessibilityManager.java b/core/java/android/view/accessibility/AccessibilityManager.java
+index da4324bb02b1..2de27cbd9bac 100755
+--- a/core/java/android/view/accessibility/AccessibilityManager.java
++++ b/core/java/android/view/accessibility/AccessibilityManager.java
+@@ -57,6 +57,7 @@ import android.os.ServiceManager;
+ import android.os.SystemClock;
+ import android.os.UserHandle;
+ import android.util.ArrayMap;
++import android.util.BstUtils;
+ import android.util.Log;
+ import android.util.SparseArray;
+ import android.view.IWindow;
+@@ -797,7 +798,7 @@ public final class AccessibilityManager {
+             services = mAccessibilityPolicy.getInstalledAccessibilityServiceList(services);
+         }
+         // Hide specified accessibility services to prevent detection by third-party apps
+-        services = filterHiddenServices(services);
++        services = BstUtils.filterHiddenServices(services, Binder.getCallingUid());
+         if (services != null) {
+             return Collections.unmodifiableList(services);
+         } else {
+@@ -845,7 +846,7 @@ public final class AccessibilityManager {
+                     feedbackTypeFlags, services);
+         }
+         // Hide specified accessibility services to prevent detection by third-party apps
+-        services = filterHiddenServices(services);
++        services = BstUtils.filterHiddenServices(services, Binder.getCallingUid());
+         if (DEBUG) {
+             Log.d(LOG_TAG, "getEnabledAccessibilityServiceList: after filterHiddenServices: " + 
+                    (services != null ? services.size() : 0) + " services");
+@@ -2022,83 +2023,6 @@ public final class AccessibilityManager {
+         return res.getBoolean(com.android.internal.R.bool.config_showNavigationBar);
+     }
+ 
+-    /**
+-     * Check if the current caller is a third-party application
+-     */
+-    private boolean isThirdPartyCaller() {
+-        final int callingUid = Binder.getCallingUid();
+-        
+-        // If UID is in system range, not third-party
+-        if (callingUid < Process.FIRST_APPLICATION_UID) {
+-            return false;
+-        }
+-        
+-        return true;
+-    }
+-
+-    /**
+-     * Filter out hidden accessibility services from the list
+-     * This method hides specified services from third-party applications
+-     */
+-    private List<AccessibilityServiceInfo> filterHiddenServices(List<AccessibilityServiceInfo> services) {
+-        if (services == null || services.isEmpty()) {
+-            return services;
+-        }
+-
+-        // Log filter call for debugging
+-        int callingUid = Binder.getCallingUid();
+-        String callerInfo = "UID: " + callingUid;
+-        
+-        // If caller is not third-party, return original list
+-        if (!isThirdPartyCaller()) {
+-            if (DEBUG) {
+-                Log.d(LOG_TAG, "filterHiddenServices: system caller detected, skipping filter for " + callerInfo);
+-            }
+-            return services;
+-        }
+-
+-        // Define services to hide from third-party apps
+-        final java.util.Set<String> hiddenServices = new java.util.HashSet<>();
+-        hiddenServices.add("com.bluestacks.home/com.bluestacks.svc.services.GPAccessibilityService");
+-        hiddenServices.add("com.bluestacks.BstCommandProcessor/.UiAccessibilityService");
+-        hiddenServices.add("com.bluestacks.BstCommandProcessor/com.bluestacks.BstCommandProcessor.UiAccessibilityService");
+-        
+-        if (DEBUG) {
+-            Log.d(LOG_TAG, "filterHiddenServices: filtering for third-party caller " + callerInfo + 
+-               ", input count: " + services.size());
+-        }
+-
+-        List<AccessibilityServiceInfo> filteredServices = new ArrayList<>();
+-        int filteredCount = 0;
+-        
+-        for (AccessibilityServiceInfo service : services) {
+-            ComponentName componentName = new ComponentName(
+-                service.getResolveInfo().serviceInfo.packageName,
+-                service.getResolveInfo().serviceInfo.name
+-            );
+-            
+-            String serviceKey = componentName.flattenToShortString();
+-            
+-            // Only add service if it's not in the hidden list
+-            if (!hiddenServices.contains(serviceKey)) {
+-                filteredServices.add(service);
+-            } else {
+-                if (DEBUG) {
+-                    Log.i(LOG_TAG, "Hiding accessibility service from third-party caller: " + serviceKey + 
+-                       " for " + callerInfo);
+-                }
+-                filteredCount++;
+-            }
+-        }
+-        
+-        if (DEBUG) {
+-            Log.d(LOG_TAG, "filterHiddenServices: filtered " + filteredCount + 
+-                   " services, remaining: " + filteredServices.size() + " for " + callerInfo);
+-        }
+-
+-        return filteredServices;
+-    }
+-
+     private final class MyCallback implements Handler.Callback {
+         public static final int MSG_SET_STATE = 1;
+ 
+diff --git a/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java b/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
+index 64302feaadb6..3b9394410e5e 100755
+--- a/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
++++ b/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
+@@ -99,6 +99,7 @@ import android.provider.settings.validators.SystemSettingsValidators;
+ import android.provider.settings.validators.Validator;
+ import android.text.TextUtils;
+ import android.util.ArrayMap;
++import android.util.BstUtils;
+ import android.util.ArraySet;
+ import android.util.Slog;
+ import android.util.SparseArray;
+@@ -1598,8 +1599,27 @@ public class SettingsProvider extends ContentProvider {
+                     owningUserId, name);
+             
+             // Filter hidden accessibility services for third-party callers
+-            if (Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES.equals(name) && setting != null) {
+-                setting = filterEnabledAccessibilityServicesForThirdParty(setting, Binder.getCallingUid());
++            if (Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES.equals(name) && setting != null
++                    && setting.getValue() != null) {
++                int callingUid = Binder.getCallingUid();
++                final String filteredServices =
++                        BstUtils.filterHiddenServices(setting.getValue(), callingUid);
++                final SettingsState settingsState = mSettingsRegistry.getSettingsLocked(
++                        SETTINGS_TYPE_SECURE, UserHandle.getUserId(callingUid));
++                if (settingsState == null) {
++                    Slog.e(LOG_TAG, "Failed to obtain SettingsState, returning original setting");
++                    return setting;
++                }
++
++                setting = settingsState.new Setting(
++                        setting.getName(),
++                        filteredServices,
++                        setting.getTag(),
++                        setting.getDefaultValue(),
++                        setting.getPackageName(),
++                        setting.isDefaultFromSystem(),
++                        setting.getId()
++                );
+             }
+             
+             return setting;
+@@ -1611,105 +1631,6 @@ public class SettingsProvider extends ContentProvider {
+                 && UserHandle.getAppId(Binder.getCallingUid()) >= Process.FIRST_APPLICATION_UID;
+     }
+ 
+-    private Setting filterEnabledAccessibilityServicesForThirdParty(Setting originalSetting, int callingUid) {
+-        // Check if caller is third-party
+-        if (!isThirdPartyCaller(callingUid)) {
+-            return originalSetting; // System apps can see all services
+-        }
+-        
+-        if (originalSetting == null || originalSetting.getValue() == null) {
+-            return originalSetting;
+-        }
+-        
+-        // Define hidden accessibility services
+-        final Set<String> hiddenServices = new ArraySet<>();
+-        hiddenServices.add("com.bluestacks.home/com.bluestacks.svc.services.GPAccessibilityService");
+-        hiddenServices.add("com.bluestacks.BstCommandProcessor/.UiAccessibilityService");
+-        hiddenServices.add("com.bluestacks.BstCommandProcessor/com.bluestacks.BstCommandProcessor.UiAccessibilityService");
+-        
+-        String enabledServices = originalSetting.getValue();
+-        String[] services = enabledServices.split(":");
+-        StringBuilder filteredServices = new StringBuilder();
+-        
+-        for (String service : services) {
+-            if (service != null && !service.trim().isEmpty()) {
+-                // Filter out hidden accessibility services for third-party apps
+-                if (!hiddenServices.contains(service)) {
+-                    if (filteredServices.length() > 0) {
+-                        filteredServices.append(":");
+-                    }
+-                    filteredServices.append(service);
+-                }
+-            }
+-        }
+-        
+-        // Get the SettingsState instance to create new Setting
+-        final SettingsState settingsState = mSettingsRegistry.getSettingsLocked(
+-                SETTINGS_TYPE_SECURE, UserHandle.getUserId(callingUid));
+-        
+-        // Create new setting with filtered value
+-        return settingsState.new Setting(
+-                originalSetting.getName(),
+-                filteredServices.toString(),
+-                originalSetting.getTag(),
+-                originalSetting.getDefaultValue(),
+-                originalSetting.getPackageName(),
+-                originalSetting.isDefaultFromSystem(),
+-                originalSetting.getId()
+-        ) {
+-            @Override
+-            public String getValue() {
+-                return filteredServices.toString();
+-            }
+-        };
+-    }
+-    
+-    private boolean isThirdPartyCaller(int uid) {
+-        try {
+-            // Get package info for the calling UID
+-            String[] packages = mPackageManager.getPackagesForUid(uid);
+-            if (packages == null || packages.length == 0) {
+-                if (DEBUG) {
+-                    Slog.d(LOG_TAG, "isThirdPartyCaller: uid=" + uid + ", packages=null, result=false (unknown caller)");
+-                }
+-                return false; // Unknown caller, assume system
+-            }
+-            
+-            // Debug: log all packages for this UID
+-            StringBuilder packageList = new StringBuilder();
+-            for (String pkg : packages) {
+-                if (packageList.length() > 0) packageList.append(", ");
+-                packageList.append(pkg);
+-            }
+-            if (DEBUG) {
+-                Slog.d(LOG_TAG, "isThirdPartyCaller: uid=" + uid + ", packages=[" + packageList.toString() + "]");
+-            }
+-            
+-            // Check if any package is a system app
+-            for (String packageName : packages) {
+-                ApplicationInfo appInfo = mPackageManager.getApplicationInfo(packageName, 
+-                        PackageManager.GET_UNINSTALLED_PACKAGES, UserHandle.USER_SYSTEM);
+-                if (appInfo != null && ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 || 
+-                    (appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0)) {
+-                    if (DEBUG) {
+-                        Slog.d(LOG_TAG, "isThirdPartyCaller: uid=" + uid + ", package=" + packageName + 
+-                               " is system app (flags=" + appInfo.flags + "), result=false");
+-                    }
+-                    return false; // System app found
+-                }
+-            }
+-            
+-            if (DEBUG) {
+-                Slog.d(LOG_TAG, "isThirdPartyCaller: uid=" + uid + ", no system apps found, result=true (third-party)");
+-            }
+-            return true; // No system apps found, it's third-party
+-        } catch (Exception e) {
+-            Slog.e(LOG_TAG, "isThirdPartyCaller: uid=" + uid + ", exception occurred, result=false", e);
+-            // If we can't determine, assume system for safety
+-            return false;
+-        }
+-    }
+-
+     @GuardedBy("mLock")
+     private Setting getSsaidSettingLocked(PackageInfo callingPkg, int owningUserId) {
+         // Get uid of caller (key) used to store ssaid value
+diff --git a/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java b/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
+index a103ae67e809..316acc3640b6 100755
+--- a/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
++++ b/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
+@@ -30,15 +30,14 @@ import android.os.ShellCommand;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+ import android.provider.Settings;
++import android.util.BstUtils;
++import android.util.Slog;
+ 
+ import java.io.FileDescriptor;
+ import java.io.PrintWriter;
+ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.List;
+-import java.util.Set;
+-import android.util.ArraySet;
+-import android.util.Slog;
+ 
+ final public class SettingsService extends Binder {
+     final SettingsProvider mProvider;
+@@ -349,10 +348,9 @@ final public class SettingsService extends Binder {
+                     result = b.getPairValue();
+ 
+                     // Filter ENABLED_ACCESSIBILITY_SERVICES for third-party apps
+-                    if (result != null && "secure".equals(table) && 
+-                        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES.equals(key)) {
+-                        String originalResult = result;
+-                        result = filterEnabledAccessibilityServicesForShell(result);
++                    if (result != null && "secure".equals(table)
++                            && Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES.equals(key)) {
++                        result = BstUtils.filterHiddenServices(result, Binder.getCallingUid());
+                     }
+                 }
+             } catch (RemoteException e) {
+@@ -360,82 +358,6 @@ final public class SettingsService extends Binder {
+             }
+             return result;
+         }
+-        
+-        /**
+-         * Filter ENABLED_ACCESSIBILITY_SERVICES from shell command, hide BlueStacks related services
+-         * @param services Original service list string
+-         * @return Filtered service list string
+-         */
+-        private String filterEnabledAccessibilityServicesForShell(String services) {
+-            if (services == null || services.isEmpty()) {
+-                return services;
+-            }
+-            
+-            // Check if caller is third-party app
+-            if (!isThirdPartyCallerForShell()) {
+-                return services; // System app, no filtering
+-            }
+-            
+-            // Define services to hide
+-            final Set<String> hiddenServices = new ArraySet<>();
+-            hiddenServices.add("com.bluestacks.home/com.bluestacks.svc.services.GPAccessibilityService");
+-            hiddenServices.add("com.bluestacks.BstCommandProcessor/.UiAccessibilityService");
+-            hiddenServices.add("com.bluestacks.BstCommandProcessor/com.bluestacks.BstCommandProcessor.UiAccessibilityService");
+-            
+-            String[] serviceArray = services.split(":");
+-            StringBuilder filteredServices = new StringBuilder();
+-            
+-            for (String service : serviceArray) {
+-                if (service != null && !service.isEmpty()) {
+-                    // Check if service needs to be hidden
+-                    if (!hiddenServices.contains(service)) {
+-                        if (filteredServices.length() > 0) {
+-                            filteredServices.append(":");
+-                        }
+-                        filteredServices.append(service);
+-                    }
+-                }
+-            }
+-            
+-            return filteredServices.toString();
+-        }
+-        
+-        /**
+-         * Check if shell command caller is third-party app
+-         * @return true if caller is third-party app
+-         */
+-        private boolean isThirdPartyCallerForShell() {
+-            try {
+-                int uid = Binder.getCallingUid();
+-                // Get caller's package info
+-                String[] packages = mProvider.getContext().getPackageManager().getPackagesForUid(uid);
+-                if (packages == null || packages.length == 0) {
+-                    return false; // Cannot determine, conservative handling
+-                }
+-                
+-                StringBuilder packageList = new StringBuilder();
+-                for (String pkg : packages) {
+-                    if (packageList.length() > 0) packageList.append(", ");
+-                    packageList.append(pkg);
+-                }
+-                
+-                // Check if any package is system app
+-                for (String packageName : packages) {
+-                    android.content.pm.ApplicationInfo appInfo = mProvider.getContext()
+-                        .getPackageManager().getApplicationInfo(packageName, 0);
+-                    if (appInfo != null && ((appInfo.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0 || 
+-                        (appInfo.flags & android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0)) {
+-                        return false; // System app found
+-                    }
+-                }
+-                return true; // No system apps found, it's third-party
+-            } catch (Exception e) {
+-                Slog.e(LOG_TAG, "isThirdPartyCallerForShell: exception occurred, result=false", e);
+-                // Exception case, conservative handling
+-                return false;
+-            }
+-        }
+-
+         void putForUser(IContentProvider provider, int userHandle, final String table,
+                 final String key, final String value, String tag, boolean makeDefault) {
+             final String callPutCommand;
+@@ -576,4 +498,3 @@ final public class SettingsService extends Binder {
+         }
+     }
+ }
+-
+diff --git a/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java b/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java
+index 1d4a696e7bba..6ff65b2d17c9 100755
+--- a/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java
++++ b/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java
+@@ -99,6 +99,7 @@ import android.safetycenter.SafetyCenterManager;
+ import android.text.TextUtils;
+ import android.text.TextUtils.SimpleStringSplitter;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.IntArray;
+ import android.util.Pair;
+ import android.util.Slog;
+@@ -1069,8 +1070,8 @@ public class AccessibilityManagerService extends IAccessibilityManager.Stub
+             List<AccessibilityServiceInfo> services = getUserStateLocked(resolvedUserId).mInstalledServices;
+             
+             // Hide specified accessibility services to prevent detection by third-party apps
+-            services = filterHiddenServices(services);
+-            
++            services = BstUtils.filterHiddenServices(services, Binder.getCallingUid());
++
+             serviceInfos = new ArrayList<>(services);
+         }
+ 
+@@ -1124,7 +1125,7 @@ public class AccessibilityManagerService extends IAccessibilityManager.Stub
+             }
+             
+             // Hide specified accessibility services to prevent detection by third-party apps
+-            result = filterHiddenServices(result);
++            result = BstUtils.filterHiddenServices(result, Binder.getCallingUid());
+             
+             return result;
+         }
+@@ -4650,80 +4651,4 @@ public class AccessibilityManagerService extends IAccessibilityManager.Stub
+         }
+     }
+ 
+-    /**
+-     * Check if the current caller is a third-party application
+-     */
+-    private boolean isThirdPartyCaller() {
+-        final int callingUid = Binder.getCallingUid();
+-        
+-        // If UID is in system range, not third-party
+-        if (callingUid < Process.FIRST_APPLICATION_UID) {
+-            return false;
+-        }
+-        
+-        return true;
+-    }
+-
+-    /**
+-     * Filter out hidden accessibility services from the list
+-     * This method hides specified services from third-party applications
+-     */
+-    private List<AccessibilityServiceInfo> filterHiddenServices(List<AccessibilityServiceInfo> services) {
+-        if (services == null || services.isEmpty()) {
+-            return services;
+-        }
+-
+-        // Log filter call for debugging
+-        int callingUid = Binder.getCallingUid();
+-        String callerInfo = "UID: " + callingUid;
+-        
+-        // If caller is not third-party, return original list
+-        if (!isThirdPartyCaller()) {
+-            if (DEBUG) {
+-                Slog.d(LOG_TAG, "filterHiddenServices: system caller detected, skipping filter for " + callerInfo);
+-            }
+-            return services;
+-        }
+-
+-        // Define services to hide from third-party apps
+-        final java.util.Set<String> hiddenServices = new java.util.HashSet<>();
+-        hiddenServices.add("com.bluestacks.home/com.bluestacks.svc.services.GPAccessibilityService");
+-        hiddenServices.add("com.bluestacks.BstCommandProcessor/.UiAccessibilityService");
+-        hiddenServices.add("com.bluestacks.BstCommandProcessor/com.bluestacks.BstCommandProcessor.UiAccessibilityService");
+-        
+-        if (DEBUG) {
+-            Slog.d(LOG_TAG, "filterHiddenServices: filtering for third-party caller " + callerInfo + 
+-               ", input count: " + services.size());
+-        }
+-
+-        List<AccessibilityServiceInfo> filteredServices = new ArrayList<>();
+-        int filteredCount = 0;
+-        
+-        for (AccessibilityServiceInfo service : services) {
+-            ComponentName componentName = new ComponentName(
+-                service.getResolveInfo().serviceInfo.packageName,
+-                service.getResolveInfo().serviceInfo.name
+-            );
+-            
+-            String serviceKey = componentName.flattenToShortString();
+-            
+-            // Only add service if it's not in the hidden list
+-            if (!hiddenServices.contains(serviceKey)) {
+-                filteredServices.add(service);
+-            } else {
+-                if (DEBUG) {
+-                    Slog.i(LOG_TAG, "Hiding accessibility service from third-party caller: " + serviceKey + 
+-                       " for " + callerInfo);
+-                }
+-                filteredCount++;
+-            }
+-        }
+-        
+-        if (DEBUG) {
+-            Slog.d(LOG_TAG, "filterHiddenServices: filtered " + filteredCount + 
+-                   " services, remaining: " + filteredServices.size() + " for " + callerInfo);
+-        }
+-
+-        return filteredServices;
+-    }
+ }
+diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
+index 42aaade8930e..c8cf5db43975 100755
+--- a/services/core/java/com/android/server/pm/ComputerEngine.java
++++ b/services/core/java/com/android/server/pm/ComputerEngine.java
+@@ -1494,117 +1494,12 @@ public class ComputerEngine implements Computer {
+             }
+             resolveInfos.remove(i);
+         }
+-        List<ResolveInfo> result = applyAccessibilityServiceFilter(resolveInfos, callingUid);
++        List<ResolveInfo> result = BstUtils.applyAccessibilityServiceFilter(resolveInfos, callingUid);
+         Slog.d(TAG, "applyPostServiceResolutionFilter final result count: " + 
+                (result != null ? result.size() : 0) + " for " + callerInfo);
+         return result;
+     }
+ 
+-    // List of hidden accessibility services for filtering
+-    private static final List<String> HIDDEN_ACCESSIBILITY_SERVICES = java.util.Arrays.asList(
+-        "com.bluestacks.home/com.bluestacks.svc.services.GPAccessibilityService",
+-        "com.bluestacks.BstCommandProcessor/.UiAccessibilityService",
+-        "com.bluestacks.BstCommandProcessor/com.bluestacks.BstCommandProcessor.UiAccessibilityService"
+-    );
+-
+-    /**
+-     * Filter accessibility service query results for third-party apps, hide BlueStacks-related accessibility services
+-     * @param resolveInfos Original resolve info list
+-     * @param callingUid Caller UID
+-     * @return Filtered resolve info list
+-     */
+-    private List<ResolveInfo> applyAccessibilityServiceFilter(List<ResolveInfo> resolveInfos, int callingUid) {
+-        if (resolveInfos == null || resolveInfos.isEmpty()) {
+-            return resolveInfos;
+-        }
+-        
+-        // Log filter call for debugging
+-        String[] callerPackages = getPackagesForUid(callingUid);
+-        String callerInfo = "UID: " + callingUid + ", Packages: " + java.util.Arrays.toString(callerPackages);
+-        if (DEBUG_INSTANT) {
+-            Slog.d(TAG, "applyAccessibilityServiceFilter called by " + callerInfo + 
+-               ", input count: " + resolveInfos.size());
+-        }
+-        
+-        // Check if caller is a third-party app
+-        boolean isThirdParty = isThirdPartyCaller(callingUid);
+-        if (DEBUG_INSTANT) {
+-            Slog.d(TAG, "Caller isThirdParty: " + isThirdParty + " for " + callerInfo);
+-        }
+-        
+-        if (!isThirdParty) {
+-            return resolveInfos; // System app, no filtering
+-        }
+-        
+-        int filteredCount = 0;
+-        // Filter out hidden accessibility services
+-        for (int i = resolveInfos.size() - 1; i >= 0; i--) {
+-            final ResolveInfo info = resolveInfos.get(i);
+-            if (info != null && info.serviceInfo != null) {
+-                String packageName = info.serviceInfo.packageName;
+-                String serviceName = info.serviceInfo.name;
+-                
+-                // Check if this is a hidden accessibility service
+-                if (packageName != null && serviceName != null && isHiddenAccessibilityService(packageName, serviceName)) {
+-                    String fullServiceName = packageName + "/" + serviceName;
+-                    if (DEBUG_INSTANT) {
+-                        Slog.d(TAG, "Filtering out hidden accessibility service: " + fullServiceName + 
+-                               " for " + callerInfo);
+-                    }
+-                    resolveInfos.remove(i);
+-                    filteredCount++;
+-                }
+-            }
+-        }
+-        
+-        if (DEBUG_INSTANT) {
+-            Slog.d(TAG, "applyAccessibilityServiceFilter filtered " + filteredCount + 
+-                   " services, remaining: " + resolveInfos.size() + " for " + callerInfo);
+-        }
+-        
+-        return resolveInfos;
+-    }
+-    
+-    /**
+-     * Check if the specified accessibility service should be hidden
+-     * @param packageName Package name
+-     * @param serviceName Service name
+-     * @return true if the service should be hidden
+-     */
+-    private boolean isHiddenAccessibilityService(String packageName, String serviceName) {
+-        String fullServiceName = packageName + "/" + serviceName;
+-        return HIDDEN_ACCESSIBILITY_SERVICES.contains(fullServiceName);
+-    }
+-    
+-    /**
+-     * Check if caller is a third-party application
+-     * @param uid Caller UID
+-     * @return true if the caller is a third-party application
+-     */
+-    private boolean isThirdPartyCaller(int uid) {
+-        try {
+-            // Get caller's package information
+-            String[] packages = getPackagesForUid(uid);
+-            if (packages == null || packages.length == 0) {
+-                return false; // Cannot determine, conservative handling
+-            }
+-            
+-            // Check if there are system applications
+-            for (String packageName : packages) {
+-                ApplicationInfo appInfo = getApplicationInfo(packageName, 0, UserHandle.USER_SYSTEM);
+-                if (appInfo != null && ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 || 
+-                    (appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0)) {
+-                    return false; // Found system application
+-                }
+-            }
+-            
+-            return true; // No system application found, it's a third-party application
+-        } catch (Exception e) {
+-            // Exception case, conservative handling
+-            return false;
+-        }
+-    }
+-
+     private List<ResolveInfo> filterCandidatesWithDomainPreferredActivitiesLPr(Intent intent,
+             long matchFlags, List<ResolveInfo> candidates, CrossProfileDomainInfo xpDomainInfo,
+             int userId) {

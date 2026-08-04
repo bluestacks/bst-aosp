@@ -1,0 +1,108 @@
+From ee63bacfaf1424f188f1f705cbc9523df9f24153 Mon Sep 17 00:00:00 2001
+From: dailongzhong-bst <106128901+dailongzhong-bst@users.noreply.github.com>
+Date: Fri, 31 Oct 2025 10:08:06 +0800
+Subject: [PATCH 204/224] Merge pull request #213 from
+ dailongzhong-bst/bst-v5.22.130-RecordingHideSecureFrame
+
+ROB-18022: inform password input state for the screen recording
+---
+ .../com/bluestacks/os/BstHostCallCcCodes.java | 42 +++++++++++++++++++
+ .../InputMethodManagerService.java            | 21 ++++++++++
+ 2 files changed, 63 insertions(+)
+ create mode 100755 core/java/com/bluestacks/os/BstHostCallCcCodes.java
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallCcCodes.java b/core/java/com/bluestacks/os/BstHostCallCcCodes.java
+new file mode 100755
+index 000000000000..052c983acbb5
+--- /dev/null
++++ b/core/java/com/bluestacks/os/BstHostCallCcCodes.java
+@@ -0,0 +1,42 @@
++/*
++ * Copyright (C) 2020-2024 BlueStack Systems, Inc.
++ * All Rights Reserved
++ *
++ * THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF BLUESTACK SYSTEMS, INC.
++ * The copyright notice above does not evidence any actual or intended
++ * publication of such source code.
++ */
++package com.bluestacks.os;
++
++public class BstHostCallCcCodes {
++    public static final int HCALL_CC_hcallResizeResolution      = 0x1;
++    public static final int HCALL_CC_hcallRestoreResolution     = 0x2;
++    public static final int HCALL_CC_hcallSplitAdsShowTimes     = 0x3;
++    public static final int HCALL_CC_hcallSplitAdsEnterComplete = 0x4;
++    public static final int HCALL_CC_hcallSplitAdsExitComplete  = 0x5;
++    public static final int HCALL_CC_hcallPasswordInputOn       = 0x6;
++    public static final int HCALL_CC_hcallPasswordInputOff      = 0x7;
++
++    public static String getHCallCcName(int code) {
++        switch (code) {
++            case HCALL_CC_hcallResizeResolution:
++                return "HCALL_CC_hcallResizeResolution";
++            case HCALL_CC_hcallRestoreResolution:
++                return "HCALL_CC_hcallRestoreResolution";
++            case HCALL_CC_hcallSplitAdsShowTimes:
++                return "HCALL_CC_hcallSplitAdsShowTimes";
++            case HCALL_CC_hcallSplitAdsEnterComplete:
++                return "HCALL_CC_hcallSplitAdsEnterComplete";
++            case HCALL_CC_hcallSplitAdsExitComplete:
++                return "HCALL_CC_hcallSplitAdsExitComplete";
++            case HCALL_CC_hcallPasswordInputOn:
++                return "HCALL_CC_hcallPasswordInputOn";
++            case HCALL_CC_hcallPasswordInputOff:
++                return "HCALL_CC_hcallPasswordInputOff";
++            default:
++                return "UnknownCode";
++        }
++
++    }
++
++}
+\ No newline at end of file
+diff --git a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+index fa1479bc948e..e5e7335a8425 100644
+--- a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
++++ b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+@@ -200,6 +200,8 @@ import com.android.server.wm.WindowManagerInternal;
+ import com.google.android.collect.Sets;
+ import com.bluestacks.os.BstFilterAppsManager;
+ import com.bluestacks.os.BstHostCallManager;
++import android.text.InputType;
++import static com.bluestacks.os.BstHostCallCcCodes.*;
+ 
+ import java.io.FileDescriptor;
+ import java.io.IOException;
+@@ -3684,6 +3686,19 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+         }
+     }
+ 
++    public static boolean isPasswordInputType(int inputType) {
++        int variation =
++                inputType & (EditorInfo.TYPE_MASK_CLASS | EditorInfo.TYPE_MASK_VARIATION);
++        return variation
++                == (EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_PASSWORD)
++                || variation
++                == (EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD)
++                || variation
++                == (EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD)
++                || variation
++                == (EditorInfo.TYPE_CLASS_NUMBER | EditorInfo.TYPE_NUMBER_VARIATION_PASSWORD);
++    }
++
+     private void bstSendSetInputMapperStatusAsync(boolean ime_enabled) {
+         // Not showing keyboard for apps whose entry is present is present in mDisabledImeActivityList.
+         // Bug 10938 : Final Fantasy Awakening, as this app has a invisible (alpha 0.0)
+@@ -3703,6 +3718,12 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+             }
+         }
+ 
++        if (mCurAttribute != null) {
++            boolean isPassword = InputMethodManagerService.isPasswordInputType(mCurAttribute.inputType);
++            Slog.d(TAG, "curAttribute inputType=" + mCurAttribute.inputType + ", isPassword=" + isPassword + ", ime_enabled=" + ime_enabled);
++            mBstHostCallManagerService.commonCommand((isPassword && ime_enabled) ? HCALL_CC_hcallPasswordInputOn : HCALL_CC_hcallPasswordInputOff, "", "");
++        }
++
+         if (ime_enabled != bstWinKeyboardInputEnabled)
+             bstWinKeyboardInputEnabled = ime_enabled;
+         else {

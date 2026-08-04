@@ -1,0 +1,22 @@
+From 05169439648c384baa1e2c5e7efa5f46cc7dd33d Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Mon, 9 Oct 2023 11:45:05 +0800
+Subject: [PATCH 024/224] Changes to add chrome webviewprovider as default
+
+---
+ core/res/res/xml/config_webview_packages.xml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/core/res/res/xml/config_webview_packages.xml b/core/res/res/xml/config_webview_packages.xml
+index f062b59a008c..7939d1415bf0 100644
+--- a/core/res/res/xml/config_webview_packages.xml
++++ b/core/res/res/xml/config_webview_packages.xml
+@@ -16,6 +16,6 @@
+ 
+ <webviewproviders>
+     <!-- The default WebView implementation -->
+-    <webviewprovider description="Android WebView" packageName="com.android.webview" availableByDefault="true">
+-    </webviewprovider>
++    <webviewprovider availableByDefault="true" description="Chrome Stable" packageName="com.android.chrome" />
++    <webviewprovider description="Android WebView" packageName="com.android.webview" isFallback="true" availableByDefault="true" />
+ </webviewproviders>

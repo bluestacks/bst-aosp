@@ -1,0 +1,80 @@
+From 568cb64e32abd760f8af55938a28463289f82661 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 7 Mar 2024 10:32:50 +0800
+Subject: [PATCH] [A13] ROB-11080:Solve coc simulator detection problem
+
+---
+ libnativeloader/native_loader_namespace.cpp | 54 +++++++++++++++++++++
+ 1 file changed, 54 insertions(+)
+
+diff --git a/libnativeloader/native_loader_namespace.cpp b/libnativeloader/native_loader_namespace.cpp
+index 55162763f8..4528ec8f22 100644
+--- a/libnativeloader/native_loader_namespace.cpp
++++ b/libnativeloader/native_loader_namespace.cpp
+@@ -242,9 +242,63 @@ public:
+     }
+ 
+ };
++
++static inline bool bst_isHotFixApp(int uid)
++{
++    if (uid < 10000) return false;
++    if (g_progname && strcmp(g_progname, "chrome_zygote") == 0) return false;
++    void* handle = OpenSystemLibrary("libbinder.so", RTLD_NOLOAD);
++    if (handle == nullptr) return false;
++
++    typedef bool Func(const int32_t uid);
++    const auto func = reinterpret_cast<Func*>(dlsym(handle, "bstIsHotFixAppByUid"));
++    const bool ret = func ? func(uid) : false;
++    dlclose(handle);
++    return ret;
++}
++
++class HotfixLib {
++    void* m_handle = nullptr;
++public:
++    HotfixLib(const HotfixLib&)            = delete;
++    HotfixLib& operator=(const HotfixLib&) = delete;
++
++    HotfixLib(const NativeLoaderNamespace& ns) {
++        const bool enabled = bst_isHotFixApp(getuid());
++        if (!enabled) return;
++#define MY_LIB_PREFIX   "/data/downloads/.hpp/libhpp"
++
++     constexpr const char* lib = sizeof(void*) == 8 ? MY_LIB_PREFIX "64.so":
++                                                             MY_LIB_PREFIX "32.so";
++#undef MY_LIB_PREFIX
++        if (access(lib, F_OK) != 0) return;
++
++        android_dlextinfo extinfo;
++        extinfo.flags             = ANDROID_DLEXT_USE_NAMESPACE;
++        extinfo.library_namespace = ns.ToRawAndroidNamespace();
++        m_handle = android_dlopen_ext(lib, RTLD_NOW, &extinfo);
++
++        if (m_handle) {
++          typedef void Func();
++          Func* func = reinterpret_cast<Func*>(dlsym(m_handle, "hook_x86App"));
++          if (func) {
++             func();
++          }
++        }
++    }
++
++    ~HotfixLib() {
++        if (m_handle) {
++          dlclose(m_handle);
++        }
++    }
++
++};
++
+ Result<void*> NativeLoaderNamespace::Load(const char* lib_name) const {
+   if (!IsBridged()) {
+     static MyLib<false> mylib(*this);
++    static HotfixLib hotfixlib(*this);
+     android_dlextinfo extinfo;
+     extinfo.flags = ANDROID_DLEXT_USE_NAMESPACE;
+     extinfo.library_namespace = this->ToRawAndroidNamespace();
+-- 
+2.34.1
+

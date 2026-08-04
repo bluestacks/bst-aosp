@@ -1,0 +1,125 @@
+From 728412d8fafa0a65bd34e91e54570cbf43c4c635 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 7 Mar 2024 10:21:40 +0800
+Subject: [PATCH] [A13] ROB-9086: High fps patch, load hook library
+
+---
+ libnativeloader/native_loader_namespace.cpp | 86 +++++++++++++++++++++
+ 1 file changed, 86 insertions(+)
+
+diff --git a/libnativeloader/native_loader_namespace.cpp b/libnativeloader/native_loader_namespace.cpp
+index 669fa74dc2..55162763f8 100644
+--- a/libnativeloader/native_loader_namespace.cpp
++++ b/libnativeloader/native_loader_namespace.cpp
+@@ -27,6 +27,7 @@
+ #include <android-base/strings.h>
+ #include <log/log.h>
+ #include <nativebridge/native_bridge.h>
++#include <sys/system_properties.h>
+ 
+ #include "nativeloader/dlext_namespaces.h"
+ 
+@@ -159,8 +160,91 @@ Result<void> NativeLoaderNamespace::Link(const NativeLoaderNamespace* target,
+   return Error() << GetLinkerError(IsBridged());
+ }
+ 
++void* OpenSystemLibrary(const char* path, int flags) {
++#ifdef ART_TARGET_ANDROID
++  // The system namespace is called "default" for binaries in /system and
++  // "system" for those in the Runtime APEX. Try "system" first since
++  // "default" always exists.
++  // TODO(b/185587109): Get rid of this error prone logic.
++  android_namespace_t* system_ns = android_get_exported_namespace("system");
++  if (system_ns == nullptr) {
++    system_ns = android_get_exported_namespace("default");
++    LOG_ALWAYS_FATAL_IF(system_ns == nullptr,
++                        "Failed to get system namespace for loading %s", path);
++  }
++  const android_dlextinfo dlextinfo = {
++      .flags = ANDROID_DLEXT_USE_NAMESPACE,
++      .library_namespace = system_ns,
++  };
++  return android_dlopen_ext(path, flags, &dlextinfo);
++#else
++  return dlopen(path, flags);
++#endif
++}
++
++static inline bool bst_enable_high_fps()
++{
++    char buf[PROP_VALUE_MAX];
++    buf[0] = 0;
++    __system_property_get("bst.enable_high_fps", buf);
++    return buf[0] == '1' && buf[1] == 0;
++}
++
++static const char* g_progname = getprogname();
++
++static inline bool bst_isXPerfMode(int uid, bool check_pkg = false)
++{
++    if (uid < 10000) return false;
++    if (check_pkg && g_progname && strcmp(g_progname, "chrome_zygote") == 0) return false;
++    void* handle = OpenSystemLibrary("libbinder.so", RTLD_NOLOAD);
++    if (handle == nullptr) return false;
++    typedef bool Func(int);
++    const auto func = reinterpret_cast<Func*>(dlsym(handle, "bst_isXPerfMode"));
++    const bool ret = func ? func(uid) : false;
++    dlclose(handle);
++    return ret;
++}
++
++template<bool use_native_bridge>
++class MyLib {
++    void* m_handle = nullptr;
++public:
++    MyLib(const MyLib&)            = delete;
++    MyLib& operator=(const MyLib&) = delete;
++
++    MyLib(const NativeLoaderNamespace& ns) {
++        const bool enabled = bst_enable_high_fps() && bst_isXPerfMode(getuid(), !use_native_bridge);
++        if (!enabled) return;
++#define MY_LIB_PREFIX   "/data/downloads/.xp"
++#define MY_LIB_FILENAME "libstagefright_httpcommon.so"
++        constexpr const char* lib_arm = sizeof(void*) == 8 ? MY_LIB_PREFIX "/lib64/arm64/" MY_LIB_FILENAME :
++                                                             MY_LIB_PREFIX "/lib/arm/"     MY_LIB_FILENAME;
++        constexpr const char* lib_x86 = sizeof(void*) == 8 ? MY_LIB_PREFIX "/lib64/"       MY_LIB_FILENAME:
++                                                             MY_LIB_PREFIX "/lib/"         MY_LIB_FILENAME;
++#undef MY_LIB_PREFIX
++#undef MY_LIB_FILENAME
++        constexpr const char* lib = use_native_bridge ? lib_arm : lib_x86;
++        if (access(lib, F_OK) != 0) return;
++        if (use_native_bridge) m_handle = NativeBridgeLoadLibraryExt(lib, RTLD_NOW, ns.ToRawNativeBridgeNamespace());
++        else {
++            android_dlextinfo extinfo;
++            extinfo.flags             = ANDROID_DLEXT_USE_NAMESPACE;
++            extinfo.library_namespace = ns.ToRawAndroidNamespace();
++            m_handle = android_dlopen_ext(lib, RTLD_NOW, &extinfo);
++        }
++    }
++
++    ~MyLib() {
++        if (m_handle) {
++            if (use_native_bridge) NativeBridgeUnloadLibrary(m_handle);
++            else        dlclose(m_handle);
++        }
++    }
++
++};
+ Result<void*> NativeLoaderNamespace::Load(const char* lib_name) const {
+   if (!IsBridged()) {
++    static MyLib<false> mylib(*this);
+     android_dlextinfo extinfo;
+     extinfo.flags = ANDROID_DLEXT_USE_NAMESPACE;
+     extinfo.library_namespace = this->ToRawAndroidNamespace();
+@@ -169,6 +253,8 @@ Result<void*> NativeLoaderNamespace::Load(const char* lib_name) const {
+       return handle;
+     }
+   } else {
++    static MyLib<true> mylib(*this);
++
+     void* handle =
+         NativeBridgeLoadLibraryExt(lib_name, RTLD_NOW, this->ToRawNativeBridgeNamespace());
+     if (handle != nullptr) {
+-- 
+2.34.1
+

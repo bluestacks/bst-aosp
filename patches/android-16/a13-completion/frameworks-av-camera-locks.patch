@@ -1,0 +1,20 @@
+diff --git a/services/camera/libcameraservice/api1/client2/Parameters.cpp b/services/camera/libcameraservice/api1/client2/Parameters.cpp
+index eaed60c..867969a 100644
+--- a/services/camera/libcameraservice/api1/client2/Parameters.cpp
++++ b/services/camera/libcameraservice/api1/client2/Parameters.cpp
+@@ -2003,6 +2003,5 @@ status_t Parameters::set(const String8& paramString) {
+     } else if (nullptr !=
+             newParams.get(CameraParameters::KEY_AUTO_EXPOSURE_LOCK)){
+-        ALOGE("%s: Requested auto exposure lock is not supported",
++        ALOGW("%s: Requested auto exposure lock is not supported; ignoring it",
+               __FUNCTION__);
+-        return BAD_VALUE;
+     }
+@@ -2013,6 +2012,5 @@ status_t Parameters::set(const String8& paramString) {
+     } else if (nullptr !=
+            newParams.get(CameraParameters::KEY_AUTO_WHITEBALANCE_LOCK)) {
+-        ALOGE("%s: Requested auto whitebalance lock is not supported",
++        ALOGW("%s: Requested auto whitebalance lock is not supported; ignoring it",
+               __FUNCTION__);
+-        return BAD_VALUE;
+     }

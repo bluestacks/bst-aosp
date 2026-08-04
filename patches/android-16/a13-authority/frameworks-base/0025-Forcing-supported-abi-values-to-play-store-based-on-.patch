@@ -1,0 +1,122 @@
+From d5b7029546611bccbd4d9ed1e2cada5f01088bd3 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Tue, 10 Oct 2023 15:45:58 +0800
+Subject: [PATCH 025/224] Forcing supported abi values to play store based on
+ bst.abi_list property
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 87 +++++++++++++++++++++
+ 1 file changed, 87 insertions(+)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index fafcf5c84b94..e6b4a34a5315 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -74,6 +74,7 @@
+ #include <bionic/mte.h>
+ #include <cutils/fs.h>
+ #include <cutils/multiuser.h>
++#include <cutils/properties.h>
+ #include <cutils/sockets.h>
+ #include <private/android_filesystem_config.h>
+ #include <processgroup/processgroup.h>
+@@ -913,6 +914,35 @@ void SetThreadName(const std::string& thread_name) {
+   android::base::SetDefaultTag(buf);
+ }
+ 
++static void SetCpuAbiList(JNIEnv* env, jclass build_class, const char* field, std::vector <std::string> val) {
++  jfieldID field_id = env->GetStaticFieldID(build_class, field, "[Ljava/lang/String;");
++  if (field_id == nullptr) {
++    env->ExceptionClear();
++    ALOGW("Could not find %s field.", field);
++    return;
++  }
++
++  // Create abi array.
++  jobjectArray abi = env->NewObjectArray(val.size(), env->FindClass("java/lang/String"), nullptr);
++  if (abi == nullptr) {
++    env->ExceptionClear();
++    ALOGW("Could not create array.");
++    return;
++  }
++
++  // Fill abi array.
++  for (size_t i = 0; i < val.size() ; i++) {
++    jstring str = env->NewStringUTF(val[i].c_str());
++    if (str == nullptr) {
++      env->ExceptionClear();
++      ALOGW("Could not create string %s.", val[i].c_str());
++      return;
++    }
++    env->SetObjectArrayElement(abi, i, str);
++  }
++  env->SetStaticObjectField(build_class, field_id, abi);
++}
++
+ /**
+  * A helper method for converting managed strings to native strings.  A fatal
+  * error is generated if a problem is encountered in extracting a non-null
+@@ -1957,6 +1987,63 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+         SetThreadName("system_server");
+     }
+ 
++
++    if (uid >= 10000 && nice_name_ptr != nullptr && !strncmp(nice_name_ptr, "com.android.vending", strlen("com.android.vending"))) {
++
++#define X86          "x86"
++#define X86_64       "x86_64"
++#define ARMEABI_V7A  "armeabi-v7a"
++#define ARMEABI      "armeabi"
++#define ARM64        "arm64-v8a"
++
++        std::vector <std::string> abi_supported;
++        std::vector <std::string> abi_supported_32;
++        std::vector <std::string> abi_supported_64;
++
++        char abi_list[PROPERTY_VALUE_MAX];
++        property_get("bst.abi_list", abi_list, "x86,arm");
++        char *abi = strtok(abi_list, ",");
++
++        while (abi != NULL) {
++            if (!strcmp(abi,"x86")) {
++                abi_supported_32.push_back(X86);
++            } else if (!strcmp(abi,"arm"))  {
++                abi_supported_32.push_back(ARMEABI_V7A);
++                abi_supported_32.push_back(ARMEABI);
++            } else if (!strcmp(abi,"arm64")) {
++                 abi_supported_64.push_back(ARM64);
++            } else if (!strcmp(abi,"x64")) {
++                 abi_supported_64.push_back(X86_64);
++            }
++            abi = strtok(NULL, ",");
++        }
++        ALOGI("abilist : %s is  ", abi_list);
++        if (abi_supported_32.size() == 0 && abi_supported_64.size() == 0 ) {
++            ALOGW("abivalue: %s is not a valid value for this system,adding default abi values", abi_list);
++            abi_supported_32.push_back(X86);
++            abi_supported_32.push_back(ARMEABI_V7A);
++            abi_supported_32.push_back(ARMEABI);
++#if defined(__LP64__)
++            abi_supported_64.push_back(X86_64);
++            abi_supported_64.push_back(ARM64);
++#endif
++        }
++
++        abi_supported.reserve(abi_supported_32.size() + abi_supported_64.size() ); // preallocate memory
++#if defined(__LP64__)
++        abi_supported.insert(abi_supported.end(), abi_supported_64.begin(), abi_supported_64.end());
++#endif
++        abi_supported.insert(abi_supported.end(), abi_supported_32.begin(), abi_supported_32.end());
++
++        jclass bclass_id = env->FindClass("android/os/Build");
++
++#if defined(__LP64__)
++        SetCpuAbiList(env, bclass_id, "SUPPORTED_64_BIT_ABIS", abi_supported_64);
++#endif
++        SetCpuAbiList(env, bclass_id, "SUPPORTED_ABIS", abi_supported);
++        SetCpuAbiList(env, bclass_id, "SUPPORTED_32_BIT_ABIS", abi_supported_32);
++    }
++
+     // Unset the SIGCHLD handler, but keep ignoring SIGHUP (rationale in SetSignalHandlers).
+     UnsetChldSignalHandler();
+ 

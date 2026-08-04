@@ -1,5 +1,10 @@
 # Android-16 Promotion Rework Audit
 
+> Historical snapshot for root `298403a` and withdrawn PR #2. Later A13
+> authority review restored additional behavior, including the full FPS
+> callback path. Current decisions and validation debt are recorded in
+> [`a13-authority-completion.md`](a13-authority-completion.md).
+
 ## Status
 
 The first promotion candidate was withdrawn on 2026-07-31. GitHub PR
@@ -175,4 +180,5 @@ All rework gates passed against root `298403a`:
 5. Windows Layer 2 passed 7/7 at 86 seconds.
 6. The 1022-submodule audit passed at 987 base + 35 merge with every modified
    component SHA reachable from the expected remote.
-7. PR #2 is ready to merge and reports no conflict with the current base.
+7. PR #2 reported no base conflict at the time; it was later withdrawn and is
+   not the current submission candidate.

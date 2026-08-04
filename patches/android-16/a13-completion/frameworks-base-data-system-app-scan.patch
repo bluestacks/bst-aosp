@@ -1,0 +1,44 @@
+diff --git a/services/core/java/com/android/server/pm/InitAppsHelper.java b/services/core/java/com/android/server/pm/InitAppsHelper.java
+index c851770ca790..6649a130abbc 100644
+--- a/services/core/java/com/android/server/pm/InitAppsHelper.java
++++ b/services/core/java/com/android/server/pm/InitAppsHelper.java
+@@ -388,6 +388,16 @@ final class InitAppsHelper {
+                     partition.apexInfo);
+         }
+ 
++        final File blueStacksPrivAppDir =
++                new File(Environment.getDataDirectory(), "priv-downloads");
++        collectScanParams(scanParamsList, blueStacksPrivAppDir, mSystemParseFlags,
++                mSystemScanFlags | SCAN_AS_PRIVILEGED, packageParser, executorService, null);
++
++        final File blueStacksAppDir =
++                new File(Environment.getDataDirectory(), "downloads");
++        collectScanParams(scanParamsList, blueStacksAppDir, mSystemParseFlags,
++                mSystemScanFlags, packageParser, executorService, null);
++
+         // Scan all directories with the parameters contained in scanParamsList.
+         parallelScanDirTracedLI(scanParamsList, packageParser, executorService);
+ 
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index cde0b01c7be0..3f811cb4ea43 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -4202,6 +4202,18 @@ final class InstallPackageHelper {
+             @PackageManagerService.ScanFlags int rescanFlags = rescanAndReparseFlags.first;
+             @ParsingPackageUtils.ParseFlags int reparseFlags = rescanAndReparseFlags.second;
+ 
++            final File blueStacksPrivAppDir =
++                    new File(Environment.getDataDirectory(), "priv-downloads");
++            final File blueStacksAppDir =
++                    new File(Environment.getDataDirectory(), "downloads");
++            if (FileUtils.contains(blueStacksPrivAppDir, scanFile)) {
++                reparseFlags = systemParseFlags;
++                rescanFlags = systemScanFlags | SCAN_AS_PRIVILEGED | SCAN_AS_SYSTEM;
++            } else if (FileUtils.contains(blueStacksAppDir, scanFile)) {
++                reparseFlags = systemParseFlags;
++                rescanFlags = systemScanFlags | SCAN_AS_SYSTEM;
++            }
++
+             if (rescanFlags == 0) {
+                 Slog.e(TAG, "Ignoring unexpected fallback path " + scanFile);
+                 continue;

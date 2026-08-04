@@ -1,0 +1,40 @@
+From 81794889f614747824a57384fa19aa62b920335f Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Wed, 1 Nov 2023 10:45:22 +0800
+Subject: [PATCH 057/224] [A13] Sending fake sensor vendor information to the
+ apps as some apps use this information to determine whether they are running
+ on emulator or actual device.
+
+---
+ core/java/android/hardware/Sensor.java | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/core/java/android/hardware/Sensor.java b/core/java/android/hardware/Sensor.java
+index 10c37301b0b0..d7b288e84e36 100644
+--- a/core/java/android/hardware/Sensor.java
++++ b/core/java/android/hardware/Sensor.java
+@@ -1075,6 +1075,13 @@ public final class Sensor {
+      * @return vendor string of this sensor.
+      */
+     public String getVendor() {
++        // sending fake sensor vendor info
++        // this is needed as some apps check for sensor vendor info
++        // to determine if they are running on real phone device or not
++        if (mVendor.toLowerCase().startsWith("bluestacks")) {
++            String bstVendor = Build.MANUFACTURER + " Inc.";
++            return bstVendor;
++        }
+         return mVendor;
+     }
+ 
+@@ -1089,6 +1096,10 @@ public final class Sensor {
+      * @return version of the sensor's module.
+      */
+     public int getVersion() {
++        if (mVersion == 0) {
++            // Apps like perk tv depend on this to check if it is bluestacks.
++            return 1;
++        }
+         return mVersion;
+     }
+ 

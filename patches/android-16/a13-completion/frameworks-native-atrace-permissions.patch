@@ -1,0 +1,26 @@
+From 7160733aa6048f6596ba7fbf1362e5e7d64b4a04 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 23:58:37 +0800
+Subject: [PATCH] [A16] Restore kernel trace permissions
+
+---
+ cmds/atrace/atrace.rc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/cmds/atrace/atrace.rc b/cmds/atrace/atrace.rc
+index 46cd6f3f83..7431e1fc95 100644
+--- a/cmds/atrace/atrace.rc
++++ b/cmds/atrace/atrace.rc
+@@ -231,7 +231,9 @@ on late-init
+     chmod 0666 /sys/kernel/tracing/events/thermal/cdev_update/enable
+ 
+ # Read and truncate the kernel trace.
++    chmod 0755 /sys/kernel/debug/tracing
+     chmod 0666 /sys/kernel/debug/tracing/trace
++    chmod 0644 /sys/kernel/debug/tracing/free_buffer
+     chmod 0666 /sys/kernel/tracing/trace
+ 
+ # Read and truncate the per-CPU kernel trace.
+-- 
+2.34.1
+

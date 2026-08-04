@@ -1,0 +1,155 @@
+From 1b50e47b9082c64b6452e404b085969ea0e0ff08 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Mon, 3 Aug 2026 19:46:31 +0800
+Subject: [PATCH] [A16] Restore per-app orientation policy
+
+Port the missing behavior from A13 b59e3681addc while retaining the Android 16 host-rotation API adaptation. Normalize app orientation requests, preserve package-specific overrides, disable fixed-to-user rotation by default, and re-synchronize the host after system_server restart.
+---
+ .../com/android/server/wm/DisplayContent.java | 56 +++++++++++++++++++
+ .../server/wm/DisplayWindowSettings.java      |  2 +-
+ .../android/server/wm/TaskDisplayArea.java    | 10 +++-
+ .../com/android/server/wm/WindowAnimator.java |  4 ++
+ 4 files changed, 70 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index 7cf94512f697..c6acfd73a4c6 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -28,8 +28,20 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
+ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSET;
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT;
+ import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+ import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+ import static android.content.res.Configuration.ORIENTATION_UNDEFINED;
+@@ -3013,6 +3025,50 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+         return orientation;
+     }
+ 
++    /** Applies the BlueStacks per-app orientation policy to an app request. */
++    @ScreenOrientation
++    int getBstOrientation(@ScreenOrientation int requestedOrientation) {
++        final String topPackage = android.os.SystemProperties.get(
++                "bst.config.top_package_name", "");
++        if ("com.foxnextgames.m3".equals(topPackage)) {
++            return SCREEN_ORIENTATION_UNSPECIFIED;
++        }
++
++        final String topActivity = android.os.SystemProperties.get(
++                "bst.config.top_activity_name", "");
++        if ("com.whatsapp/.status.playback.StatusReplyActivity".equals(topActivity)) {
++            return SCREEN_ORIENTATION_PORTRAIT;
++        }
++
++        if (mWmService.mBstFilterApps != null) {
++            if (mWmService.mBstFilterApps.isSmallScreenApp(topPackage)) {
++                return SCREEN_ORIENTATION_PORTRAIT;
++            }
++            if (mWmService.mBstFilterApps.isPortraitDisabled(topPackage)) {
++                return SCREEN_ORIENTATION_LANDSCAPE;
++            }
++        }
++
++        switch (requestedOrientation) {
++            case SCREEN_ORIENTATION_SENSOR_LANDSCAPE:
++            case SCREEN_ORIENTATION_USER_LANDSCAPE:
++            case SCREEN_ORIENTATION_REVERSE_LANDSCAPE:
++                return SCREEN_ORIENTATION_LANDSCAPE;
++            case SCREEN_ORIENTATION_SENSOR_PORTRAIT:
++            case SCREEN_ORIENTATION_USER_PORTRAIT:
++            case SCREEN_ORIENTATION_REVERSE_PORTRAIT:
++                return SCREEN_ORIENTATION_PORTRAIT;
++            case SCREEN_ORIENTATION_SENSOR:
++            case SCREEN_ORIENTATION_FULL_SENSOR:
++            case SCREEN_ORIENTATION_FULL_USER:
++            case SCREEN_ORIENTATION_USER:
++            case SCREEN_ORIENTATION_NOSENSOR:
++                return SCREEN_ORIENTATION_UNSPECIFIED;
++            default:
++                return requestedOrientation;
++        }
++    }
++
+     void updateDisplayInfo(@NonNull DisplayInfo newDisplayInfo) {
+         // Check if display metrics changed and update base values if needed.
+         updateBaseDisplayMetricsIfNeeded(newDisplayInfo);
+diff --git a/services/core/java/com/android/server/wm/DisplayWindowSettings.java b/services/core/java/com/android/server/wm/DisplayWindowSettings.java
+index 9004a6d4add3..53044211e6bd 100644
+--- a/services/core/java/com/android/server/wm/DisplayWindowSettings.java
++++ b/services/core/java/com/android/server/wm/DisplayWindowSettings.java
+@@ -394,7 +394,7 @@ class DisplayWindowSettings {
+         final int userRotation = settings.mUserRotation != null
+                 ? settings.mUserRotation : Surface.ROTATION_0;
+         final int mFixedToUserRotation = settings.mFixedToUserRotation != null
+-                ? settings.mFixedToUserRotation : IWindowManager.FIXED_TO_USER_ROTATION_DEFAULT;
++                ? settings.mFixedToUserRotation : IWindowManager.FIXED_TO_USER_ROTATION_DISABLED;
+         dc.getDisplayRotation().restoreSettings(userRotationMode, userRotation,
+                 mFixedToUserRotation);
+ 
+diff --git a/services/core/java/com/android/server/wm/TaskDisplayArea.java b/services/core/java/com/android/server/wm/TaskDisplayArea.java
+index 9d005fc7bc9e..4d507bc9611b 100644
+--- a/services/core/java/com/android/server/wm/TaskDisplayArea.java
++++ b/services/core/java/com/android/server/wm/TaskDisplayArea.java
+@@ -36,6 +36,7 @@ import static com.android.server.wm.ActivityRecord.State.RESUMED;
+ import static com.android.server.wm.ActivityTaskManagerService.TAG_ROOT_TASK;
+ import static com.android.server.wm.DisplayContent.alwaysCreateRootTask;
+ import static com.android.server.wm.WindowManagerDebugConfig.DEBUG_ROOT_TASK;
++import static com.android.server.wm.WindowManagerDebugConfig.BST_DEBUG_ORIENTATION;
+ import static com.android.server.wm.WindowManagerDebugConfig.TAG_WM;
+ 
+ import android.annotation.NonNull;
+@@ -611,7 +612,14 @@ final class TaskDisplayArea extends DisplayArea<WindowContainer> {
+     @Override
+     @ScreenOrientation
+     int getOrientation(@ScreenOrientation int candidate) {
+-        final int orientation = super.getOrientation(candidate);
++        int orientation = super.getOrientation(candidate);
++        if (BST_DEBUG_ORIENTATION) {
++            Slog.d(TAG_WM, "App requested orientation: " + orientation);
++        }
++        orientation = mDisplayContent.getBstOrientation(orientation);
++        if (BST_DEBUG_ORIENTATION) {
++            Slog.d(TAG_WM, "Changing requested orientation to: " + orientation);
++        }
+         if (!canSpecifyOrientation(orientation)) {
+             mLastOrientationSource = null;
+             // We only respect orientation of the focused TDA, which can be a child of this TDA.
+diff --git a/services/core/java/com/android/server/wm/WindowAnimator.java b/services/core/java/com/android/server/wm/WindowAnimator.java
+index 358cd7636a50..5d27fccd1d3a 100644
+--- a/services/core/java/com/android/server/wm/WindowAnimator.java
++++ b/services/core/java/com/android/server/wm/WindowAnimator.java
+@@ -30,6 +30,7 @@ import android.os.Trace;
+ import android.util.Slog;
+ import android.util.TimeUtils;
+ import android.view.Choreographer;
++import android.view.Surface;
+ import android.view.SurfaceControl;
+ 
+ import com.android.internal.protolog.ProtoLog;
+@@ -116,6 +117,9 @@ public class WindowAnimator {
+         }
+         mExecutor = new HandlerExecutor(service.mAnimationHandler);
+ 
++        // Re-synchronize host orientation after a system_server restart.
++        mService.sendOrientationToHostAsync(Surface.ROTATION_0);
++
+         mAnimationFrameCallback =
+                 frameTimeNs -> {
+                     synchronized (mService.mGlobalLock) {
+-- 
+2.34.1
+

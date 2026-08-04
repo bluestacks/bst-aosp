@@ -1,0 +1,129 @@
+From ab3e2902a7546fb6c87d11a08ba9234376c4cd54 Mon Sep 17 00:00:00 2001
+From: kitt-bst <kitt@bluestacks.com>
+Date: Tue, 23 Dec 2025 10:55:56 +0800
+Subject: [PATCH 211/224] ROB-18340: Add a item called GLMBRRO in config.db
+ (#217)
+
+If an app's GLMBRRO is set to true, glMapBufferRange will be
+called only once for improving perf.
+
+Signed-off-by: kitt-bst <kitt@bluestacks.com>
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 49 +++++++++++++++++++
+ 3 files changed, 65 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 08cf33e5fc37..c30b3e397a83 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1998,4 +1998,19 @@ public class BstFilterAppsManager {
+             return 0;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isMapBufRangeReadOnceEnabled(String pkgName)
++    {
++        try {
++            return mService.isMapBufRangeReadOnceEnabled(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 6aa13baa9b57..6bfb334e0047 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -129,4 +129,5 @@ interface IBstFilterAppsService
+     String getVKDeviceExtIgnore(String pkgName);
+     boolean isDefaultXYDpi(String pkgName);
+     int getPScoreAbove(String pkgName);
++    boolean isMapBufRangeReadOnceEnabled(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index a15066687f66..3bf69fc6ee3c 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -202,6 +202,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mExtractNativeLibsAppList = new TreeSet<String>();
+     private Set<String>           mDefaultXYDpiAppList = new TreeSet<String>();
+     private Map<String, Integer>  mPScoreAboveAppList = new HashMap<String, Integer>();
++    private Set<String>           mGlMapBufferRangeReadOnceAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2768,6 +2769,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mPScoreAboveAppList, pkgException, score);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("GLMBRRO")) {
++                                    synchronized (mGlMapBufferRangeReadOnceAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mGlMapBufferRangeReadOnceAppList \n");
++                                        mGlMapBufferRangeReadOnceAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mGlMapBufferRangeReadOnceAppList \n");
++                                            mGlMapBufferRangeReadOnceAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mGlMapBufferRangeReadOnceAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3521,6 +3538,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mPScoreAboveAppList.clear();
+         }
+ 
++        synchronized (mGlMapBufferRangeReadOnceAppList)
++        {
++            mGlMapBufferRangeReadOnceAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -8072,4 +8094,31 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return score;
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isMapBufRangeReadOnceEnabled(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mGlMapBufferRangeReadOnce app list\n");
++        initLists();
++
++        synchronized (mGlMapBufferRangeReadOnceAppList)
++        {
++            if (mGlMapBufferRangeReadOnceAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGlMapBufferRangeReadOnceAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mGlMapBufferRangeReadOnce App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

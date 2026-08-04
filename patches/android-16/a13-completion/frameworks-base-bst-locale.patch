@@ -1,0 +1,43 @@
+From 9364133ff643709056247240e56bb79903f32dc1 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 13:56:19 +0800
+Subject: [PATCH] [A16] Read the default locale from BlueStacks
+
+---
+ core/jni/AndroidRuntime.cpp | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/AndroidRuntime.cpp b/core/jni/AndroidRuntime.cpp
+index 30a49b74efca..b9bfb2ad97ba 100644
+--- a/core/jni/AndroidRuntime.cpp
++++ b/core/jni/AndroidRuntime.cpp
+@@ -495,6 +495,14 @@ const std::string readLocale()
+         return out;
+     }
+ 
++    const std::string bstLocale = GetProperty("bst.locale", "");
++    const size_t separator = bstLocale.find('-');
++    if (separator != std::string::npos && separator > 0
++            && separator + 1 < bstLocale.length()) {
++        ALOGD("Using BlueStacks locale %s", bstLocale.c_str());
++        return bstLocale;
++    }
++
+     const std::string productLocale = GetProperty("ro.product.locale", "");
+     if (!productLocale.empty()) {
+         return productLocale;
+@@ -505,7 +513,10 @@ const std::string readLocale()
+     const std::string productLanguage = GetProperty("ro.product.locale.language", "en");
+     const std::string productRegion = GetProperty("ro.product.locale.region", "US");
+ 
+-    return productLanguage + "-" + productRegion;
++    if (!productLanguage.empty() && !productRegion.empty()) {
++        return productLanguage + "-" + productRegion;
++    }
++    return "en-US";
+ }
+ 
+ void AndroidRuntime::addOption(const char* optionString, void* extraInfo)
+-- 
+2.34.1
+

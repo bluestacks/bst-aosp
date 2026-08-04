@@ -1,0 +1,127 @@
+From cf14a1f5c5ba9cb07fa69df843acc4d59d83cdd2 Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Wed, 29 May 2024 20:04:00 +0800
+Subject: [PATCH 145/224] [A13] ROB-13471: remove the hardcore fix, add
+ GLVBOCacheDisable config
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 51 +++++++++++++++++++
+ 3 files changed, 67 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 22e077d91638..5f44fd723d49 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1737,4 +1737,19 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isGLVBOCacheDisableApp(String pkgName)
++    {
++        try{
++            return mService.isGLVBOCacheDisableApp(pkgName);
++	} catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index aa7520e3909d..37c79cdf1236 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -112,4 +112,5 @@ interface IBstFilterAppsService
+     String getIapSetting(String pkgName);
+     boolean isGlMapBufferRangeHost(String pkgName);
+     boolean isIgnoreSyncTimeout(String pkgName);
++    boolean isGLVBOCacheDisableApp(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 787306dd7330..a53bc893a7ef 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -185,6 +185,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Object                mIapSettingLock = new Object();
+     private Set<String>           mGlMapBufferRangeHostAppList = new TreeSet<String>();
+     private Set<String>           mIgnoreSyncTimeoutAppList = new TreeSet<String>();
++    private Set<String>           mGLVBOCacheDisableAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2517,6 +2518,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mGlMapBufferRangeHostAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("GLVBOCacheDisable")) {
++                                    synchronized (mGLVBOCacheDisableAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mGLVBOCacheDisableList \n");
++                                        mGLVBOCacheDisableAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mGLVBOCacheDisableAppList \n");
++                                            mGLVBOCacheDisableAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mGLVBOCacheDisableAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3184,6 +3201,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mIgnoreSyncTimeoutAppList.clear();
+         }
+ 
++        synchronized (mGLVBOCacheDisableAppList)
++        {
++            mGLVBOCacheDisableAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7196,4 +7218,33 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * Check if this app need GLVBOCache Disable
++     * case ROB-13471: Adding a new entry name: GLVBOCacheDisable
++     * @hide
++     */
++    public boolean isGLVBOCacheDisableApp(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GLVBOCache Disable app list\n");
++        initLists();
++
++        synchronized (mGLVBOCacheDisableAppList)
++        {
++            if (mGLVBOCacheDisableAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGLVBOCacheDisableAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in GLVBOCache Disable App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

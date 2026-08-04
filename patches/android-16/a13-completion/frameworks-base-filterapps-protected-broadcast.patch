@@ -1,0 +1,24 @@
+From 2022162505304786857870ec510162ed2a74fca5 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Mon, 3 Aug 2026 19:13:31 +0800
+Subject: [PATCH] [A16] Protect FilterApps list change broadcast
+
+---
+ core/res/AndroidManifest.xml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index 3a5dbd08dba5..e934915593e9 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -596,6 +596,7 @@
+     <protected-broadcast android:name="EventConditionProvider.EVALUATE" />
+     <protected-broadcast android:name="SnoozeHelper.EVALUATE" />
+     <protected-broadcast android:name="wifi_scan_available" />
++    <protected-broadcast android:name="BST.FILTER.SERVICE.LISTS_CHANGED" />
+ 
+     <protected-broadcast android:name="action.cne.started" />
+     <protected-broadcast android:name="android.content.jobscheduler.JOB_DEADLINE_EXPIRED" />
+-- 
+2.34.1
+

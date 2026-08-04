@@ -1,0 +1,36 @@
+From 580b60c099d22f0b266644c55bbe4504d824abc7 Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Wed, 22 Nov 2023 17:19:47 +0800
+Subject: [PATCH 086/224] [A13] By default in bluestacks do not go into the
+ safe mode
+
+---
+ .../java/com/android/server/wm/WindowManagerService.java  | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 61c3b8c8e5ae..9cf20cef733d 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -5211,6 +5211,11 @@ public class WindowManagerService extends IWindowManager.Stub
+             }
+         } catch (IllegalArgumentException e) {
+         }
++
++        // By default, in bluestacks do not go into the safe mode even if one of the above keys are pressed.
++        if (SystemProperties.getInt("bst.debug.safemode", 0) <= 0) {
++            mSafeMode = false;
++        }
+         if (mSafeMode) {
+             ProtoLog.i(WM_ERROR, "SAFE MODE ENABLED (menu=%d s=%d dpad=%d"
+                     + " trackball=%d)", menuState, sState, dpadState, trackballState);
+@@ -5219,7 +5224,8 @@ public class WindowManagerService extends IWindowManager.Stub
+                 SystemProperties.set(ShutdownThread.RO_SAFEMODE_PROPERTY, "1");
+             }
+         } else {
+-            ProtoLog.i(WM_ERROR, "SAFE MODE not enabled");
++            ProtoLog.i(WM_ERROR, "SAFE MODE ENABLED (menu=%d s=%d dpad=%d"
++                + " trackball=%d)", menuState, sState, dpadState, trackballState);
+         }
+         mPolicy.setSafeMode(mSafeMode);
+         return mSafeMode;

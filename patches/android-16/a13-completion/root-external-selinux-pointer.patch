@@ -1,0 +1,24 @@
+From 8dc66a08a561d746c8a26c39435eb52827104793 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 02:21:08 +0800
+Subject: [PATCH] [A16] Update SELinux userspace compatibility
+
+Advance external/selinux to 62b46b73374cc636e3e0aeb0d492ee077cc2210b.
+
+Source: A13 external/selinux d42add96533decac77101c314e5abceae20070d7.
+
+The component restores the authority behavior that reports SELinux disabled to Android userspace while retaining upstream host behavior. Incremental build, host tests, and target disassembly readback passed; boot validation remains required.
+---
+ external/selinux | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/external/selinux b/external/selinux
+index 085c131..62b46b7 160000
+--- a/external/selinux
++++ b/external/selinux
+@@ -1 +1 @@
+-Subproject commit 085c131ad1b984bfa8ffdafee7a976e9d89f403c
++Subproject commit 62b46b73374cc636e3e0aeb0d492ee077cc2210b
+-- 
+2.34.1
+

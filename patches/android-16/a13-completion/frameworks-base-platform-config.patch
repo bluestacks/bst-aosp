@@ -1,0 +1,43 @@
+From 4d7c2ab8f8ede236c1a205dfa6780a4e1d45cfa4 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 14:08:22 +0800
+Subject: [PATCH] [A16] Restore BlueStacks platform configuration
+
+---
+ core/res/res/values/config.xml            | 2 +-
+ data/etc/privapp-permissions-platform.xml | 6 ++++++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index 7c1bb56b78cd..2bc307375844 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -2788,7 +2788,7 @@
+ 
+     <!-- Automatic "network" time detection config: Normal network time polling frequency in
+          milliseconds. -->
+-    <integer name="config_ntpPollingInterval">64800000</integer>
++    <integer name="config_ntpPollingInterval">3600000</integer>
+     <!-- Automatic "network" time detection config: Try-again network time polling interval in
+          milliseconds, in case the network request failed -->
+     <integer name="config_ntpPollingIntervalShorter">60000</integer>
+diff --git a/data/etc/privapp-permissions-platform.xml b/data/etc/privapp-permissions-platform.xml
+index f9d078cb6547..540a142eb57a 100644
+--- a/data/etc/privapp-permissions-platform.xml
++++ b/data/etc/privapp-permissions-platform.xml
+@@ -689,6 +689,12 @@ applications that come with the platform
+         <permission name="android.permission.BIND_WALLPAPER"/>
+     </privapp-permissions>
+ 
++    <privapp-permissions package="com.bluestacks.BstCommandProcessor">
++        <permission name="android.permission.FORCE_STOP_PACKAGES"/>
++        <permission name="android.permission.INSTALL_PACKAGES"/>
++        <permission name="android.permission.SET_TIME"/>
++    </privapp-permissions>
++
+     <privapp-permissions package="com.android.wallpaper">
+         <permission name="android.permission.SET_WALLPAPER_COMPONENT"/>
+         <permission name="android.permission.BIND_WALLPAPER"/>
+-- 
+2.34.1
+

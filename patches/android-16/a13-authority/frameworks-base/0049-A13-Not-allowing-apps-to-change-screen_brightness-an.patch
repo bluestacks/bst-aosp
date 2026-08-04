@@ -1,0 +1,139 @@
+From cb0f79d5de75be74382717efa3a7b70e427135b0 Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Tue, 31 Oct 2023 10:36:03 +0800
+Subject: [PATCH 049/224] =?UTF-8?q?[A13]=20Not=20allowing=20apps=20to=20ch?=
+ =?UTF-8?q?ange=20screen=5Fbrightness=20and=20screen=5Foff=5Fti=E2=80=A6?=
+ =?UTF-8?q?=20=E2=80=A6meout,?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+ battery saver apps causes black screen,if screen_off_timeout is set.
+
+- Temporary workaround for niantic labs app Pokemon Go. These changes will
+  allow us to use any 3rd party location provider to mock GPS coordinates
+  which can be used inside Pokemon Go app. App will not able to determine
+  whether location cordinates are coming from the MockLocation Provider or
+  actual device location provider.
+
+- ROB-4481: change the value of Settings.Global.ADB_ENABLED&Settings.Global.
+  DEVELOPMENT_SETTINGS_ENABLED returned by android.provider.Settings.
+NameValueCache.getStringForUser() to fix safetynet issue
+---
+ core/java/android/provider/Settings.java | 87 ++++++++++++++++++------
+ 1 file changed, 68 insertions(+), 19 deletions(-)
+
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 94a6382227f3..314772a1d665 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -83,6 +83,7 @@ import android.text.TextUtils;
+ import android.util.AndroidException;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.Log;
+ import android.util.MemoryIntArray;
+ import android.view.Display;
+@@ -2995,27 +2996,33 @@ public final class Settings {
+         public boolean putStringForUser(ContentResolver cr, String name, String value,
+                 String tag, boolean makeDefault, final int userHandle,
+                 boolean overrideableByRestore) {
+-            try {
+-                Bundle arg = new Bundle();
+-                arg.putString(Settings.NameValueTable.VALUE, value);
+-                arg.putInt(CALL_METHOD_USER_KEY, userHandle);
+-                if (tag != null) {
+-                    arg.putString(CALL_METHOD_TAG_KEY, tag);
+-                }
+-                if (makeDefault) {
+-                    arg.putBoolean(CALL_METHOD_MAKE_DEFAULT_KEY, true);
+-                }
+-                if (overrideableByRestore) {
+-                    arg.putBoolean(CALL_METHOD_OVERRIDEABLE_BY_RESTORE_KEY, true);
++            if(name.equals("screen_brightness") || name.equals("screen_off_timeout"))
++            {
++                Log.d(TAG,"Package name:-" + cr.getPackageName() +" trying to change " +name +" with value=" +value);
++                return true;
++            } else {
++                try {
++                    Bundle arg = new Bundle();
++                    arg.putString(Settings.NameValueTable.VALUE, value);
++                    arg.putInt(CALL_METHOD_USER_KEY, userHandle);
++                    if (tag != null) {
++                        arg.putString(CALL_METHOD_TAG_KEY, tag);
++                    }
++                    if (makeDefault) {
++                        arg.putBoolean(CALL_METHOD_MAKE_DEFAULT_KEY, true);
++                    }
++                    if (overrideableByRestore) {
++                        arg.putBoolean(CALL_METHOD_OVERRIDEABLE_BY_RESTORE_KEY, true);
++                    }
++                    IContentProvider cp = mProviderHolder.getProvider(cr);
++                    cp.call(cr.getAttributionSource(),
++                            mProviderHolder.mUri.getAuthority(), mCallSetCommand, name, arg);
++                } catch (RemoteException e) {
++                    Log.w(TAG, "Can't set key " + name + " in " + mUri, e);
++                    return false;
+                 }
+-                IContentProvider cp = mProviderHolder.getProvider(cr);
+-                cp.call(cr.getAttributionSource(),
+-                        mProviderHolder.mUri.getAuthority(), mCallSetCommand, name, arg);
+-            } catch (RemoteException e) {
+-                Log.w(TAG, "Can't set key " + name + " in " + mUri, e);
+-                return false;
++                return true;
+             }
+-            return true;
+         }
+ 
+         public @SetAllResult int setStringsForPrefix(ContentResolver cr, String prefix,
+@@ -3090,6 +3097,48 @@ public final class Settings {
+ 
+             final boolean isSelf = (userHandle == UserHandle.myUserId());
+             int currentGeneration = -1;
++            if (name != null && name.equals(Settings.Secure.ALLOW_MOCK_LOCATION)) {
++                // TODO: Temporary workaround for com.nianticlabs apps, as they check whether allow mock location is enabled or not,
++                // returning false as they don't work if they figure out that mock location are enabled.
++                try {
++                    int pid = Binder.getCallingPid();
++                    String callingApp = BstUtils.getAppNameFromPid(pid);
++                    if (DEBUG) Log.w(TAG, "app : " + callingApp + " (" + pid + ") is trying to figure out whether ALLOW_MOCK_LOCATION is currently enabled or not.");
++                    //Thread.currentThread().dumpStack();
++                    if (callingApp.startsWith("com.nianticlabs")) {
++                        if (DEBUG) Log.w(TAG, "faking value of ALLOW_MOCK_LOCATION for app: " + callingApp);
++                        return "0";
++                    }
++                } catch (Exception e) {
++                    Log.w(TAG, "Exception occured while getting the calling appName, resuming normal workflow");
++                }
++            }
++            // BS4-12478: com.netease.mrzh.mi abnormal sound fix.
++            else if (name != null && name.equals(Settings.Global.WEBVIEW_MULTIPROCESS)) {
++                try {
++                    int pid = Binder.getCallingPid();
++                    String callingApp = BstUtils.getAppNameFromPid(pid);
++                    if (callingApp.startsWith("com.netease.mrzh") ||
++                        callingApp.equals("com.tencent.tmgp.yongyong.mrzh")) {
++                        return "1";
++                    }
++                } catch (Exception e) {
++                    Log.w(TAG, "Error getting the calling appName, resuming normal workflow");
++                }
++            }
++            //ROB-4481: com.bandainamcoent.gundamucengage safetynet fix.
++            else if (name != null && (name.equals(Settings.Global.ADB_ENABLED) || name.equals(Settings.Global.DEVELOPMENT_SETTINGS_ENABLED))) {
++                try {
++                    int pid = Binder.getCallingPid();
++                    String callingApp = BstUtils.getAppNameFromPid(pid);
++                    if (LOCAL_LOGV) Log.w(TAG, "app : " + callingApp + " (" + pid + ") is trying to figure out whether ADB_ENABLED or DEVELOPMENT_SETTINGS_ENABLED is currently enabled or not.");
++                    if (callingApp != null && callingApp.startsWith("com.bandainamcoent.gundamucengage")) {
++                        return "0";
++                    }
++                } catch (Exception e) {
++                    Log.w(TAG, "Exception occured while getting the calling appName, resuming normal workflow");
++                }
++            }
+             if (isSelf) {
+                 synchronized (NameValueCache.this) {
+                     if (mGenerationTracker != null) {

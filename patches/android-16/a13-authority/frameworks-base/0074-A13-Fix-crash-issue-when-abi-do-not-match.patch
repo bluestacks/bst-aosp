@@ -1,0 +1,30 @@
+From 0b2f7a5debf48fc6d1acf6e380f0ade37a048080 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 17 Nov 2023 16:06:54 +0800
+Subject: [PATCH 074/224] [A13] Fix crash issue when abi do not match
+
+---
+ .../com/android/internal/content/NativeLibraryHelper.java     | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/com/android/internal/content/NativeLibraryHelper.java b/core/java/com/android/internal/content/NativeLibraryHelper.java
+index 46b8d75bdb88..c2f2f4a94d77 100644
+--- a/core/java/com/android/internal/content/NativeLibraryHelper.java
++++ b/core/java/com/android/internal/content/NativeLibraryHelper.java
+@@ -448,13 +448,15 @@ public class NativeLibraryHelper {
+             // Determine the abi index corresponding to actual system abiList rather than bstAbiList.
+             if (BST_DEBUG) Slog.d(TAG, "copyNativeBinariesForSupportedAbi called successfully for bstAbiList");
+             String determinedAbi = bstAbiList[copyRet];
++            int adbiListIdx = PackageManager.INSTALL_FAILED_NO_MATCHING_ABIS;
+             for (i = 0; i < abiList.length; i++) {
+                 if (determinedAbi.equals(abiList[i])) {
+-                    copyRet = i;
++                    adbiListIdx = i;
+                     if (BST_DEBUG) Slog.e(TAG, "determined abi index: " + i + " and abi value: " + abiList[i]);
+                     break;
+                 }
+             }
++            copyRet = adbiListIdx;
+         }
+ 
+         if (copyRet < 0)

@@ -1,0 +1,1555 @@
+From 2e0a75a42df3f785c500711ddada805d70e07ff2 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 22:38:51 +0800
+Subject: [PATCH] [A16] Restore managed su policy
+
+---
+ su/Android.bp           |  98 ++++++++++-
+ su/hd-hcall             |   1 +
+ su/hd-vmsg              |   1 +
+ su/hd-xpl               |   1 +
+ su/su.c                 | 321 ++++++++++++++++++++++++++++++++++++
+ su/su_crypto.c          |  64 ++++++++
+ su/su_crypto.h          |  28 ++++
+ su/su_hcall_wrapper.cpp |  30 ++++
+ su/su_hcall_wrapper.h   |  10 ++
+ su/su_packages.c        | 270 ++++++++++++++++++++++++++++++
+ su/su_packages.h        |  20 +++
+ su/su_report.c          | 127 +++++++++++++++
+ su/su_report.h          |  35 ++++
+ su/su_whitelist.c       | 353 ++++++++++++++++++++++++++++++++++++++++
+ su/su_whitelist.h       |  45 +++++
+ 15 files changed, 1399 insertions(+), 5 deletions(-)
+ create mode 120000 su/hd-hcall
+ create mode 120000 su/hd-vmsg
+ create mode 120000 su/hd-xpl
+ create mode 100644 su/su.c
+ create mode 100644 su/su_crypto.c
+ create mode 100644 su/su_crypto.h
+ create mode 100644 su/su_hcall_wrapper.cpp
+ create mode 100644 su/su_hcall_wrapper.h
+ create mode 100644 su/su_packages.c
+ create mode 100644 su/su_packages.h
+ create mode 100644 su/su_report.c
+ create mode 100644 su/su_report.h
+ create mode 100644 su/su_whitelist.c
+ create mode 100644 su/su_whitelist.h
+
+diff --git a/su/Android.bp b/su/Android.bp
+index e55f4068..678e4ad3 100644
+--- a/su/Android.bp
++++ b/su/Android.bp
+@@ -13,19 +13,107 @@ license {
+     ],
+ }
+ 
+-cc_binary {
+-    name: "su",
++license {
++    name: "bst_su_hd_proprietary_license",
++    visibility: [":__subpackages__"],
++    license_kinds: ["legacy_proprietary"],
++}
+ 
++cc_library_static {
++    name: "bst_su_xpl",
++    licenses: ["bst_su_hd_proprietary_license"],
++    srcs: [
++        "hd-xpl/Xdbg.cpp",
++        "hd-xpl/Xerr.cpp",
++        "hd-xpl/Xfile.cpp",
++        "hd-xpl/XfileUnix.cpp",
++        "hd-xpl/Xlog.cpp",
++        "hd-xpl/Xmem.cpp",
++        "hd-xpl/XmutexUnix.cpp",
++        "hd-xpl/Xpl.cpp",
++        "hd-xpl/XprocUnix.cpp",
++        "hd-xpl/Xstr.cpp",
++        "hd-xpl/XthrPool.cpp",
++        "hd-xpl/Xtime.cpp",
++        "hd-xpl/Xtimer.cpp",
++        "hd-xpl/XtimeUnix.cpp",
++    ],
++    local_include_dirs: ["hd-xpl/include"],
+     cflags: [
+-        "-Wall",
+         "-Werror",
++        "-Wno-switch",
++        "-Wno-unused-parameter",
+     ],
++}
+ 
+-    srcs: ["su.cpp"],
++cc_library_static {
++    name: "bst_su_vmsg",
++    licenses: ["bst_su_hd_proprietary_license"],
++    srcs: ["hd-vmsg/guest/VmsgGuest.cpp"],
++    local_include_dirs: [
++        "hd-vmsg",
++        "hd-vmsg/include",
++        "hd-xpl/include",
++    ],
++    cflags: [
++        "-Werror",
++        "-Wno-switch",
++        "-Wno-unused-parameter",
++    ],
++}
+ 
+-    install_in_xbin: true,
++cc_library_static {
++    name: "bst_su_hcall",
++    licenses: ["bst_su_hd_proprietary_license"],
++    srcs: [
++        "hd-hcall/guest/HcallEnc.cpp",
++        "hd-hcall/guest/HcallGuest.cpp",
++    ],
++    local_include_dirs: [
++        "hd-hcall",
++        "hd-hcall/include",
++        "hd-vmsg/include",
++        "hd-xpl/include",
++    ],
++    export_include_dirs: [
++        "hd-hcall/include",
++        "hd-xpl/include",
++    ],
++    cflags: [
++        "-Werror",
++        "-Wno-switch",
++        "-Wno-unused-parameter",
++    ],
++}
+ 
++cc_binary {
++    name: "su",
++    srcs: [
++        "su.c",
++        "su_crypto.c",
++        "su_hcall_wrapper.cpp",
++        "su_packages.c",
++        "su_report.c",
++        "su_utils.c",
++        "su_whitelist.c",
++    ],
++    cflags: [
++        "-Wall",
++        "-Werror",
++    ],
++    static_libs: [
++        "bst_su_hcall",
++        "bst_su_vmsg",
++        "bst_su_xpl",
++    ],
++    shared_libs: [
++        "libcrypto",
++        "libcutils",
++        "liblog",
++        "libssl",
++    ],
+     header_libs: ["libcutils_headers"],
++    install_in_xbin: true,
+ }
+ 
+ // A16DBG:P2:MECH BST su report daemon (a13; cloud telemetry)
+diff --git a/su/hd-hcall b/su/hd-hcall
+new file mode 120000
+index 00000000..4f8c61f3
+--- /dev/null
++++ b/su/hd-hcall
+@@ -0,0 +1 @@
++../../../../hd/Source/hcall
+\ No newline at end of file
+diff --git a/su/hd-vmsg b/su/hd-vmsg
+new file mode 120000
+index 00000000..ed02aaec
+--- /dev/null
++++ b/su/hd-vmsg
+@@ -0,0 +1 @@
++../../../../hd/Source/vmsg
+\ No newline at end of file
+diff --git a/su/hd-xpl b/su/hd-xpl
+new file mode 120000
+index 00000000..51986ccd
+--- /dev/null
++++ b/su/hd-xpl
+@@ -0,0 +1 @@
++../../../../hd/Source/xpl
+\ No newline at end of file
+diff --git a/su/su.c b/su/su.c
+new file mode 100644
+index 00000000..e893922d
+--- /dev/null
++++ b/su/su.c
+@@ -0,0 +1,321 @@
++/*
++**
++** Copyright 2008, The Android Open Source Project
++**
++** Licensed under the Apache License, Version 2.0 (the "License");
++** you may not use this file except in compliance with the License.
++** You may obtain a copy of the License at
++**
++**     http://www.apache.org/licenses/LICENSE-2.0
++**
++** Unless required by applicable law or agreed to in writing, software
++** distributed under the License is distributed on an "AS IS" BASIS,
++** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++** See the License for the specific language governing permissions and
++** limitations under the License.
++*/
++
++#define LOG_TAG "su"
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <errno.h>
++
++#include <unistd.h>
++#include <pwd.h>
++#include <android/log.h>
++#include <sys/sysinfo.h>
++
++#include "su_utils.h"
++#include "su_packages.h"
++#include "su_whitelist.h"
++#include "su_hcall_wrapper.h"
++#include "su_report.h"
++
++// Special process check function (unchanged)
++int is_special_process()
++{
++    char *x = 0;
++    FILE *fp;
++    char data[1024];
++    char proc[64] = "mpi";
++    pid_t pid = getppid();
++
++    sprintf(data, "/proc/%d/cmdline", pid);
++    fp = fopen(data, "r");
++    if(fp) {
++        x = fgets(data, 1024, fp);
++        fclose(fp);
++    }
++
++    //fprintf(stderr,"su: process name(%d): %s\n", pid, x);
++    if (x && !strcmp(x, strcat(proc,".v23")))
++    {
++        //fprintf(stderr,"su: %s(%d) is a special process and allowed to use su\n", x, pid);
++        return 1;
++    }
++
++    return 0;
++}
++
++int is_special_su()
++{
++    char	buf[1024] = {0};
++    char	path[1024];
++    sprintf(path, "/%s/%d/%s", "proc", getpid(), "exe");
++    readlink(path, buf, sizeof(buf));
++    if (strcmp(buf, "/system/xbin/su") == 0)
++        return 0;
++    return 1;
++}
++
++/*
++ * SU can be given a specific command to exec. UID _must_ be
++ * specified for this (ie argc => 3).
++ *
++ * Usage:
++ * su 1000
++ * su 1000 ls -l
++ */
++int main(int argc, char** argv)
++{
++    init_debug_log();
++
++    load_whitelist_or_die();
++
++    struct passwd *pw = NULL;
++    int uid = 0, gid = 0;
++    int argi = 1;
++
++    if (argc >= 2) {
++        pw = getpwnam(argv[argi]);
++        if (!pw) {
++            uid = gid = atoi(argv[argi]);
++        } else {
++            uid = pw->pw_uid;
++            gid = pw->pw_gid;
++        }
++        argi++;
++    } else {
++        uid = gid = 0;
++    }
++
++
++    int myuid = getuid();
++    bool allowed = false;
++
++    char* cmd = join_argv(argc, argv);
++    char cmdline[PATH_MAX] = {0};
++    snprintf(cmdline, sizeof(cmdline), "%s", cmd);
++    if (cmd) free(cmd);
++
++    warnx("DEBUG: Checking permission for uid %d, target uid: %d, gid: %d, cmd: %s, argc: %d", myuid, uid, gid, cmdline, argc);
++    log_debug("Checking permission for uid %d, target uid: %d, gid: %d, cmd: %s, argc: %d", myuid, uid, gid, cmdline, argc);
++
++    char caller_path[PATH_MAX];
++    if (get_caller_path(caller_path, sizeof(caller_path))) {
++        log_debug("the su caller path is: %s", caller_path);
++    }
++
++    char su_path_resolved[PATH_MAX] = {0};
++    char su_self_path[PATH_MAX] = {0};
++    bool su_path_allowed = false;
++
++    ssize_t su_self_len = readlink("/proc/self/exe", su_self_path, sizeof(su_self_path) - 1);
++    if (su_self_len >= 0) {
++        su_self_path[su_self_len] = '\0';
++        warnx("DEBUG: su self path: %s", su_self_path);
++        log_debug("su self path: %s", su_self_path);
++        if (path_under_allowed_execdirs(su_self_path)) {
++            su_path_allowed = true;
++            snprintf(su_path_resolved, sizeof(su_path_resolved), "%s", su_self_path);
++        }
++    } else {
++        warnx("DEBUG: Failed to readlink /proc/self/exe");
++        log_debug("Failed to readlink /proc/self/exe");
++    }
++
++    if (!su_path_allowed && argv[0]) {
++        if (resolve_in_allowed_dirs(argv[0], su_path_resolved)) {
++            warnx("DEBUG: su binary resolved path: %s", su_path_resolved);
++            log_debug("su binary resolved path: %s", su_path_resolved);
++            su_path_allowed = true;
++        } else {
++            warnx("DEBUG: Failed to resolve su binary path: %s", argv[0]);
++            log_debug("Failed to resolve su binary path: %s", argv[0]);
++        }
++    }
++
++    if (!su_path_allowed) {
++        const char* attempt = su_self_len >= 0 ? su_self_path : (argv[0] ? argv[0] : "(null)");
++        warnx("DEBUG: Permission denied - su binary not in allowed dirs: %s", attempt);
++        log_debug("Permission denied - su binary not in allowed dirs: %s", attempt);
++    } else {
++        warnx("DEBUG: su binary resolved path: %s", su_path_resolved);
++        log_debug("su binary resolved path: %s", su_path_resolved);
++
++        bool command_allowed = false;
++        if (has_command_whitelist()) {
++            const char* candidate_cmds[3];
++            size_t candidate_cmds_cnt = 0;
++            char* joined_cmd = NULL;
++
++            if (argc >= 3 && argv[2]) {
++                candidate_cmds[candidate_cmds_cnt++] = argv[2];
++            }
++
++            if (argc > 3) {
++                joined_cmd = join_argv(argc - 2, &argv[2]);
++            } else if (argc == 3 && argv[2]) {
++                joined_cmd = strdup(argv[2]);
++            }
++
++            if (joined_cmd && joined_cmd[0] && candidate_cmds_cnt < sizeof(candidate_cmds) / sizeof(candidate_cmds[0])) {
++                candidate_cmds[candidate_cmds_cnt++] = joined_cmd;
++            }
++
++            if (argc <= 3 && candidate_cmds_cnt < sizeof(candidate_cmds) / sizeof(candidate_cmds[0])) {
++                candidate_cmds[candidate_cmds_cnt++] = "/system/bin/sh";
++            }
++
++            for (size_t i = 0; i < candidate_cmds_cnt; ++i) {
++                const char* candidate = candidate_cmds[i];
++                if (!candidate || !candidate[0]) {
++                    continue;
++                }
++                if (command_in_whitelist(candidate)) {
++                    command_allowed = true;
++                    warnx("DEBUG: Command matched whitelist: %s", candidate);
++                    log_debug("Command matched whitelist: %s", candidate);
++                    break;
++                }
++            }
++
++            if (joined_cmd) {
++                free(joined_cmd);
++            }
++
++            if (!command_allowed) {
++                warnx("DEBUG: Permission denied - command not in whitelist");
++                log_debug("Permission denied - command not in whitelist");
++            }
++        }
++
++        if (command_allowed) {
++            allowed = true;
++        }
++        else if (uid_in_whitelist(myuid)) {
++            warnx("DEBUG: Permission granted - uid %d is in whitelist", myuid);
++            log_debug("Permission granted - uid %d is in whitelist", myuid);
++            allowed = true;
++        } else if (any_pkg_of_uid_whitelisted(myuid)) {
++            warnx("DEBUG: Permission granted - uid %d has package in whitelist", myuid);
++            log_debug("Permission granted - uid %d has package in whitelist", myuid);
++            allowed = true;
++        }
++    }
++
++    if (!allowed) {
++        // fprintf(stderr, "su: uid %d not allowed to su\n", myuid);
++        log_debug("su: uid %d not allowed to su", myuid);
++
++        bool hcall_result = isDeveloperMode();
++        warnx("DEBUG: Hcall wrapper function returned: %d", hcall_result ? 1 : 0);
++        if (!hcall_result) {
++            // fprintf(stderr, "su: hcall_verify failed, error %d\n", hcall_result);
++            char* cwd = getcwd(NULL, 0);
++            const char* pkgname = NULL;
++            const char* pkg_sha_ptr = NULL;
++            char pkg_sha[65] = {0};
++            const char* uptime_ptr = NULL;
++            char uptime_buf[32] = {0};
++
++            char pkgs[8][256];
++            size_t n = get_packages_for_uid(myuid, pkgs, 8);
++            if (n > 0) {
++                pkgname = pkgs[0];
++                if (get_pkg_sha256_from_packages_xml_indexed(pkgname, pkg_sha) > -1) {
++                    pkg_sha_ptr = pkg_sha;
++                }
++            }
++
++            struct sysinfo si;
++            if (sysinfo(&si) == 0) {
++                snprintf(uptime_buf, sizeof(uptime_buf), "%ld", (long)si.uptime);
++                uptime_ptr = uptime_buf;
++            }
++
++            warnx("DEBUG: report_su_denied, cmdline: %s, uid: %d, pkgname: %s, pkgsha: %s, uptime: %s, cwd: %s",
++                cmdline, myuid, pkgname ? pkgname : "(null)", pkg_sha_ptr ? pkg_sha_ptr : "(null)", uptime_ptr ? uptime_ptr : "(null)", cwd ? cwd : "(null)");
++            report_su_denied(cmdline, myuid, pkgname, cwd, pkg_sha_ptr, uptime_ptr);
++
++            free(cwd);
++            return 1;
++        }
++    } else {
++        warnx("DEBUG: Permission check passed for uid %d", myuid);
++        log_debug("Permission check passed for uid %d", myuid);
++    }
++
++#if 0
++    if (is_special_su() && !is_special_process()) {
++        fprintf(stderr, "su: permission denied as this process is not allowed.\n");
++        return 1;
++    }
++#endif
++
++    if (setgid(gid) || setuid(uid)) {
++        fprintf(stderr,"su: permission denied\n");
++        return 1;
++    }
++
++    /* User specified command for exec. */
++    if (argc == 3 ) {
++        // BS4-9390 com.userjoy.sgc macro issue. The macro-tool is not passing the argument list correctly when executing
++        // commands using su. The space separated commands are being sent in a single argv parameter resulting in execvp failing
++        // with -ENOENT as the file name does not exist.
++        // ex. '/data/local/tmp/i -n com.userjoy.sgc -l /data/local/tmp/l -s /data/local/tmp/s' == > should actually be broken as
++        // '/data/local/tmp/i', '-n', etc.
++        // Hence starting sh process in exec call as the new process so that the above command exexcutes correctly.
++        char *shell = "/system/bin/sh";
++        char *sh = "sh";
++        char *switchcmd = "-c";
++        char *exec_args[4];
++        exec_args[0] = sh;
++        exec_args[1] = switchcmd;
++        exec_args[2] = argv[2];
++        exec_args[3] = NULL;
++        warnx("DEBUG: argc == 3, execvp %s %s %s", shell, switchcmd, argv[2]);
++        if (execvp(shell, exec_args) < 0) {
++            int saved_errno = errno;
++            fprintf(stderr, "su: exec failed for %s Error:%s\n", argv[2],
++                    strerror(errno));
++            warnx("DEBUG: execvp failed for %s, error: %s", argv[2], strerror(saved_errno));
++            return -saved_errno;
++        }
++    } else if (argc > 3) {
++        /* Copy the rest of the args from main. */
++        char *exec_args[argc - 1];
++        memset(exec_args, 0, sizeof(exec_args));
++        memcpy(exec_args, &argv[2], sizeof(exec_args));
++        warnx("DEBUG: argc > 3, execvp %s %s", argv[2], exec_args[0]);
++        if (execvp(argv[2], exec_args) < 0) {
++            int saved_errno = errno;
++            fprintf(stderr, "su: exec failed for %s Error:%s\n", argv[2],
++                    strerror(errno));
++            warnx("DEBUG: execvp failed for %s, error: %s", argv[2], strerror(saved_errno));
++            return -saved_errno;
++        }
++    }
++
++    /* Default exec shell. */
++    execlp("/system/bin/sh", "sh", NULL);
++
++    fprintf(stderr, "su: exec failed\n");
++    return 1;
++}
+diff --git a/su/su_crypto.c b/su/su_crypto.c
+new file mode 100644
+index 00000000..c6c9a60c
+--- /dev/null
++++ b/su/su_crypto.c
+@@ -0,0 +1,64 @@
++#include "su_crypto.h"
++#include <openssl/evp.h>
++#include <openssl/pem.h>
++#include <openssl/sha.h>
++#include <openssl/bio.h>
++#include <string.h>
++#include "su_utils.h"
++
++// Load public key from PEM
++void* load_pubkey_from_pem(const char* pem) {
++    BIO* bio = BIO_new_mem_buf((void*)pem, -1);
++    if (!bio) return NULL;
++    EVP_PKEY* pk = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
++    BIO_free(bio);
++    return (void*)pk;
++}
++
++// Free public key
++void free_pubkey(void* pubkey) {
++    if (pubkey) {
++        EVP_PKEY_free((EVP_PKEY*)pubkey);
++    }
++}
++
++// SHA256 signature verification
++bool verify_signature_sha256(const unsigned char* data, size_t datalen,
++                            const unsigned char* sig, size_t siglen,
++                            void* pubkey) {
++    if (!pubkey) return false;
++
++    bool ok = false;
++    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
++    if (!ctx) return false;
++
++    EVP_PKEY* pk = (EVP_PKEY*)pubkey;
++    if (EVP_DigestVerifyInit(ctx, NULL, EVP_sha256(), NULL, pk) == 1 &&
++        EVP_DigestVerifyUpdate(ctx, data, datalen) == 1) {
++        int r = EVP_DigestVerifyFinal(ctx, sig, siglen);
++        ok = (r == 1);
++    }
++    EVP_MD_CTX_free(ctx);
++    return ok;
++}
++
++// Generate digest from key
++int digest_from_key(const char* key, int key_is_hex, char out_hex[65]) {
++    uint8_t buf[8192]; size_t blen=0;
++    if(key_is_hex){
++        blen=hex2bin(key, buf, sizeof(buf));
++        if(blen==0) return -1;
++    }else{
++        blen=base64_decode(key, buf, sizeof(buf));
++        if(blen==0) return -1;
++    }
++    uint8_t d[32];
++    SHA256(buf, blen, d);
++    static const char* hexmap="0123456789ABCDEF";
++    for(int i=0;i<32;i++){
++        out_hex[i*2]=hexmap[(d[i]>>4)&0xF];
++        out_hex[i*2+1]=hexmap[d[i]&0xF];
++    }
++    out_hex[64]='\0';
++    return 0;
++}
+\ No newline at end of file
+diff --git a/su/su_crypto.h b/su/su_crypto.h
+new file mode 100644
+index 00000000..3f4bdf6d
+--- /dev/null
++++ b/su/su_crypto.h
+@@ -0,0 +1,28 @@
++#ifndef SU_CRYPTO_H
++#define SU_CRYPTO_H
++
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++// Cryptographic utility functions
++bool verify_signature_sha256(const unsigned char* data, size_t datalen,
++                            const unsigned char* sig, size_t siglen,
++                            void* pubkey);
++
++void* load_pubkey_from_pem(const char* pem);
++
++void free_pubkey(void* pubkey);
++
++// Certificate and signature related
++int digest_from_key(const char* key, int key_is_hex, char out_hex[65]);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif // SU_CRYPTO_H
+\ No newline at end of file
+diff --git a/su/su_hcall_wrapper.cpp b/su/su_hcall_wrapper.cpp
+new file mode 100644
+index 00000000..90112558
+--- /dev/null
++++ b/su/su_hcall_wrapper.cpp
+@@ -0,0 +1,30 @@
++// This is a C++ wrapper file to bridge C++ headers with C code
++#include <cstddef>
++#include <cstdint>
++#include <fcntl.h>
++#include <unistd.h>
++#include <errno.h>
++#include <string.h>
++#include "su_utils.h"
++#include "Xpl.h"
++#include "Xexc.h"
++#include "Hcall.h"
++
++extern "C" {
++    bool isDeveloperMode()
++    {
++        log_debug("isDeveloperMode: Function started.");
++        bool rval = false;
++        int fd = -1;
++
++        fd = open("/dev/bstvmsg", O_RDWR | O_CLOEXEC);
++        if (fd < 0) {
++            log_debug("isDeveloperMode: Failed to open /dev/bstvmsg, errno = %d.", errno);
++            return false;
++        }
++        close(fd);
++        rval = hcallIsDeveloperModeLocked();
++        log_debug("isDeveloperMode: Got result, value = %s.", rval ? "true" : "false");
++        return rval;
++    }
++}
+\ No newline at end of file
+diff --git a/su/su_hcall_wrapper.h b/su/su_hcall_wrapper.h
+new file mode 100644
+index 00000000..045ae379
+--- /dev/null
++++ b/su/su_hcall_wrapper.h
+@@ -0,0 +1,10 @@
++// C-compatible header for su_hcall_wrapper.cpp
++#ifndef SU_HCALL_WRAPPER_H
++#define SU_HCALL_WRAPPER_H
++
++#include <stddef.h>
++#include <stdint.h>
++
++extern bool isDeveloperMode();
++
++#endif // SU_HCALL_WRAPPER_H
+\ No newline at end of file
+diff --git a/su/su_packages.c b/su/su_packages.c
+new file mode 100644
+index 00000000..56572176
+--- /dev/null
++++ b/su/su_packages.c
+@@ -0,0 +1,270 @@
++#include "su_packages.h"
++#include "su_utils.h"
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <ctype.h>
++#include <unistd.h>
++#include <errno.h>
++#include <openssl/sha.h>
++
++#define PACKAGES_LIST_PATH   "/data/system/packages.list"
++#define PACKAGES_XML_PATH    "/data/system/packages.xml"
++// Certificate mapping table structure
++typedef struct {
++    int index;            // cert index
++    char digest[129];     // HEX that can be directly used for comparison (uppercase, no colons), length 64
++    char key[4097];       // Original key (HEX or BASE64), can be empty
++    int key_is_hex;       // 1=HEX, 0=BASE64(or unknown)
++} CertEntry;
++
++typedef struct {
++    CertEntry *a; size_t n, cap;
++} CertMap;
++
++static void cmap_init(CertMap *m) { m->a=NULL; m->n=0; m->cap=0; }
++static void cmap_free(CertMap *m) { free(m->a); m->a=NULL; m->n=m->cap=0; }
++
++static CertEntry* cmap_get(CertMap *m, int index) {
++    for(size_t i=0;i<m->n;i++) if(m->a[i].index==index) return &m->a[i];
++    if(m->n==m->cap){ m->cap=m->cap?m->cap*2:16; m->a=(CertEntry*)realloc(m->a, m->cap*sizeof(CertEntry)); }
++    CertEntry *e=&m->a[m->n++]; memset(e,0,sizeof(*e)); e->index=index; return e;
++}
++
++/* Try to convert key -> digest (SHA-256), prefer HEX, otherwise try BASE64 */
++static int digest_from_key(const char *key, int key_is_hex, char out_hex[65]){
++    uint8_t buf[8192]; size_t blen=0;
++    if(key_is_hex){
++        blen=hex2bin(key, buf, sizeof(buf));
++        if(blen==0) return -1;
++    }else{
++        blen=base64_decode(key, buf, sizeof(buf));
++        if(blen==0) return -1;
++    }
++    uint8_t d[32];
++    SHA256(buf, blen, d);
++    static const char *hexmap="0123456789ABCDEF";
++    for(int i=0;i<32;i++){ out_hex[i*2]=hexmap[(d[i]>>4)&0xF]; out_hex[i*2+1]=hexmap[d[i]&0xF]; }
++    out_hex[64]='\0';
++    return 0;
++}
++
++/* First pass: Collect globally/arbitrarily appearing cert index -> digest/key */
++static int build_cert_map_from_file(const char* xml_path, CertMap* map) {
++    FILE *f=fopen(xml_path,"re"); if(!f) return -1;
++    char line[16384];
++    while(fgets(line,sizeof(line),f)){
++        if(!strstr(line,"<cert")) continue;
++        int idx=-1; char idxs[32];
++        if(extract_attr(line,"index=", idxs, sizeof(idxs))==0) idx=atoi(idxs);
++        if(idx<0) continue;
++        CertEntry *e=cmap_get(map, idx);
++
++        // First, check if digest is directly provided
++        char tmp[4096];
++        if(e->digest[0]==0 &&
++           (extract_attr(line,"certDigest=",tmp,sizeof(tmp))==0 ||
++            extract_attr(line,"digest=",tmp,sizeof(tmp))==0 ||
++            extract_attr(line,"sha256=",tmp,sizeof(tmp))==0)){
++            strncpy(e->digest,tmp,sizeof(e->digest)-1);
++            e->digest[sizeof(e->digest)-1]='\0';
++            normalize_hex(e->digest);
++        }
++
++        // Then, check if there is a key
++        if(e->key[0]==0 && extract_attr(line,"key=",tmp,sizeof(tmp))==0){
++            strncpy(e->key,tmp,sizeof(e->key)-1); e->key[sizeof(e->key)-1]='\0';
++            // Determine if it's HEX: Consider it HEX if all characters are [0-9a-fA-F:]
++            int hexlike=1;
++            for(char *p=e->key; *p; ++p){
++                if(!isxdigit((unsigned char)*p) && *p!=':' && !isspace((unsigned char)*p)){ hexlike=0; break; }
++            }
++            e->key_is_hex=hexlike?1:0;
++
++            // If there is no digest yet, try to calculate it from the key
++            if(e->digest[0]==0){
++                char dhex[65];
++                if(digest_from_key(e->key, e->key_is_hex, dhex)==0){
++                    strncpy(e->digest,dhex,sizeof(e->digest)); e->digest[64]='\0';
++                }
++            }
++        }
++    }
++    fclose(f);
++    return 0;
++}
++
++// Get the list of packages for the specified UID
++size_t get_packages_for_uid(int uid, char pkgs[][256], size_t max_pkgs) {
++    // Method 1: Try to open the packages.list file (old method)
++    FILE* fp = fopen(PACKAGES_LIST_PATH, "r");
++    if (fp) {
++        warnx("DEBUG: get_packages_for_uid - successfully opened packages list file");
++        char line[1024];
++        size_t count = 0;
++        while (fgets(line, sizeof(line), fp)) {
++            char pkg[256] = {0};
++            int file_uid = -1;
++            // Format: Package name UID GID Data directory Flags Version
++            if (sscanf(line, "%255s %d", pkg, &file_uid) >= 1) {
++                // warnx("DEBUG: get_packages_for_uid - parsed pkg: %s, uid: %d", pkg, file_uid);
++                if (file_uid == uid) {
++                    strncpy(pkgs[count], pkg, 255);
++                    pkgs[count][255] = 0;
++                    warnx("DEBUG: get_packages_for_uid - found match: %s for uid: %d", pkg, uid);
++                    if (++count >= max_pkgs) break;
++                }
++            }
++        }
++        fclose(fp);
++        warnx("DEBUG: get_packages_for_uid - total matches found via file: %zu for uid: %d", count, uid);
++        return count;
++    }
++
++    warnx("DEBUG: get_packages_for_uid - failed to open packages list file: %s. Error: %s",
++          PACKAGES_LIST_PATH, strerror(errno));
++
++    // Method 2: If direct file access is not possible, try using the pm command to get package information
++    char command[256];
++    snprintf(command, sizeof(command), "pm list packages --uid %d", uid);
++    warnx("DEBUG: get_packages_for_uid - trying to run command: %s", command);
++
++    FILE* pipe = popen(command, "r");
++    if (pipe) {
++        warnx("DEBUG: get_packages_for_uid - successfully executed pm command");
++        char line[1024];
++        size_t count = 0;
++        while (fgets(line, sizeof(line), pipe)) {
++            char pkg[256] = {0};
++            // pm command output format: "package:com.example.package"
++            if (sscanf(line, "package:%255s", pkg) == 1) {
++                warnx("DEBUG: get_packages_for_uid - parsed pkg from pm: %s", pkg);
++                strncpy(pkgs[count], pkg, 255);
++                pkgs[count][255] = 0;
++                warnx("DEBUG: get_packages_for_uid - found match via pm: %s for uid: %d", pkg, uid);
++                if (++count >= max_pkgs) break;
++            }
++        }
++        pclose(pipe);
++        warnx("DEBUG: get_packages_for_uid - total matches found via pm: %zu for uid: %d", count, uid);
++        return count;
++    }
++
++    warnx("DEBUG: get_packages_for_uid - failed to execute pm command. Error: %s", strerror(errno));
++
++    // Method 3: Try to read the /data/system/packages.xml file (as an alternative)
++    FILE* xml_fp = fopen(PACKAGES_XML_PATH, "r");
++    if (xml_fp) {
++        warnx("DEBUG: get_packages_for_uid - successfully opened packages.xml file");
++        char line[2048];
++        size_t count = 0;
++        char pkg[256] = {0};
++        int file_uid = -1;
++        bool in_package = false;
++
++        while (fgets(line, sizeof(line), xml_fp)) {
++            if (strstr(line, "<package name=") && strstr(line, "name=\"")) {
++                char name[512];
++                if (extract_attr(line, "name=", name, sizeof(name)) == 0 && strcmp(name, pkg) == 0) {
++                    in_package = true;
++                }
++            } else if (in_package && strstr(line, "userId=\"")) {
++                char* uid_start = strstr(line, "userId=\"");
++                if (uid_start) {
++                    uid_start += 8; // Skip "userId="
++                    file_uid = atoi(uid_start);
++                    warnx("DEBUG: get_packages_for_uid - parsed from xml pkg: %s, uid: %d", pkg, file_uid);
++
++                    if (file_uid == uid) {
++                        strncpy(pkgs[count], pkg, 255);
++                        pkgs[count][255] = 0;
++                        warnx("DEBUG: get_packages_for_uid - found match via xml: %s for uid: %d", pkg, uid);
++                        if (++count >= max_pkgs) break;
++                    }
++                    in_package = false;
++                }
++            }
++        }
++        fclose(xml_fp);
++        warnx("DEBUG: get_packages_for_uid - total matches found via xml: %zu for uid: %d", count, uid);
++        return count;
++    }
++
++    warnx("DEBUG: get_packages_for_uid - failed to open packages.xml file: %s. Error: %s",
++          PACKAGES_XML_PATH, strerror(errno));
++
++    // If all methods fail, return 0
++    warnx("DEBUG: get_packages_for_uid - all methods failed to find packages for uid: %d", uid);
++    return 0;
++}
++
++// Get the SHA256 signature of a package from packages.xml
++int get_pkg_sha256_from_packages_xml_indexed(const char* pkg, char out_hex[65]) {
++    const char* path="/data/system/packages.xml";
++    CertMap cmap; cmap_init(&cmap);
++    if(build_cert_map_from_file(path, &cmap)!=0){ cmap_free(&cmap); return -1; }
++
++    FILE *f=fopen(path,"re"); if(!f){ cmap_free(&cmap); return -1; }
++    char line[16384]; int in_pkg=0;
++
++    while(fgets(line,sizeof(line),f)){
++        if(!in_pkg){
++            if(strstr(line,"<package ") && strstr(line,"name=\"")){
++                char name[512];
++                if(extract_attr(line,"name=",name,sizeof(name))==0 && strcmp(name,pkg)==0){
++                    in_pkg=1;
++                    // Some ROMs put certDigest directly on the same line
++                    char d[256];
++                    if(extract_attr(line,"certDigest=",d,sizeof(d))==0 ||
++                       extract_attr(line,"digest=",d,sizeof(d))==0 ||
++                       extract_attr(line,"sha256=",d,sizeof(d))==0){
++                        strncpy(out_hex,d,65); out_hex[64]='\0'; normalize_hex(out_hex);
++                        fclose(f); cmap_free(&cmap);
++                        return (strlen(out_hex)==64)?0:-1;
++                    }
++                }
++            }
++            continue;
++        }
++
++        // Look for cert within the target package section
++        if(strstr(line,"<cert")){
++            char d[256];
++            if(extract_attr(line,"certDigest=",d,sizeof(d))==0 ||
++               extract_attr(line,"digest=",d,sizeof(d))==0 ||
++               extract_attr(line,"sha256=",d,sizeof(d))==0){
++                strncpy(out_hex,d,65); out_hex[64]='\0'; normalize_hex(out_hex);
++                fclose(f); cmap_free(&cmap);
++                to_lower_inplace(out_hex);
++                return (strlen(out_hex)==64)?0:-1;
++            }
++
++            char idxs[32];
++            if(extract_attr(line,"index=",idxs,sizeof(idxs))==0){
++                int idx=atoi(idxs);
++                CertEntry *e=cmap_get(&cmap, idx);
++                if(e && e->digest[0]){
++                    strncpy(out_hex, e->digest, 65); out_hex[64]='\0';
++                    fclose(f); cmap_free(&cmap);
++                    to_lower_inplace(out_hex);
++                    return (strlen(out_hex)==64)?0:-1;
++                }
++                // As a fallback: If there is only a key, calculate it now
++                if(e && e->key[0]){
++                    char dhex[65];
++                    if(digest_from_key(e->key, e->key_is_hex, dhex)==0){
++                        strncpy(out_hex,dhex,65); out_hex[64]='\0';
++                        fclose(f); cmap_free(&cmap);
++                        to_lower_inplace(out_hex);
++                        return 0;
++                    }
++                }
++            }
++        }
++
++        if(strstr(line,"</package>")) break; // End of the target package block
++    }
++
++    fclose(f); cmap_free(&cmap);
++    return -1;
++}
+diff --git a/su/su_packages.h b/su/su_packages.h
+new file mode 100644
+index 00000000..8b823ff5
+--- /dev/null
++++ b/su/su_packages.h
+@@ -0,0 +1,20 @@
++#ifndef SU_PACKAGES_H
++#define SU_PACKAGES_H
++
++#include <stdbool.h>
++#include <stddef.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++// Package management related functions
++size_t get_packages_for_uid(int uid, char pkgs[][256], size_t max_pkgs);
++
++int get_pkg_sha256_from_packages_xml_indexed(const char* pkg, char out_hex[65]);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif // SU_PACKAGES_H
+\ No newline at end of file
+diff --git a/su/su_report.c b/su/su_report.c
+new file mode 100644
+index 00000000..c899eefc
+--- /dev/null
++++ b/su/su_report.c
+@@ -0,0 +1,127 @@
++/*
++ * su_report.c
++ *
++ * Helper functions to send a small JSON to the report daemon.
++ */
++
++#include "su_report.h"
++#include "su_utils.h"
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <limits.h>
++#include <sys/socket.h>
++#include <sys/un.h>
++#include <unistd.h>
++#include <errno.h>
++
++/* same socket path as daemon */
++#define SOCKET_PATH "/dev/socket/report_daemon"
++#define BUF_MAX 4096
++
++/* Escape minimal JSON characters in-place into new malloc'd buffer.
++ * Escapes: backslash, double-quote, newline, tab, carriage return.
++ */
++char* json_escape(const char* in) {
++    if (!in) return strdup("");
++    size_t len = strlen(in);
++    /* worst-case every char expands to 2 (e.g. backslash), reserve more */
++    size_t max_out = len * 6 + 1;
++    char* out = (char*)malloc(max_out);
++    if (!out) return NULL;
++    char* p = out;
++    for (size_t i = 0; i < len; ++i) {
++        unsigned char c = in[i];
++        switch (c) {
++            case '\\': *p++ = '\\'; *p++ = '\\'; break;
++            case '"':  *p++ = '\\'; *p++ = '"';  break;
++            case '\n': *p++ = '\\'; *p++ = 'n';  break;
++            case '\r': *p++ = '\\'; *p++ = 'r';  break;
++            case '\t': *p++ = '\\'; *p++ = 't';  break;
++            default:
++                if (c < 0x20) { // control chars -> escape as \u00XX
++                    static const char hex[] = "0123456789ABCDEF";
++                    *p++ = '\\'; *p++ = 'u'; *p++ = '0'; *p++ = '0';
++                    *p++ = hex[(c >> 4) & 0xF];
++                    *p++ = hex[c & 0xF];
++                } else {
++                    *p++ = c;
++                }
++        }
++    }
++    *p = '\0';
++    return out;
++}
++
++/* Join argv into one string, separated by spaces. Caller frees. */
++char* join_argv(int argc, char** argv) {
++    if (!argv || argc <= 0) return strdup("");
++    /* reserve some space */
++    size_t total = 0;
++    for (int i = 0; i < argc; ++i) {
++        if (argv[i]) total += strlen(argv[i]) + 1;
++    }
++    if (total == 0) return strdup("");
++    char* out = (char*)malloc(total + 1);
++    if (!out) return strdup("");
++    out[0] = '\0';
++    for (int i = 0; i < argc; ++i) {
++        if (argv[i]) {
++            if (i) strcat(out, " ");
++            strcat(out, argv[i]);
++        }
++    }
++    return out;
++}
++
++/* Send JSON to daemon via UNIX datagram socket. Non-blocking-ish.
++ * Builds JSON: {"cmd":"...","uid":1234,"execDir":"...","pkg":"...","pkgSha256":"...","sysUpSec":"..."}
++ */
++void report_su_denied(const char* cmd, uid_t uid, const char* pkg, const char* cwd,
++                      const char* pkg_sha, const char* uptime) {
++    int sock = -1;
++    struct sockaddr_un addr;
++    char buf[BUF_MAX];
++
++    /* build JSON with escaped values */
++    char* esc_cmd = json_escape(cmd ? cmd : "");
++    char uid_buf[32];
++    snprintf(uid_buf, sizeof(uid_buf), "%u", (unsigned)uid);
++    char* esc_pkg = json_escape(pkg ? pkg : "");
++    char* esc_cwd = json_escape(cwd ? cwd : "");
++    char* esc_pkg_sha = json_escape(pkg_sha ? pkg_sha : "");
++    char* esc_uptime = json_escape(uptime ? uptime : "");
++
++    int ret = snprintf(buf, sizeof(buf),
++                       "{\"cmd\":\"%s\",\"uid\":%s,\"execDir\":\"%s\",\"pkg\":\"%s\",\"pkgSha256\":\"%s\",\"sysUpSec\":\"%s\"}",
++                       esc_cmd, uid_buf, esc_cwd, esc_pkg, esc_pkg_sha, esc_uptime);
++
++    free(esc_cmd);
++    free(esc_pkg);
++    free(esc_cwd);
++    free(esc_pkg_sha);
++    free(esc_uptime);
++
++    if (ret < 0 || ret >= (int)sizeof(buf)) return;
++
++    /* create unix datagram socket */
++    sock = socket(AF_UNIX, SOCK_DGRAM, 0);
++    if (sock < 0) {
++        /* cannot create socket, give up */
++        return;
++    }
++
++    memset(&addr, 0, sizeof(addr));
++    addr.sun_family = AF_UNIX;
++    strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
++
++    /* sendto -- this won't require server accept; it's fast in the common case */
++    ssize_t w = sendto(sock, buf, strlen(buf), 0, (struct sockaddr*)&addr, sizeof(addr));
++    if (w < 0) {
++        warnx("DEBUG: report_su_denied, sendto failed, error: %d", errno);
++    }
++    warnx("DEBUG: report_su_denied, sent %zd bytes", w);
++    (void)w; /* ignore result; nothing we can do if daemon isn't present */
++
++    close(sock);
++}
+diff --git a/su/su_report.h b/su/su_report.h
+new file mode 100644
+index 00000000..863bef01
+--- /dev/null
++++ b/su/su_report.h
+@@ -0,0 +1,35 @@
++/*
++ * su_report.h
++ *
++ * Small helper interface that su can call to report denied events to the daemon.
++ */
++
++#ifndef SU_REPORT_H
++#define SU_REPORT_H
++
++#include <sys/types.h>
++
++/* Build a JSON-like detail and send it to report_daemon via UNIX datagram socket.
++ * Parameters:
++ *   cmd      - command string (will be included as JSON string)
++ *   uid      - caller uid
++ *   pkg      - package name (nullable, pass NULL if unknown)
++ *   cwd      - current working directory (nullable)
++ *   pkg_sha  - SHA-256 of package signature (nullable)
++ *   uptime   - system uptime in seconds (nullable string)
++ *
++ * This function is non-blocking in the sense it uses a UNIX datagram sendto()
++ * and returns quickly in the common case. It does not wait for network upload.
++ */
++void report_su_denied(const char* cmd, uid_t uid, const char* pkg, const char* cwd,
++                      const char* pkg_sha, const char* uptime);
++
++/* Join argv[] into a single whitespace-separated commandline.
++ * Caller must free returned string. Returns strdup("") on empty.
++ */
++char* join_argv(int argc, char** argv);
++
++/* Escape string for JSON value (returns malloc'd string; caller frees) */
++char* json_escape(const char* in);
++
++#endif /* SU_REPORT_H */
+diff --git a/su/su_whitelist.c b/su/su_whitelist.c
+new file mode 100644
+index 00000000..9e1dcf16
+--- /dev/null
++++ b/su/su_whitelist.c
+@@ -0,0 +1,353 @@
++#include "su_whitelist.h"
++#include "su_utils.h"
++#include "su_crypto.h"
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <ctype.h>
++#include <unistd.h>
++#include <limits.h>
++#include <errno.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <private/android_filesystem_config.h>
++
++// System (read-only) paths, for bundled whitelist, swl means su whitelist
++#define WL_CONFIG_PATH_SYS        "/system/etc/.swl.cfg"
++#define WL_CONFIG_SIG_PATH_SYS    "/system/etc/.swl.cfg.sig"
++
++// Data (override) paths, for OTA whitelist override, swl means su whitelist
++#define WL_VENDOR_DIR             "/data/downloads/.swl"
++#define WL_CONFIG_PATH_DATA       WL_VENDOR_DIR "/.swl.cfg"
++#define WL_CONFIG_SIG_PATH_DATA   WL_VENDOR_DIR "/.swl.cfg.sig"
++
++// Safety limit to avoid oversized input
++#ifndef WL_CFG_MAX_SIZE
++#define WL_CFG_MAX_SIZE (256 * 1024)
++#endif
++
++// Debug option
++#ifndef SKIP_SIGNATURE_VERIFICATION
++#define SKIP_SIGNATURE_VERIFICATION 0
++#endif
++
++// Default allowed execution directories
++static const char* DEFAULT_EXEC_DIRS[] = {
++    /* e.g. "/system/xbin/bstk" */
++};
++
++/* Public key for whitelist signature verification */
++static const char* WHITELIST_PUBKEY_PEM =
++"-----BEGIN PUBLIC KEY-----\n"
++"MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAw02SuZKC2DkOGXQti8OC\n"
++"/Sr0i3+j7jx88hJl5StX5YbveeClR/C3nmkYNwI4PLUhUItEghGkmW0Nd8Z/eIUT\n"
++"+QOmflv477rD/yTfY7HcZwEcG7fUIm6HdgshMff7XuTQsL5xvxf4Yfc5n/EfKFwd\n"
++"60GsefdGcAzR7sMtthNmZ5ji01DskI4eeAM0nbTOC8Qn9ILJew/s2sWWFZ36CpHv\n"
++"NcfPK1k98PwlJBzGvu2deKfTFNqog16s+IfQ001Ya2YPWXYgr9515llQLsnsDaws\n"
++"e9NL+umbZc6QkAIIVD94Q+vd6EsCPK5LAMp/RvwtXbsa1nFJDPG0ZOwblKASMchp\n"
++"q2CN32bj38Og6wI4Cx5tCh56W7hdRCGhrMruKLmjpHb7mh5EYA/nRijqxDojJGQ3\n"
++"peQ+a2U8v+wa8R9B3V/MH6Eh/n9ANV5wYxIE38PKUwvjMFNiWiZQNHqb0JnWzByh\n"
++"9liRvcMhYuuwsdyIGLUnkytCFzPjFan9B1NuzjtaJoHZAgMBAAE=\n"
++"-----END PUBLIC KEY-----\n";
++
++static int       g_wl_uids[MAX_WL_UIDS];
++static size_t    g_wl_uids_cnt = 0;
++
++static wl_pkg_t  g_wl_pkgs[MAX_WL_PKGS];
++static size_t    g_wl_pkgs_cnt = 0;
++
++static char      g_wl_execdirs[MAX_WL_DIRS][PATH_MAX];
++static size_t    g_wl_execdirs_cnt = 0;
++
++static char      g_wl_cmds[MAX_WL_CMDS][PATH_MAX];
++static size_t    g_wl_cmds_cnt = 0;
++
++// Add an execution directory
++static void add_execdir(const char* dir) {
++    if (!dir) return;
++    if (g_wl_execdirs_cnt >= MAX_WL_DIRS) return;
++    snprintf(g_wl_execdirs[g_wl_execdirs_cnt], PATH_MAX, "%s", dir);
++    size_t n = strlen(g_wl_execdirs[g_wl_execdirs_cnt]);
++    while (n && g_wl_execdirs[g_wl_execdirs_cnt][n-1]=='/')
++        g_wl_execdirs[g_wl_execdirs_cnt][--n]=0;
++    g_wl_execdirs_cnt++;
++}
++
++// Add a specific command string
++static void add_command(const char* cmd) {
++    if (!cmd) return;
++    if (g_wl_cmds_cnt >= MAX_WL_CMDS) return;
++
++    snprintf(g_wl_cmds[g_wl_cmds_cnt], PATH_MAX, "%s", cmd);
++    trim(g_wl_cmds[g_wl_cmds_cnt]);
++    if (!g_wl_cmds[g_wl_cmds_cnt][0]) {
++        g_wl_cmds[g_wl_cmds_cnt][0] = '\0';
++        return;
++    }
++
++    for (size_t i = 0; i < g_wl_cmds_cnt; ++i) {
++        if (strcmp(g_wl_cmds[i], g_wl_cmds[g_wl_cmds_cnt]) == 0) {
++            g_wl_cmds[g_wl_cmds_cnt][0] = '\0';
++            return;
++        }
++    }
++
++    g_wl_cmds_cnt++;
++}
++
++// Initialize default configuration
++static void wl_init_defaults(void) {
++    for (size_t i=0;i<sizeof(DEFAULT_EXEC_DIRS)/sizeof(DEFAULT_EXEC_DIRS[0]);++i) {
++        add_execdir(DEFAULT_EXEC_DIRS[i]);
++    }
++}
++
++// Generic verify: caller specifies sig file path
++static bool verify_whitelist_signature(const unsigned char* data, size_t datalen,
++                                          const char* sig_path) {
++    warnx("DEBUG: WL verify (sig=%s)", sig_path ? sig_path : "(null)");
++
++    if (SKIP_SIGNATURE_VERIFICATION) {
++        warnx("WARNING: Signature verification SKIPPED (debug)");
++        return true;
++    }
++    if (!data || datalen == 0 || datalen > WL_CFG_MAX_SIZE) {
++        warnx("ERROR: invalid cfg size: %zu", datalen);
++        return false;
++    }
++    if (!sig_path) {
++        warnx("ERROR: sig_path is NULL");
++        return false;
++    }
++
++    unsigned char* sig = NULL; size_t siglen = 0;
++    if (!read_file_all(sig_path, &sig, &siglen)) {
++        warnx("ERROR: missing sig: %s (errno=%d:%s)", sig_path, errno, strerror(errno));
++        return false;
++    }
++
++    void* pk = load_pubkey_from_pem(WHITELIST_PUBKEY_PEM);
++    if (!pk) {
++        free(sig);
++        warnx("ERROR: load pubkey failed");
++        return false;
++    }
++
++    bool ok = verify_signature_sha256(data, datalen, sig, siglen, pk);
++    if (!ok) warnx("ERROR: whitelist signature FAILED for %s", sig_path);
++    else     warnx("DEBUG: whitelist signature OK for %s", sig_path);
++
++    free_pubkey(pk);
++    free(sig);
++    return ok;
++}
++
++static void wl_parse_and_apply(const unsigned char* buf, size_t len) {
++    if (!buf || !len) return;
++    char* tmp = (char*)malloc(len+1);
++    if (!tmp) return;
++    memcpy(tmp, buf, len); tmp[len]=0;
++
++    char* saveptr = NULL;
++    char* line = strtok_r(tmp, "\n", &saveptr);
++    while (line) {
++        trim(line);
++        if (!line[0] || line[0] == '#') {
++            line = strtok_r(NULL, "\n", &saveptr);
++            continue;
++        }
++
++        if (starts_with(line, "uid:")) {
++            if (g_wl_uids_cnt < MAX_WL_UIDS) {
++                int uid = atoi(line+4);
++                g_wl_uids[g_wl_uids_cnt++] = uid;
++            }
++        } else if (starts_with(line, "pkg:")) {
++            if (g_wl_pkgs_cnt < MAX_WL_PKGS) {
++                wl_pkg_t* e = &g_wl_pkgs[g_wl_pkgs_cnt];
++                memset(e, 0, sizeof(*e));
++                const char* p = line+4;
++                const char* sp = strstr(p, " sha256:");
++                if (sp) {
++                    size_t n = (size_t)(sp - p);
++                    if (n > sizeof(e->pkg)-1) n = sizeof(e->pkg)-1;
++                    memcpy(e->pkg, p, n); e->pkg[n]=0;
++
++                    const char* h = sp + 8;
++                    while (*h && isspace((unsigned char)*h)) h++;
++                    strncpy(e->sha256_hex, h, 64);
++                    e->sha256_hex[64] = 0;
++                    to_lower_inplace(e->sha256_hex);
++                } else {
++                    strncpy(e->pkg, p, sizeof(e->pkg)-1);
++                    e->pkg[sizeof(e->pkg)-1] = 0;
++                    e->sha256_hex[0] = 0;
++                }
++                g_wl_pkgs_cnt++;
++            }
++        } else if (starts_with(line, "execdir:")) {
++            add_execdir(line+8);
++        } else if (starts_with(line, "cmd:")) {
++            add_command(line+4);
++        }
++        line = strtok_r(NULL, "\n", &saveptr);
++    }
++    free(tmp);
++}
++
++// Try load+verify+apply from given cfg/sig
++static bool wl_try_load_from(const char* cfg_path, const char* sig_path) {
++    if (!cfg_path || !sig_path) return false;
++
++    unsigned char* buf = NULL; size_t blen = 0;
++    if (!read_file_all(cfg_path, &buf, &blen)) {
++        // Not present → silently allow caller to try next candidate
++        return false;
++    }
++    if (blen == 0 || blen > WL_CFG_MAX_SIZE) {
++        warnx("ERROR: cfg invalid size: %s (size=%zu)", cfg_path, blen);
++        free(buf);
++        return false;
++    }
++
++    if (!verify_whitelist_signature(buf, blen, sig_path)) {
++        warnx("ERROR: signature verify failed for %s", cfg_path);
++        free(buf);
++        return false;
++    }
++
++    wl_parse_and_apply(buf, blen);
++    free(buf);
++    warnx("INFO: Whitelist loaded: %s (sig=%s)", cfg_path, sig_path);
++    return true;
++}
++
++void load_whitelist_or_die(void) {
++    wl_init_defaults();
++
++    // Priority: /data/vendor/su → /system/etc
++    struct {
++        const char* cfg;
++        const char* sig;
++    } cand[] = {
++        { WL_CONFIG_PATH_DATA, WL_CONFIG_SIG_PATH_DATA },
++        { WL_CONFIG_PATH_SYS,  WL_CONFIG_SIG_PATH_SYS  },
++    };
++
++    for (size_t i = 0; i < sizeof(cand)/sizeof(cand[0]); ++i) {
++        if (wl_try_load_from(cand[i].cfg, cand[i].sig)) {
++            return; // success
++        }
++    }
++
++    // Fallback: use defaults only
++    warnx("WARNING: No valid whitelist in %s or %s; using defaults only.", WL_CONFIG_PATH_DATA, WL_CONFIG_PATH_SYS);
++}
++
++// Check if a UID is in the whitelist
++bool uid_in_whitelist(int uid) {
++    for (size_t i=0;i<g_wl_uids_cnt;++i) {
++        if (g_wl_uids[i] == uid) {
++            return true;
++        }
++    }
++    return false;
++}
++
++// Check if a package name and signature are allowed
++bool is_pkg_allowed_by_name_and_sig(const char* pkg, const char* sha256_hex) {
++    for (size_t i=0;i<g_wl_pkgs_cnt;++i) {
++        if (strcmp(g_wl_pkgs[i].pkg, pkg) == 0) {
++            if (g_wl_pkgs[i].sha256_hex[0] == 0) {
++                // Name-only allow (not recommended)
++                return true;
++            }
++            if (sha256_hex && strcmp(g_wl_pkgs[i].sha256_hex, sha256_hex) == 0) {
++                return true;
++            }
++        }
++    }
++    return false;
++}
++
++// Check if any package of a UID is whitelisted
++bool any_pkg_of_uid_whitelisted(int uid) {
++    extern size_t get_packages_for_uid(int uid, char pkgs[][256], size_t max_pkgs);
++    extern int get_pkg_sha256_from_packages_xml_indexed(const char* pkg, char out_hex[65]); // legacy helper function for package signature retrieval
++
++    char pkgs[8][256];
++    size_t n = get_packages_for_uid(uid, pkgs, 8);
++    if (n == 0) return false;
++
++    for (size_t i=0;i<n;++i) {
++        char sha[65] = {0};
++        bool has_sig = (get_pkg_sha256_from_packages_xml_indexed(pkgs[i], sha) > -1);
++        if (!has_sig) {
++            if (is_pkg_allowed_by_name_and_sig(pkgs[i], NULL)) return true;
++        } else {
++            if (is_pkg_allowed_by_name_and_sig(pkgs[i], sha)) return true;
++        }
++    }
++    return false;
++}
++
++bool command_in_whitelist(const char* cmd) {
++    if (!cmd) return false;
++
++    char normalized[PATH_MAX];
++    snprintf(normalized, sizeof(normalized), "%s", cmd);
++    trim(normalized);
++    if (!normalized[0]) return false;
++
++    for (size_t i = 0; i < g_wl_cmds_cnt; ++i) {
++        if (strcmp(g_wl_cmds[i], normalized) == 0) {
++            return true;
++        }
++    }
++    return false;
++}
++
++bool has_command_whitelist(void) {
++    return g_wl_cmds_cnt > 0;
++}
++
++// Check if a path is under the allowed execution directories
++bool path_under_allowed_execdirs(const char* abspath) {
++    for (size_t i=0;i<g_wl_execdirs_cnt;++i) {
++        size_t L = strlen(g_wl_execdirs[i]);
++        if (strncmp(abspath, g_wl_execdirs[i], L) == 0 &&
++            (abspath[L] == '/' || abspath[L] == 0)) {
++            return true;
++        }
++    }
++    return false;
++}
++
++// Resolve a command path in allowed directories
++bool resolve_in_allowed_dirs(const char* cmd, char out[]) {
++    if (!cmd || !out) return false;
++    if (cmd[0] == '/') {
++        snprintf(out, PATH_MAX, "%s", cmd);
++        return path_under_allowed_execdirs(out);
++    }
++    for (size_t i=0;i<g_wl_execdirs_cnt;++i) {
++        char cand[PATH_MAX];
++        snprintf(cand, sizeof(cand), "%s/%s", g_wl_execdirs[i], cmd);
++        if (access(cand, X_OK) == 0) {
++            snprintf(out, PATH_MAX, "%s", cand);
++            return true;
++        }
++    }
++    return false;
++}
++
++// Check if a command string contains disallowed absolute paths
++bool command_string_contains_disallowed_abs(const char* s) {
++    if (!s) return false;
++    const char* bad[] = { "/data/", "/sdcard/", "/storage/", "/mnt/sdcard/" };
++    for (size_t i=0;i<sizeof(bad)/sizeof(bad[0]);++i) {
++        if (strstr(s, bad[i])) return true;
++    }
++    return false;
++}
+diff --git a/su/su_whitelist.h b/su/su_whitelist.h
+new file mode 100644
+index 00000000..9fcea30b
+--- /dev/null
++++ b/su/su_whitelist.h
+@@ -0,0 +1,45 @@
++#ifndef SU_WHITELIST_H
++#define SU_WHITELIST_H
++
++#include <stdbool.h>
++#include <stddef.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++// Whitelist related constants and structures
++#define MAX_WL_UIDS        256
++#define MAX_WL_PKGS        256
++#define MAX_WL_DIRS         32
++#define MAX_WL_CMDS        1024
++
++typedef struct {
++    char pkg[256];
++    char sha256_hex[65]; // lowercase hex, 64 chars + '\0'
++} wl_pkg_t;
++
++// Whitelist management functions
++void load_whitelist_or_die(void);
++
++bool uid_in_whitelist(int uid);
++
++bool is_pkg_allowed_by_name_and_sig(const char* pkg, const char* sha256_hex);
++
++bool any_pkg_of_uid_whitelisted(int uid);
++
++bool path_under_allowed_execdirs(const char* abspath);
++
++bool resolve_in_allowed_dirs(const char* cmd, char out[]);
++
++bool command_in_whitelist(const char* cmd);
++
++bool has_command_whitelist(void);
++
++bool command_string_contains_disallowed_abs(const char* s);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif // SU_WHITELIST_H
+-- 
+2.34.1
+

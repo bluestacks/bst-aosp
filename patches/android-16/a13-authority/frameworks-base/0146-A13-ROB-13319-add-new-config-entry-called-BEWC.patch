@@ -1,0 +1,150 @@
+From 3364867a87520ac92a49471d4cc8ee0c7f32125d Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Thu, 30 May 2024 17:00:28 +0800
+Subject: [PATCH 146/224] [A13] ROB-13319: add new config entry called BEWC
+
+---
+ core/java/android/widget/EditText.java        |  8 ++--
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 48 +++++++++++++++++++
+ 4 files changed, 68 insertions(+), 4 deletions(-)
+
+diff --git a/core/java/android/widget/EditText.java b/core/java/android/widget/EditText.java
+index 6f046b0ee786..ecedf65144b5 100644
+--- a/core/java/android/widget/EditText.java
++++ b/core/java/android/widget/EditText.java
+@@ -28,6 +28,8 @@ import android.util.AttributeSet;
+ import android.util.BstUtils;
+ import android.os.Binder;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++
+ /*
+  * This is supposed to be a *very* thin veneer over TextView.
+  * Do not make any changes here that do anything that a TextView
+@@ -127,10 +129,8 @@ public class EditText extends TextView {
+             int uid = Binder.getCallingUid();
+             if (uid >= 10000) {
+                 String packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
+-                if (packageName.equals("com.higreor.gp") ||
+-                    packageName.equals("com.tdfs.rouge.gp") ||
+-                    packageName.equals("com.ldweishuwu.shark") ||
+-                    packageName.equals("com.ldweishuwutw.shark")) {
++                BstFilterAppsManager bstfilter = BstFilterAppsManager.getInstance();
++                if (bstfilter.isBlockEditWhenComposing(packageName)) {
+                     return;
+                 }
+             }
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 5f44fd723d49..d605f8bab8b9 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1752,4 +1752,19 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isBlockEditWhenComposing(String pkgName)
++    {
++        try {
++            return mService.isBlockEditWhenComposing(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 37c79cdf1236..c727708915c4 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -113,4 +113,5 @@ interface IBstFilterAppsService
+     boolean isGlMapBufferRangeHost(String pkgName);
+     boolean isIgnoreSyncTimeout(String pkgName);
+     boolean isGLVBOCacheDisableApp(String pkgName);
++    boolean isBlockEditWhenComposing(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index a53bc893a7ef..2301e902f675 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -186,6 +186,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mGlMapBufferRangeHostAppList = new TreeSet<String>();
+     private Set<String>           mIgnoreSyncTimeoutAppList = new TreeSet<String>();
+     private Set<String>           mGLVBOCacheDisableAppList = new TreeSet<String>();
++    private Set<String>           mBlockEditWhenComposingAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2534,6 +2535,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mGLVBOCacheDisableAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("BEWC")) {
++                                    synchronized (mBlockEditWhenComposingAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mBlockEditWhenComposingAppList \n");
++                                        mBlockEditWhenComposingAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mBlockEditWhenComposingAppList \n");
++                                            mBlockEditWhenComposingAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mBlockEditWhenComposingAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3205,6 +3222,10 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         {
+             mGLVBOCacheDisableAppList.clear();
+         }
++        synchronized (mBlockEditWhenComposingAppList)
++        {
++            mBlockEditWhenComposingAppList.clear();
++        }
+ 
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+@@ -7247,4 +7268,31 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isBlockEditWhenComposing(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in BlockEditWhenComposing app list\n");
++        initLists();
++
++        synchronized (mBlockEditWhenComposingAppList)
++        {
++            if (mBlockEditWhenComposingAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mBlockEditWhenComposingAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in BlockEditWhenComposing App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

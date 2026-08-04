@@ -1,0 +1,70 @@
+From bc7a252e589e14436c30139ede7621e4583db8b1 Mon Sep 17 00:00:00 2001
+From: muzhong-bst <muzhong@bluestacks.com>
+Date: Tue, 14 Nov 2023 17:24:28 +0800
+Subject: [PATCH 067/224] [A13] Changes for host clipboard
+
+---
+ .../server/clipboard/ClipboardService.java    | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+ mode change 100644 => 100755 services/core/java/com/android/server/clipboard/ClipboardService.java
+
+diff --git a/services/core/java/com/android/server/clipboard/ClipboardService.java b/services/core/java/com/android/server/clipboard/ClipboardService.java
+old mode 100644
+new mode 100755
+index 6f9a17682dd7..5c79399f5fc6
+--- a/services/core/java/com/android/server/clipboard/ClipboardService.java
++++ b/services/core/java/com/android/server/clipboard/ClipboardService.java
+@@ -63,6 +63,7 @@ import android.os.UserManager;
+ import android.provider.DeviceConfig;
+ import android.provider.Settings;
+ import android.text.TextUtils;
++import android.util.Log;
+ import android.util.ArrayMap;
+ import android.util.SafetyProtectionUtils;
+ import android.util.Slog;
+@@ -92,6 +93,8 @@ import java.util.HashSet;
+ import java.util.List;
+ import java.util.function.Consumer;
+ 
++import com.bluestacks.os.BstHostCallManager;
++
+ /**
+  * Implementation of the clipboard for copy and paste.
+  * <p>
+@@ -142,6 +145,8 @@ public class ClipboardService extends SystemService {
+ 
+     @GuardedBy("mLock")
+     private final SparseArray<PerUserClipboard> mClipboards = new SparseArray<>();
++    private final BstHostCallManager mBstHostCallManagerService;
++    private static boolean debug = false;
+ 
+     @GuardedBy("mLock")
+     private boolean mShowAccessNotifications =
+@@ -167,6 +172,7 @@ public class ClipboardService extends SystemService {
+         mPm = getContext().getPackageManager();
+         mUm = (IUserManager) ServiceManager.getService(Context.USER_SERVICE);
+         mAppOps = (AppOpsManager) getContext().getSystemService(Context.APP_OPS_SERVICE);
++        mBstHostCallManagerService = (BstHostCallManager) context.getSystemService(Context.BST_HOST_CALL);
+         mContentCaptureInternal = LocalServices.getService(ContentCaptureManagerInternal.class);
+         mAutofillInternal = LocalServices.getService(AutofillManagerInternal.class);
+         final IBinder permOwner = mUgmInternal.newUriPermissionOwner("clipboard");
+@@ -689,6 +695,19 @@ public class ClipboardService extends SystemService {
+         // Update this user
+         setPrimaryClipInternalLocked(getClipboardLocked(userId), clip, uid, sourcePackage);
+ 
++        if (debug) Slog.d(TAG, "setPrimaryClip request");
++        if (clip.getDescription() == null || clip.getDescription().getLabel() == null
++                || !clip.getDescription().getLabel().toString().equals("simpleText")) {
++            ClipData.Item clippedItem = clip.getItemAt(clip.getItemCount()-1);
++            if ( clippedItem != null && clippedItem.getText() != null && clippedItem.getText().length() > 0) {
++                int rval = mBstHostCallManagerService.setClipboardText(clippedItem.getText().toString());
++                Slog.d(TAG, "BstHostCallManagerService setClipboardText method returned: " + rval);
++                if (rval != 0) {
++                    Slog.w(TAG, "ERROR in sending setClipboardText request, rval = " + rval);
++                }
++            }
++        } else if (debug) Slog.d(TAG, "Clipdata from host");
++
+         // Update related users
+         List<UserInfo> related = getRelatedProfiles(userId);
+         if (related != null) {

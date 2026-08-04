@@ -1,0 +1,80 @@
+From 90d05c73fe04340d3f9655c0725a9d6caa0910d8 Mon Sep 17 00:00:00 2001
+From: jace-bst <88761019+jace-bst@users.noreply.github.com>
+Date: Wed, 9 Jul 2025 14:03:55 +0800
+Subject: [PATCH 195/224] ROB-16547: Improved support for UE game settings for
+ maximum fps (#202)
+
+Co-authored-by: jace@bluestacks.com <jace-bst>
+---
+ core/java/android/app/ActivityThread.java | 39 ++++++++++++-----------
+ 1 file changed, 21 insertions(+), 18 deletions(-)
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 28db279eeff0..987d872f80c9 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -453,12 +453,6 @@ public final class ActivityThread extends ClientTransactionHandler
+ 
+     private int mMaxFps = 60;
+ 
+-    private void myUESleep(long ms) {
+-        try {
+-            Thread.sleep(ms);
+-        } catch (Exception e) {}
+-    }
+-
+     private int processUEHighFPS(String processName, int fps) {
+         try {
+             WeakReference<LoadedApk> weakReference = (WeakReference)this.mPackages.get(processName);
+@@ -6931,30 +6925,39 @@ public final class ActivityThread extends ClientTransactionHandler
+         if (!data.appInfo.isPrivilegedApp() && !data.appInfo.isSystemApp() && (bfam != null)) {
+             do {
+                 final String className = data.appInfo.className;
+-                if (!className.equals("com.epicgames.unreal.GameApplication") && !className.equals("com.epicgames.ue4.GameApplication")) break;
++                if (className == null) {
++                    Log.w(TAG, "Empty className detected for process: " + data.processName);
++                    break;
++                }
++
++                if (!className.equals("com.epicgames.unreal.GameApplication")
++                    && !className.equals("com.epicgames.ue4.GameApplication")) {
++                    break;
++                }
+ 
+                 final int mode = bfam.getXperfMode(data.appInfo.uid);
+                 final int enableHighFps = SystemProperties.getInt("bst.enable_high_fps", 0);
+                 final boolean enable = (mode == 2) || (mode == 1 && enableHighFps > 0);
+                 if (!enable) break;
+ 
+-            mMaxFps = SystemProperties.getInt("bst.max_fps", 60);
++                mMaxFps = SystemProperties.getInt("bst.max_fps", 60);
+                 if (mMaxFps > 120) {
+                     mMaxFps = 120;
+                 } else if (mMaxFps < 60) {
++                    Log.w(TAG, "Invalid fps range: " + mMaxFps);
+                     break;
+                 }
+-                Log.w(TAG, "mMaxFps = " + mMaxFps);
++                Log.i(TAG, "Applying fps optimization for " + className + ", target=" + mMaxFps);
+ 
+-                (new Thread(new Runnable() {
+-                    public void run() {
+-                        while (true) {
+-                            (new Handler(Looper.getMainLooper())).post(new Runnable() {
+-                                public void run() {
+-                                    ActivityThread.this.processUEHighFPS(data.processName, mMaxFps);
+-                                }
+-                            });
+-                            ActivityThread.this.myUESleep(1000L);
++                (new Thread(() -> {
++                    while (!Thread.currentThread().isInterrupted()) {
++                        new Handler(Looper.getMainLooper()).post(() -> {
++                            ActivityThread.this.processUEHighFPS(data.processName, mMaxFps);
++                        });
++                        try {
++                            Thread.sleep(1000);
++                        } catch (InterruptedException e) {
++                            Thread.currentThread().interrupt();
+                         }
+                     }
+                 })).start();

@@ -1,0 +1,22 @@
+From 174c3b04466cbf9ac82a2292f1009201f471804d Mon Sep 17 00:00:00 2001
+From: Build Master <build@bluestacks.com>
+Date: Thu, 6 Mar 2025 09:58:53 +0530
+Subject: [PATCH 171/224] Review comments
+
+---
+ .../core/java/com/android/server/pm/PackageManagerService.java  | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index a5bf4702ac4a..498fa2150600 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -2838,7 +2838,7 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+             int pid = Binder.getCallingPid();
+             int uid = Binder.getCallingUid();
+             String pkgName = BstUtils.getAppNameFromPid(pid);
+-            if (pkgName.equalsIgnoreCase("gg.now.accounts") || pkgName.equalsIgnoreCase("gg.now.billing.service2") || uid < 10000) {
++            if (pkgName.startsWith("gg.now") || pkgName.startsWith("com.bluestacks") || uid < 10000) {
+                 return true;
+             }
+             if (BST_DEBUG) Log.d(TAG, "Package " + pkgName + " queried for feature " + name);

@@ -1,0 +1,7 @@
+diff --git a/system/core b/system/core
+index d727e7d..d97fcbb 160000
+--- a/system/core
++++ b/system/core
+@@ -1 +1 @@
+-Subproject commit d727e7ddeaf83c8d9b8cae2e2b13711051c20af9
++Subproject commit d97fcbb24c758ec6b911580a7e25bea557d7cc29

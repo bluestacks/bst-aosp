@@ -1,0 +1,101 @@
+From 8cd41668fa705dc91c04a382e13e9343ac14aee5 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 17 Nov 2023 14:51:47 +0800
+Subject: [PATCH] [A13] Add config.db entry xarch
+
+---
+ libnativebridge/native_bridge.cc | 64 ++++++++++++++++++++++++++------
+ 1 file changed, 53 insertions(+), 11 deletions(-)
+
+diff --git a/libnativebridge/native_bridge.cc b/libnativebridge/native_bridge.cc
+index fb13d62be0..a792abaf06 100644
+--- a/libnativebridge/native_bridge.cc
++++ b/libnativebridge/native_bridge.cc
+@@ -22,6 +22,7 @@
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <sys/mount.h>
+ #include <sys/stat.h>
+ #include <unistd.h>
+@@ -414,6 +415,38 @@ static void SetCpuAbi(JNIEnv* env, jclass build_class, const char* field, const
+   }
+ }
+ 
++#if defined(__ANDROID__)
++int match_uid_helper(const char *path, uid_t val, int buff_length) {
++#define MAX_UID_LENGTH     10
++
++  int debug = 0;
++  char buff[buff_length];
++  unsigned long present_uid = -1;
++
++  FILE* fp = fopen(path, "r");
++  if (fp == NULL) {
++    if (debug) ALOGW("match_uid_helper error opening file [%s] for myuid = %u\n", path, val);
++    return 0;
++  }
++
++  // now we open the marker file and iterate through the file to get the uid entries, and match it with our required value.
++  while (fgets(buff, buff_length, fp)) {
++    char *p;
++    present_uid = strtoul(buff, &p, MAX_UID_LENGTH);
++    if (val == present_uid) {
++      if (debug) ALOGW("Found matching entry of %lu\n", present_uid);
++      // we have a match, return here itself.
++      fclose(fp);
++      return 1;
++    }
++  }
++
++  // we reached here means we have parsed the file and did not get a match, returning 0.
++  fclose(fp);
++  return 0;
++}
++#endif
++
+ // Set up the environment for the bridged app.
+ static void SetupEnvironment(const NativeBridgeCallbacks* cbs, JNIEnv* env, const char* isa) {
+   // Need a JNIEnv* to do anything.
+@@ -437,17 +470,26 @@ static void SetupEnvironment(const NativeBridgeCallbacks* cbs, JNIEnv* env, cons
+     return;
+   }
+ 
+-  // Reset CPU_ABI & CPU_ABI2 to values required by the apps running with native bridge.
+-  if (env_values->cpu_abi != nullptr || env_values->cpu_abi2 != nullptr ||
+-      env_values->abi_count >= 0) {
+-    jclass bclass_id = env->FindClass("android/os/Build");
+-    if (bclass_id != nullptr) {
+-      SetCpuAbi(env, bclass_id, "CPU_ABI", env_values->cpu_abi);
+-      SetCpuAbi(env, bclass_id, "CPU_ABI2", env_values->cpu_abi2);
+-    } else {
+-      // For example in a host test environment.
+-      env->ExceptionClear();
+-      ALOGW("Could not find Build class.");
++#if defined(__ANDROID__)
++#define APP_WITH_XARCH                     "/data/downloads/.tmp/.bstXarchApps"
++#define MAX_BUFF_LENGTH                    64
++  // We have ;xarch entry for those apps running with native bridge for which we do NOT want
++  // to reset CPU_ABI, CPU_ABI2 and os.arch values at runtime.
++  if (!match_uid_helper(APP_WITH_XARCH, getuid(), MAX_BUFF_LENGTH))
++#endif
++  {
++    // Reset CPU_ABI & CPU_ABI2 to values required by the apps running with native bridge.
++    if (env_values->cpu_abi != nullptr || env_values->cpu_abi2 != nullptr ||
++        env_values->abi_count >= 0) {
++      jclass bclass_id = env->FindClass("android/os/Build");
++      if (bclass_id != nullptr) {
++        SetCpuAbi(env, bclass_id, "CPU_ABI", env_values->cpu_abi);
++        SetCpuAbi(env, bclass_id, "CPU_ABI2", env_values->cpu_abi2);
++      } else {
++        // For example in a host test environment.
++        env->ExceptionClear();
++        ALOGW("Could not find Build class.");
++      }
+     }
+   }
+ 
+-- 
+2.34.1
+

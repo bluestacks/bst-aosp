@@ -1,0 +1,62 @@
+From 517e86f37e7e27640f39ac00e2a4f8a4a7ab4acf Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Thu, 26 Oct 2023 09:54:33 +0800
+Subject: [PATCH 038/224] [A13] code sync with Rvc
+
+---
+ .../inputmethod/InputMethodManagerService.java     | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+index 0dc419a42fd9..f25f9a8e8226 100644
+--- a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
++++ b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+@@ -110,6 +110,7 @@ import android.os.ServiceManager;
+ import android.os.ShellCallback;
+ import android.os.ShellCommand;
+ import android.os.SystemClock;
++import android.os.SystemProperties;
+ import android.os.Trace;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+@@ -1835,6 +1836,8 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+         if (selectedMethodId != null && !mMethodMap.get(selectedMethodId).isSystem()) {
+             return;
+         }
++
++        Slog.d(TAG,"in resetDefaultImeLocked -> mSystemReady ::" + mSystemReady + "   mMethodList ::" + mMethodList);
+         final List<InputMethodInfo> suitableImes = InputMethodUtils.getDefaultEnabledImes(
+                 context, mSettings.getEnabledInputMethodListLocked());
+         if (suitableImes.isEmpty()) {
+@@ -3434,8 +3437,7 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+                         .setContentIntent(mImeSwitchPendingIntent);
+                 try {
+                     // TODO(b/120076400): Figure out what is the best behavior
+-                    if ((mNotificationManager != null)
+-                            && !mIWindowManager.hasNavigationBar(DEFAULT_DISPLAY)) {
++                    if (mNotificationManager != null) {
+                         if (DEBUG) {
+                             Slog.d(TAG, "--- show notification: label =  " + summary);
+                         }
+@@ -3444,7 +3446,7 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+                                 mImeSwitcherNotification.build(), UserHandle.ALL);
+                         mNotificationShown = true;
+                     }
+-                } catch (RemoteException e) {
++                } catch (Exception e) {
+                 }
+             } else {
+                 if (mNotificationShown && mNotificationManager != null) {
+@@ -3567,6 +3569,12 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+             // Set a subtype to this input method.
+             // subtypeId the name of a subtype which will be set.
+             setSelectedInputMethodAndSubtypeLocked(info, subtypeId, false);
++            if (DEBUG) Slog.d(TAG, "id : " + id + ", mCurMethodId=" + getSelectedMethodIdLocked());
++            //Setting the property bst.config.ime_listenerport to 0 when ime changes from LatinIme to some other value.
++            if  ("com.android.inputmethod.latin/.LatinIME".equals(getSelectedMethodIdLocked()) && !id.equals(getSelectedMethodIdLocked())) {
++                if (DEBUG) Slog.d(TAG, "Setting the propert of bst.config.ime_listenerport to 0");
++                SystemProperties.set("bst.config.ime_listenerport", "0");
++            }
+             // mCurMethodId should be updated after setSelectedInputMethodAndSubtypeLocked()
+             // because mCurMethodId is stored as a history in
+             // setSelectedInputMethodAndSubtypeLocked().

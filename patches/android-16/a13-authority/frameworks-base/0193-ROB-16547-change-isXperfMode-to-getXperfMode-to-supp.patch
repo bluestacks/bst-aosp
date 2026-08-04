@@ -1,0 +1,143 @@
+From 209d19bd9f073810c3cc7ce1ba908166d50977ec Mon Sep 17 00:00:00 2001
+From: jace-bst <88761019+jace-bst@users.noreply.github.com>
+Date: Thu, 3 Jul 2025 17:13:14 +0800
+Subject: [PATCH 193/224] ROB-16547: change isXperfMode to getXperfMode to
+ support HighFps (#200)
+
+Co-authored-by: jace@bluestacks.com <jace-bst>
+---
+ .../bluestacks/os/BstFilterAppsManager.java   |  6 +--
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  2 +-
+ .../server/BstFilterAppsService.java          | 39 +++++++++++--------
+ 3 files changed, 27 insertions(+), 20 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 08307587b52b..b0d3f423414a 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1560,15 +1560,15 @@ public class BstFilterAppsManager {
+     * case ROB-9086: High fps config, Adding a new entry name: XperfMode
+     * @hide
+     */
+-    public boolean isXperfMode(int uid)
++    public int getXperfMode(int uid)
+     {
+         try {
+-            return mService.isXperfMode(uid);
++            return mService.getXperfMode(uid);
+         } catch(Exception e) {
+             // Catching the error and returning default behavior as if entry was not
+             // present in config.db
+             if (DEBUG) e.printStackTrace();
+-            return false;
++            return 0;
+         }
+     }
+ 
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index ce7423f8177c..150f3dea1271 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -95,7 +95,7 @@ interface IBstFilterAppsService
+     boolean isGLInvalidateFramebufferFilterApp(String pkgName);
+     int getUnityFlickerPatchRequired(String pkgName);
+     String getDefaultProfile(String pkgName);
+-    boolean isXperfMode(int uid);
++    int getXperfMode(int uid);
+     boolean isIntelGLDispatchComputeFlushApp(String pkgName);
+     int getCameraInitRotation(String pkgName);
+     boolean isDhdg(int uid);
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 851180d4b80a..2f15782ff2cb 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -168,7 +168,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mGLInvalidateFramebufferFilterAppList = new TreeSet<String>();
+     private Map<String, Integer>  mUnityFlickerAppList = new HashMap<String, Integer>();
+     private Map<String, String>   mDefaultProfileAppList = new HashMap<String, String>();
+-    private Set<String>           mXperfModeList = new TreeSet<String>();
++    private Map<String, Integer>  mXperfModeList = new HashMap<String, Integer>();
+     private Set<String>           mIntelGLDispatchComputeFlushAppList = new TreeSet<String>();
+     private Set<String>           mDhdgList = new TreeSet<String>();
+     private Set<String>           mGlNativeSyncDisabledAppList = new TreeSet<String>();
+@@ -2306,18 +2306,24 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                  }
+                                  else if (key.equalsIgnoreCase("XperfMode")) {
+                                     synchronized (mXperfModeList) {
+-                                        if (value.equalsIgnoreCase("false")) {
+-                                            packageName = "~" + packageName;
+-                                        }
++                                        int XperfModeValue = 0;
+                                         if (DEBUG)
+-                                            Slog.d(TAG, "Adding " + packageName + " to mXperfModeList \n");
+-                                        mXperfModeList.add(packageName);
++                                            Slog.d(TAG, "Adding packageName :" + packageName + " to mXperfModeList \n");
++                                        if (value.equalsIgnoreCase("true")) {
++                                            XperfModeValue = 1;
++                                        }
++                                        else if (value.equalsIgnoreCase("false")) {
++                                            XperfModeValue = 0;
++                                        } else {
++                                            XperfModeValue = Integer.parseInt(value);
++                                        }
++                                        mXperfModeList.put(packageName, XperfModeValue);
+                                         if (packageName.startsWith("~")) {
+                                             if (DEBUG)
+                                                 Slog.d(TAG, "Removing " + origPackageName + " from mXperfModeList \n");
+                                             mXperfModeList.remove(packageName.substring(1));
+                                         }
+-                                        removePackageEntryFromList(mXperfModeList, pkgException);
++                                        removePackageEntryFromList(mXperfModeList, pkgException, XperfModeValue);
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("IntelDCFlush")) {
+@@ -7153,9 +7159,9 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+      * case ROB-9086: High fps config, Adding a new entry name: XperfMode
+      * @hide
+      */
+-    public boolean isXperfMode(int uid)
++    public int getXperfMode(int uid)
+     {
+-        boolean found = false;
++        int xperfModeValue = 0;
+         uid = mapUid(uid);
+         initLists();
+ 
+@@ -7164,29 +7170,30 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         String[] str = mPackageManager.getPackagesForUid(uid);
+         if (str == null)
+         {
+-            Slog.d(TAG, "no corresponding package found for uid :" + uid + ". Returning false by default");
+-            return found;
++            Slog.d(TAG, "no corresponding package found for uid :" + uid + ". Returning 0 by default");
++            return xperfModeValue;
+         }
+         String pkgName = str[0];
+         if(DEBUG) Slog.d(TAG, "corresponding to uid :" + uid + "  ,found package :" + pkgName);
+ 
+         synchronized (mXperfModeList)
+         {
+-            if (mXperfModeList.contains(pkgName))
++            if (mXperfModeList.containsKey(pkgName))
+             {
+-                return true;
++                xperfModeValue = mXperfModeList.get(pkgName);
++                if (DEBUG) Slog.d(TAG,"The XperfMode for package: " + pkgName + " is : " + xperfModeValue);
+             }
+             else
+             {
+                 String wildcardMatchedPackageName = isPackageMatchedWilcard(mXperfModeList, pkgName);
+                 if(wildcardMatchedPackageName != null)
+                 {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in mXperfModeList App List\n");
+-                    return true;
++                    xperfModeValue = mXperfModeList.get(wildcardMatchedPackageName);
++                    if (DEBUG) Slog.d(TAG,"The XperfMode package: " + pkgName + " matched with : " + wildcardMatchedPackageName + " is : " + xperfModeValue);
+                 }
+             }
+         }
+-        return false;
++        return xperfModeValue;
+     }
+ 
+     /**

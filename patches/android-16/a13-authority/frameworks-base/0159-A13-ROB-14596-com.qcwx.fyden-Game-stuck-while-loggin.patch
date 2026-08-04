@@ -1,0 +1,233 @@
+From 09bf1376d3f7df82cfc85d24394d8edeb7a39013 Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Fri, 10 Jan 2025 17:36:32 +0800
+Subject: [PATCH 159/224] [A13] ROB-14596: com.qcwx.fyden - Game stuck while
+ logging with google in Landscape mode
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../com/bluestacks/os/BstHostCallManager.java |  4 +-
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../bluestacks/os/IBstHostCallService.aidl    |  2 +-
+ .../server/BstFilterAppsService.java          | 50 +++++++++++++++++++
+ .../bluestacks/server/BstHostCallService.java | 10 ++--
+ ...m_bluestacks_server_BstHostCallService.cpp |  9 ++--
+ 7 files changed, 79 insertions(+), 12 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 024061baea23..cb0e9921de76 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1845,4 +1845,19 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isRotateDisabled(String pkgName)
++    {
++        try {
++            return mService.isRotateDisabled(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index 7e3219ad8abd..013d477a6cb8 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -267,9 +267,9 @@ public class BstHostCallManager {
+     /**
+      * @hide
+      */
+-    public int onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String attemptId) {
++    public int onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String orientation, String attemptId) {
+         try {
+-            return mBstHostCallService.onAppInstalled(pkg, activity, appLabel, versionCode, versionName, iconFileName, source, isUpdate, isHomeApp, attemptId);
++            return mBstHostCallService.onAppInstalled(pkg, activity, appLabel, versionCode, versionName, iconFileName, source, isUpdate, isHomeApp, orientation, attemptId);
+         } catch (RemoteException e) {
+             throw new RuntimeException(e);
+         }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 6676cf7623a3..a44409b591bb 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -119,4 +119,5 @@ interface IBstFilterAppsService
+     boolean isEGLSurfaceIgnore(String pkgName);
+     boolean isHardKeyBoard(String pkgName);
+     boolean isIntelAutoGLFlushApp(String pkgName);
++    boolean isRotateDisabled(String pkgName);
+ }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index 725d3100a61e..499edc042fde 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -22,7 +22,7 @@ interface IBstHostCallService {
+     int setGoogleAdId(String googleAdId);
+     int onCursorLocationChanged(int x, int y);
+     int onLocaleChanged(String locale);
+-    int onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String attemptId);
++    int onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String orientation, String attemptId);
+     int onAppUninstalled(String pkg);
+     int onScreenshotSaved(String fileName);
+     int createDesktopShortcut(String pkg);
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 587dd401f38e..019eef0c9d82 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -192,6 +192,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mEGLSurfaceIgnoreAppList = new TreeSet<String>();
+     private Set<String>           mHardKeyBoardAppList = new TreeSet<String>();
+     private Set<String>           mIntelAutoGLFlushAppList = new TreeSet<String>();
++    private Set<String>           mRotateDisabledAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2626,6 +2627,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mIntelAutoGLFlushAppList,pkgException);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("RotateDisabled"))) {
++                                    synchronized (mRotateDisabledAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding packageName :" + packageName + " to mRotateDisabledAppList\n");
++                                        mRotateDisabledAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mRotateDisabledAppList\n");
++                                            mRotateDisabledAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mRotateDisabledAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3328,6 +3345,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mIntelAutoGLFlushAppList.clear();
+         }
+ 
++        synchronized (mRotateDisabledAppList)
++        {
++            mRotateDisabledAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7534,4 +7556,32 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isRotateDisabled(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mRotateDisabledAppList app list\n");
++        initLists();
++        synchronized (mRotateDisabledAppList)
++        {
++            if (mRotateDisabledAppList.contains(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mRotateDisabledAppList App List\n");
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mRotateDisabledAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mRotateDisabledAppList App List\n");
++                    return true;
++                }
++            }
++        }
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mRotateDisabledAppList App List\n");
++        return false;
++    }
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index 1e8124050aef..e93e699b32d5 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -212,16 +212,16 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     /**
+      * @hide
+      */
+-    public int onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String attemptId) {
+-        if (DBG) Slog.d(TAG, "in BstHostCallService onAppInstalled, pkg : " + pkg + ", activity = " + activity + ", appLabel = " + appLabel + ", versionCode = " + versionCode + ", versionName = " + versionName + ", iconFileName = " + iconFileName + ", source = " + source + ", isUpdate = " + isUpdate + ", isHomeApp = " + isHomeApp + " attemptId = " + attemptId);
+-        return native_onAppInstalled(pkg, activity, appLabel, versionCode, versionName, iconFileName, source, isUpdate, isHomeApp, attemptId);
++    public int onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String orientation, String attemptId) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService onAppInstalled, pkg : " + pkg + ", activity = " + activity + ", appLabel = " + appLabel + ", versionCode = " + versionCode + ", versionName = " + versionName + ", iconFileName = " + iconFileName + ", source = " + source + ", isUpdate = " + isUpdate + ", isHomeApp = " + isHomeApp + ", orientation = " + orientation + ", attemptId = " + attemptId);
++        return native_onAppInstalled(pkg, activity, appLabel, versionCode, versionName, iconFileName, source, isUpdate, isHomeApp, orientation, attemptId);
+     }
+ 
+     /**
+      * @hide
+      */
+     public int onAppUninstalled(String pkg) {
+-        if (DBG) Slog.d(TAG, "in BstHostCallService onAppInstalled, pkg : " + pkg);
++        if (DBG) Slog.d(TAG, "in BstHostCallService onAppUninstalled, pkg : " + pkg);
+         return native_onAppUninstalled(pkg);
+     }
+ 
+@@ -465,7 +465,7 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_setGoogleAdId(String googleAdId);
+     private static native int native_onCursorLocationChanged(int x, int y);
+     private static native int native_onLocaleChanged(String locale);
+-    private static native int native_onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String attemptId);
++    private static native int native_onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String orientation, String attemptId);
+     private static native int native_onAppUninstalled(String pkg);
+     private static native int native_onScreenshotSaved(String fileName);
+     private static native int native_createDesktopShortcut(String pkg);
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index 08e0fd286d46..36f1591347d3 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -414,7 +414,7 @@ static jint onLocaleChanged(JNIEnv* env, jobject clazz, jstring jLocaleStr) {
+     return 0;
+ }
+ 
+-static jint onAppInstalled(JNIEnv* env, jobject clazz, jstring pkgStr, jstring activityStr, jstring appLabelStr, jint versionCode, jstring versionNameStr, jstring iconFileNameStr, jstring sourceStr, jboolean isUpdate, jboolean isHomeApp, jstring attemptIdStr) {
++static jint onAppInstalled(JNIEnv* env, jobject clazz, jstring pkgStr, jstring activityStr, jstring appLabelStr, jint versionCode, jstring versionNameStr, jstring iconFileNameStr, jstring sourceStr, jboolean isUpdate, jboolean isHomeApp, jstring orientationStr, jstring attemptIdStr) {
+     if (dbg) ALOGD("%s: called", __func__);
+     string pkg = getStringFromJstring(env, clazz, pkgStr);
+     string activity = getStringFromJstring(env, clazz, activityStr);
+@@ -422,14 +422,15 @@ static jint onAppInstalled(JNIEnv* env, jobject clazz, jstring pkgStr, jstring a
+     string versionName = getStringFromJstring(env, clazz, versionNameStr);
+     string iconFileName = getStringFromJstring(env, clazz, iconFileNameStr);
+     string source = getStringFromJstring(env, clazz, sourceStr);
++    string orientation = getStringFromJstring(env, clazz, orientationStr);
+     string attemptId = getStringFromJstring(env, clazz, attemptIdStr);
+ 
+     if (pkg.empty() || activity.empty()) return -1;
+ 
+-    if (dbg) ALOGD("%s: package = %s, activity = %s, appLabel = %s, versionCode = %d, versionName = %s, iconFileName: %s, source: %s, isUpdate: %d, isHomeApp: %d, attemptId: %s", __func__, pkg.c_str(), activity.c_str(), appLabel.c_str(), versionCode, versionName.c_str(), iconFileName.c_str(), source.c_str(), isUpdate, isHomeApp, attemptId.c_str());
++    if (dbg) ALOGD("%s: package = %s, activity = %s, appLabel = %s, versionCode = %d, versionName = %s, iconFileName: %s, source: %s, isUpdate: %d, isHomeApp: %d, orientation: %s, attemptId: %s", __func__, pkg.c_str(), activity.c_str(), appLabel.c_str(), versionCode, versionName.c_str(), iconFileName.c_str(), source.c_str(), isUpdate, isHomeApp, orientation.c_str(), attemptId.c_str());
+     xthrPoolAddTask(&g_thr_pool.threadPool, [=]
+         {
+-            xerr_t rval = hcallOnAppInstalledRpc(pkg.c_str(), activity.c_str(), appLabel.c_str(), versionCode, versionName.c_str(), iconFileName.c_str(), source.c_str(), isUpdate, isHomeApp, attemptId.c_str());
++            xerr_t rval = hcallOnAppInstalledRpc(pkg.c_str(), activity.c_str(), appLabel.c_str(), versionCode, versionName.c_str(), iconFileName.c_str(), source.c_str(), isUpdate, isHomeApp, orientation.c_str(), attemptId.c_str());
+             if (rval != XERR_SUCCESS) {
+                 ALOGE("hcallOnActivityDisplayedRpc failed, error %d", rval);
+             }
+@@ -941,7 +942,7 @@ static const JNINativeMethod gMethods[] = {
+     { "native_setGoogleAdId", "(Ljava/lang/String;)I", (void *)setGoogleAdId},
+     { "native_onCursorLocationChanged", "(II)I", (void *)onCursorLocationChanged},
+     { "native_onLocaleChanged", "(Ljava/lang/String;)I", (void *)onLocaleChanged },
+-    { "native_onAppInstalled", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZLjava/lang/String;)I", (void *)onAppInstalled },
++    { "native_onAppInstalled", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZLjava/lang/String;Ljava/lang/String;)I", (void *)onAppInstalled },
+     { "native_onAppUninstalled", "(Ljava/lang/String;)I", (void *)onAppUninstalled },
+     { "native_onScreenshotSaved", "(Ljava/lang/String;)I", (void *)onScreenshotSaved },
+     { "native_createDesktopShortcut", "(Ljava/lang/String;)I", (void*)createDesktopShortcut },

@@ -1,0 +1,31 @@
+diff --git a/media/java/android/media/AudioSystem.java b/media/java/android/media/AudioSystem.java
+index 966dcece50b2..be42fc928169 100644
+--- a/media/java/android/media/AudioSystem.java
++++ b/media/java/android/media/AudioSystem.java
+@@ -2644,10 +2644,10 @@ public class AudioSystem
+     public static int[] DEFAULT_STREAM_VOLUME = new int[] {
+         4,  // STREAM_VOICE_CALL
+         7,  // STREAM_SYSTEM
+-        5,  // STREAM_RING           // configured in AudioService by config_audio_notif_vol_default
+-        5, // STREAM_MUSIC
++        7,  // STREAM_RING           // configured in AudioService by config_audio_notif_vol_default
++        15, // STREAM_MUSIC
+         6,  // STREAM_ALARM
+-        5,  // STREAM_NOTIFICATION   // configured in AudioService by config_audio_ring_vol_default
++        7,  // STREAM_NOTIFICATION   // configured in AudioService by config_audio_ring_vol_default
+         7,  // STREAM_BLUETOOTH_SCO
+         7,  // STREAM_SYSTEM_ENFORCED
+         5, // STREAM_DTMF
+diff --git a/services/core/java/com/android/server/audio/AudioService.java b/services/core/java/com/android/server/audio/AudioService.java
+index 2b62b281c03f..3e57b9f64e67 100644
+--- a/services/core/java/com/android/server/audio/AudioService.java
++++ b/services/core/java/com/android/server/audio/AudioService.java
+@@ -1558,7 +1558,7 @@ public class AudioService extends IAudioService.Stub
+                         MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] / 4;
+             } else {
+                 AudioSystem.DEFAULT_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] =
+-                        MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] / 3;
++                        MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC];
+             }
+         }
+ 

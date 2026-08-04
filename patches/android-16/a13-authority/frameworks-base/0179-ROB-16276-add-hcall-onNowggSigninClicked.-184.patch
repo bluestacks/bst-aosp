@@ -1,0 +1,121 @@
+From bb8f77eceb39d70da9bded3d92a7c6a2dbb43a93 Mon Sep 17 00:00:00 2001
+From: michael-bst <michael@bluestacks.com>
+Date: Mon, 7 Apr 2025 18:58:40 +0800
+Subject: [PATCH 179/224] ROB-16276: add hcall onNowggSigninClicked. (#184)
+
+---
+ .../com/bluestacks/os/BstHostCallManager.java | 11 +++++++++++
+ .../bluestacks/os/IBstHostCallService.aidl    |  1 +
+ .../com/bluestacks/os/IBstUtilsService.aidl   |  0
+ .../bluestacks/server/BstHostCallService.java |  9 +++++++++
+ ...m_bluestacks_server_BstHostCallService.cpp | 19 ++++++++++++++++++-
+ 5 files changed, 39 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 core/java/com/bluestacks/os/BstHostCallManager.java
+ mode change 100644 => 100755 core/java/com/bluestacks/os/IBstHostCallService.aidl
+ mode change 100644 => 100755 core/java/com/bluestacks/os/IBstUtilsService.aidl
+ mode change 100644 => 100755 services/java/com/bluestacks/server/BstHostCallService.java
+ mode change 100644 => 100755 services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+old mode 100644
+new mode 100755
+index 90dfa13c391c..83e1ca2cb1b4
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -604,4 +604,15 @@ public class BstHostCallManager {
+             throw new RuntimeException(e);
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public int onNowggSigninClicked(String pkg) {
++        try {
++            return mBstHostCallService.onNowggSigninClicked(pkg);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+old mode 100644
+new mode 100755
+index 73709ebad3ff..c67014022618
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -54,4 +54,5 @@ interface IBstHostCallService {
+     int onIAPCompleted(String source, String data);
+     int unzipFile(String fileName, String attemptId, String source, String pkgName);
+     int allowInstallApkGameCenter(String pkg);
++    int onNowggSigninClicked(String pkg);
+ }
+diff --git a/core/java/com/bluestacks/os/IBstUtilsService.aidl b/core/java/com/bluestacks/os/IBstUtilsService.aidl
+old mode 100644
+new mode 100755
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+old mode 100644
+new mode 100755
+index 4134730b235b..fc4270c38cc9
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -459,6 +459,14 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_allowInstallApkGameCenter(pkg);
+     }
+ 
++    /**
++     * @hide
++     */
++    public int onNowggSigninClicked(String pkg) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService onNowggSigninClicked pkg : " + pkg);
++        return native_onNowggSigninClicked(pkg);
++    }
++
+     private static native final int native_init();
+     private static native int native_initImeStatus(String imeName);
+     private static native int native_initInputDebuggingStatus(boolean showTouches, boolean showPointerLocation);
+@@ -512,4 +520,5 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_onIAPCompleted(String source, String data);
+     private static native int native_unzipFile(String fileName, String attemptId, String source, String pkgName);
+     private static native int native_allowInstallApkGameCenter(String pkg);
++    private static native int native_onNowggSigninClicked(String pkg);
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+old mode 100644
+new mode 100755
+index 59ad0beec903..9621cdf8c7d8
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -940,6 +940,22 @@ static jint allowInstallApkGameCenter(JNIEnv* env, jobject clazz, jstring pkg) {
+     return 0;
+ }
+ 
++static jint onNowggSigninClicked(JNIEnv* env, jobject clazz, jstring pkg) {
++    if (dbg) ALOGD("%s: called", __func__);
++
++    string pkgString = getStringFromJstring(env, clazz, pkg);
++
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallOnNowggSigninClickedRpc(pkgString.c_str());
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
++
+ /*
+  * JNI registration.
+  */
+@@ -998,7 +1014,8 @@ static const JNINativeMethod gMethods[] = {
+     { "native_commonCommand", "(ILjava/lang/String;Ljava/lang/String;)I", (void*)commonCommand },
+     { "native_onIAPCompleted", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)onIAPCompleted },
+     { "native_unzipFile", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)unzipFile },
+-    { "native_allowInstallApkGameCenter", "(Ljava/lang/String;)I", (void*)allowInstallApkGameCenter }
++    { "native_allowInstallApkGameCenter", "(Ljava/lang/String;)I", (void*)allowInstallApkGameCenter },
++    { "native_onNowggSigninClicked", "(Ljava/lang/String;)I", (void*)onNowggSigninClicked }
+ };
+ 
+ // This function only registers the native methods

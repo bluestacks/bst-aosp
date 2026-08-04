@@ -1,0 +1,22 @@
+From 1110db4a424bb085b40cf827c3c9bc20d5740710 Mon Sep 17 00:00:00 2001
+From: Build <build@bluestacks.com>
+Date: Fri, 26 Apr 2024 09:02:17 +0530
+Subject: [PATCH 139/224] Build error fix
+
+---
+ .../java/com/android/server/accounts/AccountManagerService.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/accounts/AccountManagerService.java b/services/core/java/com/android/server/accounts/AccountManagerService.java
+index eb9542adce10..6b8326963c0d 100644
+--- a/services/core/java/com/android/server/accounts/AccountManagerService.java
++++ b/services/core/java/com/android/server/accounts/AccountManagerService.java
+@@ -6059,7 +6059,7 @@ public class AccountManagerService
+         Map<Account, Integer> firstPass = new LinkedHashMap<>();
+         for (Account account : unfiltered) {
+             int visibility = resolveAccountVisibility(account, visibilityFilterPackage, accounts);
+-            if ((account.type.equals("now.gg")) || visibility == AccountManager.VISIBILITY_VISIBLE
++            if ((account.type.equals("now.gg") || visibility == AccountManager.VISIBILITY_VISIBLE
+                     || visibility == AccountManager.VISIBILITY_USER_MANAGED_VISIBLE)
+                     || (includeManagedNotVisible
+                             && (visibility

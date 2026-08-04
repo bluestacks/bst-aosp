@@ -1,0 +1,44 @@
+From 6327608a8753df6b99e46079034b812373c71a93 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 14:21:12 +0800
+Subject: [PATCH] [A16] Restore BlueStacks system feature query policy
+
+---
+ .../android/server/pm/PackageManagerService.java   | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index c99fae9a945a..fe2ac3955dcb 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -3054,9 +3054,11 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+             return true;
+         }
+ 
+-        if (callingUid >= Process.FIRST_APPLICATION_UID
+-                && ("android.hardware.bluestacks".equalsIgnoreCase(name)
+-                || "android.hardware.nap".equalsIgnoreCase(name))) {
++        if ("android.hardware.bluestacks".equalsIgnoreCase(name)
++                || "android.hardware.nap".equalsIgnoreCase(name)) {
++            if (callingUid < Process.FIRST_APPLICATION_UID) {
++                return true;
++            }
+             final BstFilterAppsManager filterApps = getBstFilterAppsManager();
+             if (filterApps != null && callingPackage != null
+                     && filterApps.isBluestacksPartnerApp(callingPackage)) {
+@@ -3065,8 +3067,10 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+         }
+ 
+         if ("android.hardware.nowgg".equalsIgnoreCase(name)) {
+-            if ("gg.now.accounts".equalsIgnoreCase(callingPackage)
+-                    || "gg.now.billing.service2".equalsIgnoreCase(callingPackage)) {
++            if (callingUid < Process.FIRST_APPLICATION_UID
++                    || (callingPackage != null
++                    && (callingPackage.startsWith("gg.now")
++                    || callingPackage.startsWith("com.bluestacks")))) {
+                 return true;
+             }
+             if (BST_DEBUG) {
+-- 
+2.34.1
+

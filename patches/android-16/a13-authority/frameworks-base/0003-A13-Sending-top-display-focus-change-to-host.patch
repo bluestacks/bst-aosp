@@ -1,0 +1,285 @@
+From 78298c72dab40702d5af0c79eb7fc05ff8f61be6 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Tue, 15 Aug 2023 17:39:10 +0800
+Subject: [PATCH 003/224] [A13] Sending top display focus change to host
+
+---
+ .../com/android/server/wm/DisplayContent.java |  26 ++++
+ .../server/wm/WindowManagerService.java       | 144 ++++++++++++++++++
+ 2 files changed, 170 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index 75d84eabd146..830d2e891dc2 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -27,8 +27,22 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+ import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
+ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_BEHIND;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSET;
+ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
++import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT;
+ import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+ import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+ import static android.content.res.Configuration.ORIENTATION_UNDEFINED;
+@@ -98,6 +112,7 @@ import static com.android.internal.protolog.ProtoLogGroup.WM_DEBUG_IME;
+ import static com.android.internal.protolog.ProtoLogGroup.WM_DEBUG_KEEP_SCREEN_ON;
+ import static com.android.internal.protolog.ProtoLogGroup.WM_DEBUG_ORIENTATION;
+ import static com.android.internal.protolog.ProtoLogGroup.WM_DEBUG_SCREEN_ON;
++import static com.android.server.wm.WindowManagerDebugConfig.DEBUG_VISIBILITY;
+ import static com.android.internal.protolog.ProtoLogGroup.WM_DEBUG_WALLPAPER;
+ import static com.android.internal.protolog.ProtoLogGroup.WM_SHOW_TRANSACTIONS;
+ import static com.android.internal.util.LatencyTracker.ACTION_ROTATE_SCREEN;
+@@ -263,6 +278,7 @@ import java.util.Set;
+ import java.util.function.Consumer;
+ import java.util.function.Predicate;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
+ /**
+  * Utility class for keeping track of the WindowStates and other pertinent contents of a
+  * particular Display.
+@@ -711,6 +727,8 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+      */
+     private boolean mInEnsureActivitiesVisible = false;
+ 
++    final BstFilterAppsManager mBstFilterApps;
++
+     /**
+      * Used to indicate that the movement of child tasks to top will not move the display to top as
+      * well and thus won't change the top resumed / focused record
+@@ -1173,6 +1191,7 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+ 
+         setWindowingMode(WINDOWING_MODE_FULLSCREEN);
+         mWmService.mDisplayWindowSettings.applySettingsToDisplayLocked(this);
++        mBstFilterApps = (BstFilterAppsManager) mWmService.mContext.getSystemService(Context.BST_FILTER_APPS);
+     }
+ 
+     private void beginHoldScreenUpdate() {
+@@ -3767,6 +3786,13 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+ 
+         getDisplayPolicy().focusChangedLw(oldFocus, newFocus);
+ 
++        // Sending the top displayed activity info to host on Focus change.
++        if (newFocus != null) {
++            if (DEBUG_VISIBILITY)
++                Slog.v(TAG_WM, "Setting focused app to: " + newFocus + " old focus=" + oldFocus);
++            mWmService.bstSendTopDisplayedOnFocusChange(newFocus);
++        }
++
+         if (imWindowChanged && oldFocus != mInputMethodWindow) {
+             // Focus of the input method window changed. Perform layout if needed.
+             if (mode == UPDATE_FOCUS_PLACING_SURFACES) {
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 4e32a7ca3bf4..8effb3e37528 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -167,6 +167,8 @@ import android.app.IActivityManager;
+ import android.app.IAssistDataReceiver;
+ import android.app.WindowConfiguration;
+ import android.content.BroadcastReceiver;
++import android.accounts.Account;
++import android.accounts.AccountManager;
+ import android.content.ComponentName;
+ import android.content.ContentResolver;
+ import android.content.Context;
+@@ -209,6 +211,7 @@ import android.os.PowerManager;
+ import android.os.PowerManager.ServiceType;
+ import android.os.PowerManagerInternal;
+ import android.os.PowerSaveState;
++import android.os.Process;
+ import android.os.RemoteCallback;
+ import android.os.RemoteCallbackList;
+ import android.os.RemoteException;
+@@ -353,6 +356,10 @@ import java.util.Optional;
+ import java.util.function.Function;
+ import java.util.function.Supplier;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++import com.bluestacks.os.BstHostCallManager;
++import com.bluestacks.os.BstUtilsManager;
++
+ /** {@hide} */
+ public class WindowManagerService extends IWindowManager.Stub
+         implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs {
+@@ -1002,6 +1009,9 @@ public class WindowManagerService extends IWindowManager.Stub
+     final DisplayManagerInternal mDisplayManagerInternal;
+     final DisplayManager mDisplayManager;
+     final ActivityTaskManagerService mAtmService;
++    final BstFilterAppsManager mBstFilterApps;
++    final BstUtilsManager mBstUtils;
++    final BstHostCallManager mBstHostCallManagerService;
+ 
+     /** Indicates whether this device supports wide color gamut / HDR rendering */
+     private boolean mHasWideColorGamutSupport;
+@@ -1227,10 +1237,15 @@ public class WindowManagerService extends IWindowManager.Stub
+         mDisplayManagerInternal = LocalServices.getService(DisplayManagerInternal.class);
+         mPossibleDisplayInfoMapper = new PossibleDisplayInfoMapper(mDisplayManagerInternal);
+ 
++
+         mSurfaceControlFactory = surfaceControlFactory;
+         mTransactionFactory = transactionFactory;
+         mTransaction = mTransactionFactory.get();
+ 
++        mBstFilterApps = (BstFilterAppsManager)context.getSystemService(Context.BST_FILTER_APPS);
++        mBstUtils = (BstUtilsManager) context.getSystemService(Context.BST_UTILS);
++        mBstHostCallManagerService = (BstHostCallManager) context.getSystemService(Context.BST_HOST_CALL);
++
+         mPolicy = policy;
+         mAnimator = new WindowAnimator(this);
+         mRoot = new RootWindowContainer(this);
+@@ -2046,6 +2061,10 @@ public class WindowManagerService extends IWindowManager.Stub
+         }
+     }
+ 
++    public void setBstProposedRotation(int proposedRotation) {
++        // mPolicy.setBstProposedRotation(proposedRotation);
++    }
++
+     void removeWindow(Session session, IWindow client) {
+         synchronized (mGlobalLock) {
+             WindowState win = windowForClientLocked(session, client, false);
+@@ -6060,6 +6079,131 @@ public class WindowManagerService extends IWindowManager.Stub
+         mAnimator.scheduleAnimation();
+     }
+ 
++    void bstSendTopDisplayedOnFocusChange(WindowState newFocus) {
++        String lastTopDisplayedPackage = SystemProperties.get("bst.config.top_displayed_pkg" , "");
++        String packageName = newFocus.getOwningPackage();
++        ActivityRecord activityRecord = newFocus.mActivityRecord;
++        if (activityRecord == null) {
++            if (DEBUG_VISIBILITY) Slog.d(TAG, "activityRecord is null so returning");
++            return;
++        }
++
++        String activityRecordStr = activityRecord.toString();
++        Slog.e(TAG, "bstSendTopDisplayedOnFocusChange activityRecordStr: " + activityRecordStr);
++        String[] splitsAppToken = activityRecordStr.split(" ");
++        for (int i=0; i<splitsAppToken.length; i++) {
++            Slog.e(TAG, i + ": " + splitsAppToken[i]);
++        }
++        if (splitsAppToken.length < 4) {
++            Slog.e(TAG, "activityRecord is invalid, activityRecordStr: " + activityRecordStr + ", so returning");
++            return;
++        }
++
++        String componentName = splitsAppToken[2].trim();
++        if (componentName.endsWith("}")) {
++            componentName = componentName.substring(0, componentName.length() - 1);
++            Slog.e(TAG, "bstSendTopDisplayedOnFocusChange Modified componentName: " + componentName);
++        }
++        Slog.e(TAG, "bstSendTopDisplayedOnFocusChange componentName: " + componentName);
++
++        if(packageName == null) {
++            if (DEBUG_VISIBILITY)  Slog.d(TAG, "packageName is null through getOwningPackage, falling back to parsing activityRecord to get packagename");
++            // See toString() of ActivityRecord for token format.
++            // We are assuming <package-name>/<activity-name> in the token string.
++            packageName = componentName.substring(0, componentName.indexOf("/")).trim();
++            Slog.e(TAG, "bstSendTopDisplayedOnFocusChange packageName: " + packageName);
++        }
++
++        String activityName = componentName.substring(componentName.indexOf("/") + 1, componentName.length()).trim();
++            Slog.e(TAG, "bstSendTopDisplayedOnFocusChange activityName: " + activityName);
++        if (activityName.startsWith(".")) {
++            activityName = packageName + activityName;
++        }
++        if (packageName.length() > SystemProperties.PROP_VALUE_MAX)
++            packageName = packageName.substring(0,SystemProperties.PROP_VALUE_MAX);
++
++        if (DEBUG_VISIBILITY) Slog.d(TAG, "Now Visible : " + activityRecord.toString()
++                                     + " current top displayed package name : " +  ((packageName != null) ? packageName : "null")
++                                     + " lastTopDisplayedPackage " + lastTopDisplayedPackage);
++
++        try {
++            //Set lastDisplayedPackage when appToken is corresponding to PhoenixAcquireActivity.
++            //This will store the packageName in which IAP is being done.
++            String giapActivityName = "com.google.android.finsky.billing.acquire.SheetUiBuilderHostActivity";
++            String giapActivityName2 = android.os.SystemProperties.get("bst.config.giap_activity", giapActivityName);
++            if ((activityName != null
++                        && (activityName.contains(giapActivityName)
++                            || activityName.contains(giapActivityName2)))
++                    && (packageName != null)
++                    && (packageName.equals("com.android.vending"))
++                    && !(lastTopDisplayedPackage.startsWith("com.android")
++                        || lastTopDisplayedPackage.startsWith("com.google.android"))) {
++                if (DEBUG_VISIBILITY) Slog.d(TAG, "lastDisplayedPackage updated to " + lastTopDisplayedPackage + ", previous value = " + SystemProperties.get("bst.config.last_displayed_pkg", null));
++                    SystemProperties.set("bst.config.last_displayed_pkg", lastTopDisplayedPackage);
++                }
++        } catch (Exception ex) {
++            Slog.w(TAG, "Exception in AppWindowToken for " + activityRecord + " : " + ex.getMessage());
++            if (DEBUG_VISIBILITY) ex.printStackTrace();
++        }
++
++        if (packageName != null && !packageName.equalsIgnoreCase(lastTopDisplayedPackage)
++                                && activityName != null && !activityName.equalsIgnoreCase("com.android.settings.FallbackHome")) {
++            //Set bst.config.top_displayed_pkg property to the current owning package,
++            //and send this info to host.
++            Slog.d(TAG, "calling BstHostCallManagerService onActivityDisplayed method, packageName: " + packageName + ", activityName: " + activityName);
++            SystemProperties.set("bst.config.top_displayed_pkg", packageName);
++            SystemProperties.set("bst.config.show_mouse_ptr", "false");
++            String callingPackage = SystemProperties.get("bst.config.calling_package", "");
++            int rval = mBstHostCallManagerService.onActivityDisplayed(packageName, activityName, callingPackage);
++            Slog.d(TAG, "BstHostCallManagerService onActivityDisplayed method returned: " + rval);
++            if (rval != 0) {
++                Slog.w(TAG, "ERROR in sending topDisplayedPackage request, rval = " + rval);
++            }
++
++            boolean showSignInPopup = (SystemProperties.getInt("bst.enable_sigin_gamelaunch", 1) == 0 ? false : true);
++            if (showSignInPopup && mBstFilterApps.isGoogleSignInRequired(packageName)) {
++                Account[] accounts = AccountManager.get(mContext).getAccountsByType("com.google");
++                if (accounts.length == 0) {
++                    Intent intent = new Intent();
++                    intent.setPackage("com.bluestacks.home");
++                    intent.setAction("com.bluestacks.home.DISPLAY_SIGNIN_POPUP");
++                    intent.putExtra("app_pkg", packageName);
++                    mContext.startServiceAsUser(intent, Process.myUserHandle());
++                    SystemProperties.set("bst.display_signin_popup", "true");
++                }
++            }
++            //Sending macrosDisabled modifier value to host for top displayed package
++            boolean macrosDisabled = mBstFilterApps.isMacrosDisabledApp(packageName);
++            boolean showFeedbackPopup = mBstFilterApps.showFeedbackPopup(packageName);
++            String mouseCursorStyle = mBstFilterApps.getMouseCursorStyle(packageName);
++            boolean nativeGamepad = mBstFilterApps.isEnableNativeGamePad(packageName);
++            Slog.d(TAG, "calling BstHostCallManagerService setAppConfigDbParams method, packageName: " + packageName
++                        + ", macrosDisabled: " + macrosDisabled
++                        + ", showFeedbackPopup: " + showFeedbackPopup
++                        + ", mouseCursorStyle: " + mouseCursorStyle
++                        + ", nativeGamepad: " + nativeGamepad);
++            rval = mBstHostCallManagerService.setAppConfigDbParams(packageName, macrosDisabled, showFeedbackPopup, mouseCursorStyle, nativeGamepad);
++            Slog.d(TAG, "BstHostCallManagerService setAppConfigDbParams method returned: " + rval);
++            if (rval != 0) {
++                Slog.w(TAG, "ERROR in sending setAppConfigDbParams request, rval = " + rval);
++            }
++        }
++        String mouseAction = mBstFilterApps.getMouseAction(packageName, activityName);
++        String lastSentMouseAction = SystemProperties.get("bst.config.last_mouse_action", "");
++        Slog.d(TAG, "bstSendTopDisplayedOnFocusChange packageName : "+ packageName
++                        + "  activityName : "+ activityName
++                        + "  mouseAction  : "+ mouseAction
++                        + "  lastSentMouseAction : "+ lastSentMouseAction);
++
++        if( !mouseAction.isEmpty() || !lastSentMouseAction.isEmpty()) {
++             int rval = mBstHostCallManagerService.onSetMouseAction(packageName, activityName, mouseAction);
++             SystemProperties.set("bst.config.last_mouse_action", mouseAction);
++             if (rval != 0) {
++                Slog.w(TAG, "ERROR in sending onSetMouseAction request, rval = " + rval);
++             }
++        }
++    }
++
+     boolean updateFocusedWindowLocked(int mode, boolean updateInputWindows) {
+         Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "wmUpdateFocus");
+         boolean changed = mRoot.updateFocusedWindowLocked(mode, updateInputWindows);

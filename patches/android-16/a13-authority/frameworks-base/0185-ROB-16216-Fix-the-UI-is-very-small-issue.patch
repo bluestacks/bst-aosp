@@ -1,0 +1,230 @@
+From 8ede0aaab9ec9ab63fc62b3080e6c6605eb027d9 Mon Sep 17 00:00:00 2001
+From: "yongda.yang" <yongda.yang@bluestacks.com>
+Date: Tue, 6 May 2025 11:15:15 +0800
+Subject: [PATCH 185/224] ROB-16216:Fix the UI is very small issue
+
+---
+ .../android/content/res/ResourcesImpl.java    | 18 +++++++
+ core/java/android/view/Display.java           | 30 ++++++++++++
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 49 +++++++++++++++++++
+ 5 files changed, 113 insertions(+)
+ mode change 100644 => 100755 core/java/android/content/res/ResourcesImpl.java
+ mode change 100644 => 100755 core/java/android/view/Display.java
+
+diff --git a/core/java/android/content/res/ResourcesImpl.java b/core/java/android/content/res/ResourcesImpl.java
+old mode 100644
+new mode 100755
+index 128086b4f31f..4b883e1314e1
+--- a/core/java/android/content/res/ResourcesImpl.java
++++ b/core/java/android/content/res/ResourcesImpl.java
+@@ -33,6 +33,7 @@ import android.content.pm.ActivityInfo.Config;
+ import android.content.res.AssetManager.AssetInputStream;
+ import android.content.res.Configuration.NativeConfig;
+ import android.content.res.Resources.NotFoundException;
++import android.content.Context;
+ import android.graphics.ImageDecoder;
+ import android.graphics.Typeface;
+ import android.graphics.drawable.ColorDrawable;
+@@ -44,6 +45,7 @@ import android.os.Build;
+ import android.os.LocaleList;
+ import android.os.SystemProperties;
+ import android.os.Trace;
++import android.os.ServiceManager;
+ import android.util.AttributeSet;
+ import android.util.DisplayMetrics;
+ import android.util.Log;
+@@ -55,6 +57,8 @@ import android.view.DisplayAdjustments;
+ 
+ import com.android.internal.util.GrowingArrayUtils;
+ 
++import com.bluestacks.os.IBstFilterAppsService;
++
+ import libcore.util.NativeAllocationRegistry;
+ 
+ import org.xmlpull.v1.XmlPullParser;
+@@ -196,6 +200,20 @@ public class ResourcesImpl {
+     DisplayMetrics getDisplayMetrics() {
+         if (DEBUG_CONFIG) Slog.v(TAG, "Returning DisplayMetrics: " + mMetrics.widthPixels
+                 + "x" + mMetrics.heightPixels + " " + mMetrics.density);
++        try{
++            String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
++            if (topPackageName != null && !topPackageName.equals("")){
++                IBstFilterAppsService bstfilter = IBstFilterAppsService.Stub.asInterface(ServiceManager.getService(Context.BST_FILTER_APPS));
++                if (bstfilter != null && bstfilter.isDefaultXYDpi(topPackageName)) {
++                    if (DEBUG_CONFIG) Log.d(TAG, "App[" + topPackageName + "] use Default Xdpi and Ydpi");
++                } else {
++                    mMetrics.xdpi = mMetrics.ydpi = mMetrics.densityDpi;
++                }
++            }
++        } catch (Exception exception) {
++            Log.w(TAG, "Exception while set xdpi and ydpi: " + exception);
++            exception.printStackTrace();
++        }
+         return mMetrics;
+     }
+ 
+diff --git a/core/java/android/view/Display.java b/core/java/android/view/Display.java
+old mode 100644
+new mode 100755
+index fc589f2e20ca..d337ccfe510e
+--- a/core/java/android/view/Display.java
++++ b/core/java/android/view/Display.java
+@@ -1462,6 +1462,21 @@ public final class Display {
+         synchronized (mLock) {
+             updateDisplayInfoLocked();
+             mDisplayInfo.getAppMetrics(outMetrics, getDisplayAdjustments());
++            try{
++                if (Binder.getCallingUid() >= 10000) {
++                    int pid = android.os.Process.myPid();
++                    String callingApp = BstUtils.getAppNameFromPid(pid);
++                    IBstFilterAppsService bstfilter = IBstFilterAppsService.Stub.asInterface(ServiceManager.getService(Context.BST_FILTER_APPS));
++                    if (callingApp != null && bstfilter != null && bstfilter.isDefaultXYDpi(callingApp)) {
++                        if (DEBUG) Log.d(TAG, "App[" + callingApp + "] use Default Xdpi and Ydpi");
++                    } else {
++                        outMetrics.xdpi = outMetrics.ydpi = outMetrics.densityDpi;
++                    }
++                }
++            } catch (Exception exception) {
++                Log.w(TAG, "Exception while set xdpi and ydpi: " + exception);
++                exception.printStackTrace();
++            }
+         }
+     }
+ 
+@@ -1585,6 +1600,21 @@ public final class Display {
+     public void getRealMetrics(DisplayMetrics outMetrics) {
+         synchronized (mLock) {
+             updateDisplayInfoLocked();
++            try{
++                if (Binder.getCallingUid() >= 10000) {
++                    int pid = android.os.Process.myPid();
++                    String callingApp = BstUtils.getAppNameFromPid(pid);
++                    IBstFilterAppsService bstfilter = IBstFilterAppsService.Stub.asInterface(ServiceManager.getService(Context.BST_FILTER_APPS));
++                    if (callingApp != null && bstfilter != null && bstfilter.isDefaultXYDpi(callingApp)) {
++                        if (DEBUG) Log.d(TAG, "App[" + callingApp + "] use Default Xdpi and Ydpi");
++                    } else {
++                        outMetrics.xdpi = outMetrics.ydpi = outMetrics.densityDpi;
++                    }
++                }
++            } catch (Exception exception) {
++                Log.w(TAG, "Exception while set xdpi and ydpi: " + exception);
++                exception.printStackTrace();
++            }
+             if (shouldReportMaxBounds()) {
+                 mDisplayInfo.getMaxBoundsMetrics(outMetrics,
+                         CompatibilityInfo.DEFAULT_COMPATIBILITY_INFO,
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index c38bb3591194..156fc2d7dace 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1905,4 +1905,19 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isDefaultXYDpi(String pkgName)
++    {
++        try {
++            return mService.isDefaultXYDpi(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 271fb864dd5d..7677cadbac6a 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -123,4 +123,5 @@ interface IBstFilterAppsService
+     boolean isUnreal5App(String pkgName);
+     boolean isUE5PBDisabled(String pkgName);
+     boolean isBptcApp(String pkgName);
++    boolean isDefaultXYDpi(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 32811b70cfa2..fcb122440c0d 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -196,6 +196,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Map<String, Boolean>  mUnreal5AppMap = new HashMap<String, Boolean>();
+     private Set<String>           mUE5PBDisabledAppList = new TreeSet<String>();
+     private Set<String>   	      mBptcAppList = new TreeSet<String>();
++    private Set<String>           mDefaultXYDpiAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2678,6 +2679,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mBptcAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("DefaultXYDpi")) {
++                                    synchronized (mDefaultXYDpiAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mDefaultXYDpiAppList \n");
++                                        mDefaultXYDpiAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mDefaultXYDpiAppList \n");
++                                            mDefaultXYDpiAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mDefaultXYDpiAppList, pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3401,6 +3418,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mBptcAppList.clear();
+         }
+ 
++        synchronized (mDefaultXYDpiAppList)
++        {
++            mDefaultXYDpiAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7774,4 +7796,31 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isDefaultXYDpi(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in DefaultXYDpi app list\n");
++        initLists();
++
++        synchronized (mDefaultXYDpiAppList)
++        {
++            if (mDefaultXYDpiAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mDefaultXYDpiAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in DefaultXYDpi App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

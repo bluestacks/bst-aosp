@@ -13,6 +13,10 @@ canonical classification is generated in
   intermediates as independent artifacts.
 - Never restore signing credentials from history. The keystore record is a
   security tombstone and requires external rotation.
+- For a source patch that mixes reviewable code with a restricted prebuilt,
+  keep one `git format-patch --no-binary` record plus the source commit, Git
+  blob, byte count and SHA-256. Do not duplicate the binary delta in patch
+  archives; record its license/publication gate separately.
 
 The three required bundles contain 28.88 MiB of member data:
 

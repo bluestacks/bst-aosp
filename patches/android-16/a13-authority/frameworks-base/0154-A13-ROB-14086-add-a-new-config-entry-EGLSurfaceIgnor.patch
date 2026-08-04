@@ -1,0 +1,123 @@
+From ab353e57708b5fe0e169faa69db244a928e11aed Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Mon, 30 Sep 2024 12:29:21 +0800
+Subject: [PATCH 154/224] [A13] ROB-14086 add a new config entry
+ EGLSurfaceIgnore
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 16 +++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 46 +++++++++++++++++++
+ 3 files changed, 63 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index eb1bb54e59b1..6cd14515153a 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1800,4 +1800,20 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * Check if EGLSurface is Ignore for this app or not.
++     * @hide
++     */
++    public boolean isEGLSurfaceIgnore(String pkgName)
++    {
++        try {
++            return mService.isEGLSurfaceIgnore(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 775a58aa15f7..b551e59692be 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -116,4 +116,5 @@ interface IBstFilterAppsService
+     boolean isBlockEditWhenComposing(String pkgName);
+     String getGLHostInfo(String pkgName);
+     String getGLExtensionsIgnore(String pkgName);
++    boolean isEGLSurfaceIgnore(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index e83e19e072e3..f272130aeeb9 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -189,6 +189,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mBlockEditWhenComposingAppList = new TreeSet<String>();
+     private Map<String, String>   mGLHostInfoList = new HashMap<String, String>();
+     private Map<String, String>   mGLExtensionsIgnoreList = new HashMap<String, String>();
++    private Set<String>           mEGLSurfaceIgnoreAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2575,6 +2576,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mGLExtensionsIgnoreList,pkgException,value);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("EGLSurfaceIgnore")) {
++                                    synchronized (mEGLSurfaceIgnoreAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mEGLSurfaceIgnoreAppList \n");
++                                        mEGLSurfaceIgnoreAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mEGLSurfaceIgnoreAppList \n");
++                                            mEGLSurfaceIgnoreAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mEGLSurfaceIgnoreAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3262,6 +3279,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+            mGLExtensionsIgnoreList.clear();
+         }
+ 
++        synchronized (mEGLSurfaceIgnoreAppList)
++        {
++            mEGLSurfaceIgnoreAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7389,4 +7411,28 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return res;
+     }
+ 
++    public boolean isEGLSurfaceIgnore(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in EGLSurfaceIgnore app list\n");
++        initLists();
++
++        synchronized (mEGLSurfaceIgnoreAppList)
++        {
++            if (mEGLSurfaceIgnoreAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mEGLSurfaceIgnoreAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in EGLSurfaceIgnoreAppList App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
+ }

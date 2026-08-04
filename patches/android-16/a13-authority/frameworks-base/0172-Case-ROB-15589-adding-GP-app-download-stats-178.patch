@@ -1,0 +1,74 @@
+From 423364b372b8d1b85109fd5b32f6ceca8e076cf9 Mon Sep 17 00:00:00 2001
+From: michael-bst <michael@bluestacks.com>
+Date: Wed, 19 Mar 2025 21:19:07 +0800
+Subject: [PATCH 172/224] Case ROB-15589 : adding GP app download stats (#178)
+
+---
+ .../server/am/ActivityManagerService.java     | 37 +++++++++++++++++++
+ 1 file changed, 37 insertions(+)
+ mode change 100644 => 100755 services/core/java/com/android/server/am/ActivityManagerService.java
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+old mode 100644
+new mode 100755
+index 7a9eac855ceb..2d192e470376
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -484,6 +484,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+     private static final String TAG_SWITCH = TAG + POSTFIX_SWITCH;
+     static final String TAG_UID_OBSERVERS = TAG + POSTFIX_UID_OBSERVERS;
+     private static final String TAG_BST_REFERRAL = TAG + "-Affiliate";
++    private static final String TAG_BST_GPSTATS = TAG + "-GPStats";
+ 
+     private static final int DOWNLOAD_STATE_ENQUEUED = 1;
+ 
+@@ -500,6 +501,9 @@ public class ActivityManagerService extends IActivityManager.Stub
+ 
+     static final boolean DEBUG_BST_REFERRAL = DEBUG_BROADCAST || DEBUG_BST || SystemProperties.getInt("bst.debug.referral", 0) > 0 ? true : false;
+ 
++    static final boolean DEBUG_BST_GPSTATS = DEBUG_BROADCAST || DEBUG_BST || SystemProperties.getInt("bst.debug.gpstats", 0) > 0 ? true : false;
++    HashMap<String,String> mBstGPStatsPrevState = new HashMap<String,String>();
++
+     // The flags that are set for all calls we make to the package manager.
+     public static final int STOCK_PM_FLAGS = PackageManager.GET_SHARED_LIBRARY_FILES;
+ 
+@@ -14145,6 +14149,39 @@ public class ActivityManagerService extends IActivityManager.Stub
+                     }
+                 }
+                     }
++
++            // Passing package enqueue,downloading,installing,dequeue to BS-Services for gp app install stats
++            if ("com.android.vending".equals(callerPackage) && action != null
++                    && (action.equals("com.android.launcher.action.ACTION_PACKAGE_ENQUEUED")
++                        || action.equals("com.android.launcher.action.ACTION_PACKAGE_DOWNLOADING")
++                        || action.equals("com.android.launcher.action.ACTION_PACKAGE_INSTALLING")
++                        || action.equals("com.android.launcher.action.ACTION_PACKAGE_DEQUEUED"))) {
++                String pkgName = null;
++                Uri uri = intent.getData();
++                if (uri != null) {
++                    pkgName = uri.getSchemeSpecificPart();
++                }
++
++                if (pkgName != null) {
++                    String previousState = mBstGPStatsPrevState.get(pkgName);
++                    if (DEBUG_BST_GPSTATS) Log.d(TAG_BST_GPSTATS, "Intent Received ACTION=" + action + ", packageName=" + pkgName + ", callerPackage=" + callerPackage + ", previousState = " + previousState + "sending broadcast");
++                    if (previousState == null || !action.equals(previousState)) {
++                        Intent bstIntent = new Intent();
++                        bstIntent.setPackage("com.bluestacks.home");
++                        String bstAction = action.replace("com.android.launcher", "com.uncube.launcher3");
++                        bstIntent.setAction(bstAction);
++                        Bundle bundle = intent.getExtras();
++                        if (bundle != null) {
++                            bstIntent.putExtras(bundle);
++                        }
++                        bstIntent.putExtra("pkgName", pkgName);
++                        mServices.startServiceLocked(null, bstIntent, null, 0, 0, false, null, userId);
++                    }
++                } else {
++                    if (DEBUG_BST_GPSTATS) Log.w(TAG_BST_GPSTATS, "pkgName is null");
++                }
++                mBstGPStatsPrevState.put(pkgName, action);
++            }
+         } catch (Exception e) {
+             Slog.w(TAG,"Exception occur in finding more information for the intent: " + intent);
+             e.printStackTrace();

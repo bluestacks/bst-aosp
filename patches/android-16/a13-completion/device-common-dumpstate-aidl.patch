@@ -1,0 +1,13 @@
+diff --git a/treble.mk b/treble.mk
+--- a/treble.mk
++++ b/treble.mk
+@@ -37,8 +37,7 @@ PRODUCT_PACKAGES += \
+ 
+ # DumpState HAL
+ PRODUCT_PACKAGES += \
+-    android.hardware.dumpstate@1.0-impl \
+-    android.hardware.dumpstate@1.0-service.example
++    android.hardware.dumpstate-service.example
+ 
+ # Gatekeeper HAL
+ #PRODUCT_PACKAGES += \

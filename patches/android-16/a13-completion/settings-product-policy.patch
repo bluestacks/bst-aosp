@@ -1,0 +1,330 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -5010,8 +5010,6 @@
+                 <action android:name="com.android.settings.action.IA_SETTINGS" />
+             </intent-filter>
+             <!-- Tell Settings app which category it belongs to -->
+-            <meta-data android:name="com.android.settings.category"
+-                       android:value="com.android.settings.category.ia.system" />
+             <meta-data android:name="com.android.settings.icon"
+                        android:resource="@drawable/ic_settings_backup" />
+             <meta-data android:name="com.android.settings.order" android:value="-60"/>
+diff --git a/res/xml/top_level_settings_bst.xml b/res/xml/top_level_settings_bst.xml
+new file mode 100644
+--- /dev/null
++++ b/res/xml/top_level_settings_bst.xml
+@@ -0,0 +1,90 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  Copyright (C) 2018 The Android Open Source Project
++
++  Licensed under the Apache License, Version 2.0 (the "License");
++  you may not use this file except in compliance with the License.
++  You may obtain a copy of the License at
++
++       http://www.apache.org/licenses/LICENSE-2.0
++
++  Unless required by applicable law or agreed to in writing, software
++  distributed under the License is distributed on an "AS IS" BASIS,
++  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++  See the License for the specific language governing permissions and
++  limitations under the License.
++-->
++<PreferenceScreen
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:settings="http://schemas.android.com/apk/res-auto"
++    android:key="top_level_settings">
++
++    <com.android.settings.widget.HomepagePreference
++        android:fragment="com.android.settings.applications.AppDashboardFragment"
++        android:icon="@drawable/ic_apps_filled"
++        android:key="top_level_apps"
++        android:order="-130"
++        android:title="@string/apps_dashboard_title"
++        android:summary="@string/app_and_notification_dashboard_summary"
++        settings:highlightableMenuKey="@string/menu_key_apps" />
++
++    <com.android.settings.widget.HomepagePreference
++        android:fragment="com.android.settings.notification.ConfigureNotificationSettings"
++        android:icon="@drawable/ic_notifications_filled"
++        android:key="top_level_notifications"
++        android:order="-120"
++        android:title="@string/configure_notification_settings"
++        android:summary="@string/notification_dashboard_summary"
++        settings:highlightableMenuKey="@string/menu_key_notifications" />
++
++    <com.android.settings.widget.HomepagePreference
++        android:fragment="com.android.settings.deviceinfo.StorageDashboardFragment"
++        android:icon="@drawable/ic_storage_filled"
++        android:key="top_level_storage"
++        android:order="-100"
++        android:title="@string/storage_settings"
++        android:summary="@string/summary_placeholder"
++        settings:highlightableMenuKey="@string/menu_key_storage"
++        settings:controller="com.android.settings.deviceinfo.TopLevelStoragePreferenceController" />
++
++    <com.android.settings.widget.HomepagePreference
++        android:fragment="com.android.settings.accessibility.AccessibilitySettings"
++        android:icon="@drawable/ic_settings_accessibility_filled"
++        android:key="top_level_accessibility"
++        android:order="-60"
++        android:title="@string/accessibility_settings"
++        android:summary="@string/accessibility_settings_summary"
++        settings:highlightableMenuKey="@string/menu_key_accessibility"
++        settings:controller="com.android.settings.accessibility.TopLevelAccessibilityPreferenceController" />
++
++    <com.android.settings.widget.HomepagePreference
++        android:fragment="com.android.settings.system.SystemDashboardFragment"
++        android:icon="@drawable/ic_settings_system_dashboard_filled"
++        android:key="top_level_system"
++        android:order="10"
++        android:title="@string/header_category_system"
++        android:summary="@string/system_dashboard_summary"
++        settings:highlightableMenuKey="@string/menu_key_system" />
++
++    <com.android.settings.widget.HomepagePreference
++        android:icon="@drawable/ic_help_filled"
++        android:key="top_level_support"
++        android:order="100"
++        android:title="@string/page_tab_title_support"
++        android:summary="@string/support_summary"
++        settings:highlightableMenuKey="@string/menu_key_support"
++        settings:controller="com.android.settings.support.SupportPreferenceController" />
++
++</PreferenceScreen>
+diff --git a/src/com/android/settings/gestures/GesturesSettingPreferenceController.java b/src/com/android/settings/gestures/GesturesSettingPreferenceController.java
+--- a/src/com/android/settings/gestures/GesturesSettingPreferenceController.java
++++ b/src/com/android/settings/gestures/GesturesSettingPreferenceController.java
+@@ -18,6 +18,7 @@ package com.android.settings.gestures;
+ 
+ import android.content.Context;
+ import android.hardware.display.AmbientDisplayConfiguration;
++import android.os.SystemProperties;
+ 
+ import androidx.annotation.NonNull;
+@@ -32,6 +33,8 @@ public class GesturesSettingPreferenceController extends BasePreferenceController
+ 
+     private static final String FAKE_PREF_KEY = "fake_key_only_for_get_available";
++    private static final boolean BST_CHANGES_ENABLED =
++            SystemProperties.getInt("bst.config.modify_settings", 1) > 0;
+ 
+     public GesturesSettingPreferenceController(Context context, String key) {
+@@ -47,6 +50,9 @@ public class GesturesSettingPreferenceController extends BasePreferenceController
+ 
+     @Override
+     public int getAvailabilityStatus() {
++        if (BST_CHANGES_ENABLED) {
++            return UNSUPPORTED_ON_DEVICE;
++        }
+         if (mGestureControllers == null) {
+             mGestureControllers = buildAllPreferenceControllers(mContext);
+         }
+diff --git a/src/com/android/settings/homepage/SettingsHomepageActivity.java b/src/com/android/settings/homepage/SettingsHomepageActivity.java
+--- a/src/com/android/settings/homepage/SettingsHomepageActivity.java
++++ b/src/com/android/settings/homepage/SettingsHomepageActivity.java
+@@ -35,6 +35,7 @@ import android.os.Bundle;
+ import android.os.Process;
++import android.os.SystemProperties;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+@@ -90,6 +91,8 @@ public class SettingsHomepageActivity extends FragmentActivity implements
+ 
+     private static final String TAG = "SettingsHomepageActivity";
++    private static final boolean BST_CHANGES_ENABLED =
++            SystemProperties.getInt("bst.config.modify_settings", 1) > 0;
+ 
+     // Additional extra of Settings#ACTION_SETTINGS_LARGE_SCREEN_DEEP_LINK.
+@@ -407,10 +410,15 @@ public class SettingsHomepageActivity extends FragmentActivity implements
+     }
+ 
+     private void initSearchBarView() {
+-        View toolbar = findViewById(R.id.search_action_bar);
++        final View toolbar = findViewById(R.id.search_action_bar);
++        if (BST_CHANGES_ENABLED) {
++            if (toolbar != null) {
++                toolbar.setVisibility(View.GONE);
++            }
++            return;
++        }
+         FeatureFactory.getFeatureFactory().getSearchFeatureProvider()
+                 .initSearchToolbar(this /* activity */, toolbar,
+                         SettingsEnums.SETTINGS_HOMEPAGE);
+diff --git a/src/com/android/settings/homepage/TopLevelSettings.java b/src/com/android/settings/homepage/TopLevelSettings.java
+--- a/src/com/android/settings/homepage/TopLevelSettings.java
++++ b/src/com/android/settings/homepage/TopLevelSettings.java
+@@ -25,6 +25,7 @@ import android.content.Context;
+ import android.content.res.Configuration;
+ import android.os.Bundle;
++import android.os.SystemProperties;
+ import android.provider.SearchIndexableResource;
+@@ -65,6 +66,8 @@ public class TopLevelSettings extends DashboardFragment implements SplitLayoutLis
+     private static final String TAG = "TopLevelSettings";
+     private static final String SAVED_HIGHLIGHT_MIXIN = "highlight_mixin";
+     private static final String PREF_KEY_SUPPORT = "top_level_support";
++    private static final boolean BST_CHANGES_ENABLED =
++            SystemProperties.getInt("bst.config.modify_settings", 1) > 0;
+ 
+     private boolean mIsEmbeddingActivityEnabled;
+@@ -349,6 +352,9 @@ public class TopLevelSettings extends DashboardFragment implements SplitLayoutLis
+     }
+ 
+     private static int getPreferenceLayoutResId(Context context) {
++        if (BST_CHANGES_ENABLED) {
++            return R.xml.top_level_settings_bst;
++        }
+         return SettingsThemeHelper.isExpressiveTheme(context)
+                 ? R.xml.top_level_settings_expressive
+                 : R.xml.top_level_settings;
+diff --git a/src/com/android/settings/inputmethod/PhysicalKeyboardFragment.java b/src/com/android/settings/inputmethod/PhysicalKeyboardFragment.java
+--- a/src/com/android/settings/inputmethod/PhysicalKeyboardFragment.java
++++ b/src/com/android/settings/inputmethod/PhysicalKeyboardFragment.java
+@@ -28,6 +28,7 @@ import android.net.Uri;
+ import android.os.Bundle;
+ import android.os.Handler;
++import android.os.SystemProperties;
+ import android.os.UserHandle;
+@@ -74,6 +75,8 @@ public final class PhysicalKeyboardFragment extends DashboardFragment
+     private static final String KEYBOARD_SHORTCUTS_HELPER = "keyboard_shortcuts_helper";
+     private static final String MODIFIER_KEYS_SETTINGS = "modifier_keys_settings";
++    private static final boolean BST_CHANGES_ENABLED =
++            SystemProperties.getInt("bst.config.modify_settings", 1) > 0;
+     private static final String EXTRA_AUTO_SELECTION = "auto_selection";
+@@ -160,6 +163,9 @@ public final class PhysicalKeyboardFragment extends DashboardFragment
+         if (!isModifierKeySettingsEnabled) {
+             mKeyboardAssistanceCategory.removePreference(findPreference(MODIFIER_KEYS_SETTINGS));
+         }
++        if (BST_CHANGES_ENABLED) {
++            final Preference keyboardShortcuts = findPreference(KEYBOARD_SHORTCUTS_HELPER);
++            if (keyboardShortcuts != null) {
++                mKeyboardAssistanceCategory.removePreference(keyboardShortcuts);
++            }
++        }
+         mKeyboardA11yCategory.removePreference(mAccessibilityBounceKeys);
+@@ -253,6 +262,9 @@ public final class PhysicalKeyboardFragment extends DashboardFragment
+     }
+ 
+     private void scheduleUpdateHardKeyboards() {
++        if (BST_CHANGES_ENABLED) {
++            return;
++        }
+         final Context context = getContext();
+         ThreadUtils.postOnBackgroundThread(() -> {
+diff --git a/src/com/android/settings/inputmethod/PhysicalKeyboardPreferenceController.java b/src/com/android/settings/inputmethod/PhysicalKeyboardPreferenceController.java
+--- a/src/com/android/settings/inputmethod/PhysicalKeyboardPreferenceController.java
++++ b/src/com/android/settings/inputmethod/PhysicalKeyboardPreferenceController.java
+@@ -23,6 +23,7 @@ import android.hardware.input.InputManager;
+ import android.icu.text.ListFormatter;
++import android.os.SystemProperties;
+ import android.provider.Settings;
+@@ -43,6 +44,8 @@ public class PhysicalKeyboardPreferenceController extends AbstractPreferenceContr
+ 
+     private final InputManager mIm;
++    private static final boolean BST_CHANGES_ENABLED =
++            SystemProperties.getInt("bst.config.modify_settings", 1) > 0;
+ 
+     private Preference mPreference;
+@@ -60,7 +63,8 @@ public class PhysicalKeyboardPreferenceController extends AbstractPreferenceContr
+     @Override
+     public boolean isAvailable() {
+-        return !getKeyboards().isEmpty()
++        return (BST_CHANGES_ENABLED || !getKeyboards().isEmpty())
+                 && mContext.getResources().getBoolean(R.bool.config_show_physical_keyboard_pref);
+     }
+@@ -111,6 +115,10 @@ public class PhysicalKeyboardPreferenceController extends AbstractPreferenceContr
+         if (mPreference == null) {
+             return;
+         }
++        if (BST_CHANGES_ENABLED) {
++            mPreference.setVisible(true);
++            return;
++        }
+         List<HardKeyboardDeviceInfo> keyboards = getKeyboards();
+diff --git a/src/com/android/settings/language/PointerSpeedController.java b/src/com/android/settings/language/PointerSpeedController.java
+--- a/src/com/android/settings/language/PointerSpeedController.java
++++ b/src/com/android/settings/language/PointerSpeedController.java
+@@ -18,6 +18,7 @@ package com.android.settings.language;
+ 
+ import android.content.Context;
++import android.os.SystemProperties;
+ 
+ import androidx.annotation.VisibleForTesting;
+@@ -29,6 +30,8 @@ public class PointerSpeedController extends BasePreferenceController {
+ 
+     @VisibleForTesting static final String KEY_POINTER_SPEED = "pointer_speed";
++    private static final boolean BST_CHANGES_ENABLED =
++            SystemProperties.getInt("bst.config.modify_settings", 1) > 0;
+ 
+     public PointerSpeedController(Context context) {
+@@ -38,6 +41,9 @@ public class PointerSpeedController extends BasePreferenceController {
+     @AvailabilityStatus
+     public int getAvailabilityStatus() {
++        if (BST_CHANGES_ENABLED) {
++            return UNSUPPORTED_ON_DEVICE;
++        }
+         return mContext.getResources().getBoolean(R.bool.config_show_pointer_speed)
+diff --git a/src/com/android/settings/system/ResetPreferenceController.java b/src/com/android/settings/system/ResetPreferenceController.java
+--- a/src/com/android/settings/system/ResetPreferenceController.java
++++ b/src/com/android/settings/system/ResetPreferenceController.java
+@@ -17,6 +17,7 @@
+ package com.android.settings.system;
+ 
+ import android.content.Context;
++import android.os.SystemProperties;
+ 
+ import com.android.settings.R;
+@@ -25,6 +26,8 @@ import com.android.settings.core.BasePreferenceController;
+ // LINT.IfChange
+ public class ResetPreferenceController extends BasePreferenceController {
++    private static final boolean BST_CHANGES_ENABLED =
++            SystemProperties.getInt("bst.config.modify_settings", 1) > 0;
+ 
+     public ResetPreferenceController(Context context, String preferenceKey) {
+@@ -34,6 +37,9 @@ public class ResetPreferenceController extends BasePreferenceController {
+     @Override
+     public int getAvailabilityStatus() {
++        if (BST_CHANGES_ENABLED) {
++            return UNSUPPORTED_ON_DEVICE;
++        }
+         return mContext.getResources().getBoolean(R.bool.config_show_reset_dashboard)
+diff --git a/src/com/android/settings/system/SystemUpdatePreferenceController.kt b/src/com/android/settings/system/SystemUpdatePreferenceController.kt
+--- a/src/com/android/settings/system/SystemUpdatePreferenceController.kt
++++ b/src/com/android/settings/system/SystemUpdatePreferenceController.kt
+@@ -18,6 +18,7 @@ package com.android.settings.system
+ import android.content.Context
+ import android.os.Build
++import android.os.SystemProperties
+ import android.os.SystemUpdateManager
+@@ -35,8 +36,11 @@ open class SystemUpdatePreferenceController(context: Context, preferenceKey: Stri
+     private val clientInitiatedActionRepository = ClientInitiatedActionRepository(context)
+     private lateinit var preference: Preference
++    private val bstChangesEnabled =
++        SystemProperties.getInt("bst.config.modify_settings", 1) > 0
+ 
+     override fun getAvailabilityStatus() =
+-        if (mContext.resources.getBoolean(R.bool.config_show_system_update_settings) &&
++        if (!bstChangesEnabled &&
++            mContext.resources.getBoolean(R.bool.config_show_system_update_settings) &&
+             userManager.isAdminUser
+diff --git a/src/com/android/settings/users/MultiUserPreferenceController.java b/src/com/android/settings/users/MultiUserPreferenceController.java
+--- a/src/com/android/settings/users/MultiUserPreferenceController.java
++++ b/src/com/android/settings/users/MultiUserPreferenceController.java
+@@ -19,6 +19,7 @@ import android.content.Context;
+ import android.content.pm.UserInfo;
++import android.os.SystemProperties;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+ 
+ import com.android.settings.R;
+@@ -28,6 +29,8 @@ import com.android.settings.core.BasePreferenceController;
+ public class MultiUserPreferenceController extends BasePreferenceController {
++    private static final boolean BST_CHANGES_ENABLED =
++            SystemProperties.getInt("bst.config.modify_settings", 1) > 0;
+ 
+     public MultiUserPreferenceController(Context context, String preferenceKey) {
+@@ -37,7 +40,7 @@ public class MultiUserPreferenceController extends BasePreferenceController {
+     @Override
+     public int getAvailabilityStatus() {
+-        return (UserHandle.MU_ENABLED && UserManager.supportsMultipleUsers()
++        return (!BST_CHANGES_ENABLED && UserHandle.MU_ENABLED && UserManager.supportsMultipleUsers()
+                 && !Utils.isMonkeyRunning()) ? AVAILABLE : UNSUPPORTED_ON_DEVICE;

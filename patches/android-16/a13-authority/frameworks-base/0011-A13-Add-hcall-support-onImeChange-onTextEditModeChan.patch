@@ -1,0 +1,121 @@
+From eebc5c7960b9b942080491d8d3e6f10c75bce149 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 7 Sep 2023 17:24:17 +0800
+Subject: [PATCH 011/224] [A13] Add hcall support
+ onImeChange,onTextEditModeChange
+
+---
+ .../InputMethodManagerService.java            | 55 +++++++++++++++++++
+ 1 file changed, 55 insertions(+)
+
+diff --git a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+index faa219e89aa9..0dc419a42fd9 100644
+--- a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
++++ b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+@@ -197,6 +197,8 @@ import com.android.server.utils.PriorityDump;
+ import com.android.server.wm.WindowManagerInternal;
+ 
+ import com.google.android.collect.Sets;
++import com.bluestacks.os.BstFilterAppsManager;
++import com.bluestacks.os.BstHostCallManager;
+ 
+ import java.io.FileDescriptor;
+ import java.io.IOException;
+@@ -264,6 +266,11 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+     private static final String TAG_TRY_SUPPRESSING_IME_SWITCHER = "TrySuppressingImeSwitcher";
+     private static final String HANDLER_THREAD_NAME = "android.imms";
+ 
++    // For BlueStacks input mapper utility
++    private static boolean bstWinKeyboardInputEnabled = true;
++    private final BstFilterAppsManager mBstFilterAppsManager;
++    private final BstHostCallManager mBstHostCallManagerService;
++
+     /**
+      * A protected broadcast intent action for internal use for {@link PendingIntent} in
+      * the notification.
+@@ -1754,6 +1761,8 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+         mAppOpsManager = mContext.getSystemService(AppOpsManager.class);
+         mUserManager = mContext.getSystemService(UserManager.class);
+         mUserManagerInternal = LocalServices.getService(UserManagerInternal.class);
++        mBstFilterAppsManager = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++        mBstHostCallManagerService = (BstHostCallManager) context.getSystemService(Context.BST_HOST_CALL);
+         mAccessibilityManager = AccessibilityManager.getInstance(context);
+         mHasFeature = context.getPackageManager().hasSystemFeature(
+                 PackageManager.FEATURE_INPUT_METHODS);
+@@ -3568,6 +3577,7 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+                 intent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
+                 intent.putExtra("input_method_id", id);
+                 mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);
++                mBstHostCallManagerService.onImeChange(id);
+             }
+             unbindCurrentClientLocked(UnbindReason.SWITCH_IME);
+         } finally {
+@@ -3664,9 +3674,45 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+         }
+     }
+ 
++    private void bstSendSetInputMapperStatusAsync(boolean ime_enabled) {
++        // Not showing keyboard for apps whose entry is present is present in mDisabledImeActivityList.
++        // Bug 10938 : Final Fantasy Awakening, as this app has a invisible (alpha 0.0)
++        // edit text box on the top, which is in focus and keymapping fails to work.
++        // Bug 11707 : Game com.gd.nevergone Unable to set the keymapping. In this case a text box was always drawn on a specific activity and new views were laid on the textview, due to which keymapping was not set as the textview was always presnt though not visible.
++        String topActivityName = android.os.SystemProperties.get("bst.config.top_activity_name",null);
++        if (topActivityName != null) {
++            String[] parts = topActivityName.split("/");
++            String packageName = parts[0];
++            String activityName = null;
++            if (parts.length > 1)
++                activityName = parts[1];
++            Slog.d(TAG, "packageName=" + packageName + ", activityName=" + activityName);
++            if (mBstFilterAppsManager != null && mBstFilterAppsManager.isIMEDisabled(packageName, activityName)) {
++                if (DEBUG) Slog.d(TAG, "packageName=" + packageName + ", activityName=" + activityName + ", returning");
++                ime_enabled = false;
++            }
++        }
++
++        if (ime_enabled != bstWinKeyboardInputEnabled)
++            bstWinKeyboardInputEnabled = ime_enabled;
++        else {
++            Slog.d (TAG, "ime_enabled = " + ime_enabled + " is same as last value, no change");
++            return;
++        }
++
++        final boolean isTextEditMode = bstWinKeyboardInputEnabled;
++        Slog.d(TAG, "bstSendSetInputMapperStatusAsync: calling BstHostCallManagerService onTextEditModeChange method, isTextEditMode: " + isTextEditMode);
++        int rval = mBstHostCallManagerService.onTextEditModeChange(isTextEditMode);
++        Slog.d(TAG, "bstSendSetInputMapperStatusAsync: BstHostCallManagerService onTextEditModeChange method returned: " + rval);
++        if (DEBUG) Slog.w(TAG, "Returning from bstSendSetInputMapperStatusAsync");
++        return;
++    }
++
+     @GuardedBy("ImfLock.class")
+     boolean showCurrentInputLocked(IBinder windowToken, int flags, ResultReceiver resultReceiver,
+             @SoftInputShowHideReason int reason) {
++        // Enable Windows Keyboard input events for this screen
++        bstSendSetInputMapperStatusAsync(true);
+         mShowRequested = true;
+         if (mAccessibilityRequestingNoSoftKeyboard || mImeHiddenByDisplayPolicy) {
+             return false;
+@@ -3748,6 +3794,10 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+     @GuardedBy("ImfLock.class")
+     boolean hideCurrentInputLocked(IBinder windowToken, int flags, ResultReceiver resultReceiver,
+             @SoftInputShowHideReason int reason) {
++        // Disable Windows Keyboard input events for this screen as focus is not on
++        // editable input text field
++        bstSendSetInputMapperStatusAsync(false);
++
+         if ((flags&InputMethodManager.HIDE_IMPLICIT_ONLY) != 0
+                 && (mShowExplicitlyRequested || mShowForced)) {
+             if (DEBUG) Slog.v(TAG, "Not hiding: explicit show not cancelled by non-explicit hide");
+@@ -4076,6 +4126,11 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+                     }
+                     showCurrentInputLocked(windowToken, InputMethodManager.SHOW_IMPLICIT, null,
+                             SoftInputShowHideReason.SHOW_AUTO_EDITOR_FORWARD_NAV);
++                } else if (isTextEditor && doAutoShow) {
++                    //Sending InputMapperStatus irrespective of whether the SOFT_INPUT_IS_FORWARD_NAVIGATION
++                    //bit is enabled or not.The status shown will be true if both isTextEditor and doAutoShow are true
++                    if (DEBUG) Slog.d(TAG, "Unspecified window with SOFT_INPUT_IS_FORWARD_NAVIGATION bit disabled, will show input");
++                        bstSendSetInputMapperStatusAsync(true);
+                 }
+                 break;
+             case LayoutParams.SOFT_INPUT_STATE_UNCHANGED:

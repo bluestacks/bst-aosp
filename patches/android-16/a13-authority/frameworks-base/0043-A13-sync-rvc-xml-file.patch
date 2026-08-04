@@ -1,0 +1,40 @@
+From af86d77b1c800658512bca4a8f2960341876728a Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Fri, 27 Oct 2023 11:18:16 +0800
+Subject: [PATCH 043/224] [A13] sync rvc xml file
+
+---
+ core/res/res/values/config.xml            | 2 +-
+ data/etc/privapp-permissions-platform.xml | 6 ++++++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index 11629cb91b00..276420390979 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -2417,7 +2417,7 @@
+     <!-- Remote server that can provide NTP responses. -->
+     <string translatable="false" name="config_ntpServer">time.android.com</string>
+     <!-- Normal polling frequency in milliseconds -->
+-    <integer name="config_ntpPollingInterval">64800000</integer>
++    <integer name="config_ntpPollingInterval">3600000</integer>
+     <!-- Try-again polling interval in milliseconds, in case the network request failed -->
+     <integer name="config_ntpPollingIntervalShorter">60000</integer>
+     <!-- Number of times to try again with the shorter interval, before backing
+diff --git a/data/etc/privapp-permissions-platform.xml b/data/etc/privapp-permissions-platform.xml
+index 58a2073981bf..ccbf04672d26 100644
+--- a/data/etc/privapp-permissions-platform.xml
++++ b/data/etc/privapp-permissions-platform.xml
+@@ -516,6 +516,12 @@ applications that come with the platform
+         <permission name="android.permission.BIND_WALLPAPER"/>
+     </privapp-permissions>
+ 
++    <privapp-permissions package="com.bluestacks.BstCommandProcessor">
++        <permission name="android.permission.FORCE_STOP_PACKAGES"/>
++        <permission name="android.permission.INSTALL_PACKAGES"/>
++        <permission name="android.permission.SET_TIME"/>
++    </privapp-permissions>
++
+     <privapp-permissions package="com.android.dynsystem">
+         <permission name="android.permission.REBOOT"/>
+         <permission name="android.permission.MANAGE_DYNAMIC_SYSTEM"/>

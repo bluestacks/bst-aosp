@@ -1,0 +1,47 @@
+From b3f8ca2c95e4c5f4211b8e6bccb0a0a7d9e92ed6 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 02:47:21 +0800
+Subject: [PATCH] [A16] Restore China captive portal policy
+
+Sources: A13 packages/modules/Connectivity 33b855c9022604cec5944afbbffad06ff85eb50e and its API-fix follow-up f082bfff816777d3b0133e249038aac079dcbd43.
+
+Purpose: default captive portal handling to IGNORE for the nxt_cn OEM while preserving the user-configured global mode and the A16 Wear Bluetooth exception.
+
+Adaptation: retain the A16 getCaptivePortalMode(NetworkAgentInfo) contract and ConnectivitySettingsManager constants, then apply the A13 OEM-specific default only after the Wear special case.
+
+Necessity: the previous A16 merge lacked the nxt_cn default, changing China game network behavior from the A13 authority.
+
+Performance: adds two cached system-property reads only when captive portal mode is evaluated; no packet-path work is added.
+
+Security: nxt_cn intentionally bypasses captive portal prompting by default, which can hide untrusted portal interception; an explicit global setting still overrides the default.
+
+Validation: service-connectivity-pre-jarjar and FrameworksNetTests built; compiled service jar readback contains bst.oem, nxt_cn, and captivePortalMode, SHA-256 642b557cdb4a1b997ad8021035445b2d96230b3d53e21bc8ea56c66831768771.
+---
+ .../src/com/android/server/ConnectivityService.java    | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/service/src/com/android/server/ConnectivityService.java b/service/src/com/android/server/ConnectivityService.java
+index 27f6dd357d..ab8f8f2fe7 100644
+--- a/service/src/com/android/server/ConnectivityService.java
++++ b/service/src/com/android/server/ConnectivityService.java
+@@ -5470,9 +5470,15 @@ public class ConnectivityService extends IConnectivityManager.Stub
+                 return ConnectivitySettingsManager.CAPTIVE_PORTAL_MODE_PROMPT;
+             }
+ 
+-            return Settings.Global.getInt(mContext.getContentResolver(),
++            final int defaultMode = "nxt_cn".equals(SystemProperties.get("bst.oem", ""))
++                    ? ConnectivitySettingsManager.CAPTIVE_PORTAL_MODE_IGNORE
++                    : ConnectivitySettingsManager.CAPTIVE_PORTAL_MODE_PROMPT;
++            final int mode = Settings.Global.getInt(mContext.getContentResolver(),
+                     ConnectivitySettingsManager.CAPTIVE_PORTAL_MODE,
+-                    ConnectivitySettingsManager.CAPTIVE_PORTAL_MODE_PROMPT);
++                    defaultMode);
++            log("bst.oem=" + SystemProperties.get("bst.oem", "")
++                    + ", captivePortalMode=" + mode);
++            return mode;
+         }
+ 
+         private boolean maybeHandleNetworkAgentInfoMessage(Message msg) {
+-- 
+2.34.1
+

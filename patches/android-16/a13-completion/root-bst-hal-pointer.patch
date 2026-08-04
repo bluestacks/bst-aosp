@@ -1,0 +1,19 @@
+From 35871e5ecbeda55991a5fa71e1a4e1f7df439a05 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 22:43:31 +0800
+Subject: [PATCH] [A16] Restore BlueStacks HAL priority
+
+---
+ hardware/libhardware | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hardware/libhardware b/hardware/libhardware
+index 873448b..e2305d5 160000
+--- a/hardware/libhardware
++++ b/hardware/libhardware
+@@ -1 +1 @@
+-Subproject commit 873448b78050d3770f53b3c61ef6ca393c1492cd
++Subproject commit e2305d5c825f9d9a54059607c503951c233b0fab
+-- 
+2.34.1
+

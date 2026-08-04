@@ -1,0 +1,19 @@
+From fb8eff4f9ceba7eb0957c04e2ca067f286219897 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 23:58:45 +0800
+Subject: [PATCH] [A16] Restore kernel trace permissions
+
+---
+ frameworks/native | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/frameworks/native b/frameworks/native
+index dad15bb..7160733 160000
+--- a/frameworks/native
++++ b/frameworks/native
+@@ -1 +1 @@
+-Subproject commit dad15bbbd29371ef74f714bdcd89eef51c632611
++Subproject commit 7160733aa6048f6596ba7fbf1362e5e7d64b4a04
+-- 
+2.34.1
+

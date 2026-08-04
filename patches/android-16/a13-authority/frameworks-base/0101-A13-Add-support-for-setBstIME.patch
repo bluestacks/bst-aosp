@@ -1,0 +1,107 @@
+From cae884de5d0f209a7b6f50cbe6e3c0c95900f46c Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Sat, 9 Dec 2023 17:25:30 +0800
+Subject: [PATCH 101/224] [A13] Add support for setBstIME
+
+---
+ .../view/inputmethod/InputMethodManager.java  | 13 ++++++++++++
+ .../internal/view/IInputMethodManager.aidl    |  1 +
+ .../InputMethodManagerService.java            | 21 +++++++++++++++++++
+ 3 files changed, 35 insertions(+)
+
+diff --git a/core/java/android/view/inputmethod/InputMethodManager.java b/core/java/android/view/inputmethod/InputMethodManager.java
+index b5a742bfb2eb..0a8c05509784 100644
+--- a/core/java/android/view/inputmethod/InputMethodManager.java
++++ b/core/java/android/view/inputmethod/InputMethodManager.java
+@@ -3238,6 +3238,19 @@ public final class InputMethodManager {
+         }
+     }
+ 
++    /**
++     * As per the parameter enable and select given IME.
++     * @hide
++     */
++    public void setBstIME(String imeId) {
++        try {
++            Log.d(TAG, "setBstIME : " + imeId);
++            mService.setBstIMEFromClient(imeId);
++        } catch (Exception e) {
++            Log.w(TAG, "IME died: " + e);
++        }
++    }
++
+     private void showInputMethodPickerLocked() {
+         try {
+             mService.showInputMethodPickerFromClient(mClient, SHOW_IM_PICKER_MODE_AUTO);
+diff --git a/core/java/com/android/internal/view/IInputMethodManager.aidl b/core/java/com/android/internal/view/IInputMethodManager.aidl
+index 315776045afe..988ba57f4abe 100644
+--- a/core/java/com/android/internal/view/IInputMethodManager.aidl
++++ b/core/java/com/android/internal/view/IInputMethodManager.aidl
+@@ -64,6 +64,7 @@ interface IInputMethodManager {
+             int auxiliarySubtypeMode);
+     void showInputMethodPickerFromSystem(in IInputMethodClient client,
+             int auxiliarySubtypeMode, int displayId);
++    void setBstIMEFromClient(in String imeId);
+     void showInputMethodAndSubtypeEnablerFromClient(in IInputMethodClient client, String topId);
+     boolean isInputMethodPickerShownForTest();
+     InputMethodSubtype getCurrentInputMethodSubtype();
+diff --git a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+index f25f9a8e8226..fa1479bc948e 100644
+--- a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
++++ b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+@@ -238,6 +238,7 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+     }
+ 
+     private static final int MSG_SHOW_IM_SUBTYPE_PICKER = 1;
++    private static final int MSG_SET_IME = 2;
+ 
+     private static final int MSG_HIDE_CURRENT_INPUT_METHOD = 1035;
+     private static final int MSG_REMOVE_IME_SURFACE = 1060;
+@@ -272,6 +273,7 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+     private final BstFilterAppsManager mBstFilterAppsManager;
+     private final BstHostCallManager mBstHostCallManagerService;
+ 
++    private String mBstImeId;
+     /**
+      * A protected broadcast intent action for internal use for {@link PendingIntent} in
+      * the notification.
+@@ -3716,6 +3718,13 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+         return;
+     }
+ 
++    private void setBstIME() {
++        Slog.d(TAG, "setBstIME ime: " + mBstImeId);
++        setInputMethodEnabledLocked(mBstImeId,true);
++        updateFromSettingsLocked(true);
++        setInputMethodLocked(mBstImeId,-1);
++    }
++
+     @GuardedBy("ImfLock.class")
+     boolean showCurrentInputLocked(IBinder windowToken, int flags, ResultReceiver resultReceiver,
+             @SoftInputShowHideReason int reason) {
+@@ -4276,6 +4285,14 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+         return false;
+     }
+ 
++    /*
++     * @hide
++     */
++    public void setBstIMEFromClient(String imeId) {
++        mBstImeId = imeId;
++        mHandler.sendEmptyMessage(MSG_SET_IME);
++    }
++
+     @Override
+     public void showInputMethodPickerFromClient(IInputMethodClient client,
+             int auxiliarySubtypeMode) {
+@@ -5070,6 +5087,10 @@ public final class InputMethodManagerService extends IInputMethodManager.Stub
+                 return true;
+             }
+ 
++            case MSG_SET_IME:
++                setBstIME();
++                return true;
++
+             // ---------------------------------------------------------
+ 
+             case MSG_UNBIND_CLIENT: {

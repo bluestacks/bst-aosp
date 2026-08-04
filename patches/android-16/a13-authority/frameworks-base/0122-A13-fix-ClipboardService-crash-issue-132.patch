@@ -1,0 +1,25 @@
+From 4a948bf5fb349cec5d2a6ab7cc3bc0e470d0c315 Mon Sep 17 00:00:00 2001
+From: allen-bst <70563899+allen-bst@users.noreply.github.com>
+Date: Fri, 8 Mar 2024 17:49:29 +0800
+Subject: [PATCH 122/224] [A13] fix ClipboardService crash issue (#132)
+
+The system will restart abnormally after being used for a period of time. This issue is caused by ClipboardService crash.
+---
+ .../java/com/android/server/clipboard/ClipboardService.java   | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/clipboard/ClipboardService.java b/services/core/java/com/android/server/clipboard/ClipboardService.java
+index 5c79399f5fc6..666c6b5e82b2 100755
+--- a/services/core/java/com/android/server/clipboard/ClipboardService.java
++++ b/services/core/java/com/android/server/clipboard/ClipboardService.java
+@@ -696,8 +696,8 @@ public class ClipboardService extends SystemService {
+         setPrimaryClipInternalLocked(getClipboardLocked(userId), clip, uid, sourcePackage);
+ 
+         if (debug) Slog.d(TAG, "setPrimaryClip request");
+-        if (clip.getDescription() == null || clip.getDescription().getLabel() == null
+-                || !clip.getDescription().getLabel().toString().equals("simpleText")) {
++        if (clip != null && (clip.getDescription() == null || clip.getDescription().getLabel() == null
++                || !clip.getDescription().getLabel().toString().equals("simpleText"))) {
+             ClipData.Item clippedItem = clip.getItemAt(clip.getItemCount()-1);
+             if ( clippedItem != null && clippedItem.getText() != null && clippedItem.getText().length() > 0) {
+                 int rval = mBstHostCallManagerService.setClipboardText(clippedItem.getText().toString());

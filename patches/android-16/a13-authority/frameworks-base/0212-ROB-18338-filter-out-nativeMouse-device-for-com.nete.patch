@@ -1,0 +1,77 @@
+From bbe9209ae32d06ceb2af4e3862d7cc1a5ddcf0e1 Mon Sep 17 00:00:00 2001
+From: MarkJiang-bst <97725346+MarkJiang-bst@users.noreply.github.com>
+Date: Wed, 24 Dec 2025 16:04:06 +0800
+Subject: [PATCH 212/224] ROB-18338: filter out nativeMouse device for
+ com.netease.yyslshmt (#218)
+
+---
+ .../android/hardware/input/InputManager.java  | 48 +++++++++++++++++--
+ 1 file changed, 44 insertions(+), 4 deletions(-)
+
+diff --git a/core/java/android/hardware/input/InputManager.java b/core/java/android/hardware/input/InputManager.java
+index aaf83bb1b258..8d201e77ef3f 100644
+--- a/core/java/android/hardware/input/InputManager.java
++++ b/core/java/android/hardware/input/InputManager.java
+@@ -56,6 +56,7 @@ import android.os.Vibrator;
+ import android.os.VibratorManager;
+ import android.provider.Settings;
+ import android.provider.Settings.SettingNotFoundException;
++import android.util.BstUtils;
+ import android.util.Log;
+ import android.util.SparseArray;
+ import android.view.InputDevice;
+@@ -412,11 +413,50 @@ public final class InputManager {
+         synchronized (mInputDevicesLock) {
+             populateInputDevicesLocked();
+ 
+-            final int count = mInputDevices.size();
+-            final int[] ids = new int[count];
+-            for (int i = 0; i < count; i++) {
+-                ids[i] = mInputDevices.keyAt(i);
++            int uid = Binder.getCallingUid();
++            String packageName = "";
++            if (uid >= 10000) {
++                packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
+             }
++            if (!"com.netease.yyslshmt".equals(packageName)) {
++                final int count = mInputDevices.size();
++                final int[] ids = new int[count];
++                for (int i = 0; i < count; i++) {
++                    ids[i] = mInputDevices.keyAt(i);
++                }
++                return ids;
++            }
++
++            // ROB-18338, filter nativeMouse for "com.netease.yyslshmt" only
++            List<Integer> idList = new ArrayList<>();
++            for (int i = 0;i < mInputDevices.size(); i++) {
++                InputDevice device = mInputDevices.valueAt(i);
++                if (device == null) {
++                    int id = mInputDevices.keyAt(i);
++                    try {
++                        device = mIm.getInputDevice(id);
++                    } catch (RemoteException ex) {
++                        throw ex.rethrowFromSystemServer();
++                    }
++                }
++
++                if (device == null)
++                    continue;
++
++                if (device.getVendorId() == 0x1234 && device.getProductId() == 0x5678) {
++                    Log.d(TAG, "filter device: " + device.getName() +
++                    " (Vendor: 0x" + Integer.toHexString(device.getVendorId()) +
++                    ", Product: 0x" + Integer.toHexString(device.getProductId()) + ")");
++                    continue;
++                }
++                idList.add(device.getId());
++            }
++
++            int[] ids = new int[idList.size()];
++            for (int i = 0; i < idList.size(); i++) {
++                ids[i] = idList.get(i);
++            }
++
+             return ids;
+         }
+     }

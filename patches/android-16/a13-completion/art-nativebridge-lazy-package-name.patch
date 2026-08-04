@@ -1,0 +1,16 @@
+diff --git a/libnativebridge/native_bridge_lazy.cc b/libnativebridge/native_bridge_lazy.cc
+--- a/libnativebridge/native_bridge_lazy.cc
++++ b/libnativebridge/native_bridge_lazy.cc
+@@ -70,6 +70,12 @@ const char* NativeBridgeGetError() {
+   return f();
+ }
+ 
++extern "C" const char* bst_nbpname() {
++  using PackageNameFunction = const char* (*)();
++  static auto f = GetFuncPtr<PackageNameFunction>("bst_nbpname");
++  return f();
++}
++
+ #undef GET_FUNC_PTR
+ 
+ }  // namespace android

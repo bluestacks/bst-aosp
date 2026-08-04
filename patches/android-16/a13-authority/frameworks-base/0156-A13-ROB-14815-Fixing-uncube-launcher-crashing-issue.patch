@@ -1,0 +1,147 @@
+From d8caf5f91e27ca367e3026ac241ba06160ac4524 Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Mon, 30 Sep 2024 18:46:13 +0800
+Subject: [PATCH 156/224] [A13] ROB-14815 Fixing uncube launcher crashing issue
+
+---
+ .../server/pm/PackageAbiHelperImpl.java       | 39 ++++++++++++++-----
+ .../server/pm/PackageManagerService.java      |  6 +++
+ .../android/server/pm/ScanPackageUtils.java   |  2 +-
+ 3 files changed, 36 insertions(+), 11 deletions(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageAbiHelperImpl.java b/services/core/java/com/android/server/pm/PackageAbiHelperImpl.java
+index 42d254dca323..acca94c1a033 100644
+--- a/services/core/java/com/android/server/pm/PackageAbiHelperImpl.java
++++ b/services/core/java/com/android/server/pm/PackageAbiHelperImpl.java
+@@ -26,6 +26,7 @@ import static com.android.internal.content.NativeLibraryHelper.LIB64_DIR_NAME;
+ import static com.android.internal.content.NativeLibraryHelper.LIB_DIR_NAME;
+ import static com.android.server.pm.InstructionSets.getPreferredInstructionSet;
+ import static com.android.server.pm.InstructionSets.getPrimaryInstructionSet;
++import static com.android.server.pm.PackageManagerService.bstIsFirstBootOrUpgrade;
+ 
+ import android.annotation.Nullable;
+ import android.content.pm.PackageManager;
+@@ -145,14 +146,15 @@ final class PackageAbiHelperImpl implements PackageAbiHelper {
+         // current state in PackageSetting is irrelevant.
+         return deriveNativeLibraryPaths(new Abis(AndroidPackageUtils.getRawPrimaryCpuAbi(pkg),
+                 AndroidPackageUtils.getRawSecondaryCpuAbi(pkg)), appLib32InstallDir, pkg.getPath(),
+-                pkg.getBaseApkPath(), pkg.isSystem(), isUpdatedSystemApp);
++                pkg.getBaseApkPath(), pkg.isSystem(), isUpdatedSystemApp, pkg.isMultiArch());
+     }
+ 
+     private static NativeLibraryPaths deriveNativeLibraryPaths(final Abis abis,
+             final File appLib32InstallDir, final String codePath, final String sourceDir,
+-            final boolean isSystemApp, final boolean isUpdatedSystemApp) {
++            final boolean isSystemApp, final boolean isUpdatedSystemApp, final boolean isMultiArch) {
+         final File codeFile = new File(codePath);
+         final boolean bundledApp = isSystemApp && !isUpdatedSystemApp;
++        final boolean isMultiArchApp = isMultiArch;
+ 
+         final String nativeLibraryRootDir;
+         final boolean nativeLibraryRootRequiresIsa;
+@@ -193,12 +195,21 @@ final class PackageAbiHelperImpl implements PackageAbiHelper {
+             nativeLibraryRootRequiresIsa = false;
+             nativeLibraryDir = nativeLibraryRootDir;
+         } else {
+-            // Cluster install
+-            nativeLibraryRootDir = new File(codeFile, LIB_DIR_NAME).getAbsolutePath();
+-            nativeLibraryRootRequiresIsa = true;
++              if ((codePath.equals("/data/downloads/com.uncube.launcher3")
++                      || (codePath.equals("/data/downloads/com.uncube.gamevantage")))
++                      && isSystemApp && !isMultiArchApp) {
++                final String apkName = deriveCodePathName(codePath);
++                nativeLibraryRootDir = new File(appLib32InstallDir, apkName).getAbsolutePath();
++                nativeLibraryRootRequiresIsa = false;
++                nativeLibraryDir = nativeLibraryRootDir;
++            } else {
++                // Cluster install
++                nativeLibraryRootDir = new File(codeFile, LIB_DIR_NAME).getAbsolutePath();
++                nativeLibraryRootRequiresIsa = true;
+ 
+-            nativeLibraryDir = new File(nativeLibraryRootDir,
+-                    getPrimaryInstructionSet(abis)).getAbsolutePath();
++                nativeLibraryDir = new File(nativeLibraryRootDir,
++                        getPrimaryInstructionSet(abis)).getAbsolutePath();
++            }
+ 
+             if (abis.secondary != null) {
+                 secondaryNativeLibraryDir = new File(nativeLibraryRootDir,
+@@ -324,7 +335,7 @@ final class PackageAbiHelperImpl implements PackageAbiHelper {
+                 new Abis(pkgRawPrimaryCpuAbi, pkgRawSecondaryCpuAbi),
+                 appLib32InstallDir, pkg.getPath(),
+                 pkg.getBaseApkPath(), pkg.isSystem(),
+-                isUpdatedSystemApp);
++                isUpdatedSystemApp, pkg.isMultiArch());
+ 
+         final boolean extractLibs = shouldExtractLibs(pkg, isUpdatedSystemApp);
+ 
+@@ -496,7 +507,7 @@ final class PackageAbiHelperImpl implements PackageAbiHelper {
+         return new Pair<>(abis,
+                 deriveNativeLibraryPaths(abis, appLib32InstallDir,
+                         pkg.getPath(), pkg.getBaseApkPath(), pkg.isSystem(),
+-                        isUpdatedSystemApp));
++                        isUpdatedSystemApp, pkg.isMultiArch()));
+     }
+ 
+     private boolean shouldExtractLibs(AndroidPackage pkg, boolean isUpdatedSystemApp) {
+@@ -504,7 +515,15 @@ final class PackageAbiHelperImpl implements PackageAbiHelper {
+         boolean extractLibs = !AndroidPackageUtils.isLibrary(pkg) && pkg.isExtractNativeLibs();
+         // We shouldn't attempt to extract libs from system app when it was not updated.
+         if (pkg.isSystem() && !isUpdatedSystemApp) {
+-            extractLibs = false;
++            // ROB-14090: We want to extract libraries of uncube launcher3 explicitly as
++            // it has used compressed format which causes library missing issue at runtime.
++            if (PackageManagerService.bstIsFirstBootOrUpgrade()
++                    && (pkg.getPackageName().equals("com.uncube.launcher3")
++                    || pkg.getPackageName().equals("com.uncube.gamevantage"))) {
++                extractLibs = true;
++            } else {
++                extractLibs = false;
++            }
+         }
+         return extractLibs;
+     }
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index f770041f7c6f..437d58b6975d 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -367,6 +367,7 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+     private static final String bstDefaultAppPermissionsFile = "/data/downloads/.dp/apps.xml";
+     private File firstBootAfterUpgradeFile = new File("/data/downloads/.first_boot_after_upgrade_for_pm");
+     private static boolean isFirstBootAfterUpgrade = false;
++    private static boolean isPlayerFirstBoot = false;
+ 
+     // List of installed packages which are blacklisted with uninstall action for current version.
+     private static Set<String> bstUninstallPkgList = new HashSet<String>();
+@@ -1931,6 +1932,7 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+                     /* excludePartial= */ true,
+                     /* excludeDying= */ false,
+                     /* excludePreCreated= */ false));
++            isPlayerFirstBoot = mFirstBoot;
+             t.traceEnd();
+ 
+             if (mFirstBoot) {
+@@ -2300,6 +2302,10 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+         setUpInstantAppInstallerActivityLP(getInstantAppInstallerLPr());
+     }
+ 
++    public static boolean  bstIsFirstBootOrUpgrade() {
++        return isPlayerFirstBoot || isFirstBootAfterUpgrade;
++    }
++
+     public static boolean  bstIsFirstBootAfterUpgrade() {
+         // check if player is first boot after upgrade
+         return isFirstBootAfterUpgrade;
+diff --git a/services/core/java/com/android/server/pm/ScanPackageUtils.java b/services/core/java/com/android/server/pm/ScanPackageUtils.java
+index 46f0dbcdfe10..89d823d57c47 100644
+--- a/services/core/java/com/android/server/pm/ScanPackageUtils.java
++++ b/services/core/java/com/android/server/pm/ScanPackageUtils.java
+@@ -146,7 +146,7 @@ final class ScanPackageUtils {
+         // them in the case where we're not upgrading or booting for the first time.
+         String primaryCpuAbiFromSettings = null;
+         String secondaryCpuAbiFromSettings = null;
+-        boolean needToDeriveAbi = (scanFlags & SCAN_FIRST_BOOT_OR_UPGRADE) != 0;
++        boolean needToDeriveAbi = ((scanFlags & SCAN_FIRST_BOOT_OR_UPGRADE) != 0) || PackageManagerService.bstIsFirstBootAfterUpgrade();
+         if (!needToDeriveAbi) {
+             if (pkgSetting != null) {
+                 // TODO(b/154610922): if it is not first boot or upgrade, we should directly use

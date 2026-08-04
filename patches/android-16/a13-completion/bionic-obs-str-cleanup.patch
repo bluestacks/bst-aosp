@@ -1,0 +1,10 @@
+diff --git a/libc/system_properties/obs_str.hpp b/libc/system_properties/obs_str.hpp
+old mode 100755
+new mode 100644
+--- a/libc/system_properties/obs_str.hpp
++++ b/libc/system_properties/obs_str.hpp
+@@ -151,4 +151,3 @@ static inline constexpr auto make_encrypt_data(const char(&arr)[N]) {
+ };
+ 
+ }
+-

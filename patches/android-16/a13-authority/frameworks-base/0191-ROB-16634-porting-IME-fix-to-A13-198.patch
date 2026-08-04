@@ -1,0 +1,90 @@
+From 48ddd2e05ea0e7ac6dc49369e2071a92ad7629f0 Mon Sep 17 00:00:00 2001
+From: MarkJiang-bst <97725346+MarkJiang-bst@users.noreply.github.com>
+Date: Wed, 18 Jun 2025 18:57:46 +0800
+Subject: [PATCH 191/224] ROB-16634: porting IME fix to A13 (#198)
+
+---
+ .../InputMethodService.java                   | 11 +++++--
+ .../com/android/server/wm/DisplayContent.java | 33 +++++++++++++++++--
+ 2 files changed, 40 insertions(+), 4 deletions(-)
+
+diff --git a/core/java/android/inputmethodservice/InputMethodService.java b/core/java/android/inputmethodservice/InputMethodService.java
+index ce7b5e1b76b3..07ebeb87b66e 100644
+--- a/core/java/android/inputmethodservice/InputMethodService.java
++++ b/core/java/android/inputmethodservice/InputMethodService.java
+@@ -153,6 +153,7 @@ import com.android.internal.util.RingBuffer;
+ import com.android.internal.view.IInlineSuggestionsRequestCallback;
+ import com.android.internal.view.IInputContext;
+ import com.android.internal.view.InlineSuggestionsRequestInfo;
++import com.bluestacks.os.BstUtilsManager;
+ 
+ import java.io.FileDescriptor;
+ import java.io.PrintWriter;
+@@ -2117,8 +2118,14 @@ public class InputMethodService extends AbstractInputMethodService {
+             return true;
+         }
+         Configuration config = getResources().getConfiguration();
+-        return config.keyboard == Configuration.KEYBOARD_NOKEYS
+-                || config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES;
++        BstUtilsManager mBstUtils = (BstUtilsManager) getSystemService(Context.BST_UTILS);
++        return mBstUtils.isBstSoftKeyboardEnabled();
++
++        /* Commenting out this code as in our case if config.keyboard is set to NO_KEYS that means we
++         * are deliberately hiding the hardkeyboard from the user and don't want to show the soft keyboard either.
++         return config.keyboard == Configuration.KEYBOARD_NOKEYS
++         || config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES;
++         */
+     }
+ 
+     /**
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index ba7c120436c4..b6b92cff834f 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -2362,7 +2362,16 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+         // Update the configuration based on available input devices, lid switch,
+         // and platform configuration.
+         config.touchscreen = Configuration.TOUCHSCREEN_NOTOUCH;
+-        config.keyboard = Configuration.KEYBOARD_NOKEYS;
++        // Set keyboard configuration to KEYBOARD_NOKEYS, thus hiding the hardware devices from 3rd part apps.
++        // As certain apps Case 14556 (FIFA Mobile), Case 13920 (War Robots)
++        // use there on keymapping if hardware keyboard is present.
++        // So by default hiding all the mouse and keyboard input devices.
++        // They can be exposed to a package by adding the config "ide" in config.db
++        String topPackage = android.os.SystemProperties.get("bst.config.top_package_name",null);
++        boolean exposeInputDevices = mBstFilterApps.areInputDevicesExposed(topPackage);
++        if (!exposeInputDevices) {
++            config.keyboard = Configuration.KEYBOARD_NOKEYS;
++        }
+         config.navigation = Configuration.NAVIGATION_NONAV;
+ 
+         int keyboardPresence = 0;
+@@ -2403,7 +2412,27 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+             }
+ 
+             if (device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC) {
+-                config.keyboard = Configuration.KEYBOARD_QWERTY;
++                String packageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
++                if(mBstFilterApps.isHardKeyBoard(packageName)) {
++                    if (packageName.equals("com.roblox.client")) {
++                        String lastSentMouseAction = android.os.SystemProperties.get("bst.config.last_mouse_action", "");
++                        config.keyboard = (lastSentMouseAction.equals("enableNative")) ? Configuration.KEYBOARD_QWERTY : Configuration.KEYBOARD_NOKEYS;
++                    }
++                    else {
++                        config.keyboard = Configuration.KEYBOARD_QWERTY;
++                    }
++                } else {
++                    /**
++                     * ROB-6795, ROB-6863, ROB-6497, ROB-6653:
++                     * The input field of some Unity versions cannot pop up the input method normally.
++                     * The reason is that the input field component detects that there is a physical keyboard and does not pop up the input method
++                     * (see the activateInputfieldInternal method in the unity engine inputfield.cs for the specific code location),
++                     * so here changed to no physical keyboard, Makes the soft keyboard pop up normally.
++                     * it will impact mService.mHardKeyboardAvailable, and will impact the process of shouldShowImeSwitcherLocked in InputMethodManagerService
++                     */
++                    //config.keyboard = Configuration.KEYBOARD_QWERTY;
++                    config.keyboard = Configuration.KEYBOARD_NOKEYS;
++                }
+                 keyboardPresence |= presenceFlag;
+             }
+         }

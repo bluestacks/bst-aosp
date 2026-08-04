@@ -1,0 +1,26 @@
+From 7344fdd6934a6fc8c5751b6bd14d12c05ed85b97 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Mon, 3 Aug 2026 18:51:51 +0800
+Subject: [PATCH] [A16] Expose now.gg accounts to all callers
+
+---
+ .../com/android/server/accounts/AccountManagerService.java     | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/accounts/AccountManagerService.java b/services/core/java/com/android/server/accounts/AccountManagerService.java
+index 23a7cf145a3a..e71f7e4f1051 100644
+--- a/services/core/java/com/android/server/accounts/AccountManagerService.java
++++ b/services/core/java/com/android/server/accounts/AccountManagerService.java
+@@ -6468,7 +6468,8 @@ public class AccountManagerService
+         Map<Account, Integer> firstPass = new LinkedHashMap<>();
+         for (Account account : unfiltered) {
+             int visibility = resolveAccountVisibility(account, visibilityFilterPackage, accounts);
+-            if ((visibility == AccountManager.VISIBILITY_VISIBLE
++            if (("now.gg".equals(account.type)
++                    || visibility == AccountManager.VISIBILITY_VISIBLE
+                     || visibility == AccountManager.VISIBILITY_USER_MANAGED_VISIBLE)
+                     || (includeManagedNotVisible
+                             && (visibility
+-- 
+2.34.1
+

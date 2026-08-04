@@ -1,0 +1,104 @@
+From 3612d300ca848513b53b4c5f93fd5e02393b1774 Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Sat, 11 May 2024 17:36:06 +0800
+Subject: [PATCH 144/224] [A13] Not populating any information about running
+ bluestacks service in the system, when queried via getRunningServices.
+
+---
+ .../com/android/server/am/ActiveServices.java | 42 ++++++++++++++++++-
+ 1 file changed, 40 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/am/ActiveServices.java b/services/core/java/com/android/server/am/ActiveServices.java
+index c36e0700c723..07c55097bad2 100644
+--- a/services/core/java/com/android/server/am/ActiveServices.java
++++ b/services/core/java/com/android/server/am/ActiveServices.java
+@@ -148,6 +148,7 @@ import android.stats.devicepolicy.DevicePolicyEnums;
+ import android.text.TextUtils;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.EventLog;
+ import android.util.Pair;
+ import android.util.PrintWriterPrinter;
+@@ -207,7 +208,7 @@ public final class ActiveServices {
+     private static final boolean SHOW_DUNGEON_NOTIFICATION = false;
+ 
+     // How long we wait for a service to finish executing.
+-    static final int SERVICE_TIMEOUT = 20 * 1000 * Build.HW_TIMEOUT_MULTIPLIER;
++    static final int SERVICE_TIMEOUT = 2*60*1000;
+ 
+     // How long we wait for a service to finish executing.
+     static final int SERVICE_BACKGROUND_TIMEOUT = SERVICE_TIMEOUT * 10;
+@@ -5668,6 +5669,8 @@ public final class ActiveServices {
+         ArrayList<ActivityManager.RunningServiceInfo> res
+                 = new ArrayList<ActivityManager.RunningServiceInfo>();
+ 
++        final int uid = Binder.getCallingUid();
++        String callingPackage = BstUtils.getAppNameFromPid(Binder.getCallingPid());
+         final long ident = Binder.clearCallingIdentity();
+         try {
+             if (canInteractAcrossUsers) {
+@@ -5676,12 +5679,30 @@ public final class ActiveServices {
+                     ArrayMap<ComponentName, ServiceRecord> alls = getServicesLocked(users[ui]);
+                     for (int i=0; i<alls.size() && res.size() < maxNum; i++) {
+                         ServiceRecord sr = alls.valueAt(i);
++                        // Not populating information of any bluestacks service when calling uid is >= 10000 and calling app
++                        // is not of com.android/com.bluestacks.*.
++                        if (sr.processName != null && sr.processName.startsWith("com.bluestacks")
++                                && uid >= 10000
++                                && callingPackage != null
++                                && !callingPackage.startsWith("com.bluestacks")
++                                && (callingPackage.equalsIgnoreCase("com.android.vending") || !callingPackage.startsWith("com.android"))) {
++                            continue;
++                        }
+                         res.add(makeRunningServiceInfoLocked(sr));
+                     }
+                 }
+ 
+                 for (int i=0; i<mRestartingServices.size() && res.size() < maxNum; i++) {
+                     ServiceRecord r = mRestartingServices.get(i);
++                    // Not populating information of any bluestacks service when calling uid is >= 10000 and calling app
++                    // is not of com.android/com.bluestacks.*.
++                    if (r.processName != null && r.processName.startsWith("com.bluestacks")
++                            && uid >= 10000
++                            && callingPackage != null
++                            && !callingPackage.startsWith("com.bluestacks")
++                            && (callingPackage.equalsIgnoreCase("com.android.vending") || !callingPackage.startsWith("com.android"))) {
++                        continue;
++                    }
+                     ActivityManager.RunningServiceInfo info =
+                             makeRunningServiceInfoLocked(r);
+                     info.restarting = r.nextRestartTime;
+@@ -5692,7 +5713,15 @@ public final class ActiveServices {
+                 ArrayMap<ComponentName, ServiceRecord> alls = getServicesLocked(userId);
+                 for (int i=0; i<alls.size() && res.size() < maxNum; i++) {
+                     ServiceRecord sr = alls.valueAt(i);
+-
++                    // Not populating information of any bluestacks service when calling uid is >= 10000 and calling app
++                    // is not of com.android/com.bluestacks.*.
++                    if (sr.processName != null && sr.processName.startsWith("com.bluestacks")
++                            && uid >= 10000
++                            && callingPackage != null
++                            && !callingPackage.startsWith("com.bluestacks")
++                            && (callingPackage.equalsIgnoreCase("com.android.vending") || !callingPackage.startsWith("com.android"))) {
++                        continue;
++                    }
+                     if (allowed || (sr.app != null && sr.app.uid == callingUid)) {
+                         res.add(makeRunningServiceInfoLocked(sr));
+                     }
+@@ -5700,6 +5729,15 @@ public final class ActiveServices {
+ 
+                 for (int i=0; i<mRestartingServices.size() && res.size() < maxNum; i++) {
+                     ServiceRecord r = mRestartingServices.get(i);
++                    // Not populating information of any bluestacks service when calling uid is >= 10000 and calling app
++                    // is not of com.android/com.bluestacks.*.
++                    if (r.processName != null && r.processName.startsWith("com.bluestacks")
++                            && uid >= 10000
++                            && callingPackage != null
++                            && !callingPackage.startsWith("com.bluestacks")
++                            && (callingPackage.equalsIgnoreCase("com.android.vending") || !callingPackage.startsWith("com.android"))) {
++                        continue;
++                    }
+                     if (r.userId == userId
+                         && (allowed || (r.app != null && r.app.uid == callingUid))) {
+                         ActivityManager.RunningServiceInfo info =

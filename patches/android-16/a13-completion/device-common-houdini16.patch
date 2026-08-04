@@ -1,0 +1,103 @@
+diff --git a/init.x86.rc b/init.x86.rc
+index eddb13e..a39bd68 100755
+--- a/init.x86.rc
++++ b/init.x86.rc
+@@ -2,6 +2,8 @@ import /init.superuser.rc
+ 
+ on early-init
+     write /proc/sys/kernel/ctrl-alt-del 1
++    mount binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
+ 
+     write /sys/module/xt_qtaguid/parameters/ctrl_write_limited N
+ 
+@@ -108,2 +110,7 @@ on property:persist.sys.nativebridge=1
+ on property:persist.sys.nativebridge=0
+     #stop nativebridge
++
++on property:ro.dalvik.vm.native.bridge=libnb.so
++    copy /system/etc/houdini/binfmt_misc/arm64_exe /proc/sys/fs/binfmt_misc/register
++    copy /system/etc/houdini/binfmt_misc/arm64_dyn /proc/sys/fs/binfmt_misc/register
++    mount none /system/lib64/houdini/arm64 /system/lib64/arm64 bind rec
+diff --git a/nativebridge/nativebridge.mk b/nativebridge/nativebridge.mk
+index 630bc47..79aa381 100755
+--- a/nativebridge/nativebridge.mk
++++ b/nativebridge/nativebridge.mk
+@@ -11,7 +11,9 @@
+ WITH_NATIVE_BRIDGE := true
+ 
+ # Native Bridge ABI List
+-NATIVE_BRIDGE_ABI_LIST_32_BIT := armeabi-v7a armeabi
++# The Android 16 Houdini package and the bundled NDK translation payload are
++# both arm64-only. Do not advertise an arm32 translator that is not installed.
++NATIVE_BRIDGE_ABI_LIST_32_BIT :=
+ NATIVE_BRIDGE_ABI_LIST_64_BIT := arm64-v8a
+ 
+ PRODUCT_COPY_FILES := \
+@@ -26,7 +28,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
+ ifeq ($(TARGET_SUPPORTS_64_BIT_APPS),true)
+ PRODUCT_PROPERTY_OVERRIDES += \
+     ro.dalvik.vm.isa.arm64=x86_64 \
+-    ro.enable.native.bridge.exec64=1
++    ro.enable.native.bridge.exec64=1 \
++    ro.vendor.enable.native.bridge.exec64=1
+ endif
+ 
+ PRODUCT_PROPERTY_OVERRIDES += \
+@@ -36,5 +39,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
+ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+     ro.dalvik.vm.native.bridge=libnb.so
+ 
+-PRODUCT_PACKAGES := libnb
++# libnb preserves the A13 per-app translator selection and compatibility hooks;
++# houdini64 installs the licensed Android 16 translator payload.
++PRODUCT_PACKAGES += libnb houdini64
+ 
+diff --git a/sepolicy/houdini/app_zygote.te b/sepolicy/houdini/app_zygote.te
+new file mode 100644
+index 0000000..a39a7dc
+--- /dev/null
++++ b/sepolicy/houdini/app_zygote.te
+@@ -0,0 +1 @@
++allow app_zygote same_process_hal_file:file { execute read open getattr map };
+diff --git a/sepolicy/houdini/init.te b/sepolicy/houdini/init.te
+new file mode 100644
+index 0000000..966b50c
+--- /dev/null
++++ b/sepolicy/houdini/init.te
+@@ -0,0 +1,3 @@
++allow init proc:dir mounton;
++allow init system_lib_file:dir mounton;
++allow init binfmt_miscfs:file write;
+diff --git a/sepolicy/houdini/property.te b/sepolicy/houdini/property.te
+new file mode 100644
+index 0000000..0e4a299
+--- /dev/null
++++ b/sepolicy/houdini/property.te
+@@ -0,0 +1 @@
++vendor_restricted_prop(vendor_houdini_default_prop)
+diff --git a/sepolicy/houdini/property_contexts b/sepolicy/houdini/property_contexts
+new file mode 100644
+index 0000000..3ab80ec
+--- /dev/null
++++ b/sepolicy/houdini/property_contexts
+@@ -0,0 +1 @@
++ro.vendor.enable.native.bridge.  u:object_r:vendor_houdini_default_prop:s0
+diff --git a/sepolicy/houdini/shell.te b/sepolicy/houdini/shell.te
+new file mode 100644
+index 0000000..4522568
+--- /dev/null
++++ b/sepolicy/houdini/shell.te
+@@ -0,0 +1,4 @@
++allow shell same_process_hal_file:file rx_file_perms;
++allowxperm shell self:fifo_file ioctl TIOCGPTN;
++get_prop(shell, vendor_houdini_default_prop)
++allow shell system_file:file { read execute map open getattr execute_no_trans };
+diff --git a/sepolicy/houdini/vendor_init.te b/sepolicy/houdini/vendor_init.te
+new file mode 100644
+index 0000000..b66ac1a
+--- /dev/null
++++ b/sepolicy/houdini/vendor_init.te
+@@ -0,0 +1,3 @@
++set_prop(vendor_init, vendor_houdini_default_prop)
++allow vendor_init binfmt_miscfs:file write;
++allow vendor_init binfmt_miscfs:chr_file { create setattr unlink rw_file_perms };

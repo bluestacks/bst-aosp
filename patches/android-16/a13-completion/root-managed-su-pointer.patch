@@ -1,0 +1,19 @@
+From 89a96bf15461d144c9fcd38a7dbcc55e1a2a469c Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 22:38:58 +0800
+Subject: [PATCH] [A16] Complete the managed su port
+
+---
+ system/extras | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/system/extras b/system/extras
+index 99ab133..2e0a75a 160000
+--- a/system/extras
++++ b/system/extras
+@@ -1 +1 @@
+-Subproject commit 99ab133eca8c26838fe92022070dd5ba8964f3b2
++Subproject commit 2e0a75a42df3f785c500711ddada805d70e07ff2
+-- 
+2.34.1
+

@@ -1,0 +1,103 @@
+From 803b0902b28ede460c9c55610556f962dbdee074 Mon Sep 17 00:00:00 2001
+From: michael-bst <michael@bluestacks.com>
+Date: Sat, 9 May 2026 17:35:23 +0800
+Subject: [PATCH 224/224] ROB-18868: Change Build.VERSION.SDK_INT to 30 to
+ force the game to use android.location.LocationManager. (#231)
+
+---
+ core/java/android/app/PendingIntent.java    | 15 +++++++++++++++
+ core/jni/com_android_internal_os_Zygote.cpp | 21 +++++++++++++++++++++
+ 2 files changed, 36 insertions(+)
+ mode change 100644 => 100755 core/java/android/app/PendingIntent.java
+ mode change 100644 => 100755 core/jni/com_android_internal_os_Zygote.cpp
+
+diff --git a/core/java/android/app/PendingIntent.java b/core/java/android/app/PendingIntent.java
+old mode 100644
+new mode 100755
+index a8dd2c51925e..c6d0dd5e752e
+--- a/core/java/android/app/PendingIntent.java
++++ b/core/java/android/app/PendingIntent.java
+@@ -471,6 +471,12 @@ public final class PendingIntent implements Parcelable {
+                 user != null ? user : UserHandle.of(context.getUserId()));
+     }
+ 
++    private static @Flags int patchFlags( @Flags int flags) {
++        final int NEED_ONE_OF_FLAGS = FLAG_IMMUTABLE | FLAG_MUTABLE;
++        if ((flags & NEED_ONE_OF_FLAGS) != 0) return flags;
++        return flags | FLAG_IMMUTABLE;
++    }
++
+     /**
+      * @hide
+      * Note that UserHandle.CURRENT will be interpreted at the time the
+@@ -481,6 +487,9 @@ public final class PendingIntent implements Parcelable {
+             @NonNull Intent intent, int flags, Bundle options, UserHandle user) {
+         String packageName = context.getPackageName();
+         String resolvedType = intent.resolveTypeIfNeeded(context.getContentResolver());
++        if ("jp.co.mixi.monsterstrike".equals(packageName) || "jp.co.mixi.monsterstrikeTW".equals(packageName)) {
++            flags = patchFlags(flags);
++        }
+         checkFlags(flags, packageName);
+         try {
+             if (intent != null) {
+@@ -670,6 +679,9 @@ public final class PendingIntent implements Parcelable {
+             Intent intent, int flags, UserHandle userHandle) {
+         String packageName = context.getPackageName();
+         String resolvedType = intent.resolveTypeIfNeeded(context.getContentResolver());
++        if ("jp.co.mixi.monsterstrike".equals(packageName) || "jp.co.mixi.monsterstrikeTW".equals(packageName)) {
++            flags = patchFlags(flags);
++        }
+         checkFlags(flags, packageName);
+         try {
+             intent.prepareToLeaveProcess(context);
+@@ -749,6 +761,9 @@ public final class PendingIntent implements Parcelable {
+             Intent intent, int flags, int serviceKind) {
+         String packageName = context.getPackageName();
+         String resolvedType = intent.resolveTypeIfNeeded(context.getContentResolver());
++        if ("jp.co.mixi.monsterstrike".equals(packageName) || "jp.co.mixi.monsterstrikeTW".equals(packageName)) {
++            flags = patchFlags(flags);
++        }
+         checkFlags(flags, packageName);
+         try {
+             intent.prepareToLeaveProcess(context);
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+old mode 100644
+new mode 100755
+index 7635eb8ec57b..b472338f8058
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -944,6 +944,23 @@ static void BstSetDeviceProperties(JNIEnv* env, const char* prop_name, jclass bu
+     env->SetStaticObjectField(build_class, field_id, str);
+ }
+ 
++static void BstSetVersionCode(JNIEnv* env, const char* clsname, const char* name, const int value) {
++    ScopedLocalRef<jclass> cls(env, env->FindClass(clsname));
++    if (cls.get() == nullptr) {
++        env->ExceptionClear();
++        ALOGW("Could not find %s cls.", clsname);
++        return;
++    }
++
++    jfieldID field_id = env->GetStaticFieldID(cls.get(), name, "I");
++    if (field_id == nullptr) {
++        env->ExceptionClear();
++        ALOGW("Could not find %s field.", name);
++        return;
++    }
++    env->SetStaticIntField(cls.get(), field_id, value);
++}
++
+ /*
+  * Add READPROC (3009) group to process group list so that
+  * it can read all proc entries.
+@@ -2408,6 +2425,10 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+         BstSetDeviceProperties(env, "ro.hardware", bclass_id, "HARDWARE");
+     }
+ 
++    if (uid >= 10000 && nice_name_ptr != nullptr && !strncmp(nice_name_ptr, "jp.co.mixi.monsterstrike", strlen("jp.co.mixi.monsterstrike"))) {
++      BstSetVersionCode(env, "android/os/Build$VERSION", "SDK_INT", 30);
++    }
++
+     if (uid >= 10000 && nice_name_ptr != nullptr && !strncmp(nice_name_ptr, "com.android.vending", strlen("com.android.vending"))) {
+ 
+ #define X86          "x86"

@@ -1,0 +1,21 @@
+diff --git a/src/gpu/AtlasTypes.cpp b/src/gpu/AtlasTypes.cpp
+index d4980b8..700881e 100644
+--- a/src/gpu/AtlasTypes.cpp
++++ b/src/gpu/AtlasTypes.cpp
+@@ -72,4 +72,6 @@ void* Plot::dataAt(const AtlasLocator& atlasLocator) {
+     if (!fData) {
+-        fData = reinterpret_cast<unsigned char*>(
+-                        sk_calloc_throw(fBytesPerPixel * fWidth * fHeight));
++        // Goldfish may read up to one row past an offset upload.
++        const size_t allocationSize =
++                size_t(fBytesPerPixel) * fWidth * (fHeight + 1);
++        fData = reinterpret_cast<unsigned char*>(sk_calloc_throw(allocationSize));
+     }
+@@ -90,4 +92,5 @@ SkIPoint Plot::prepForRender(const AtlasLocator& al, SkAutoPixmapStorage* pixmap
+     if (!fData) {
+-        fData = reinterpret_cast<unsigned char*>(
+-                        sk_calloc_throw(fBytesPerPixel * fWidth * fHeight));
++        const size_t allocationSize =
++                size_t(fBytesPerPixel) * fWidth * (fHeight + 1);
++        fData = reinterpret_cast<unsigned char*>(sk_calloc_throw(allocationSize));
+     }

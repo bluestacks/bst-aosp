@@ -1,0 +1,29 @@
+From 87fd724fae85f521d5822485e6c9128cf9128323 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 19:25:47 +0800
+Subject: [PATCH] [A16] Stage efibootmgr in installer image
+
+---
+ Android.mk | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/Android.mk b/Android.mk
+index 51b9037..2fa7afb 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -54,7 +54,12 @@ $(INITRD_RAMDISK): $(initrd_bin) $(systemimg) $(TARGET_INITRD_SCRIPTS) | $(ACP)
+ 	$(MKBOOTFS) $(<D) $(TARGET_INITRD_OUT) | gzip -9 > $@
+ 
+ INSTALL_RAMDISK := $(PRODUCT_OUT)/install.img
++EFIBOOTMGR := $(call intermediates-dir-for,EXECUTABLES,efibootmgr)/efibootmgr
+ INSTALLER_BIN := $(TARGET_INSTALLER_OUT)/sbin/efibootmgr
++$(INSTALLER_BIN): $(EFIBOOTMGR) | $(ACP)
++	$(hide) mkdir -p $(dir $@)
++	$(ACP) $< $@
++
+ $(INSTALL_RAMDISK): $(wildcard $(LOCAL_PATH)/install/*/* $(LOCAL_PATH)/install/*/*/*/*) $(INSTALLER_BIN) | $(MKBOOTFS)
+ 	$(if $(TARGET_INSTALL_SCRIPTS),mkdir -p $(TARGET_INSTALLER_OUT)/scripts; $(ACP) -p $(TARGET_INSTALL_SCRIPTS) $(TARGET_INSTALLER_OUT)/scripts)
+ 	$(MKBOOTFS) $(dir $(dir $(<D))) $(TARGET_INSTALLER_OUT) | gzip -9 > $@
+-- 
+2.34.1
+

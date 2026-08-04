@@ -1,0 +1,121 @@
+diff --git a/java/AndroidManifest.xml b/java/AndroidManifest.xml
+--- a/java/AndroidManifest.xml
++++ b/java/AndroidManifest.xml
+@@ -25,6 +25,7 @@
+     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"/>
+     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
++    <uses-permission android:name="android.permission.INTERNET"/>
+     <uses-permission android:name="android.permission.READ_CONTACTS"/>
+     <uses-permission android:name="android.permission.READ_PROFILE"/>
+     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
+diff --git a/java/res/values/config-common.xml b/java/res/values/config-common.xml
+--- a/java/res/values/config-common.xml
++++ b/java/res/values/config-common.xml
+@@ -41,7 +41,7 @@
+     <!-- Suppress showing key preview duration after batch input in millisecond -->
+     <integer name="config_suppress_key_preview_after_batch_input_duration">1000</integer>
+ 
+-    <bool name="config_default_vibration_enabled">true</bool>
++    <bool name="config_default_vibration_enabled">false</bool>
+     <integer name="config_max_vibration_duration">100</integer>
+ 
+     <integer name="config_default_longpress_key_timeout">300</integer>
+diff --git a/java/res/values/config.xml b/java/res/values/config.xml
+--- a/java/res/values/config.xml
++++ b/java/res/values/config.xml
+@@ -98,7 +98,7 @@
+          2. Meta mask (if any) from android.view.KeyEvent
+          Used in EmojiAltPhysicalKeyDetector and KeyboardSwitcher. -->
+     <string-array name="keyboard_switcher_emoji" translatable="false">
+-        <item>57,16</item> <!-- KeyEvent.KEYCODE_ALT_LEFT , KeyEvent.META_ALT_LEFT_ON -->
++        <!-- Alt is reserved for host and game keyboard mappings. -->
+     </string-array>
+ 
+     <!-- Key codes of hardware keys that can be used to toggle the Symbols (Shifted) layout.
+@@ -107,6 +107,6 @@
+          2. Meta mask (if any) from android.view.KeyEvent
+          Used in EmojiAltPhysicalKeyDetector and KeyboardSwitcher. -->
+     <string-array name="keyboard_switcher_symbols_shifted" translatable="false">
+-        <item>58,32</item> <!-- KeyEvent.KEYCODE_ALT_RIGHT , KeyEvent.META_ALT_RIGHT_ON -->
++        <!-- Alt is reserved for host and game keyboard mappings. -->
+     </string-array>
+ </resources>
+diff --git a/java/src/com/android/inputmethod/latin/LatinIME.java b/java/src/com/android/inputmethod/latin/LatinIME.java
+--- a/java/src/com/android/inputmethod/latin/LatinIME.java
++++ b/java/src/com/android/inputmethod/latin/LatinIME.java
+@@ -218,5 +218,6 @@ public class LatinIME extends InputMethodService implements KeyboardActionListen
+ 
+     public final UIHandler mHandler = new UIHandler(this);
++    private BstImeBridge mBstImeBridge;
+ 
+     public static final class UIHandler extends LeakGuardHandlerWrapper<LatinIME> {
+         private static final int MSG_UPDATE_SHIFT_STATE = 0;
+@@ -608,16 +609,8 @@ public class LatinIME extends InputMethodService implements KeyboardActionListen
+         mDisplayContext = getDisplayContext();
+         KeyboardSwitcher.init(this);
+         super.onCreate();
+-        // A16DBG:P2:MECH BST IME listener port init via reflection (a13; avoids classpath issue)
+-        try {
+-            Object bstUtils = getApplicationContext().getSystemService("bstutils");
+-            if (bstUtils != null) {
+-                java.lang.reflect.Method m = bstUtils.getClass().getMethod("setProperty", String.class, String.class);
+-                m.invoke(bstUtils, "bst.config.ime_listenerport", "0");
+-            }
+-        } catch (Exception e) {
+-            // BST service not available — non-fatal
+-        }
++        mBstImeBridge = new BstImeBridge(this);
++        mBstImeBridge.start();
+ 
+         mHandler.onCreate();
+ 
+@@ -765,6 +759,9 @@ public class LatinIME extends InputMethodService implements KeyboardActionListen
+ 
+     @Override
+     public void onDestroy() {
++        if (mBstImeBridge != null) {
++            mBstImeBridge.stop();
++        }
+         mDictionaryFacilitator.closeDictionaries();
+         mSettings.onDestroy();
+         unregisterReceiver(mHideSoftInputReceiver);
+@@ -1799,6 +1796,9 @@ public class LatinIME extends InputMethodService implements KeyboardActionListen
+                     getApplicationContext().getResources());
+         }
+         mEmojiAltPhysicalKeyDetector.onKeyDown(keyEvent);
++        if (mBstImeBridge != null && mBstImeBridge.handleHardwareKey(keyCode, keyEvent)) {
++            return true;
++        }
+         if (!ProductionFlags.IS_HARDWARE_KEYBOARD_SUPPORTED) {
+             return super.onKeyDown(keyCode, keyEvent);
+         }
+diff --git a/java/src/com/android/inputmethod/latin/settings/SettingsValues.java b/java/src/com/android/inputmethod/latin/settings/SettingsValues.java
+--- a/java/src/com/android/inputmethod/latin/settings/SettingsValues.java
++++ b/java/src/com/android/inputmethod/latin/settings/SettingsValues.java
+@@ -169,7 +169,7 @@ public class SettingsValues {
+         mKeypressSoundVolume = Settings.readKeypressSoundVolume(prefs, res);
+         mKeyPreviewPopupDismissDelay = Settings.readKeyPreviewPopupDismissDelay(prefs, res);
+         mEnableEmojiAltPhysicalKey = prefs.getBoolean(
+-                Settings.PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY, true);
++                Settings.PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY, false);
+         mShowAppIcon = Settings.readShowSetupWizardIcon(prefs, context);
+         mIsShowAppIconSettingInPreferences = prefs.contains(Settings.PREF_SHOW_SETUP_WIZARD_ICON);
+         mAutoCorrectionThreshold = readAutoCorrectionThreshold(res,
+@@ -305,14 +305,12 @@ public class SettingsValues {
+ 
+     private static boolean readSuggestionsEnabled(final SharedPreferences prefs) {
+         if (prefs.contains(Settings.PREF_SHOW_SUGGESTIONS_SETTING_OBSOLETE)) {
+-            final boolean alwaysHide = SUGGESTIONS_VISIBILITY_HIDE_VALUE_OBSOLETE.equals(
+-                    prefs.getString(Settings.PREF_SHOW_SUGGESTIONS_SETTING_OBSOLETE, null));
+             prefs.edit()
+                     .remove(Settings.PREF_SHOW_SUGGESTIONS_SETTING_OBSOLETE)
+-                    .putBoolean(Settings.PREF_SHOW_SUGGESTIONS, !alwaysHide)
++                    .putBoolean(Settings.PREF_SHOW_SUGGESTIONS, false)
+                     .apply();
+         }
+-        return prefs.getBoolean(Settings.PREF_SHOW_SUGGESTIONS, true);
++        return prefs.getBoolean(Settings.PREF_SHOW_SUGGESTIONS, false);
+     }
+ 
+     private static boolean readBigramPredictionEnabled(final SharedPreferences prefs,

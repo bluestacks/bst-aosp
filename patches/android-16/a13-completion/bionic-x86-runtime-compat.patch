@@ -1,0 +1,40 @@
+diff --git a/libc/SYSCALLS.TXT b/libc/SYSCALLS.TXT
+--- a/libc/SYSCALLS.TXT
++++ b/libc/SYSCALLS.TXT
+@@ -368,6 +368,8 @@ __riscv_flush_icache:riscv_flush_icache(void*, void*, unsigned long) riscv64
+ 
+ # x86-specific
+ __set_thread_area:set_thread_area(void*) x86
++ioperm(unsigned long, unsigned long, int) x86,x86_64
++iopl(int) x86,x86_64
+ arch_prctl(int, unsigned long) x86_64
+ 
+ # vdso stuff.
+diff --git a/libc/libc.map.txt b/libc/libc.map.txt
+--- a/libc/libc.map.txt
++++ b/libc/libc.map.txt
+@@ -521,6 +521,8 @@ LIBC {
+     inotify_rm_watch;
+     insque;
+     ioctl;
++    ioperm; # x86 x86_64
++    iopl; # x86 x86_64
+     isalnum;
+     isalnum_l;
+     isalpha;
+diff --git a/linker/linker.cpp b/linker/linker.cpp
+--- a/linker/linker.cpp
++++ b/linker/linker.cpp
+@@ -3386,10 +3386,12 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
+ 
+ #if !defined(__LP64__)
+   if (has_text_relocations) {
++#if !defined(__i386__)
+     if (DL_ERROR_AFTER(23, "\"%s\" has text relocations", get_realpath())) {
+       return false;
+     }
+     add_dlwarning(get_realpath(), "text relocations");
++#endif
+     // Make segments writable to allow text relocations to work properly. We will later call
+     // phdr_table_protect_segments() after all of them are applied.
+     if (phdr_table_unprotect_segments(phdr, phnum, load_bias, should_pad_segments_,

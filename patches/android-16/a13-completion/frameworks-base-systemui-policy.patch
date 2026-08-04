@@ -1,0 +1,112 @@
+diff --git a/packages/SystemUI/res/layout/qs_panel.xml b/packages/SystemUI/res/layout/qs_panel.xml
+index 7ecbde11af20..9e65a862341b 100644
+--- a/packages/SystemUI/res/layout/qs_panel.xml
++++ b/packages/SystemUI/res/layout/qs_panel.xml
+@@ -29,6 +29,7 @@
+         android:scrollbars="none"
+         android:clipChildren="false"
+         android:clipToPadding="false"
++        android:visibility="gone"
+         android:layout_weight="1">
+         <com.android.systemui.qs.QSPanel
+             android:id="@+id/quick_settings_panel"
+diff --git a/packages/SystemUI/res/layout/status_bar_notification_section_header.xml b/packages/SystemUI/res/layout/status_bar_notification_section_header.xml
+index 1108684e7fa5..095786461f72 100644
+--- a/packages/SystemUI/res/layout/status_bar_notification_section_header.xml
++++ b/packages/SystemUI/res/layout/status_bar_notification_section_header.xml
+@@ -34,6 +34,7 @@
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:gravity="start|center_vertical"
++            android:visibility="gone"
+             android:layout_weight="1">
+ 
+             <TextView
+diff --git a/packages/SystemUI/res/values/config.xml b/packages/SystemUI/res/values/config.xml
+index 69ca698b4aab..22013015191f 100644
+--- a/packages/SystemUI/res/values/config.xml
++++ b/packages/SystemUI/res/values/config.xml
+@@ -103,10 +103,8 @@
+ 
+     <!-- The default tiles to display in QuickSettings -->
+     <string name="quick_settings_tiles_default" translatable="false">
+-        internet,bt,flashlight,dnd,alarm,airplane,controls,wallet,rotation,battery,cast,screenrecord,mictoggle,cameratoggle,custom(com.android.permissioncontroller/.permission.service.v33.SafetyCenterQsTileService)
+     </string>
+ 
+     <!-- The default tiles to display in QuickSettings with the new UI -->
+     <string name="quick_settings_tiles_new_default" translatable="false">
+-        internet,bt,dnd,cast,flashlight,airplane,rotation,wallet,alarm,controls,screenrecord,battery
+     </string>
+@@ -122,5 +120,4 @@
+ 
+     <!-- Tiles native to System UI. Order should match "quick_settings_tiles_default" -->
+     <string name="quick_settings_tiles_stock" translatable="false">
+-        internet,bt,flashlight,dnd,modes_dnd,alarm,airplane,controls,wallet,rotation,battery,cast,screenrecord,mictoggle,cameratoggle,location,hotspot,inversion,saver,dark,work,night,reverse,reduce_brightness,qr_code_scanner,onehanded,color_correction,dream,font_scaling,record_issue,hearing_devices,notes,desktopeffects
+     </string>
+@@ -585,4 +582,16 @@
+     <string-array name="config_statusBarIconsToExclude" translatable="false">
+         <item>@*android:string/status_bar_rotate</item>
++        <item>@*android:string/status_bar_volume</item>
++        <item>@*android:string/status_bar_airplane</item>
++        <item>@*android:string/status_bar_zen</item>
++        <item>@*android:string/status_bar_alarm_clock</item>
+         <item>@*android:string/status_bar_headset</item>
++        <item>@*android:string/status_bar_bluetooth</item>
++        <item>@*android:string/status_bar_managed_profile</item>
++        <item>@*android:string/status_bar_cast</item>
++        <item>@*android:string/status_bar_hotspot</item>
++        <item>@*android:string/status_bar_mobile</item>
++        <item>@*android:string/status_bar_ethernet</item>
++        <item>@*android:string/status_bar_wifi</item>
++        <item>@*android:string/status_bar_battery</item>
+     </string-array>
+diff --git a/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java b/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java
+index f876ac6cccd4..c1d30e6f0d81 100644
+--- a/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java
++++ b/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java
+@@ -40,5 +40,6 @@
+ import android.util.TypedValue;
+ import android.view.Gravity;
+ import android.view.LayoutInflater;
++import android.view.View;
+ import android.widget.ImageView;
+ import android.widget.LinearLayout;
+@@ -149,5 +149,6 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
+             addView(mBatteryIconView, mlp);
+         }
++        mBatteryIconView.setVisibility(View.INVISIBLE);
+ 
+         updateShowPercent();
+         mDualToneHandler = new DualToneHandler(context);
+@@ -522,6 +523,8 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
+     }
+ 
+     void updateShowPercent() {
++        setPercentShowMode(MODE_OFF);
++
+         if (!NewStatusBarIcons.isEnabled()) {
+             updateShowPercentLegacy();
+             return;
+diff --git a/packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java b/packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java
+index 573b03a92303..fd4c0bbde83e 100644
+--- a/packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java
+@@ -125,3 +125,4 @@ public class TunerServiceImpl extends TunerService {
+                 new HandlerExecutor(mainHandler));
++        initializeIconHideList();
+     }
+ 
+@@ -161,5 +162,13 @@ public class TunerServiceImpl extends TunerService {
+         setValue(TUNER_VERSION, newVersion);
+     }
+ 
++    private void initializeIconHideList() {
++        final ArraySet<String> iconHideList = StatusBarIconController.getIconHideList(
++                mContext, null);
++        Settings.Secure.putStringForUser(mContentResolver,
++                StatusBarIconController.ICON_HIDE_LIST,
++                TextUtils.join(",", iconHideList), mCurrentUser);
++    }
++
+     @Override
+     public String getValue(String setting) {

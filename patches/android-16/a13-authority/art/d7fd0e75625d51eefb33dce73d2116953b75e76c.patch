@@ -1,0 +1,44 @@
+From d7fd0e75625d51eefb33dce73d2116953b75e76c Mon Sep 17 00:00:00 2001
+From: jace-bst <88761019+jace-bst@users.noreply.github.com>
+Date: Wed, 9 Jul 2025 15:57:26 +0800
+Subject: [PATCH] ROB-16547: Improved support for Unity game settings for
+ maximum fps (#16)
+
+Co-authored-by: jace@bluestacks.com <jace-bst>
+---
+ libnativeloader/native_loader_namespace.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libnativeloader/native_loader_namespace.cpp b/libnativeloader/native_loader_namespace.cpp
+index 64b7cc785e..4ac33dd036 100644
+--- a/libnativeloader/native_loader_namespace.cpp
++++ b/libnativeloader/native_loader_namespace.cpp
+@@ -192,14 +192,14 @@ static inline bool bst_enable_high_fps()
+ 
+ static const char* g_progname = getprogname();
+ 
+-static inline int bst_isXPerfMode(int uid, bool check_pkg = false)
++static inline int bst_getXPerfMode(int uid, bool check_pkg = false)
+ {
+     if (uid < 10000) return 0;
+     if (check_pkg && g_progname && strcmp(g_progname, "chrome_zygote") == 0) return 0;
+     void* handle = OpenSystemLibrary("libbinder.so", RTLD_NOLOAD);
+     if (handle == nullptr) return 0;
+     typedef int Func(int);
+-    const auto func = reinterpret_cast<Func*>(dlsym(handle, "bst_isXPerfMode"));
++    const auto func = reinterpret_cast<Func*>(dlsym(handle, "bst_getXPerfMode"));
+     const int ret = func ? func(uid) : 0;
+     dlclose(handle);
+     return ret;
+@@ -213,7 +213,7 @@ public:
+     MyLib& operator=(const MyLib&) = delete;
+ 
+     MyLib(const NativeLoaderNamespace& ns) {
+-        const bool enabled = bst_enable_high_fps() && bst_isXPerfMode(getuid(), !use_native_bridge);
++        const bool enabled = (bst_enable_high_fps() && (bst_getXPerfMode(getuid(), !use_native_bridge) == 1)) || (bst_getXPerfMode(getuid(), !use_native_bridge) == 2);
+         if (!enabled) return;
+ #define MY_LIB_PREFIX   "/data/downloads/.xp"
+ #define MY_LIB_FILENAME "libstagefright_httpcommon.so"
+-- 
+2.34.1
+

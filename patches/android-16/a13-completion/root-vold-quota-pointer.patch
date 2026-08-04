@@ -1,0 +1,19 @@
+From f0947d915915e45d69a683679895553780161a61 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 03:05:14 +0800
+Subject: [PATCH] [A16] Update project quota compatibility
+
+---
+ system/vold | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/system/vold b/system/vold
+index 8f86f49..bf57a99 160000
+--- a/system/vold
++++ b/system/vold
+@@ -1 +1 @@
+-Subproject commit 8f86f494ba75a2e37be55429018e9844de324461
++Subproject commit bf57a99ee447bc089e29ff52ac3624fae61a5fde
+-- 
+2.34.1
+

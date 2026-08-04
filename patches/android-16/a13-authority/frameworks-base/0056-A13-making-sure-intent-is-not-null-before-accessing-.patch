@@ -1,0 +1,27 @@
+From 400113645b5adbadd0096337d780c0dbe7543f2f Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Wed, 1 Nov 2023 14:06:34 +0800
+Subject: [PATCH 056/224] [A13] making sure intent is not null before accessing
+ its elements.
+
+---
+ core/java/android/app/PendingIntent.java | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/core/java/android/app/PendingIntent.java b/core/java/android/app/PendingIntent.java
+index bc78df59ff12..a8dd2c51925e 100644
+--- a/core/java/android/app/PendingIntent.java
++++ b/core/java/android/app/PendingIntent.java
+@@ -483,8 +483,10 @@ public final class PendingIntent implements Parcelable {
+         String resolvedType = intent.resolveTypeIfNeeded(context.getContentResolver());
+         checkFlags(flags, packageName);
+         try {
+-            intent.migrateExtraStreamToClipData(context);
+-            intent.prepareToLeaveProcess(context);
++            if (intent != null) {
++                intent.migrateExtraStreamToClipData(context);
++                intent.prepareToLeaveProcess(context);
++            }
+             IIntentSender target =
+                 ActivityManager.getService().getIntentSenderWithFeature(
+                     INTENT_SENDER_ACTIVITY, packageName,

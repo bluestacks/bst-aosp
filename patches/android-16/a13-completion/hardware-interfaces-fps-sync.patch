@@ -1,0 +1,233 @@
+From bf800caa090008c2fbbc1723c6fe814ece6f7eb9 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 02:09:55 +0800
+Subject: [PATCH] [A16] Restore framebuffer FPS synchronization
+
+---
+ .../2.1/utils/hwc2onfbadapter/Android.bp      |  1 +
+ .../utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp | 71 ++++++++++++++++++-
+ .../include/hwc2onfbadapter/HWC2OnFbAdapter.h |  9 +++
+ 3 files changed, 79 insertions(+), 2 deletions(-)
+
+diff --git a/graphics/composer/2.1/utils/hwc2onfbadapter/Android.bp b/graphics/composer/2.1/utils/hwc2onfbadapter/Android.bp
+index ecf6201e2f..72847909a3 100644
+--- a/graphics/composer/2.1/utils/hwc2onfbadapter/Android.bp
++++ b/graphics/composer/2.1/utils/hwc2onfbadapter/Android.bp
+@@ -38,6 +38,7 @@ cc_library_shared {
+ 
+     header_libs: ["libhardware_headers"],
+     shared_libs: [
++        "libcutils",
+         "liblog",
+         "libsync",
+     ],
+diff --git a/graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp b/graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp
+index 0f5057756e..e0373c9be7 100644
+--- a/graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp
++++ b/graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp
+@@ -21,6 +21,8 @@
+ #include "hwc2onfbadapter/HWC2OnFbAdapter.h"
+ 
+ #include <algorithm>
++#include <chrono>
++#include <cstdlib>
+ #include <type_traits>
+ 
+ #include <inttypes.h>
+@@ -29,6 +31,7 @@
+ #include <unistd.h> // for close
+ 
+ #include <hardware/fb.h>
++#include <cutils/properties.h>
+ #include <log/log.h>
+ #include <sync/sync.h>
+ 
+@@ -59,6 +62,7 @@ int32_t registerCallbackHook(hwc2_device_t* device, int32_t descriptor,
+             }
+             break;
+         case HWC2_CALLBACK_REFRESH:
++            adapter.setRefreshCallback(reinterpret_cast<HWC2_PFN_REFRESH>(pointer), callbackData);
+             break;
+         case HWC2_CALLBACK_VSYNC:
+             adapter.setVsyncCallback(reinterpret_cast<HWC2_PFN_VSYNC>(pointer), callbackData);
+@@ -264,6 +268,9 @@ int32_t getDisplayAttributeHook(hwc2_device_t* device, hwc2_display_t display, h
+     if (adapter.getConfigId() != config) {
+         return HWC2_ERROR_BAD_CONFIG;
+     }
++    if (attribute == HWC2_ATTRIBUTE_VSYNC_PERIOD) {
++        adapter.updateVsyncPeriod();
++    }
+ 
+     const auto& info = adapter.getInfo();
+     switch (attribute) {
+@@ -691,6 +698,10 @@ const HWC2OnFbAdapter::Info& HWC2OnFbAdapter::getInfo() const {
+     return mFbInfo;
+ }
+ 
++void HWC2OnFbAdapter::updateVsyncPeriod() {
++    mFbInfo.vsync_period_ns = mVsyncThread.getRefreshPeriod();
++}
++
+ void HWC2OnFbAdapter::updateDebugString() {
+     if (mFbDevice->common.version >= 1 && mFbDevice->dump) {
+         char buffer[4096];
+@@ -790,6 +801,11 @@ bool HWC2OnFbAdapter::postBuffer() {
+     return error == 0;
+ }
+ 
++void HWC2OnFbAdapter::setRefreshCallback(HWC2_PFN_REFRESH callback,
++                                         hwc2_callback_data_t data) {
++    mVsyncThread.setCallback(callback, data);
++}
++
+ void HWC2OnFbAdapter::setVsyncCallback(HWC2_PFN_VSYNC callback, hwc2_callback_data_t data) {
+     mVsyncThread.setCallback(callback, data);
+ }
+@@ -843,6 +859,7 @@ bool HWC2OnFbAdapter::VsyncThread::sleepUntil(int64_t t) {
+ void HWC2OnFbAdapter::VsyncThread::start(int64_t firstVsync, int64_t period) {
+     mNextVsync = firstVsync;
+     mPeriod = period;
++    mRefreshPeriod.store(period);
+     mStarted = true;
+     mThread = std::thread(&VsyncThread::vsyncLoop, this);
+ }
+@@ -856,6 +873,13 @@ void HWC2OnFbAdapter::VsyncThread::stop() {
+     mThread.join();
+ }
+ 
++void HWC2OnFbAdapter::VsyncThread::setCallback(HWC2_PFN_REFRESH callback,
++                                               hwc2_callback_data_t data) {
++    std::lock_guard<std::mutex> lock(mMutex);
++    mRefreshCallback = callback;
++    mRefreshCallbackData = data;
++}
++
+ void HWC2OnFbAdapter::VsyncThread::setCallback(HWC2_PFN_VSYNC callback, hwc2_callback_data_t data) {
+     std::lock_guard<std::mutex> lock(mMutex);
+     mCallback = callback;
+@@ -878,18 +902,43 @@ void HWC2OnFbAdapter::VsyncThread::vsyncLoop() {
+         return;
+     }
+ 
++    int64_t lastFpsSyncTime = 0;
+     while (true) {
+         if (!mCallbackEnabled) {
+-            mCondition.wait(lock, [this] { return mCallbackEnabled || !mStarted; });
++            mCondition.wait_for(lock, std::chrono::seconds(1),
++                                [this] { return mCallbackEnabled || !mStarted; });
++            if (!mStarted) {
++                break;
++            }
++        }
++
++        int64_t t = now();
++        HWC2_PFN_REFRESH refreshCallback = nullptr;
++        hwc2_callback_data_t refreshCallbackData = nullptr;
++        if (t >= lastFpsSyncTime + 1'000'000'000) {
++            if (syncFpsWithConfigLocked()) {
++                refreshCallback = mRefreshCallback;
++                refreshCallbackData = mRefreshCallbackData;
++            }
++            lastFpsSyncTime = t;
++        }
++
++        if (refreshCallback != nullptr) {
++            lock.unlock();
++            refreshCallback(refreshCallbackData, getDisplayId());
++            lock.lock();
+             if (!mStarted) {
+                 break;
+             }
+         }
++        if (!mCallbackEnabled) {
++            continue;
++        }
+ 
+         lock.unlock();
+ 
+         // adjust mNextVsync if necessary
+-        int64_t t = now();
++        t = now();
+         if (mNextVsync < t) {
+             int64_t n = (t - mNextVsync + mPeriod - 1) / mPeriod;
+             mNextVsync += mPeriod * n;
+@@ -908,4 +957,22 @@ void HWC2OnFbAdapter::VsyncThread::vsyncLoop() {
+     }
+ }
+ 
++bool HWC2OnFbAdapter::VsyncThread::syncFpsWithConfigLocked() {
++    char value[PROP_VALUE_MAX] = {};
++    property_get("bst.max_fps", value, "0");
++    const long maxFps = std::strtol(value, nullptr, 10);
++    if (maxFps <= 0) {
++        return false;
++    }
++
++    const int64_t refreshPeriod = 1'000'000'000 / maxFps;
++    if (refreshPeriod <= 0 || refreshPeriod == mPeriod) {
++        return false;
++    }
++
++    mPeriod = refreshPeriod;
++    mRefreshPeriod.store(refreshPeriod);
++    return true;
++}
++
+ } // namespace android
+diff --git a/graphics/composer/2.1/utils/hwc2onfbadapter/include/hwc2onfbadapter/HWC2OnFbAdapter.h b/graphics/composer/2.1/utils/hwc2onfbadapter/include/hwc2onfbadapter/HWC2OnFbAdapter.h
+index f1f11ef2bf..a58b32a4f4 100644
+--- a/graphics/composer/2.1/utils/hwc2onfbadapter/include/hwc2onfbadapter/HWC2OnFbAdapter.h
++++ b/graphics/composer/2.1/utils/hwc2onfbadapter/include/hwc2onfbadapter/HWC2OnFbAdapter.h
+@@ -17,6 +17,7 @@
+ #ifndef ANDROID_SF_HWC2_ON_FB_ADAPTER_H
+ #define ANDROID_SF_HWC2_ON_FB_ADAPTER_H
+ 
++#include <atomic>
+ #include <condition_variable>
+ #include <mutex>
+ #include <string>
+@@ -56,6 +57,7 @@ public:
+     };
+     const Info& getInfo() const;
+ 
++    void updateVsyncPeriod();
+     void updateDebugString();
+     const std::string& getDebugString() const;
+ 
+@@ -77,6 +79,7 @@ public:
+     void setBuffer(buffer_handle_t buffer);
+     bool postBuffer();
+ 
++    void setRefreshCallback(HWC2_PFN_REFRESH callback, hwc2_callback_data_t data);
+     void setVsyncCallback(HWC2_PFN_VSYNC callback, hwc2_callback_data_t data);
+     void enableVsync(bool enable);
+     void getCapabilities(uint32_t* outCount, int32_t* outCapabilities);
+@@ -104,12 +107,15 @@ private:
+ 
+         void start(int64_t first, int64_t period);
+         void stop();
++        void setCallback(HWC2_PFN_REFRESH callback, hwc2_callback_data_t data);
+         void setCallback(HWC2_PFN_VSYNC callback, hwc2_callback_data_t data);
+         void enableCallback(bool enable);
++        int64_t getRefreshPeriod() const { return mRefreshPeriod.load(); }
+ 
+     private:
+         void vsyncLoop();
+         bool waitUntilNextVsync();
++        bool syncFpsWithConfigLocked();
+ 
+         std::thread mThread;
+         int64_t mNextVsync{0};
+@@ -121,6 +127,9 @@ private:
+         HWC2_PFN_VSYNC mCallback{nullptr};
+         hwc2_callback_data_t mCallbackData{nullptr};
+         bool mCallbackEnabled{false};
++        std::atomic<int64_t> mRefreshPeriod{0};
++        HWC2_PFN_REFRESH mRefreshCallback{nullptr};
++        hwc2_callback_data_t mRefreshCallbackData{nullptr};
+     };
+     VsyncThread mVsyncThread;
+ };
+-- 
+2.34.1
+

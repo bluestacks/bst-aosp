@@ -1,0 +1,54 @@
+From 9094c3134b039eed86e2f68c8c94763d384b9d4c Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Wed, 6 Dec 2023 16:33:45 +0800
+Subject: [PATCH 100/224] [A13] Fix compile failures related
+ commit:139d7a18d965784256ec37d1412ffaee3670e21e
+
+---
+ .../com/android/server/pm/InstallPackageHelper.java    | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 8c66f6f1e0f3..57cb5ead5897 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -143,6 +143,7 @@ import android.os.storage.VolumeInfo;
+ import android.stats.storage.StorageEnums;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.EventLog;
+ import android.util.Log;
+ import android.util.Pair;
+@@ -194,6 +195,7 @@ import java.security.cert.CertificateException;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Collections;
++import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map;
+@@ -221,8 +223,14 @@ final class InstallPackageHelper {
+     private final PackageManagerServiceInjector mInjector;
+     BstFilterAppsManager mBstfilter = null;
+ 
++    // file to store referral data information
++    private static final String appReferralListFile = "/data/downloads/.aff/.fl";
++    // file to store packages information that have offers
++    private static final String offerPackageListFile = "/data/downloads/.aff/.opf";
++
+     // Flags to disable permission revoke for bluestacks apps.
+     private static final boolean BST_DEBUG = SystemProperties.getInt("bst.debug.pm", 0) == 0 ? false : true;
++    private static final boolean BST_DEBUG_REFERRAL = BST_DEBUG || SystemProperties.getInt("bst.debug.referral", 0) == 0 ? false : true;
+ 
+     // TODO(b/198166813): remove PMS dependency
+     InstallPackageHelper(PackageManagerService pm, AppDataHelper appDataHelper) {
+@@ -1353,7 +1361,7 @@ final class InstallPackageHelper {
+ 
+                 if (BST_DEBUG_REFERRAL) Log.d(TAG_BST_REFERRAL, "packageName = " + pkgName + ", offerPresent = " + offerPresent + ", bstClickTime = " + bstClickTime + ", bstCurrentTime = " + bstCurrentTime + ", addDelay = " + addDelay + ", original installerPackageName = " );
+                 if (offerPresent) {
+-                    args.installSource.installerPackageName = "com.android.vending";
++                    args.mInstallSource.installerPackageName = "com.android.vending";
+                     // sleeping only if the difference b/w firstInstallTime and bstCurrentTime is less than 4
+                     if (addDelay > 0) {
+                         if (BST_DEBUG_REFERRAL) Log.d(TAG_BST_REFERRAL, "*** Adding Delay of " + addDelay + " secs (" + System.currentTimeMillis()/1000 + ") ***");

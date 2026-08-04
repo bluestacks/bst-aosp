@@ -1,0 +1,58 @@
+From d36e8582d22c654109e67b736bd5fa6e61aff435 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 16 Nov 2023 10:05:40 +0800
+Subject: [PATCH 08/13] [A13] Fix the crash issue when value is NULL
+
+---
+ libc/bionic/system_property_set.cpp | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/libc/bionic/system_property_set.cpp b/libc/bionic/system_property_set.cpp
+index 6a8e98d79..7dd935ac1 100644
+--- a/libc/bionic/system_property_set.cpp
++++ b/libc/bionic/system_property_set.cpp
+@@ -567,7 +567,7 @@ int bst_hack_system_property(const char *name, char *value) {
+     // If some third party app is trying to read system properties ro.secure/ro.debuggable, then show them the modified values.
+     // Apps like puzzle and dragon tries to read ro.debuggable and crashes if does not get user build specific values.
+     if (myuid >= 10000
+-            && name != NULL
++            && name != NULL && value != NULL
+             && (!strcmp(name, "ro.secure") || !strcmp(name, "ro.debuggable")
+                 || !strcmp(name, "ro.allow.mock.location") || !strcmp(name, "ro.crypto.state")
+                 || !strcmp(name, "ro.adb.secure") || !strncmp(name, "init.svc.bst", strlen("init.svc.bst"))
+@@ -675,7 +675,7 @@ int bst_hack_system_property(const char *name, char *value) {
+             len = strlen(USB_STATE_NONE);
+             memcpy(value, USB_STATE_NONE, len+1);
+         }
+-    } else if(myuid >= 10000 && name != NULL && (strstr(name,"cpu.abi") || strstr(name, "native.bridge") || strstr(name, "ro.arch"))) {
++    } else if(myuid >= 10000 && name != NULL && value != NULL && (strstr(name,"cpu.abi") || strstr(name, "native.bridge") || strstr(name, "ro.arch"))) {
+         is_uid_match = match_uid_helper(APP_WITH_ABI2, myuid, MAX_BUFF_LENGTH);
+ 
+         // Some china apps like com.netease.TCYM.uc; com.youzu.wzqj.ad.baidu; com.zmxyol.union.baidu installed in arm mode
+@@ -716,7 +716,7 @@ int bst_hack_system_property(const char *name, char *value) {
+                 }
+             }
+         }
+-    } else if (myuid >= 10000 && name != NULL && !strcmp(name,"ro.csc.sales_code")) {
++    } else if (myuid >= 10000 && name != NULL && value != NULL && !strcmp(name,"ro.csc.sales_code")) {
+         // Sending null value for this specific property,as only samsung apps should be able to read this value
+ #define PKG_1 "com.sec.android.app.samsungapps"
+ #define PKG_2 "com.sec.android.app.billing"
+@@ -728,7 +728,7 @@ int bst_hack_system_property(const char *name, char *value) {
+             len = -1;
+             value[0] = 0;
+         }
+-    } else if (myuid >= 10000 && name != NULL && !strcmp(name,"ro.product.store")) {
++    } else if (myuid >= 10000 && name != NULL && value != NULL && !strcmp(name,"ro.product.store")) {
+         // Sending null value for this specific property,as only one store apps should be able to read this value
+ #define PKG_5       "com.skt.skaf.OA00018282"
+ #define PKG_6       "com.skt.skaf.A000Z00040"
+@@ -738,7 +738,7 @@ int bst_hack_system_property(const char *name, char *value) {
+             len = -1;
+             value[0] = 0;
+         }
+-    } else if (name != NULL
++    } else if (name != NULL && value != NULL
+             && (! strcmp(name, "ro.product.board")
+                 || !strcmp(name, "ro.product.brand")
+                 || !strcmp(name, "ro.product.device")

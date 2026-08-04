@@ -1,0 +1,64 @@
+From 42610340d7fec9f2939d7628531710cef8ac15e5 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 01:41:03 +0800
+Subject: [PATCH] [A16] Restore H.263 16CIF limits
+
+---
+ .../components/mpeg4_h263/C2SoftMpeg4Dec.cpp   | 18 ++++++++++--------
+ 1 file changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/media/codec2/components/mpeg4_h263/C2SoftMpeg4Dec.cpp b/media/codec2/components/mpeg4_h263/C2SoftMpeg4Dec.cpp
+index b695f4d51b..4493ef7e22 100644
+--- a/media/codec2/components/mpeg4_h263/C2SoftMpeg4Dec.cpp
++++ b/media/codec2/components/mpeg4_h263/C2SoftMpeg4Dec.cpp
+@@ -35,10 +35,12 @@
+ namespace android {
+ constexpr size_t kMinInputBufferSize = 2 * 1024 * 1024;
+ #ifdef MPEG4
+-constexpr size_t kMaxDimension = 1920;
++constexpr size_t kMaxWidth = 1920;
++constexpr size_t kMaxHeight = 1920;
+ constexpr char COMPONENT_NAME[] = "c2.android.mpeg4.decoder";
+ #else
+-constexpr size_t kMaxDimension = 352;
++constexpr size_t kMaxWidth = 1408;
++constexpr size_t kMaxHeight = 1152;
+ constexpr char COMPONENT_NAME[] = "c2.android.h263.decoder";
+ #endif
+ 
+@@ -77,8 +79,8 @@ public:
+                 DefineParam(mSize, C2_PARAMKEY_PICTURE_SIZE)
+                 .withDefault(new C2StreamPictureSizeInfo::output(0u, 176, 144))
+                 .withFields({
+-                    C2F(mSize, width).inRange(2, kMaxDimension, 2),
+-                    C2F(mSize, height).inRange(2, kMaxDimension, 2),
++                    C2F(mSize, width).inRange(2, kMaxWidth, 2),
++                    C2F(mSize, height).inRange(2, kMaxHeight, 2),
+                 })
+                 .withSetter(SizeSetter)
+                 .build());
+@@ -129,8 +131,8 @@ public:
+                 DefineParam(mMaxSize, C2_PARAMKEY_MAX_PICTURE_SIZE)
+                 .withDefault(new C2StreamMaxPictureSizeTuning::output(0u, 352, 288))
+                 .withFields({
+-                    C2F(mSize, width).inRange(2, kMaxDimension, 2),
+-                    C2F(mSize, height).inRange(2, kMaxDimension, 2),
++                    C2F(mSize, width).inRange(2, kMaxWidth, 2),
++                    C2F(mSize, height).inRange(2, kMaxHeight, 2),
+                 })
+                 .withSetter(MaxPictureSizeSetter, mSize)
+                 .build());
+@@ -188,8 +190,8 @@ public:
+                                     const C2P<C2StreamPictureSizeInfo::output> &size) {
+         (void)mayBlock;
+         // TODO: get max width/height from the size's field helpers vs. hardcoding
+-        me.set().width = c2_min(c2_max(me.v.width, size.v.width), kMaxDimension);
+-        me.set().height = c2_min(c2_max(me.v.height, size.v.height), kMaxDimension);
++        me.set().width = c2_min(c2_max(me.v.width, size.v.width), kMaxWidth);
++        me.set().height = c2_min(c2_max(me.v.height, size.v.height), kMaxHeight);
+         return C2R::Ok();
+     }
+ 
+-- 
+2.34.1
+

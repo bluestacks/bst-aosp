@@ -1,0 +1,153 @@
+From 279c7128863117fe2d0d57069ca294ff1fffb5e7 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 17 Nov 2023 16:39:28 +0800
+Subject: [PATCH 076/224] [A13] Porting vms config.db setting impl
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp   | 51 +++++++++++++++++++
+ .../server/am/ActivityManagerService.java     | 41 +++++++++++++++
+ 2 files changed, 92 insertions(+)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index 3b13804a3b17..4976ce5b74de 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -1888,6 +1888,41 @@ out:
+ 
+     return ret;
+ }
++
++bool bst_get_memorysize_app(const char *calling_pkg, char *pbuf, int bufsize)
++{
++#define MEMORYSIZE_FILE_PATH "/data/downloads/.tmp/.bstMemorySizeApps"
++    char *file_buf, *temp, *token, *subtoken_pkg, *subtoken_value;
++    loff_t file_size, len;
++    bool ret = false;
++
++    file_buf = _bst_read_small_file(MEMORYSIZE_FILE_PATH, &file_size);
++    if (!file_buf || !calling_pkg)
++        goto out;
++
++    // Read app name line by line
++    temp = file_buf;
++    while ((token = strsep(&temp, "\n")) != NULL && strlen(token) > 0) {
++        subtoken_pkg = token;
++        if ((token = strchr(token, ';')) != NULL && strlen(token) > 0) {
++            subtoken_value = token + 1;
++            *token = '\0';
++            if (strcmp(subtoken_pkg, calling_pkg) == 0) {
++                len = bufsize > strlen(subtoken_value) ? bufsize - 1 : strlen(subtoken_value);
++                memcpy(pbuf, subtoken_value, len);
++                ret = true;
++                break;
++            }
++        }
++    }
++
++out:
++    if (file_buf)
++        free(file_buf);
++
++    return ret;
++}
++
+ // Utility routine to specialize a zygote child process.
+ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids, jint runtime_flags,
+                              jobjectArray rlimits, jlong permitted_capabilities,
+@@ -2007,6 +2042,22 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+         }
+     }
+ 
++    if (uid >= 10000) {
++        char memorySize[128] = { '\0', };
++        if (bst_get_memorysize_app(g_pkgname, memorySize, sizeof(memorySize)) && strlen(memorySize) > 0) {
++            char meminfo_path[1024] = { '\0', };
++            sprintf(meminfo_path, "%s%s", "/data/downloads/.tmp/xmeminfo.", memorySize);
++            // Bind-mount
++            if (TEMP_FAILURE_RETRY(mount(meminfo_path,        // Source.
++                                   "/proc/meminfo",     // Target.
++                                   nullptr,             // FS type.
++                                   MS_BIND,             // Mount flags: bind mount.
++                                   nullptr)) == -1) {   // "Data."
++                ALOGW("Failed to bind-mount %s as /proc/meminfo: %s", meminfo_path, strerror(errno));
++            }
++        }
++    }
++
+     if (setresgid(gid, gid, gid) == -1) {
+         fail_fn(CREATE_ERROR("setresgid(%d) failed: %s", gid, strerror(errno)));
+     }
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index a84f0669f1ca..8ffbb8b0606d 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -318,6 +318,7 @@ import android.text.TextUtils;
+ import android.text.style.SuggestionSpan;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.EventLog;
+ import android.util.FeatureFlagUtils;
+ import android.util.IntArray;
+@@ -458,6 +459,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
+ import java.util.concurrent.Executor;
+ import java.util.concurrent.atomic.AtomicInteger;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++
+ public class ActivityManagerService extends IActivityManager.Stub
+         implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback, ActivityManagerGlobalLock {
+ 
+@@ -590,6 +593,8 @@ public class ActivityManagerService extends IActivityManager.Stub
+ 
+     private Installer mInstaller;
+ 
++    BstFilterAppsManager mBstFilterApps;
++
+     final InstrumentationReporter mInstrumentationReporter = new InstrumentationReporter();
+ 
+     @CompositeRWLock({"this", "mProcLock"})
+@@ -6277,7 +6282,43 @@ public class ActivityManagerService extends IActivityManager.Stub
+ 
+     @Override
+     public void getMemoryInfo(ActivityManager.MemoryInfo outInfo) {
++        boolean DEBUG = SystemProperties.getInt("bst.debug.fakemem", 0) > 0;
++
+         mProcessList.getMemoryInfo(outInfo);
++
++        // if total mem is less than provided value from config.db (for example 2100mb - 2100*1024*1024), increase total mem for packages
++        // which have vms in config.db.
++        // This is needed for apps like com.netmarble.lin2ws as they requires more than 1.5GB.
++        // For systems having less than 1.5GB RAM, they show "device incompatible" error.
++        if (mBstFilterApps == null)
++            mBstFilterApps = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++
++        if (DEBUG) {
++            int pid = Binder.getCallingPid();
++            String pkgName = BstUtils.getAppNameFromPid(pid);
++            Log.d(TAG, "getMemoryInfo() called with: pid: " + pid + " pkgName is : " + pkgName );
++        }
++
++        int uid = Binder.getCallingUid();
++        String memorySize = mBstFilterApps.getMemorySize(uid);
++        if (!memorySize.isEmpty()) {
++            if (DEBUG) Log.d(TAG, "getMemoryInfo() actual : total mem is  " + outInfo.totalMem + " avail mem is :" + outInfo.availMem);
++            long fakeTotalMem = 0L;
++            try {
++                fakeTotalMem = Long.parseLong(memorySize);
++            } catch (Exception e) {
++                e.printStackTrace();
++                Log.d(TAG, "getMemoryInfo() exception in parsing memorySize setting : " + fakeTotalMem);
++            }
++
++            if (outInfo.totalMem < fakeTotalMem) {
++                outInfo.totalMem = fakeTotalMem;
++                if (DEBUG) Log.d(TAG, "getMemoryInfo() returning total mem: " + outInfo.totalMem);
++            } else {
++                if (DEBUG) Log.d(TAG, "returning orig values from getMemoryInfo(), total mem: " + outInfo.totalMem);
++            }
++        }
++        if (DEBUG) Log.d(TAG, "getMemoryInfo() returned: total mem is: " + outInfo.totalMem + " avail mem is :" + outInfo.availMem);
+     }
+ 
+     // =========================================================

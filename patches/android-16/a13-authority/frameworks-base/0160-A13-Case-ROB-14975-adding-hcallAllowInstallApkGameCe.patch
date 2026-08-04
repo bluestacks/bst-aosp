@@ -1,0 +1,106 @@
+From f71d7fd8e1a793856b560647024d791bfad78a55 Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Fri, 10 Jan 2025 17:38:31 +0800
+Subject: [PATCH 160/224] [A13] Case ROB-14975 : adding
+ hcallAllowInstallApkGameCenterRpc
+
+---
+ .../com/bluestacks/os/BstHostCallManager.java | 11 ++++++++++
+ .../bluestacks/os/IBstHostCallService.aidl    |  1 +
+ .../bluestacks/server/BstHostCallService.java |  9 +++++++++
+ ...m_bluestacks_server_BstHostCallService.cpp | 20 ++++++++++++++++++-
+ 4 files changed, 40 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index 013d477a6cb8..1154f4eeed19 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -582,4 +582,15 @@ public class BstHostCallManager {
+             throw new RuntimeException(e);
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public int allowInstallApkGameCenter(String pkg) {
++        try {
++            return mBstHostCallService.allowInstallApkGameCenter(pkg);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index 499edc042fde..c675fae4fdaf 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -52,4 +52,5 @@ interface IBstHostCallService {
+     int commonCommand(int code, String name, String data);
+     int onIAPCompleted(String source, String data);
+     int unzipFile(String fileName, String attemptId, String source, String pkgName);
++    int allowInstallApkGameCenter(String pkg);
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index e93e699b32d5..af5bcc4ea084 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -443,6 +443,14 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_unzipFile(fileName, attemptId, source, pkgName);
+     }
+ 
++    /**
++     * @hide
++     */
++    public int allowInstallApkGameCenter(String pkg) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService allowInstallApkGameCenter pkg : " + pkg);
++        return native_allowInstallApkGameCenter(pkg);
++    }
++
+     private static native final int native_init();
+     private static native int native_initImeStatus(String imeName);
+     private static native int native_initInputDebuggingStatus(boolean showTouches, boolean showPointerLocation);
+@@ -494,4 +502,5 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_commonCommand(int code, String name, String data);
+     private static native int native_onIAPCompleted(String source, String data);
+     private static native int native_unzipFile(String fileName, String attemptId, String source, String pkgName);
++    private static native int native_allowInstallApkGameCenter(String pkg);
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index 36f1591347d3..dca65d80baa6 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -915,6 +915,23 @@ static jint unzipFile(JNIEnv* env, jobject clazz, jstring fileNameStr, jstring a
+         });
+     return 0;
+ }
++
++static jint allowInstallApkGameCenter(JNIEnv* env, jobject clazz, jstring pkg) {
++    if (dbg) ALOGD("%s: called", __func__);
++
++    string pkgString = getStringFromJstring(env, clazz, pkg);
++
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallAllowInstallApkGameCenterRpc(pkgString.c_str());
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
++
+ /*
+  * JNI registration.
+  */
+@@ -971,7 +988,8 @@ static const JNINativeMethod gMethods[] = {
+     { "native_onNowbuxUpdated", "()I", (void *)onNowbuxUpdated},
+     { "native_commonCommand", "(ILjava/lang/String;Ljava/lang/String;)I", (void*)commonCommand },
+     { "native_onIAPCompleted", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)onIAPCompleted },
+-    { "native_unzipFile", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)unzipFile }
++    { "native_unzipFile", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)unzipFile },
++    { "native_allowInstallApkGameCenter", "(Ljava/lang/String;)I", (void*)allowInstallApkGameCenter }
+ };
+ 
+ // This function only registers the native methods

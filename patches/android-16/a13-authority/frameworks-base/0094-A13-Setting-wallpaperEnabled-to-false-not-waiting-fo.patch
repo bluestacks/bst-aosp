@@ -1,0 +1,25 @@
+From 0045604f8367682458af3ca915308aa62df82962 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Sat, 25 Nov 2023 21:16:23 +0800
+Subject: [PATCH 094/224] [A13] Setting wallpaperEnabled to false, not waiting
+ for wallpaper while turning on screen
+
+---
+ services/core/java/com/android/server/wm/DisplayContent.java | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index 34244a36f892..e13594a11d7e 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -4693,6 +4693,10 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+                 R.bool.config_checkWallpaperAtBoot)
+                 && !mWmService.mOnlyCore;
+ 
++        // We have seen in some casesImageWallpaper is not drawn from system Ui and we have to wait for 30 sec Timeout
++        // for setting mForceDisplayEnabled in performBootTimeout();
++        wallpaperEnabled = false;
++
+         final boolean haveBootMsg = drawnWindowTypes.get(TYPE_BOOT_PROGRESS);
+         final boolean haveApp = drawnWindowTypes.get(TYPE_BASE_APPLICATION);
+         final boolean haveWallpaper = drawnWindowTypes.get(TYPE_WALLPAPER);

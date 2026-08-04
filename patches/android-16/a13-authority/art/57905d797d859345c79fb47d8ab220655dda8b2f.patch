@@ -1,0 +1,99 @@
+From 57905d797d859345c79fb47d8ab220655dda8b2f Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Wed, 21 Feb 2024 16:20:28 +0800
+Subject: [PATCH] [A13] Added hotfix function
+
+---
+ libnativebridge/libnativebridge.map.txt |  1 +
+ libnativebridge/native_bridge.cc        | 57 ++++++++++++++++++++++++-
+ 2 files changed, 57 insertions(+), 1 deletion(-)
+
+diff --git a/libnativebridge/libnativebridge.map.txt b/libnativebridge/libnativebridge.map.txt
+index 8b51ab893a..13a33bc5ad 100644
+--- a/libnativebridge/libnativebridge.map.txt
++++ b/libnativebridge/libnativebridge.map.txt
+@@ -26,6 +26,7 @@ LIBNATIVEBRIDGE_1 {
+     PreInitializeNativeBridge;
+     NativeBridgeAvailable;
+     NeedsNativeBridge;
++    bst_nbpname;
+   local:
+     *;
+ };
+diff --git a/libnativebridge/native_bridge.cc b/libnativebridge/native_bridge.cc
+index c6ea637973..7cb2026988 100755
+--- a/libnativebridge/native_bridge.cc
++++ b/libnativebridge/native_bridge.cc
+@@ -954,13 +954,68 @@ static inline void* load_arm_lib(native_bridge_namespace_t* ns)
+ }
+ #endif
+ 
++class  __attribute__((visibility("hidden"))) HotFix {
++  typedef void Func(const char* libpath);
++  typedef bool bstIsHotFixApp(const char* callingPackage);
++  void*  m_handle = nullptr;
++  Func*  m_func_a = nullptr;
++  Func*  m_func_b = nullptr;
++
++public:
++  HotFix(const char* pkgname, const char* libpath = nullptr) __attribute__((always_inline)) {
++   if (pkgname == nullptr || *pkgname == 0) return;
++#if defined(__ANDROID__)
++    bool need_patch = false;
++    const char* libBinder = "libbinder.so";
++    void* handleBinder = OpenSystemLibrary(libBinder, RTLD_NOW);
++    if (handleBinder == nullptr) return;
++    bstIsHotFixApp* func_isHotFixApp = reinterpret_cast<bstIsHotFixApp*>(dlsym(handleBinder, "bstIsHotFixApp"));
++    if(func_isHotFixApp){
++       need_patch = func_isHotFixApp(pkgname);
++    }
++    dlclose(handleBinder);
++#else
++    bool need_patch = false;
++#endif
++    if (!need_patch) return;
++ const char* lib = sizeof(void*) == 8 ? "/data/downloads/.hpp/libhpp64.so" : "/data/downloads/.hpp/libhpp32.so";
++    void* handle = OpenSystemLibrary(lib, RTLD_NOW);
++    if (handle == nullptr) return;
++
++    Func* func_a = reinterpret_cast<Func*>(dlsym(handle, "hppa"));
++    Func* func_b = reinterpret_cast<Func*>(dlsym(handle, "hppb"));
++
++    if (func_a && func_b) {
++      m_handle  = handle;
++      m_func_a  = func_a;
++      m_func_b  = func_b;
++      if (libpath) patch_before_loading_lib(libpath);
++      return;
++    }
++    dlclose(handle);
++  }
++
++  ~HotFix() { if (m_handle) dlclose(m_handle); }
++
++  void patch_before_loading_lib(const char* libpath) const {
++    if (m_func_b) m_func_b(libpath);
++  }
++
++  void patch_after_loading_lib(const char* libpath) const {
++    if (m_func_a) m_func_a(libpath);
++  }
++};
++
+ void* NativeBridgeLoadLibraryExt(const char* libpath, int flag, native_bridge_namespace_t* ns) {
+   if (NativeBridgeInitialized()) {
+     if (isCompatibleWith(NAMESPACE_VERSION)) {
+ #if defined(__LP64__) && defined(__ANDROID__)
+       static ArmHandle ah(load_arm_lib(ns));
+ #endif
+-      return callbacks->loadLibraryExt(libpath, flag, ns);
++      static const HotFix hotfix(g_pkgname, libpath);
++      auto ret = callbacks->loadLibraryExt(libpath, flag, ns);
++      if (ret) hotfix.patch_after_loading_lib(libpath);
++      return ret;
+     } else {
+       ALOGE("not compatible with version %d, cannot load library in namespace", NAMESPACE_VERSION);
+     }
+-- 
+2.34.1
+

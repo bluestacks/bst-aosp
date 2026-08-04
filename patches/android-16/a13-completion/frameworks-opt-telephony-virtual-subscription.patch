@@ -1,0 +1,257 @@
+From 2e929cdce086df0cf42ad3e99ce030bb15ae12d1 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Sat, 1 Aug 2026 19:22:33 +0800
+Subject: [PATCH] [A16] Restore BlueStacks virtual SIM subscription
+
+---
+ .../SubscriptionManagerService.java           | 120 ++++++++++++++++--
+ 1 file changed, 110 insertions(+), 10 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/subscription/SubscriptionManagerService.java b/src/java/com/android/internal/telephony/subscription/SubscriptionManagerService.java
+index 4c12127948..9ef7573b3b 100644
+--- a/src/java/com/android/internal/telephony/subscription/SubscriptionManagerService.java
++++ b/src/java/com/android/internal/telephony/subscription/SubscriptionManagerService.java
+@@ -85,6 +85,7 @@ import android.telephony.euicc.EuiccManager;
+ import android.text.TextUtils;
+ import android.util.ArraySet;
+ import android.util.Base64;
++import android.util.BstUtils;
+ import android.util.EventLog;
+ import android.util.IndentingPrintWriter;
+ import android.util.LocalLog;
+@@ -155,6 +156,9 @@ public class SubscriptionManagerService extends ISub.Stub {
+     private static final String LOG_TAG = "SMSVC";
+     private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
+     private static final String BOOT_ALLOW_MOCK_MODEM_PROPERTY = "ro.boot.radio.allow_mock_modem";
++    private static final String BST_TELEPHONY_PROPERTY = "bst.config.enable_telephony";
++    private static final int BST_SUBSCRIPTION_ID = 1;
++    private static final int BST_SLOT_INDEX = 0;
+ 
+     private static final int CHECK_BOOTSTRAP_TIMER_IN_MS = 20 * 60 * 1000; // 20 minutes
+     private static CountDownTimer bootstrapProvisioningTimer;
+@@ -869,6 +873,49 @@ public class SubscriptionManagerService extends ISub.Stub {
+         return result.build();
+     }
+ 
++    private static boolean isBstTelephonyEnabled() {
++        return SystemProperties.getBoolean(BST_TELEPHONY_PROPERTY, true);
++    }
++
++    @NonNull
++    private SubscriptionInfo createBstSubscriptionInfo() {
++        String iccId = TextUtils.emptyIfNull(BstUtils.getBstSimSerialNumber());
++        String operatorNumeric = SystemProperties.get("gsm.operator.numeric", "310260");
++        if (!operatorNumeric.matches("[0-9]{5,6}")) {
++            operatorNumeric = "310260";
++        }
++
++        String carrierName = SystemProperties.get("gsm.operator.alpha", "T-Mobile");
++        if (TextUtils.isEmpty(carrierName)) {
++            carrierName = "T-Mobile";
++        }
++        String countryIso = SystemProperties.get("gsm.operator.iso-country", "us");
++        if (TextUtils.isEmpty(countryIso)) {
++            countryIso = "us";
++        }
++
++        return new SubscriptionInfoInternal.Builder()
++                .setId(BST_SUBSCRIPTION_ID)
++                .setIccId(iccId)
++                .setSimSlotIndex(BST_SLOT_INDEX)
++                .setDisplayName("SIM 1")
++                .setCarrierName(carrierName)
++                .setNumber("")
++                .setMcc(operatorNumeric.substring(0, 3))
++                .setMnc(operatorNumeric.substring(3))
++                .setCountryIso(countryIso)
++                .setCardString(iccId)
++                .setUiccApplicationsEnabled(1)
++                .build()
++                .toSubscriptionInfo();
++    }
++
++    private boolean shouldUseBstSubscription() {
++        return isBstTelephonyEnabled() && mSlotIndexToSubId.values().stream()
++                .map(mSubscriptionDatabaseManager::getSubscriptionInfoInternal)
++                .noneMatch(subInfo -> subInfo != null && subInfo.isActive());
++    }
++
+     /**
+      * Get the stripped ICCID, which sometimes ended with 'F'. Also not doing this if the ICCID
+      * is MAC address (used by texting through bluetooth).
+@@ -1963,7 +2010,13 @@ public class SubscriptionManagerService extends ISub.Stub {
+                         callingPackage, callingFeatureId, "getAllSubInfoList"))
+                 .sorted(Comparator.comparing(SubscriptionInfo::getSimSlotIndex)
+                         .thenComparing(SubscriptionInfo::getSubscriptionId))
+-                .collect(Collectors.toList());
++                .collect(Collectors.collectingAndThen(Collectors.toList(), result -> {
++                    if (result.isEmpty() && shouldUseBstSubscription()) {
++                        result.add(conditionallyRemoveIdentifiers(createBstSubscriptionInfo(),
++                                callingPackage, callingFeatureId, "getAllSubInfoList"));
++                    }
++                    return result;
++                }));
+     }
+ 
+     /**
+@@ -2003,6 +2056,10 @@ public class SubscriptionManagerService extends ISub.Stub {
+             return conditionallyRemoveIdentifiers(subInfo.toSubscriptionInfo(), callingPackage,
+                     callingFeatureId, "getActiveSubscriptionInfo");
+         }
++        if (subId == BST_SUBSCRIPTION_ID && shouldUseBstSubscription()) {
++            return conditionallyRemoveIdentifiers(createBstSubscriptionInfo(), callingPackage,
++                    callingFeatureId, "getActiveSubscriptionInfo");
++        }
+         return null;
+     }
+ 
+@@ -2037,7 +2094,10 @@ public class SubscriptionManagerService extends ISub.Stub {
+             SubscriptionInfoInternal subInfo = mSubscriptionDatabaseManager
+                     .getSubscriptionInfoInternalByIccId(iccId);
+ 
+-            return (subInfo != null && subInfo.isActive()) ? subInfo.toSubscriptionInfo() : null;
++            if (subInfo != null && subInfo.isActive()) return subInfo.toSubscriptionInfo();
++            SubscriptionInfo bstSubInfo = createBstSubscriptionInfo();
++            return shouldUseBstSubscription() && iccId.equals(bstSubInfo.getIccId())
++                    ? bstSubInfo : null;
+ 
+         } finally {
+             Binder.restoreCallingIdentity(identity);
+@@ -2088,6 +2148,10 @@ public class SubscriptionManagerService extends ISub.Stub {
+             return conditionallyRemoveIdentifiers(subInfo.toSubscriptionInfo(), callingPackage,
+                     callingFeatureId, "getActiveSubscriptionInfoForSimSlotIndex");
+         }
++        if (slotIndex == BST_SLOT_INDEX && shouldUseBstSubscription()) {
++            return conditionallyRemoveIdentifiers(createBstSubscriptionInfo(), callingPackage,
++                    callingFeatureId, "getActiveSubscriptionInfoForSimSlotIndex");
++        }
+ 
+         return null;
+     }
+@@ -2136,7 +2200,7 @@ public class SubscriptionManagerService extends ISub.Stub {
+         if (isForAllProfiles) {
+             enforcePermissionAccessAllUserProfiles();
+         }
+-        return getSubscriptionInfoStreamAsUser(isForAllProfiles
++        List<SubscriptionInfo> result = getSubscriptionInfoStreamAsUser(isForAllProfiles
+                 ? UserHandle.ALL : BINDER_WRAPPER.getCallingUserHandle())
+                 .filter(SubscriptionInfoInternal::isActive)
+                 // Remove the identifier if the caller does not have sufficient permission.
+@@ -2147,6 +2211,11 @@ public class SubscriptionManagerService extends ISub.Stub {
+                 .sorted(Comparator.comparing(SubscriptionInfo::getSimSlotIndex)
+                         .thenComparing(SubscriptionInfo::getSubscriptionId))
+                 .collect(Collectors.toList());
++        if (result.isEmpty() && shouldUseBstSubscription()) {
++            result.add(conditionallyRemoveIdentifiers(createBstSubscriptionInfo(), callingPackage,
++                    callingFeatureId, "getActiveSubscriptionInfoList"));
++        }
++        return result;
+     }
+ 
+     /**
+@@ -2181,8 +2250,12 @@ public class SubscriptionManagerService extends ISub.Stub {
+ 
+         enforceTelephonyFeatureWithException(callingPackage, "getActiveSubInfoCount");
+ 
+-        return getActiveSubIdListAsUser(false, isForAllProfiles
++        int count = getActiveSubIdListAsUser(false, isForAllProfiles
+                 ? UserHandle.ALL : BINDER_WRAPPER.getCallingUserHandle()).length;
++        if (count == 0 && shouldUseBstSubscription()) {
++            return 1;
++        }
++        return count;
+     }
+ 
+     /** @throws SecurityException if caller doesn't have one of the requested permissions. */
+@@ -3070,6 +3143,9 @@ public class SubscriptionManagerService extends ISub.Stub {
+         for (Map.Entry<Integer, Integer> entry : mSlotIndexToSubId.entrySet()) {
+             if (entry.getValue() == subId) return entry.getKey();
+         }
++        if (subId == BST_SUBSCRIPTION_ID && shouldUseBstSubscription()) {
++            return BST_SLOT_INDEX;
++        }
+ 
+         return SubscriptionManager.INVALID_SIM_SLOT_INDEX;
+     }
+@@ -3095,8 +3171,13 @@ public class SubscriptionManagerService extends ISub.Stub {
+             return SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+         }
+ 
+-        return mSlotIndexToSubId.getOrDefault(slotIndex,
++        int subId = mSlotIndexToSubId.getOrDefault(slotIndex,
+                 SubscriptionManager.INVALID_SUBSCRIPTION_ID);
++        if (!SubscriptionManager.isValidSubscriptionId(subId)
++                && slotIndex == BST_SLOT_INDEX && shouldUseBstSubscription()) {
++            return BST_SUBSCRIPTION_ID;
++        }
++        return subId;
+     }
+ 
+     /**
+@@ -3159,7 +3240,11 @@ public class SubscriptionManagerService extends ISub.Stub {
+         enforceTelephonyFeatureWithException(getCurrentPackageName(),
+                 "getDefaultSubIdAsUser");
+ 
+-        return getDefaultAsUser(userId, mDefaultSubId.get());
++        int subId = getDefaultAsUser(userId, mDefaultSubId.get());
++        if (!SubscriptionManager.isValidSubscriptionId(subId) && shouldUseBstSubscription()) {
++            return BST_SUBSCRIPTION_ID;
++        }
++        return subId;
+     }
+ 
+     /**
+@@ -3216,7 +3301,11 @@ public class SubscriptionManagerService extends ISub.Stub {
+      */
+     @Override
+     public int getDefaultDataSubId() {
+-        return mDefaultDataSubId.get();
++        int subId = mDefaultDataSubId.get();
++        if (!SubscriptionManager.isValidSubscriptionId(subId) && shouldUseBstSubscription()) {
++            return BST_SUBSCRIPTION_ID;
++        }
++        return subId;
+     }
+ 
+     /**
+@@ -3351,7 +3440,11 @@ public class SubscriptionManagerService extends ISub.Stub {
+      */
+     @Override
+     public int getDefaultSmsSubIdAsUser(@UserIdInt int userId) {
+-        return getDefaultAsUser(userId, mDefaultSmsSubId.get());
++        int subId = getDefaultAsUser(userId, mDefaultSmsSubId.get());
++        if (!SubscriptionManager.isValidSubscriptionId(subId) && shouldUseBstSubscription()) {
++            return BST_SUBSCRIPTION_ID;
++        }
++        return subId;
+     }
+ 
+     /**
+@@ -3417,7 +3510,11 @@ public class SubscriptionManagerService extends ISub.Stub {
+         }
+ 
+         // UserHandle.ALL because this API is exposed as system API.
+-        return getActiveSubIdListAsUser(visibleOnly, UserHandle.ALL);
++        int[] subIds = getActiveSubIdListAsUser(visibleOnly, UserHandle.ALL);
++        if (subIds.length == 0 && shouldUseBstSubscription()) {
++            return new int[] {BST_SUBSCRIPTION_ID};
++        }
++        return subIds;
+     }
+ 
+     /**
+@@ -3653,7 +3750,10 @@ public class SubscriptionManagerService extends ISub.Stub {
+         try {
+             SubscriptionInfoInternal subInfo = mSubscriptionDatabaseManager
+                     .getSubscriptionInfoInternal(subId);
+-            return subInfo != null && subInfo.isActive();
++            if (subInfo != null && subInfo.isActive()) {
++                return true;
++            }
++            return subId == BST_SUBSCRIPTION_ID && shouldUseBstSubscription();
+         } finally {
+             Binder.restoreCallingIdentity(identity);
+         }
+-- 
+2.34.1
+

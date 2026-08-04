@@ -1,0 +1,45 @@
+diff --git a/src/com/android/providers/downloads/RetryDownloadReceiver.java b/src/com/android/providers/downloads/RetryDownloadReceiver.java
+index 74e24aca..be59c684 100644
+--- a/src/com/android/providers/downloads/RetryDownloadReceiver.java
++++ b/src/com/android/providers/downloads/RetryDownloadReceiver.java
+@@ -19,7 +19,6 @@ package com.android.providers.downloads;
+ import static com.android.providers.downloads.Constants.TAG;
+ import static com.android.providers.downloads.Helpers.getAsyncHandler;
+ 
+-import android.Manifest;
+ import android.app.DownloadManager;
+ import android.content.BroadcastReceiver;
+ import android.content.ContentResolver;
+@@ -32,9 +31,14 @@ import android.os.Process;
+ import android.provider.Downloads;
+ import android.util.Log;
+ 
++import java.util.ArrayList;
++import java.util.List;
++
+ /** Handles host requests to retry pending downloads without exporting system broadcast handlers. */
+ public class RetryDownloadReceiver extends BroadcastReceiver {
+     private static final long ALL_DOWNLOADS = -1;
++    private static final String ACCESS_DOWNLOAD_MANAGER_ADVANCED =
++            "android.permission.ACCESS_DOWNLOAD_MANAGER_ADVANCED";
+ 
+     @Override
+     public void onReceive(Context context, Intent intent) {
+@@ -65,7 +68,7 @@ public class RetryDownloadReceiver extends BroadcastReceiver {
+                 || uid == Process.SYSTEM_UID
+                 || uid == Process.myUid()
+                 || context.checkPermission(
+-                        Manifest.permission.ACCESS_DOWNLOAD_MANAGER_ADVANCED,
++                        ACCESS_DOWNLOAD_MANAGER_ADVANCED,
+                         -1,
+                         uid) == PackageManager.PERMISSION_GRANTED;
+     }
+@@ -76,7 +79,7 @@ public class RetryDownloadReceiver extends BroadcastReceiver {
+         final StringBuilder selection = new StringBuilder()
+                 .append(Downloads.Impl.COLUMN_STATUS)
+                 .append(" IN (?, ?, ?)");
+-        final java.util.List<String> selectionArgs = new java.util.ArrayList<>();
++        final List<String> selectionArgs = new ArrayList<>();
+         selectionArgs.add(Integer.toString(Downloads.Impl.STATUS_WAITING_TO_RETRY));
+         selectionArgs.add(Integer.toString(Downloads.Impl.STATUS_WAITING_FOR_NETWORK));
+         selectionArgs.add(Integer.toString(Downloads.Impl.STATUS_QUEUED_FOR_WIFI));

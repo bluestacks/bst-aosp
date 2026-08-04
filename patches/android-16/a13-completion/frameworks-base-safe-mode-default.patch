@@ -1,0 +1,15 @@
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 30f0792ceb01..10115ef93761 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -5951,6 +5951,10 @@ public class WindowManagerService extends IWindowManager.Stub
+             }
+         } catch (IllegalArgumentException e) {
+         }
++        // App-player ignores accidental safe-mode key states unless explicitly debugging them.
++        if (SystemProperties.getInt("bst.debug.safemode", 0) <= 0) {
++            mSafeMode = false;
++        }
+         if (mSafeMode) {
+             ProtoLog.i(WM_ERROR, "SAFE MODE ENABLED (menu=%d s=%d dpad=%d"
+                     + " trackball=%d)", menuState, sState, dpadState, trackballState);

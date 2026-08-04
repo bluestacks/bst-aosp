@@ -1,0 +1,238 @@
+From 7fdcf1219e70b038e3ea5980b04cdb96821b2ef3 Mon Sep 17 00:00:00 2001
+From: jace-bst <88761019+jace-bst@users.noreply.github.com>
+Date: Tue, 25 Mar 2025 14:55:17 +0800
+Subject: [PATCH 175/224] ROB-15990: Support extractNativeLibs entry to decide
+ whether to extract Native libraries from App (#181)
+
+Co-authored-by: jace@bluestacks.com <jace-bst>
+---
+ .../android/content/pm/PackageParser.java     | 19 +++++--
+ .../content/pm/parsing/ApkLiteParseUtils.java | 23 ++++++--
+ .../bluestacks/os/BstFilterAppsManager.java   | 16 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 52 +++++++++++++++++++
+ 5 files changed, 103 insertions(+), 8 deletions(-)
+
+diff --git a/core/java/android/content/pm/PackageParser.java b/core/java/android/content/pm/PackageParser.java
+index 4e53a0b8c49f..d790518e2d33 100644
+--- a/core/java/android/content/pm/PackageParser.java
++++ b/core/java/android/content/pm/PackageParser.java
+@@ -71,6 +71,7 @@ import android.content.res.XmlResourceParser;
+ import android.os.Build;
+ import android.os.Bundle;
+ import android.os.Debug;
++import android.os.Process;
+ import android.os.FileUtils;
+ import android.os.Parcel;
+ import android.os.Parcelable;
+@@ -1712,10 +1713,6 @@ public class PackageParser {
+                     }
+                     if ("extractNativeLibs".equals(attr)) {
+                         extractNativeLibs = attrs.getAttributeBooleanValue(i, true);
+-                        // ROB-15882 extract native libs for Pokemon app to avoid emulator detection.
+-                        if (packageSplit.first.equals("jp.pokemon.pokemontcgp")) {
+-                            extractNativeLibs = true;
+-                        }
+                     }
+                     if ("useEmbeddedDex".equals(attr)) {
+                         useEmbeddedDex = attrs.getAttributeBooleanValue(i, false);
+@@ -1765,6 +1762,20 @@ public class PackageParser {
+             }
+         }
+ 
++        // ROB-15882 extract native libs for Pokemon app to avoid emulator detection.
++        try {
++            int ppid = android.os.Process.myPpid();
++            if (ppid != 1 && ppid != 2 && !packageSplit.first.equals("system_server")) {
++                IBstFilterAppsService BstFilter = IBstFilterAppsService.Stub.asInterface(ServiceManager.getService(Context.BST_FILTER_APPS));
++                if (BstFilter != null && BstFilter.isExtractNativeLibs(packageSplit.first)) {
++                    extractNativeLibs = true;
++                }
++            }
++        } catch (Exception ex) {
++            Slog.d(TAG, ex.getMessage());
++            ex.printStackTrace();
++        }
++
+         // Check to see if overlay should be excluded based on system property condition
+         if (!checkRequiredSystemProperties(requiredSystemPropertyName,
+                 requiredSystemPropertyValue)) {
+diff --git a/core/java/android/content/pm/parsing/ApkLiteParseUtils.java b/core/java/android/content/pm/parsing/ApkLiteParseUtils.java
+index dfde22a7eda0..0097b773284d 100644
+--- a/core/java/android/content/pm/parsing/ApkLiteParseUtils.java
++++ b/core/java/android/content/pm/parsing/ApkLiteParseUtils.java
+@@ -22,6 +22,7 @@ import static android.os.Trace.TRACE_TAG_PACKAGE_MANAGER;
+ 
+ import android.annotation.NonNull;
+ import android.app.admin.DeviceAdminReceiver;
++import android.content.Context;
+ import android.content.pm.PackageInfo;
+ import android.content.pm.PackageManager;
+ import android.content.pm.SigningDetails;
+@@ -32,6 +33,8 @@ import android.content.res.ApkAssets;
+ import android.content.res.XmlResourceParser;
+ import android.os.Build;
+ import android.os.Trace;
++import android.os.Process;
++import android.os.ServiceManager;
+ import android.text.TextUtils;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
+@@ -57,6 +60,8 @@ import java.util.List;
+ import java.util.Objects;
+ import java.util.Set;
+ 
++import com.bluestacks.os.IBstFilterAppsService;
++
+ /** @hide */
+ public class ApkLiteParseUtils {
+ 
+@@ -481,10 +486,6 @@ public class ApkLiteParseUtils {
+                         false);
+                 extractNativeLibs = parser.getAttributeBooleanValue(ANDROID_RES_NAMESPACE,
+                         "extractNativeLibs", true);
+-                // ROB-15882 extract native libs for Pokemon app to avoid emulator detection.
+-                if (packageSplit.first.equals("jp.pokemon.pokemontcgp")) {
+-                    extractNativeLibs = true;
+-                }
+                 useEmbeddedDex = parser.getAttributeBooleanValue(ANDROID_RES_NAMESPACE,
+                         "useEmbeddedDex", false);
+                 rollbackDataPolicy = parser.getAttributeIntValue(ANDROID_RES_NAMESPACE,
+@@ -596,6 +597,20 @@ public class ApkLiteParseUtils {
+             }
+         }
+ 
++        // ROB-15882 extract native libs for Pokemon app to avoid emulator detection.
++        try {
++            int ppid = android.os.Process.myPpid();
++            if (ppid != 1 && ppid != 2 && !packageSplit.first.equals("system_server")) {
++                IBstFilterAppsService BstFilter = IBstFilterAppsService.Stub.asInterface(ServiceManager.getService(Context.BST_FILTER_APPS));
++                if (BstFilter != null && BstFilter.isExtractNativeLibs(packageSplit.first)) {
++                    extractNativeLibs = true;
++                }
++            }
++        } catch (Exception ex) {
++            Slog.d(TAG, ex.getMessage());
++            ex.printStackTrace();
++        }
++
+         // Check to see if overlay should be excluded based on system property condition
+         if ((flags & FrameworkParsingPackageUtils.PARSE_IGNORE_OVERLAY_REQUIRED_SYSTEM_PROPERTY)
+                 == 0 && !FrameworkParsingPackageUtils.checkRequiredSystemProperties(
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index c38bb3591194..68a081deead0 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1905,4 +1905,20 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * Check the value of extractNativeLibs to determine whether native libraries need to be extracted for the application.
++     * @hide
++     */
++    public boolean isExtractNativeLibs(String pkgName)
++    {
++       try {
++           return mService.isExtractNativeLibs(pkgName);
++       } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++       }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 271fb864dd5d..9840a51d3597 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -123,4 +123,5 @@ interface IBstFilterAppsService
+     boolean isUnreal5App(String pkgName);
+     boolean isUE5PBDisabled(String pkgName);
+     boolean isBptcApp(String pkgName);
++    boolean isExtractNativeLibs(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 32811b70cfa2..ff2ff3c2b69c 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -196,6 +196,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Map<String, Boolean>  mUnreal5AppMap = new HashMap<String, Boolean>();
+     private Set<String>           mUE5PBDisabledAppList = new TreeSet<String>();
+     private Set<String>   	      mBptcAppList = new TreeSet<String>();
++    private Set<String>           mExtractNativeLibsAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2678,6 +2679,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mBptcAppList,pkgException);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("extractNativeLibs"))) {
++                                    synchronized (mExtractNativeLibsAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mExtractNativeLibsAppList \n");
++                                        mExtractNativeLibsAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mExtractNativeLibsAppList \n");
++                                            mExtractNativeLibsAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mExtractNativeLibsAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3401,6 +3418,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mBptcAppList.clear();
+         }
+ 
++        synchronized (mExtractNativeLibsAppList)
++        {
++           mExtractNativeLibsAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7774,4 +7796,34 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * Check the value of extractNativeLibs to determine whether native libraries need to be extracted for the application.
++     * @hide
++     */
++    public boolean isExtractNativeLibs(String pkgName)
++    {
++        boolean res = false;
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in ExtractNativeLibsApp list\n");
++        initLists();
++
++        synchronized (mExtractNativeLibsAppList)
++        {
++            if (mExtractNativeLibsAppList.contains(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in ExtractNativeLibsApp List\n");
++                res = true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mExtractNativeLibsAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in ExtractNativeLibsApp List\n");
++                    res = true ;
++                }
++            }
++        }
++        return res;
++    }
+ }

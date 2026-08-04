@@ -1,0 +1,104 @@
+From f577c7cec551bd56566990650b5e6745a33ad2e0 Mon Sep 17 00:00:00 2001
+From: michael-bst <michael@bluestacks.com>
+Date: Mon, 26 May 2025 14:42:15 +0800
+Subject: [PATCH 188/224] ROB-16756,ROB-16757: modify input device name to pass
+ emulator detection. (#193)
+
+---
+ core/java/android/view/InputDevice.java | 63 ++++++++++++++++++++++++-
+ 1 file changed, 62 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 core/java/android/view/InputDevice.java
+
+diff --git a/core/java/android/view/InputDevice.java b/core/java/android/view/InputDevice.java
+old mode 100644
+new mode 100755
+index 71644120cb43..c99357893a1f
+--- a/core/java/android/view/InputDevice.java
++++ b/core/java/android/view/InputDevice.java
+@@ -33,6 +33,8 @@ import android.os.Parcel;
+ import android.os.Parcelable;
+ import android.os.Vibrator;
+ import android.os.VibratorManager;
++import android.util.BstUtils;
++import android.util.Slog;
+ 
+ import com.android.internal.annotations.GuardedBy;
+ import com.android.internal.annotations.VisibleForTesting;
+@@ -687,6 +689,47 @@ public final class InputDevice implements Parcelable {
+      * @return The input device name.
+      */
+     public String getName() {
++
++        // BST: Hiding Bluestacks string from input device Names. Some apps are querying for all InputDevices
++        // and try to read device names to determine bluestacks platform.
++        // Currently modifying Bluestacks Virtual Mouse/Virtual Touch to 'Synaptics'
++
++        int pid = Binder.getCallingPid();
++        String callingApp = BstUtils.getAppNameFromPid(pid);
++        String modifiedDeviceName = "Synaptics";
++        boolean exposeInputDevices =  false;
++        IBstFilterAppsService mBstFilter = IBstFilterAppsService.Stub.asInterface(
++                ServiceManager.getService(Context.BST_FILTER_APPS));
++        try {
++            exposeInputDevices = mBstFilter.areInputDevicesExposed(callingApp);
++        } catch (Exception ex) {
++            Slog.d(TAG, ex.getMessage());
++            ex.printStackTrace();
++        }
++        // Allow packages of com.bluestacks/com.uncube or with SYSTEM_UID to access input device names.
++        // Else, depending on the exposeInputDevices property we will hide or show the keyboard/mouse
++        // input devices to apps. Also when exposing input devices we will make sure that BlueStacks and
++        // VirtualBox keywords are not present in the device names.
++
++
++        if ((mName.toLowerCase().startsWith("bluestacks") || mName.toLowerCase().startsWith("virtualbox")
++                    || mName.toLowerCase().contains("keyboard") || mName.toLowerCase().contains("mouse")) &&
++                (Binder.getCallingUid() != Process.SYSTEM_UID) && (Binder.getCallingUid() >= 10000) &&
++                callingApp != null && !callingApp.startsWith("com.bluestacks") && !callingApp.startsWith("com.uncube")) {
++            if (exposeInputDevices) {
++                if (mName.startsWith("BlueStacks") || mName.startsWith("VirtualBox")) {
++                    if (mName.toLowerCase().contains("keyboard"))
++                        return modifiedDeviceName + " keyboard";
++                    else if (mName.toLowerCase().contains("mouse"))
++                        return modifiedDeviceName + " mouse";
++                    else
++                        return modifiedDeviceName + "-" + mId;
++                }
++            } else {
++                return modifiedDeviceName + "-" + mId;
++            }
++        }
++
+         return mName;
+     }
+ 
+@@ -1179,10 +1222,28 @@ public final class InputDevice implements Parcelable {
+         return 0;
+     }
+ 
++    private String getModifiedDeviceName() {
++        if (Binder.getCallingUid() < 10000) {
++            return mName;
++        }
++
++        int pid = Binder.getCallingPid();
++        String callingApp = BstUtils.getAppNameFromPid(pid);
++        String modifiedDeviceName = "Synaptics";
++
++        if ((mName.toLowerCase().startsWith("bluestacks") || mName.toLowerCase().startsWith("virtualbox")
++             || mName.toLowerCase().contains("keyboard") || mName.toLowerCase().contains("mouse"))) {
++                if (callingApp != null && callingApp.contains("lineage2m")) {
++                    return modifiedDeviceName + "-" + mId;
++                }
++        }
++        return mName;
++    }
++
+     @Override
+     public String toString() {
+         StringBuilder description = new StringBuilder();
+-        description.append("Input Device ").append(mId).append(": ").append(mName).append("\n");
++        description.append("Input Device ").append(mId).append(": ").append(getModifiedDeviceName()).append("\n");
+         description.append("  Descriptor: ").append(mDescriptor).append("\n");
+         description.append("  Generation: ").append(mGeneration).append("\n");
+         description.append("  Location: ").append(mIsExternal ? "external" : "built-in").append("\n");

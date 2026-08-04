@@ -1,0 +1,13 @@
+diff --git a/services/core/java/com/android/server/power/ShutdownThread.java b/services/core/java/com/android/server/power/ShutdownThread.java
+index 89470e69fd33..640214b89659 100644
+--- a/services/core/java/com/android/server/power/ShutdownThread.java
++++ b/services/core/java/com/android/server/power/ShutdownThread.java
+@@ -370,7 +370,7 @@ public final class ShutdownThread extends Thread {
+         pd.setCancelable(false);
+         pd.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
+ 
+-        pd.show();
++        // The host owns app-player shutdown UX; keep the dialog object hidden in the guest.
+         return pd;
+     }
+ 

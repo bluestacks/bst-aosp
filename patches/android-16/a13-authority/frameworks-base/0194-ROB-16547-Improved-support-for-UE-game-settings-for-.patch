@@ -1,0 +1,107 @@
+From 822d88c74b87e50aff8cc18dad9e4b8ae6ea953a Mon Sep 17 00:00:00 2001
+From: jace-bst <88761019+jace-bst@users.noreply.github.com>
+Date: Fri, 4 Jul 2025 13:34:32 +0800
+Subject: [PATCH 194/224] ROB-16547: Improved support for UE game settings for
+ maximum fps (#201)
+
+Co-authored-by: jace@bluestacks.com <jace-bst>
+---
+ core/java/android/app/ActivityThread.java | 78 +++++++++++++++++++++++
+ 1 file changed, 78 insertions(+)
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index a69fd7b372dc..28db279eeff0 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -451,6 +451,51 @@ public final class ActivityThread extends ClientTransactionHandler
+     private final Map<IBinder, Integer> mLastReportedWindowingMode = Collections.synchronizedMap(
+             new ArrayMap<>());
+ 
++    private int mMaxFps = 60;
++
++    private void myUESleep(long ms) {
++        try {
++            Thread.sleep(ms);
++        } catch (Exception e) {}
++    }
++
++    private int processUEHighFPS(String processName, int fps) {
++        try {
++            WeakReference<LoadedApk> weakReference = (WeakReference)this.mPackages.get(processName);
++            if (weakReference == null)
++                return 0;
++            ClassLoader classLoader = ((LoadedApk)weakReference.get()).getClassLoader();
++            Class<?> clazz = null;
++            try {
++                clazz = classLoader.loadClass("com.epicgames.unreal.GameActivity");
++            } catch (ClassNotFoundException e) {
++                try {
++                    clazz = classLoader.loadClass("com.epicgames.ue4.GameActivity");
++                } catch (ClassNotFoundException ex) {
++                    return 0;
++                }
++            }
++            if (clazz == null)
++                return 0;
++            Method method = clazz.getMethod("nativeConsoleCommand", new Class[] { String.class });
++            if (method == null)
++                return 0;
++            Object obj = clazz.getConstructor(new Class[0]).newInstance(new Object[0]);
++            if (obj == null)
++                return 0;
++            method.setAccessible(true);
++
++            String maxFpsCommand = "t.MaxFPS " + fps;
++            String framePaceCommand   = "r.SetFramePace " + fps;
++            method.invoke(obj, maxFpsCommand);
++            method.invoke(obj, framePaceCommand);
++
++        } catch (Exception exception) {
++            exception.printStackTrace();
++        }
++        return 0;
++    }
++
+     private static final class ProviderKey {
+         final String authority;
+         final int userId;
+@@ -6882,6 +6927,39 @@ public final class ActivityThread extends ClientTransactionHandler
+                 throw e.rethrowFromSystemServer();
+             }
+         }
++
++        if (!data.appInfo.isPrivilegedApp() && !data.appInfo.isSystemApp() && (bfam != null)) {
++            do {
++                final String className = data.appInfo.className;
++                if (!className.equals("com.epicgames.unreal.GameApplication") && !className.equals("com.epicgames.ue4.GameApplication")) break;
++
++                final int mode = bfam.getXperfMode(data.appInfo.uid);
++                final int enableHighFps = SystemProperties.getInt("bst.enable_high_fps", 0);
++                final boolean enable = (mode == 2) || (mode == 1 && enableHighFps > 0);
++                if (!enable) break;
++
++            mMaxFps = SystemProperties.getInt("bst.max_fps", 60);
++                if (mMaxFps > 120) {
++                    mMaxFps = 120;
++                } else if (mMaxFps < 60) {
++                    break;
++                }
++                Log.w(TAG, "mMaxFps = " + mMaxFps);
++
++                (new Thread(new Runnable() {
++                    public void run() {
++                        while (true) {
++                            (new Handler(Looper.getMainLooper())).post(new Runnable() {
++                                public void run() {
++                                    ActivityThread.this.processUEHighFPS(data.processName, mMaxFps);
++                                }
++                            });
++                            ActivityThread.this.myUESleep(1000L);
++                        }
++                    }
++                })).start();
++            } while (false);
++        }
+     }
+ 
+     private void handleSetContentCaptureOptionsCallback(String packageName) {

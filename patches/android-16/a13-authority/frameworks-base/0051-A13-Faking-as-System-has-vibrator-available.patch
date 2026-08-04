@@ -1,0 +1,62 @@
+From f29e2908dd8dafbee1b6d80d6482d86b29962b36 Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Tue, 31 Oct 2023 16:28:40 +0800
+Subject: [PATCH 051/224] [A13] Faking as System has vibrator available.
+
+---
+ core/java/android/os/SystemVibrator.java | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/os/SystemVibrator.java b/core/java/android/os/SystemVibrator.java
+index bf72b1d7a035..95de18386bd7 100644
+--- a/core/java/android/os/SystemVibrator.java
++++ b/core/java/android/os/SystemVibrator.java
+@@ -16,12 +16,14 @@
+ 
+ package android.os;
+ 
++import android.app.ActivityThread;
+ import android.annotation.CallbackExecutor;
+ import android.annotation.NonNull;
+ import android.annotation.Nullable;
+ import android.compat.annotation.UnsupportedAppUsage;
+ import android.content.Context;
+ import android.hardware.vibrator.IVibrator;
++import android.os.RemoteException;
+ import android.util.ArrayMap;
+ import android.util.Log;
+ import android.util.Range;
+@@ -46,9 +48,12 @@ import java.util.function.Function;
+  */
+ public class SystemVibrator extends Vibrator {
+     private static final String TAG = "Vibrator";
++    private static boolean DEBUG = SystemProperties.getInt("bst.debug.vibrator", 0) > 0 ? true : false;
++    private static final boolean bst_enable_vibrator = true;
+ 
+     private final VibratorManager mVibratorManager;
+     private final Context mContext;
++    private final String mPackageName;
+ 
+     @GuardedBy("mBrokenListeners")
+     private final ArrayList<MultiVibratorStateListener> mBrokenListeners = new ArrayList<>();
+@@ -66,6 +71,7 @@ public class SystemVibrator extends Vibrator {
+         super(context);
+         mContext = context;
+         mVibratorManager = mContext.getSystemService(VibratorManager.class);
++        mPackageName = ActivityThread.currentPackageName();
+     }
+ 
+     @Override
+@@ -111,7 +117,11 @@ public class SystemVibrator extends Vibrator {
+             Log.w(TAG, "Failed to check if vibrator exists; no vibrator manager.");
+             return false;
+         }
+-        return mVibratorManager.getVibratorIds().length > 0;
++
++        boolean result = mVibratorManager.getVibratorIds().length > 0;
++        if (DEBUG) Log.d(TAG, "hasVibrator returns : " + result + " packageName: " + mPackageName + " myuid: " + Process.myUid());
++
++        return result || bst_enable_vibrator;
+     }
+ 
+     @Override

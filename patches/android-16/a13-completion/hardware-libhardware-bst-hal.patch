@@ -1,0 +1,36 @@
+From e2305d5c825f9d9a54059607c503951c233b0fab Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 22:43:31 +0800
+Subject: [PATCH] [A16] Prefer BlueStacks legacy HAL modules
+
+---
+ hardware.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/hardware.c b/hardware.c
+index a89077df..765dd21b 100644
+--- a/hardware.c
++++ b/hardware.c
+@@ -57,6 +57,7 @@
+  * led.trout.so
+  * led.msm7k.so
+  * led.ARMV6.so
++ * led.bst.so
+  * led.default.so
+  */
+ 
+@@ -259,6 +260,11 @@ int hw_get_module_by_class(const char *class_id, const char *inst,
+         }
+     }
+ 
++    /* BlueStacks legacy passthrough HALs take precedence over the default. */
++    if (hw_module_exists(path, sizeof(path), name, "bst") == 0) {
++        goto found;
++    }
++
+     /* Nothing found, try the default */
+     if (hw_module_exists(path, sizeof(path), name, "default") == 0) {
+         goto found;
+-- 
+2.34.1
+

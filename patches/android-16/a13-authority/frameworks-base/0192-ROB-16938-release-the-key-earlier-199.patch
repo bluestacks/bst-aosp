@@ -1,0 +1,42 @@
+From 6a7d3285bc650be71159859eb4ab39d56f4fdac8 Mon Sep 17 00:00:00 2001
+From: MarkJiang-bst <97725346+MarkJiang-bst@users.noreply.github.com>
+Date: Wed, 25 Jun 2025 15:33:28 +0800
+Subject: [PATCH 192/224] ROB-16938: release the key earlier (#199)
+
+---
+ core/java/android/view/ViewRootImpl.java | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/core/java/android/view/ViewRootImpl.java b/core/java/android/view/ViewRootImpl.java
+index 9e35970bb763..f5edcaa25370 100644
+--- a/core/java/android/view/ViewRootImpl.java
++++ b/core/java/android/view/ViewRootImpl.java
+@@ -6678,19 +6678,23 @@ public final class ViewRootImpl implements ViewParent,
+         }
+ 
+         private int processKeyEvent(QueuedInputEvent q) {
+-            KeyEvent event = (KeyEvent)q.mEvent;
++            final KeyEvent event = (KeyEvent)q.mEvent;
+ 
+             // ROB-16938: manually release the key to fix shooting issue when holding "Space' or "C' key in FreeFireMax.
+             int keyCode = event.getKeyCode();
+             int repeatCount = event.getRepeatCount();
+-            if ((keyCode == KeyEvent.KEYCODE_C || keyCode == KeyEvent.KEYCODE_SPACE) && repeatCount > 0) {
++            int keyAction = event.getAction();
++            if ((keyCode == KeyEvent.KEYCODE_C || keyCode == KeyEvent.KEYCODE_SPACE) && keyAction == KeyEvent.ACTION_DOWN) {
+                 int uid = Binder.getCallingUid();
+                 if (uid >= 10000) {
+                     String packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
+                     if (packageName != null && packageName.equals("com.dts.freefiremax")) {
+-                        if (repeatCount == 1) {
+-                            KeyEvent eventUp = KeyEvent.changeAction(event, KeyEvent.ACTION_UP);
+-                            event = eventUp;
++                        if (repeatCount == 0) {
++                            mView.postDelayed(() -> {
++                                KeyEvent eventUp = KeyEvent.changeAction(event, KeyEvent.ACTION_UP);
++                                eventUp = KeyEvent.changeTimeRepeat(eventUp, eventUp.getEventTime() + 60, eventUp.getRepeatCount());
++                                enqueueInputEvent(eventUp);
++                            }, 60);
+                         }
+                         else {
+                             return FINISH_HANDLED;

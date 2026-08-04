@@ -1,0 +1,26 @@
+From 9298914a72837ab0cb060d03ea50e788c62cc225 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Mon, 3 Aug 2026 20:36:02 +0800
+Subject: [PATCH] [A16] Allow preinstalled overlay permission grants
+
+Port A13 acc057e84d10 by adding the preinstalled protection flag to SYSTEM_ALERT_WINDOW while retaining its app-op gate.
+---
+ core/res/AndroidManifest.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index e934915593e9..d1b03106ab58 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -4544,7 +4544,7 @@
+     <permission android:name="android.permission.SYSTEM_ALERT_WINDOW"
+         android:label="@string/permlab_systemAlertWindow"
+         android:description="@string/permdesc_systemAlertWindow"
+-        android:protectionLevel="signature|setup|appop|installer|pre23|development" />
++        android:protectionLevel="signature|preinstalled|setup|appop|installer|pre23|development" />
+ 
+     <!-- @SystemApi @hide Allows an application to create windows using the type
+          {@link android.view.WindowManager.LayoutParams#TYPE_APPLICATION_OVERLAY},
+-- 
+2.34.1
+

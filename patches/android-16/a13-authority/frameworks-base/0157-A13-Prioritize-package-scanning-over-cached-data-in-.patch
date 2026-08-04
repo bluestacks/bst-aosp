@@ -1,0 +1,37 @@
+From e7d9b8c4884e62cb6967c49211c12f62de87adb1 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Wed, 8 Jan 2025 10:29:34 +0800
+Subject: [PATCH 157/224] [A13] Prioritize package scanning over cached data in
+ upgrade scenario
+
+We observed that in some cases, the mod-time of cached file is even newer
+than that of the package to be updated. This would lead to the newer
+package being ignored during the system upgrade.
+
+(cherry picked from commit 3dda714846910ce9929b4327a330b0b4949989e8)
+---
+ .../java/com/android/server/pm/parsing/PackageCacher.java     | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/parsing/PackageCacher.java b/services/core/java/com/android/server/pm/parsing/PackageCacher.java
+index f7a6eef29dee..e5451cf529bc 100644
+--- a/services/core/java/com/android/server/pm/parsing/PackageCacher.java
++++ b/services/core/java/com/android/server/pm/parsing/PackageCacher.java
+@@ -29,6 +29,7 @@ import android.util.Slog;
+ 
+ import com.android.internal.annotations.VisibleForTesting;
+ import com.android.server.pm.ApexManager;
++import com.android.server.pm.PackageManagerService;
+ import com.android.server.pm.parsing.pkg.PackageImpl;
+ import com.android.server.pm.parsing.pkg.ParsedPackage;
+ 
+@@ -166,7 +167,8 @@ public class PackageCacher {
+ 
+         try {
+             // If the cache is not up to date, return null.
+-            if (!isCacheUpToDate(packageFile, cacheFile)) {
++            if (PackageManagerService.bstIsFirstBootAfterUpgrade()
++                    || !isCacheUpToDate(packageFile, cacheFile)) {
+                 return null;
+             }
+ 

@@ -1,0 +1,64 @@
+From e17d18f399fa2ca52b874dc0aa6a93192ea413a7 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 12 Mar 2024 14:39:07 +0800
+Subject: [PATCH 126/224] [A13] ROB-11560 set Extreme and high fps by default
+ for martial egame
+
+---
+ .../android/app/SharedPreferencesImpl.java    | 29 +++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+
+diff --git a/core/java/android/app/SharedPreferencesImpl.java b/core/java/android/app/SharedPreferencesImpl.java
+index 4a034a2f93bc..2202549b1a51 100644
+--- a/core/java/android/app/SharedPreferencesImpl.java
++++ b/core/java/android/app/SharedPreferencesImpl.java
+@@ -433,6 +433,28 @@ final class SharedPreferencesImpl implements SharedPreferences {
+         }
+     }
+ 
++    // ROB-11560 set Extreme and high fps by default for martial egame
++    private int bstPatchForMartialEgameGetInt(String key,Integer v) {
++        if ((v == null) && mFile.getName().equals("com.martial.egame.gp.v2.playerprefs.xml")) {
++            if(key.endsWith("PERFORMANCE_MODE") || key.endsWith("OPEN_HIGH_FRAME")) return 1;
++            else if(key.equals("fenbianlv")) return 1;
++        }
++        return 0;
++    }
++
++    private boolean bstPatchForMartialEgameContains(String key) {
++        if (!mMap.containsKey(key) && mFile.getName().equals("com.martial.egame.gp.v2.playerprefs.xml")) {
++            if(key.endsWith("PERFORMANCE_MODE") || key.endsWith("OPEN_HIGH_FRAME")) {
++                Editor editor = edit();
++                String keyName = key;
++                editor.putInt(keyName, 1);
++                editor.apply();
++                return true;
++            }
++        }
++        return false;
++    }
++
+     @Override
+     public int getInt(String key, int defValue) {
+         //If the value is present in the list then we will disable the game settings for the package by default it will be on.
+@@ -449,6 +471,10 @@ final class SharedPreferencesImpl implements SharedPreferences {
+             }
+ 
+             Integer v = (Integer)mMap.get(key);
++
++            int egameRet = bstPatchForMartialEgameGetInt(key, v);
++            if(egameRet > 0) return egameRet;
++
+             return v != null ? v : defValue;
+         }
+     }
+@@ -502,6 +528,9 @@ final class SharedPreferencesImpl implements SharedPreferences {
+     public boolean contains(String key) {
+         synchronized (mLock) {
+             awaitLoadedLocked();
++
++            if(bstPatchForMartialEgameContains(key)) return true;
++
+             return mMap.containsKey(key);
+         }
+     }

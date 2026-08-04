@@ -1,0 +1,1102 @@
+From 48b6474b897cd9d1d810dfa77e0a15cfdcd673a7 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 15 Dec 2023 14:59:59 +0800
+Subject: [PATCH 106/224] [A13] Hcall related code porting.
+
+---
+ core/java/android/app/Instrumentation.java    | 388 +++++++++++++++++-
+ core/java/android/widget/Editor.java          |  54 ++-
+ .../accounts/AccountManagerService.java       |  51 +++
+ .../server/am/ActivityManagerService.java     |   6 +
+ .../server/input/InputManagerService.java     |  14 +-
+ .../NotificationManagerService.java           |  74 ++++
+ .../android/server/wm/ActivityStarter.java    |  33 ++
+ .../wm/ActivityTaskManagerDebugConfig.java    |   1 +
+ 8 files changed, 611 insertions(+), 10 deletions(-)
+
+diff --git a/core/java/android/app/Instrumentation.java b/core/java/android/app/Instrumentation.java
+index 556058b567f9..ecb54934d416 100644
+--- a/core/java/android/app/Instrumentation.java
++++ b/core/java/android/app/Instrumentation.java
+@@ -41,10 +41,12 @@ import android.os.Process;
+ import android.os.RemoteException;
+ import android.os.ServiceManager;
+ import android.os.SystemClock;
++import android.os.SystemProperties;
+ import android.os.TestLooperManager;
+ import android.os.UserHandle;
+ import android.util.AndroidRuntimeException;
+ import android.util.Log;
++import android.view.Gravity;
+ import android.view.IWindowManager;
+ import android.view.InputDevice;
+ import android.view.KeyCharacterMap;
+@@ -54,9 +56,12 @@ import android.view.SurfaceControl;
+ import android.view.ViewConfiguration;
+ import android.view.Window;
+ import android.view.WindowManagerGlobal;
++import android.widget.Toast;
+ 
+ import com.android.internal.content.ReferrerIntent;
+ 
++import com.bluestacks.os.BstHostCallManager;
++import com.bluestacks.os.BstUtilsManager;
+ import java.io.File;
+ import java.lang.annotation.Retention;
+ import java.lang.annotation.RetentionPolicy;
+@@ -64,6 +69,8 @@ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.concurrent.TimeoutException;
+ 
++import org.json.JSONObject;
++
+ /**
+  * Base class for implementing application instrumentation code.  When running
+  * with instrumentation turned on, this class will be instantiated for you
+@@ -90,6 +97,8 @@ public class Instrumentation {
+     public static final String REPORT_KEY_STREAMRESULT = "stream";
+ 
+     private static final String TAG = "Instrumentation";
++    private static final String BST_TAG = "Bst-Instrumentation";
++    private static final String BST_TAG_REFERRAL = "Bst-Instrumentation-Affiliate";
+ 
+     private static final long CONNECT_TIMEOUT_MILLIS = 5000;
+ 
+@@ -118,6 +127,8 @@ public class Instrumentation {
+     private Bundle mPerfMetrics = new Bundle();
+     private UiAutomation mUiAutomation;
+     private final Object mAnimationCompleteLock = new Object();
++    private static final boolean BST_DBG = SystemProperties.getInt("bst.debug.instrumentation", 0) > 0 ? true : false;
++    private static final boolean BST_DBG_REFERRAL = BST_DBG || SystemProperties.getInt("bst.debug.referral", 0) > 0 ? true : false;
+ 
+     public Instrumentation() {
+     }
+@@ -1751,6 +1762,262 @@ public class Instrumentation {
+         private final Intent mResultData;
+     }
+ 
++    public int bstHandleProprietryIntents(@Nullable Context who, int result, @Nullable Intent intent) {
++        try {
++            /* Changes to handle market:// and other such proprietry intent from the applications. Now, for such intents,
++             * show a Toast message and return Intent successfully handled to the application, since Bluestacks don't
++             * have google android market or such proprietry apps installed on their device by default. This is needed as
++             * some poorly written application don't handle the cases if we provide them with actual errors and hence result
++             * into the crash.
++             */
++            if (who == null || intent == null )
++                return result ;
++
++            String data = "";
++            if (intent.getData() != null)
++                data = intent.getData().toString().toLowerCase();
++            ComponentName mComponent = intent.getComponent();
++            Log.w(TAG, "Unresolved intent: cmp: " + mComponent);
++            Log.w(TAG, "Unresolved intent: data: " + data);
++            if (data.startsWith("market:"))
++            {
++                result = ActivityManager.START_SUCCESS;
++                Toast toast = Toast.makeText(who, "Sorry, this feature is not supported currently", Toast.LENGTH_LONG);
++                toast.setGravity(Gravity.BOTTOM, 0, 0);
++                toast.show();
++            }
++            else if (data.startsWith("mailto:"))
++            {
++                result = ActivityManager.START_SUCCESS;
++                Toast toast = Toast.makeText(who, "This app requires an Email app to send e-mail. Please install one and retry this.", Toast.LENGTH_LONG);
++                toast.setGravity(Gravity.BOTTOM, 0, 0);
++                toast.show();
++            }
++            else if (mComponent != null) {
++                String mComponentName = mComponent.flattenToShortString();
++                Log.w(TAG, "Unresolved intent: cmpName: " + mComponentName);
++                if (mComponentName.startsWith("com.google.android.gm") && !mComponentName.endsWith(".Main"))
++                {
++                    result = ActivityManager.START_SUCCESS;
++                    Toast toast = Toast.makeText(who, "This app requires GMail. Please install the GMail app and retry this.", Toast.LENGTH_LONG);
++                    toast.setGravity(Gravity.BOTTOM, 0, 0);
++                    toast.show();
++                }
++                else if (mComponentName.startsWith("com.google.android.apps.maps") && !mComponentName.endsWith(".Main"))
++                {
++                    result = ActivityManager.START_SUCCESS;
++                    Toast toast = Toast.makeText(who, "This app requires Google Maps. Please install the Google Maps app and retry this.", Toast.LENGTH_LONG);
++                    toast.setGravity(Gravity.BOTTOM, 0, 0);
++                    toast.show();
++                }
++                else if (mComponentName.startsWith("com.google.android.youtube") && !mComponentName.endsWith(".Main"))
++                {
++                    result = ActivityManager.START_SUCCESS;
++                    Toast toast = Toast.makeText(who, "This app requires YouTube. Please install the YouTube app and retry this.", Toast.LENGTH_LONG);
++                    toast.setGravity(Gravity.BOTTOM, 0, 0);
++                    toast.show();
++                }
++                else if (mComponentName.startsWith("com.google.android.voicesearch") && !mComponentName.endsWith(".Main"))
++                {
++                    result = ActivityManager.START_SUCCESS;
++                    Toast toast = Toast.makeText(who, "This app requires Voice Search. Please install the Voice Search app and retry this.", Toast.LENGTH_LONG);
++                    toast.setGravity(Gravity.BOTTOM, 0, 0);
++                    toast.show();
++                }
++                else if (mComponentName.startsWith("com.android.vending") && !mComponentName.endsWith(".Main"))
++                {
++                    result = ActivityManager.START_SUCCESS;
++                    Toast toast = Toast.makeText(who, "Sorry, this feature is not supported currently", Toast.LENGTH_LONG);
++                    toast.setGravity(Gravity.BOTTOM, 0, 0);
++                    toast.show();
++                }
++            }
++        } catch (Exception ex) {
++            Log.w(TAG, "Exception occured while handling intent");
++            ex.printStackTrace();
++            //ignore it
++        }
++        return result;
++    }
++
++    // This function will check if the app is opened from some third party app through some ad.
++    // If referrer field is present then we will not send our click event
++    // and will let the conversion attributed to the click event sent by the third party app.
++    /*
++     *@hide
++     */
++    public void bstReferrerHack(@Nullable Context context, @Nullable Intent mIntent) {
++        String intentData = mIntent.getDataString();
++        if (BST_DBG_REFERRAL) Log.d(BST_TAG_REFERRAL, "intentData = " + intentData);
++        if (context != null && mIntent != null && intentData != null
++                && (intentData.startsWith("https://play.google.com/store/apps/details")
++                    || intentData.startsWith("http://play.google.com/store/apps/details")
++                    || intentData.startsWith("https://market.android.com/details")
++                    || intentData.startsWith("http://market.android.com/details")
++                    || intentData.startsWith("market://details"))) {
++            String values = intentData.substring(intentData.indexOf("?") + 1);
++            String keyValuePairs[] = values.split("&");
++            String packageName = null;
++            String referrer = null;
++            String value = "";
++            String key = "";
++            for (String str : keyValuePairs) {
++                try {
++                    String keyValue[] = str.split("=");
++                    key = keyValue[0];
++                    if (keyValue.length > 1)
++                        value = keyValue[1];
++                    if (key.equals("id"))
++                        packageName = value;
++                    else if (key.equals("referrer"))
++                        referrer = value;
++                } catch (Exception e) {
++                    Log.e(BST_TAG_REFERRAL, "Exception while parsing the string = " + str + " key = " + key + " value = " + value);
++                    if (BST_DBG_REFERRAL) e.printStackTrace();
++                }
++            }
++            if (BST_DBG_REFERRAL) Log.d(BST_TAG_REFERRAL, "packageName = " + packageName + ", referrer = " + referrer);
++            try {
++                Intent intent = new Intent();
++                if (referrer != null) {
++                    // If referrer field is non null then we assume that the app is opened from some 3rd party app.
++                    // In this case we will not send our click event.
++                    BstUtilsManager bstutils = (BstUtilsManager) context.getSystemService(context.BST_UTILS);
++                    bstutils.setProperty("bst.config.referrerpackage", packageName);
++                    intent.setAction("BST_UPDATE_REFERRERLIST_ADD");
++                    if (BST_DBG_REFERRAL) Log.d(BST_TAG_REFERRAL, "send BST_UPDATE_REFERRERLIST_ADD to BstCommandProcessor");
++                } else {
++                    // Removing the entry from the file so that we can send our click event.
++                    intent.setAction("BST_UPDATE_REFERRERLIST_REMOVE");
++                    if (BST_DBG_REFERRAL) Log.d(BST_TAG_REFERRAL, "send BST_UPDATE_REFERRERLIST_REMOVE to BstCommandProcessor");
++                }
++                ComponentName cn = new ComponentName("com.bluestacks.BstCommandProcessor",
++                        "com.bluestacks.BstCommandProcessor.BstCommandProcessorService");
++                intent.setComponent(cn);
++                intent.putExtra("packageName", packageName);
++                context.startService(intent);
++            } catch (Exception ex) {
++                Log.w(BST_TAG_REFERRAL, "Exception while updating thirdParty Referrer List: " + ex.getMessage());
++                if (BST_DBG_REFERRAL) ex.printStackTrace();
++            }
++        }
++    }
++
++    private Intent checkIfLaunchingGpStore(Context cxt, Intent intent) {
++        Intent ret = null;
++        String intentData = intent.getDataString();
++        String callerPkgName = cxt.getBasePackageName();
++
++        if (intentData == null )
++            return ret ;
++
++        if (intentData != null
++                && (intentData.startsWith("https://play.google.com/store/apps/details")
++                    || intentData.startsWith("http://play.google.com/store/apps/details")
++                    || intentData.startsWith("https://market.android.com/details")
++                    || intentData.startsWith("http://market.android.com/details")
++                    || intentData.startsWith("market://details"))) {
++            String calleePkgName = parsePkgName(intentData);
++            if (BST_DBG) Log.d(BST_TAG, "callerPkgName = " + callerPkgName + ", calleePkgName = " + calleePkgName);
++            if (callerPkgName != null && calleePkgName!= null && callerPkgName.equalsIgnoreCase(calleePkgName))
++                ret = intent ;
++       } else if (intentData.startsWith("https://ffgpdownload.freefiremobile.com/api/link") && (callerPkgName.equalsIgnoreCase("com.dts.freefiremax"))) {
++           ret = new Intent();
++           ret.setAction("android.intent.action.VIEW");
++           ret.setData(Uri.parse("market://details?id="+callerPkgName));
++       }
++       return ret;
++    }
++
++    private String parsePkgName(String data) {
++        String values = data.substring(data.indexOf("?") + 1);
++        String keyValuePairs[] = values.split("&");
++        String packageName = null;
++        String referrer = null;
++        String value = "";
++        String key = "";
++        for (String str : keyValuePairs) {
++            try {
++                String keyValue[] = str.split("=");
++                key = keyValue[0];
++                if (keyValue.length > 1)
++                    value = keyValue[1];
++                if (key.equals("id"))
++                    packageName = value;
++            } catch (Exception e) {
++                  Log.e(BST_TAG, "Exception while parsing the string = " + str + " key = " + key + " value = " + value);
++                  if (BST_DBG) e.printStackTrace();
++            }
++        }
++        return packageName;
++    }
++
++    private String getApkUpdateSource(Context cxt, Intent intent) {
++        String response = null;
++        String intentData = intent.getDataString();
++        String calleePkgName = parsePkgName(intentData);
++        BstUtilsManager bstutils = (BstUtilsManager) cxt.getSystemService(cxt.BST_UTILS);
++        String source = bstutils.getApkDownloadSource(calleePkgName,"update");
++        String appStore = "";
++        if (source != null && source.trim().length() > 0) {
++            try {
++                JSONObject jsonObject = new JSONObject(source);
++                appStore = jsonObject.optString("app_store");
++            } catch (Exception ex) {
++                Log.e(BST_TAG, "Exception in launchAppStoreClbk : " + ex.getMessage());
++                if (BST_DBG) ex.printStackTrace();
++                return response;
++            }
++        } else {
++           if (BST_DBG) Log.e(BST_TAG, "Cloud call response is either null or empty. response : "+response);
++            return response;
++        }
++        if (appStore != null && !appStore.equals("com.android.vending")) {
++            response = source;
++        }
++        return response;
++    }
++
++    private void launchAppStore(Context cxt, Intent intent, String apkUpdateSource) {
++        String calleePkgName = parsePkgName(intent.getDataString());
++        BstUtilsManager bstutils = (BstUtilsManager) cxt.getSystemService(cxt.BST_UTILS);
++        bstutils.launchAppStore(calleePkgName, apkUpdateSource);
++    }
++
++    private boolean isLaunchingNonGpAppStore(Context who, Intent intent) {
++        boolean ret = false;
++        Intent res = checkIfLaunchingGpStore(who, intent);
++        if (res != null) {
++            String apkUpdateSource = getApkUpdateSource(who, res);
++            if (apkUpdateSource != null) {
++                launchAppStore(who, res, apkUpdateSource);
++                ret = true;
++            }
++        }
++        return ret;
++    }
++
++    /* Main function to determine whether this intent needs to be forwarded to host or not.
++     * If this intent is forwarded to host, return true else false
++     */
++    private boolean fwdIntentToHost(Context context, Intent intent) {
++        // check if extra is present in intent
++        if (!intent.getBooleanExtra("openOnHostBrowser", false)) {
++            return false;
++        }
++        Uri data = intent.getData();
++        String dataStr = "";
++        if (data != null) {
++            dataStr = data.toString();
++        } else {
++            return true;
++        }
++        if(BST_DBG) Log.d(BST_TAG, "browser intent data: " + dataStr);
++        BstHostCallManager bstHostCallManagerService = (BstHostCallManager) context.getSystemService(Context.BST_HOST_CALL);
++        bstHostCallManagerService.openUrl(dataStr);
++        return true;
++    }
++
+     /**
+      * Execute a startActivity call made by the application.  The default 
+      * implementation takes care of updating any active {@link ActivityMonitor}
+@@ -1798,6 +2065,8 @@ public class Instrumentation {
+     public ActivityResult execStartActivity(
+             Context who, IBinder contextThread, IBinder token, Activity target,
+             Intent intent, int requestCode, Bundle options) {
++        if (isLaunchingNonGpAppStore(who, intent))
++            return null;
+         IApplicationThread whoThread = (IApplicationThread) contextThread;
+         Uri referrer = target != null ? target.onProvideReferrer() : null;
+         if (referrer != null) {
+@@ -1831,10 +2100,24 @@ public class Instrumentation {
+         try {
+             intent.migrateExtraStreamToClipData(who);
+             intent.prepareToLeaveProcess(who);
+-            int result = ActivityTaskManager.getService().startActivity(whoThread,
++            bstReferrerHack(who, intent);
++            int result;
++            // check whether this intent needs to be forwarded to host or not.
++            boolean isIntentHandled = fwdIntentToHost(who, intent);
++            if (isIntentHandled) {
++                Log.d(BST_TAG, "This is special intent so consuming it and not doing any action on android, intent: " + intent);
++                result = ActivityManager.START_SUCCESS;
++            } else {
++                result = ActivityTaskManager.getService().startActivity(whoThread,
+                     who.getOpPackageName(), who.getAttributionTag(), intent,
+                     intent.resolveTypeIfNeeded(who.getContentResolver()), token,
+                     target != null ? target.mEmbeddedID : null, requestCode, 0, null, options);
++            }
++
++            if ((result == ActivityManager.START_INTENT_NOT_RESOLVED) || (result == ActivityManager.START_CLASS_NOT_FOUND))
++            {
++                result = bstHandleProprietryIntents(who, result, intent);
++            }
+             notifyStartActivityResult(result, options);
+             checkStartActivityResult(result, intent);
+         } catch (RemoteException e) {
+@@ -1874,6 +2157,10 @@ public class Instrumentation {
+     public int execStartActivitiesAsUser(Context who, IBinder contextThread,
+             IBinder token, Activity target, Intent[] intents, Bundle options,
+             int userId) {
++
++        if (isLaunchingNonGpAppStore(who, intents[0]))
++            return ActivityManager.START_SUCCESS;
++
+         IApplicationThread whoThread = (IApplicationThread) contextThread;
+         if (mActivityMonitors != null) {
+             synchronized (mSync) {
+@@ -1907,9 +2194,24 @@ public class Instrumentation {
+                 intents[i].prepareToLeaveProcess(who);
+                 resolvedTypes[i] = intents[i].resolveTypeIfNeeded(who.getContentResolver());
+             }
+-            int result = ActivityTaskManager.getService().startActivities(whoThread,
++            bstReferrerHack(who, intents[0]);
++            int result;
++
++            // check whether this intent needs to be forwarded to host or not.
++            boolean isIntentHandled = fwdIntentToHost(who, intents[0]);
++            if (isIntentHandled) {
++                Log.d(BST_TAG, "This is special intent so consuming it and not doing any action on android, intent: " + intents[0]);
++                result = ActivityManager.START_SUCCESS;
++            } else {
++                result = ActivityTaskManager.getService().startActivities(whoThread,
+                     who.getOpPackageName(), who.getAttributionTag(), intents, resolvedTypes,
+                     token, options, userId);
++            }
++
++            if ((result == ActivityManager.START_INTENT_NOT_RESOLVED) || (result == ActivityManager.START_CLASS_NOT_FOUND))
++            {
++                result = bstHandleProprietryIntents(who, result, intents[0]);
++            }
+             notifyStartActivityResult(result, options);
+             checkStartActivityResult(result, intents[0]);
+             return result;
+@@ -1949,6 +2251,10 @@ public class Instrumentation {
+     public ActivityResult execStartActivity(
+         Context who, IBinder contextThread, IBinder token, String target,
+         Intent intent, int requestCode, Bundle options) {
++
++        if (isLaunchingNonGpAppStore(who, intent))
++            return null;
++
+         IApplicationThread whoThread = (IApplicationThread) contextThread;
+         if (mActivityMonitors != null) {
+             synchronized (mSync) {
+@@ -1978,10 +2284,26 @@ public class Instrumentation {
+         try {
+             intent.migrateExtraStreamToClipData(who);
+             intent.prepareToLeaveProcess(who);
+-            int result = ActivityTaskManager.getService().startActivity(whoThread,
++
++            bstReferrerHack(who, intent);
++            int result;
++
++            // check whether this intent needs to be forwarded to host or not.
++            boolean isIntentHandled = fwdIntentToHost(who, intent);
++            if (isIntentHandled) {
++                Log.d(BST_TAG, "This is special intent so consuming it and not doing any action on android, intent: " + intent);
++                result = ActivityManager.START_SUCCESS;
++            } else {
++                result = ActivityTaskManager.getService().startActivity(whoThread,
+                     who.getOpPackageName(), who.getAttributionTag(), intent,
+                     intent.resolveTypeIfNeeded(who.getContentResolver()), token, target,
+                     requestCode, 0, null, options);
++            }
++
++            if ((result == ActivityManager.START_INTENT_NOT_RESOLVED) || (result == ActivityManager.START_CLASS_NOT_FOUND))
++            {
++                result = bstHandleProprietryIntents(who, result, intent);
++            }
+             notifyStartActivityResult(result, options);
+             checkStartActivityResult(result, intent);
+         } catch (RemoteException e) {
+@@ -2020,6 +2342,10 @@ public class Instrumentation {
+     public ActivityResult execStartActivity(
+             Context who, IBinder contextThread, IBinder token, String resultWho,
+             Intent intent, int requestCode, Bundle options, UserHandle user) {
++
++         if (isLaunchingNonGpAppStore(who, intent))
++             return null;
++
+         IApplicationThread whoThread = (IApplicationThread) contextThread;
+         if (mActivityMonitors != null) {
+             synchronized (mSync) {
+@@ -2049,10 +2375,25 @@ public class Instrumentation {
+         try {
+             intent.migrateExtraStreamToClipData(who);
+             intent.prepareToLeaveProcess(who);
+-            int result = ActivityTaskManager.getService().startActivityAsUser(whoThread,
++            bstReferrerHack(who, intent);
++            int result;
++
++            // check whether this intent needs to be forwarded to host or not.
++            boolean isIntentHandled = fwdIntentToHost(who, intent);
++            if (isIntentHandled) {
++                Log.d(BST_TAG, "This is special intent so consuming it and not doing any action on android, intent: " + intent);
++                result = ActivityManager.START_SUCCESS;
++            } else {
++                result = ActivityTaskManager.getService().startActivityAsUser(whoThread,
+                     who.getOpPackageName(), who.getAttributionTag(), intent,
+                     intent.resolveTypeIfNeeded(who.getContentResolver()), token, resultWho,
+                     requestCode, 0, null, options, user.getIdentifier());
++            }
++
++            if ((result == ActivityManager.START_INTENT_NOT_RESOLVED) || (result == ActivityManager.START_CLASS_NOT_FOUND))
++            {
++                result = bstHandleProprietryIntents(who, result, intent);
++            }
+             notifyStartActivityResult(result, options);
+             checkStartActivityResult(result, intent);
+         } catch (RemoteException e) {
+@@ -2070,6 +2411,8 @@ public class Instrumentation {
+             Context who, IBinder contextThread, IBinder token, Activity target,
+             Intent intent, int requestCode, Bundle options,
+             boolean ignoreTargetSecurity, int userId) {
++        if (isLaunchingNonGpAppStore(who, intent))
++            return null;
+         IApplicationThread whoThread = (IApplicationThread) contextThread;
+         if (mActivityMonitors != null) {
+             synchronized (mSync) {
+@@ -2099,12 +2442,27 @@ public class Instrumentation {
+         try {
+             intent.migrateExtraStreamToClipData(who);
+             intent.prepareToLeaveProcess(who);
+-            int result = ActivityTaskManager.getService()
++            bstReferrerHack(who, intent);
++            int result;
++
++            // check whether this intent needs to be forwarded to host or not.
++            boolean isIntentHandled = fwdIntentToHost(who, intent);
++            if (isIntentHandled) {
++                Log.d(BST_TAG, "This is special intent so consuming it and not doing any action on android, intent: " + intent);
++                result = ActivityManager.START_SUCCESS;
++            } else {
++                result = ActivityTaskManager.getService()
+                     .startActivityAsCaller(whoThread, who.getOpPackageName(), intent,
+                             intent.resolveTypeIfNeeded(who.getContentResolver()),
+                             token, target != null ? target.mEmbeddedID : null,
+                             requestCode, 0, null, options,
+                             ignoreTargetSecurity, userId);
++            }
++
++            if ((result == ActivityManager.START_INTENT_NOT_RESOLVED) || (result == ActivityManager.START_CLASS_NOT_FOUND))
++            {
++                result = bstHandleProprietryIntents(who, result, intent);
++            }
+             notifyStartActivityResult(result, options);
+             checkStartActivityResult(result, intent);
+         } catch (RemoteException e) {
+@@ -2121,6 +2479,9 @@ public class Instrumentation {
+     public void execStartActivityFromAppTask(
+             Context who, IBinder contextThread, IAppTask appTask,
+             Intent intent, Bundle options) {
++
++        if (isLaunchingNonGpAppStore(who, intent))
++            return ;
+         IApplicationThread whoThread = (IApplicationThread) contextThread;
+         if (mActivityMonitors != null) {
+             synchronized (mSync) {
+@@ -2150,9 +2511,24 @@ public class Instrumentation {
+         try {
+             intent.migrateExtraStreamToClipData(who);
+             intent.prepareToLeaveProcess(who);
+-            int result = appTask.startActivity(whoThread.asBinder(), who.getOpPackageName(),
++            bstReferrerHack(who, intent);
++            int result;
++
++            // check whether this intent needs to be forwarded to host or not.
++            boolean isIntentHandled = fwdIntentToHost(who, intent);
++            if (isIntentHandled) {
++                Log.d(BST_TAG, "This is special intent so consuming it and not doing any action on android, intent: " + intent);
++                result = ActivityManager.START_SUCCESS;
++            } else {
++                result = appTask.startActivity(whoThread.asBinder(), who.getOpPackageName(),
+                     who.getAttributionTag(), intent,
+                     intent.resolveTypeIfNeeded(who.getContentResolver()), options);
++            }
++
++            if ((result == ActivityManager.START_INTENT_NOT_RESOLVED) || (result == ActivityManager.START_CLASS_NOT_FOUND))
++            {
++                result = bstHandleProprietryIntents(who, result, intent);
++            }
+             notifyStartActivityResult(result, options);
+             checkStartActivityResult(result, intent);
+         } catch (RemoteException e) {
+diff --git a/core/java/android/widget/Editor.java b/core/java/android/widget/Editor.java
+index fadad99f0885..f819e622e037 100644
+--- a/core/java/android/widget/Editor.java
++++ b/core/java/android/widget/Editor.java
+@@ -58,6 +58,7 @@ import android.os.Parcel;
+ import android.os.Parcelable;
+ import android.os.ParcelableParcel;
+ import android.os.SystemClock;
++import android.os.SystemProperties;
+ import android.provider.Settings;
+ import android.text.DynamicLayout;
+ import android.text.Editable;
+@@ -155,6 +156,8 @@ import java.util.List;
+ import java.util.Map;
+ import java.util.Objects;
+ 
++import com.bluestacks.os.BstHostCallManager;
++
+ /**
+  * Helper class used by TextView to handle editable text views.
+  *
+@@ -162,6 +165,7 @@ import java.util.Objects;
+  */
+ public class Editor {
+     private static final String TAG = "Editor";
++    private static final boolean BST_DEBUG = SystemProperties.getInt("bst.debug.editor", 0) > 0;
+     private static final boolean DEBUG_UNDO = false;
+ 
+     // Specifies whether to use the magnifier when pressing the insertion or selection handles.
+@@ -239,6 +243,7 @@ public class Editor {
+     private boolean mSelectionControllerEnabled;
+ 
+     private final boolean mHapticTextHandleEnabled;
++    private BstHostCallManager mBstHostCallManagerService;
+     /** Handles OnBackInvokedCallback back dispatch */
+     private final OnBackInvokedCallback mBackCallback = this::stopTextActionMode;
+     private boolean mBackCallbackRegistered;
+@@ -463,6 +468,7 @@ public class Editor {
+ 
+     Editor(TextView textView) {
+         mTextView = textView;
++        mBstHostCallManagerService = (BstHostCallManager) mTextView.getContext().getSystemService(Context.BST_HOST_CALL);
+         // Synchronize the filter list, which places the undo input filter at the end.
+         mTextView.setFilters(mTextView.getFilters());
+         mProcessTextIntentActionsHandler = new ProcessTextIntentActionsHandler(this);
+@@ -504,7 +510,6 @@ public class Editor {
+         mLineChangeSlopMin = (int) TypedValue.applyDimension(
+                 TypedValue.COMPLEX_UNIT_DIP, LINE_CHANGE_SLOP_MIN_DP,
+                 mTextView.getContext().getResources().getDisplayMetrics());
+-
+     }
+ 
+     @VisibleForTesting
+@@ -2342,6 +2347,44 @@ public class Editor {
+ 
+         final boolean clamped = layout.shouldClampCursor(line);
+         updateCursorPosition(top, bottom, layout.getPrimaryHorizontal(offset, clamped));
++        if (BST_DEBUG) Log.d(TAG, "updateCursorPosition, sending cursor location");
++            bstSendCursorLocation();
++    }
++
++    void bstSendCursorLocation() {
++        if (mBlink == null) {
++            Log.d(TAG, "mBlink is not initialized, not sending cursor position to host");
++            return;
++        }
++
++        Layout layout = mTextView.getLayout();
++        boolean isTextEditModeEnabled = SystemProperties.getBoolean("bst.config.text_mode_enabled", false);
++
++        if (BST_DEBUG) Log.d(TAG, "isTextEditModeEnabled = " + isTextEditModeEnabled + ", prevCursorX = " + mBlink.mBstPrevCursorX + ", prevCursorY = " + mBlink.mBstPrevCursorY);
++        if (mTextView != null && layout != null && mBlink.mBstIsBlinking && isTextEditModeEnabled) {
++            int[] cursorXY = new int[2];
++            mTextView.getLocationOnScreen(cursorXY);
++            if (BST_DEBUG) Log.d(TAG, "text view location: cursorXY[0] = " + cursorXY[0] + ", cursorXY[1] = " + cursorXY[1]);
++
++            final int offset = mTextView.getSelectionStart();
++            final int line = layout.getLineForOffset(offset);
++
++            final float insertionMarkerX = layout.getPrimaryHorizontal(offset) + mTextView.viewportToContentHorizontalOffset();
++            final float insertionMarkerBottom = layout.getLineBottom(line) + mTextView.viewportToContentVerticalOffset();
++
++            cursorXY[0] = cursorXY[0] + (int) Math.ceil(insertionMarkerX);
++            cursorXY[1] = cursorXY[1] + (int) Math.ceil(insertionMarkerBottom);
++
++            if (BST_DEBUG) Log.d(TAG, "final cursor position: cursorXY[0] = " + cursorXY[0] + ", cursorXY[1] = " + cursorXY[1]);
++
++            if (mBlink.mBstPrevCursorX != cursorXY[0] || mBlink.mBstPrevCursorY != cursorXY[1]) {
++                if (BST_DEBUG) Log.d(TAG, "send cursor's position to host, cursorXY[0] = " + cursorXY[0] + ", cursorXY[1] = " + cursorXY[1]);
++                mBstHostCallManagerService.onCursorLocationChanged(cursorXY[0], cursorXY[1]);
++            }
++
++            mBlink.mBstPrevCursorX = cursorXY[0];
++            mBlink.mBstPrevCursorY = cursorXY[1];
++        }
+     }
+ 
+     void refreshTextActionMode() {
+@@ -2882,6 +2925,9 @@ public class Editor {
+ 
+     private class Blink implements Runnable {
+         private boolean mCancelled;
++        private boolean mBstIsBlinking = false;
++        private int mBstPrevCursorX = -1;
++        private int mBstPrevCursorY = -1;
+ 
+         public void run() {
+             if (mCancelled) {
+@@ -2892,6 +2938,9 @@ public class Editor {
+ 
+             if (shouldBlink()) {
+                 if (mTextView.getLayout() != null) {
++                    if (BST_DEBUG) Log.d(TAG, "In blink run method, sending cursor location");
++                        mBstIsBlinking = true;
++                        bstSendCursorLocation();
+                     mTextView.invalidateCursorPath();
+                 }
+ 
+@@ -2901,12 +2950,15 @@ public class Editor {
+ 
+         void cancel() {
+             if (!mCancelled) {
++                if (BST_DEBUG) Log.d(TAG, "cancel blinking");
+                 mTextView.removeCallbacks(this);
+                 mCancelled = true;
++                mBstIsBlinking = false;
+             }
+         }
+ 
+         void uncancel() {
++            if (BST_DEBUG) Log.d(TAG, "uncancel blinking");
+             mCancelled = false;
+         }
+     }
+diff --git a/services/core/java/com/android/server/accounts/AccountManagerService.java b/services/core/java/com/android/server/accounts/AccountManagerService.java
+index 425158195940..3b11a28c1502 100644
+--- a/services/core/java/com/android/server/accounts/AccountManagerService.java
++++ b/services/core/java/com/android/server/accounts/AccountManagerService.java
+@@ -85,6 +85,7 @@ import android.os.ResultReceiver;
+ import android.os.ShellCallback;
+ import android.os.StrictMode;
+ import android.os.SystemClock;
++import android.os.SystemProperties;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+ import android.stats.devicepolicy.DevicePolicyEnums;
+@@ -137,6 +138,8 @@ import java.util.UUID;
+ import java.util.concurrent.CopyOnWriteArrayList;
+ import java.util.concurrent.atomic.AtomicReference;
+ 
++import com.bluestacks.os.BstHostCallManager;
++
+ /**
+  * A system service that provides  account, password, and authtoken management for all
+  * accounts on the device. Some of these calls are implemented with the help of the corresponding
+@@ -180,6 +183,7 @@ public class AccountManagerService
+     private final PackageManager mPackageManager;
+     private final AppOpsManager mAppOpsManager;
+     private UserManager mUserManager;
++    private BstHostCallManager mBstHostCallManagerService;
+     private final Injector mInjector;
+ 
+     final MessageHandler mHandler;
+@@ -190,6 +194,10 @@ public class AccountManagerService
+ 
+     private final IAccountAuthenticatorCache mAuthenticatorCache;
+     private static final String PRE_N_DATABASE_NAME = "accounts.db";
++
++    private static final int BST_ACCOUNT_ADDED = 0;
++    private static final int BST_ACCOUNT_REMOVED = 1;
++
+     private static final Intent ACCOUNTS_CHANGED_INTENT;
+ 
+     private static final int SIGNATURE_CHECK_MISMATCH = 0;
+@@ -280,6 +288,7 @@ public class AccountManagerService
+         mContext = injector.getContext();
+         mPackageManager = mContext.getPackageManager();
+         mAppOpsManager = mContext.getSystemService(AppOpsManager.class);
++        mBstHostCallManagerService = (BstHostCallManager) mContext.getSystemService(Context.BST_HOST_CALL);
+         mHandler = new MessageHandler(injector.getMessageHandlerLooper());
+         mAuthenticatorCache = mInjector.getAccountAuthenticatorCache();
+         mAuthenticatorCache.setListener(this, mHandler);
+@@ -1060,6 +1069,7 @@ public class AccountManagerService
+     }
+ 
+     private void sendAccountsChangedBroadcast(int userId) {
++        setGoogleAdId();
+         Log.i(TAG, "the accounts changed, sending broadcast of "
+                 + ACCOUNTS_CHANGED_INTENT.getAction());
+         mContext.sendBroadcastAsUser(ACCOUNTS_CHANGED_INTENT, new UserHandle(userId));
+@@ -1211,6 +1221,12 @@ public class AccountManagerService
+                             } finally {
+                                 accountsDb.endTransaction();
+                             }
++
++                            if ("com.google".equals(account.type))
++                                mBstHostCallManagerService.googleAccountListUpdated(account.name, BST_ACCOUNT_REMOVED);
++                            else if ("now.gg".equals(account.type))
++                                mBstHostCallManagerService.onNowggAccountRemoved(account.name);
++
+                             accountDeleted = true;
+ 
+                             logRecord(AccountsDb.DEBUG_ACTION_AUTHENTICATOR_REMOVE,
+@@ -1897,6 +1913,23 @@ public class AccountManagerService
+             addAccountToLinkedRestrictedUsers(account, accounts.userId);
+         }
+ 
++        String type = account.type;
++        // persist.sys.user.email property contains email of the primary account added at the time of OTS.
++        // if this account is removed any time, value is set to blank, if any account is added at
++        // a later stage after removal of primary account, that account's email id is saved in this property.
++        if ("com.google".equals(type) && SystemProperties.get("persist.sys.user.email", "").isEmpty()) {
++            SystemProperties.set("persist.sys.user.email", account.name);
++            if (SystemProperties.get("bst.bluestacks_account_id","").isEmpty()) {
++                // Case PIG-1824 : Not seting bluestacks_account_id if its already set to some email
++                // because when other instance signs in with different id then this value gets set to new value which isn't required
++                SystemProperties.set("bst.bluestacks_account_id", account.name);
++                mBstHostCallManagerService.onGoogleLoginCompleted(account.name);
++            }
++        }
++
++        if ("com.google".equals(account.type))
++            mBstHostCallManagerService.googleAccountListUpdated(account.name, BST_ACCOUNT_ADDED);
++
+         sendNotificationAccountUpdated(account, accounts);
+         // Only send LOGIN_ACCOUNTS_CHANGED when the database changed.
+         sendAccountsChangedBroadcast(accounts.userId);
+@@ -2422,6 +2455,11 @@ public class AccountManagerService
+                     accounts.accountsDb.endTransaction();
+                 }
+                 if (isChanged) {
++                    if ("com.google".equals(account.type))
++                        mBstHostCallManagerService.googleAccountListUpdated(account.name, BST_ACCOUNT_REMOVED);
++                    else if ("now.gg".equals(account.type))
++                        mBstHostCallManagerService.onNowggAccountRemoved(account.name);
++
+                     removeAccountFromCacheLocked(accounts, account);
+                     for (Entry<String, Integer> packageToVisibility : packagesToVisibility
+                             .entrySet()) {
+@@ -6280,6 +6318,19 @@ public class AccountManagerService
+         }
+     }
+ 
++    /*
++     * @hide
++     * */
++    void setGoogleAdId() {
++        Intent intent = new Intent();
++        ComponentName cn = new ComponentName("com.bluestacks.BstCommandProcessor",
++                "com.bluestacks.BstCommandProcessor.BstCommandProcessorService");
++        intent.setAction("setGoogleAdId");
++        intent.setComponent(cn);
++        mContext.startServiceAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
++        return;
++    }
++
+     private final class AccountManagerInternalImpl extends AccountManagerInternal {
+         private final Object mLock = new Object();
+ 
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index b120710cc5e2..0857d3736572 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -460,6 +460,7 @@ import java.util.concurrent.Executor;
+ import java.util.concurrent.atomic.AtomicInteger;
+ 
+ import com.bluestacks.os.BstFilterAppsManager;
++import com.bluestacks.os.BstHostCallManager;
+ 
+ public class ActivityManagerService extends IActivityManager.Stub
+         implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback, ActivityManagerGlobalLock {
+@@ -661,6 +662,8 @@ public class ActivityManagerService extends IActivityManager.Stub
+     // we still create this new offload queue, but never ever put anything on it.
+     final boolean mEnableOffloadQueue;
+ 
++    BstHostCallManager mBstHostCallManagerService;
++
+     final BroadcastQueue mFgBroadcastQueue;
+     final BroadcastQueue mBgBroadcastQueue;
+     final BroadcastQueue mBgOffloadBroadcastQueue;
+@@ -17298,6 +17301,9 @@ public class ActivityManagerService extends IActivityManager.Stub
+                             null, null, OP_NONE, bOptions.toBundle(), false, false, MY_PID,
+                             SYSTEM_UID, Binder.getCallingUid(), Binder.getCallingPid(),
+                             UserHandle.USER_ALL);
++                    if (mBstHostCallManagerService == null)
++                        mBstHostCallManagerService = (BstHostCallManager) mContext.getSystemService(Context.BST_HOST_CALL);
++                    mBstHostCallManagerService.onLocaleChanged(SystemProperties.get("persist.sys.locale"));
+                 }
+ 
+                 // Send a broadcast to PackageInstallers if the configuration change is interesting
+diff --git a/services/core/java/com/android/server/input/InputManagerService.java b/services/core/java/com/android/server/input/InputManagerService.java
+index b2edb18b1c33..ee989df3947c 100644
+--- a/services/core/java/com/android/server/input/InputManagerService.java
++++ b/services/core/java/com/android/server/input/InputManagerService.java
+@@ -151,6 +151,8 @@ import java.util.Objects;
+ import java.util.OptionalInt;
+ import java.util.function.Consumer;
+ 
++import com.bluestacks.os.BstHostCallManager;
++
+ /** The system implementation of {@link IInputManager} that manages input devices. */
+ public class InputManagerService extends IInputManager.Stub
+         implements Watchdog.Monitor {
+@@ -389,6 +391,7 @@ public class InputManagerService extends IInputManager.Stub
+ 
+     /** Whether to use the dev/input/event or uevent subsystem for the audio jack. */
+     final boolean mUseDevInputEventForAudioJack;
++    final BstHostCallManager mBstHostCallManagerService;
+ 
+     /** Point of injection for test dependencies. */
+     @VisibleForTesting
+@@ -419,11 +422,11 @@ public class InputManagerService extends IInputManager.Stub
+     }
+ 
+     public InputManagerService(Context context) {
+-        this(new Injector(context, DisplayThread.get().getLooper()));
++        this(context, new Injector(context, DisplayThread.get().getLooper()));
+     }
+ 
+     @VisibleForTesting
+-    InputManagerService(Injector injector) {
++    InputManagerService(Context context, Injector injector) {
+         // The static association map is accessed by both java and native code, so it must be
+         // initialized before initializing the native service.
+         mStaticAssociations = loadStaticInputPortAssociations();
+@@ -444,6 +447,8 @@ public class InputManagerService extends IInputManager.Stub
+             new File(doubleTouchGestureEnablePath);
+ 
+         injector.registerLocalService(new LocalService());
++
++        mBstHostCallManagerService = (BstHostCallManager) context.getSystemService(Context.BST_HOST_CALL);
+     }
+ 
+     public void setWindowManagerCallbacks(WindowManagerCallbacks callbacks) {
+@@ -1759,7 +1764,10 @@ public class InputManagerService extends IInputManager.Stub
+     @Override
+     public void requestPointerCapture(IBinder inputChannelToken, boolean enabled) {
+         Objects.requireNonNull(inputChannelToken, "event must not be null");
+-
++        int rval = mBstHostCallManagerService.onSetMouseAction(" ", " ", enabled ? "enablePan" : "disablePan");
++        if (rval != 0) {
++            Slog.w(TAG, "ERROR in sending onSetMouseAction request, rval = " + rval);
++        }
+         mNative.requestPointerCapture(inputChannelToken, enabled);
+     }
+ 
+diff --git a/services/core/java/com/android/server/notification/NotificationManagerService.java b/services/core/java/com/android/server/notification/NotificationManagerService.java
+index 4d44c886fa22..f862fdb13575 100755
+--- a/services/core/java/com/android/server/notification/NotificationManagerService.java
++++ b/services/core/java/com/android/server/notification/NotificationManagerService.java
+@@ -347,6 +347,8 @@ import java.util.concurrent.TimeUnit;
+ import java.util.function.BiConsumer;
+ import java.util.stream.Collectors;
+ 
++import com.bluestacks.os.BstHostCallManager;
++
+ /** {@hide} */
+ public class NotificationManagerService extends SystemService {
+     public static final String TAG = "NotificationService";
+@@ -671,6 +673,7 @@ public class NotificationManagerService extends SystemService {
+     private NotificationRecordLogger mNotificationRecordLogger;
+     private InstanceIdSequence mNotificationInstanceIdSequence;
+     private Set<String> mMsgPkgsAllowedAsConvos = new HashSet();
++    private BstHostCallManager mBstHostCallManagerService;
+ 
+     // Broadcast intent receiver for notification permissions review-related intents
+     private ReviewNotificationPermissionsReceiver mReviewNotificationPermissionsReceiver;
+@@ -7475,6 +7478,7 @@ public class NotificationManagerService extends SystemService {
+ 
+                     final StatusBarNotification n = r.getSbn();
+                     final Notification notification = n.getNotification();
++                    final String pkg = n.getPackageName();
+                     boolean isCallNotificationAndCorrectStyle = isCallNotification
+                             && notification.isStyle(Notification.CallStyle.class);
+ 
+@@ -7546,6 +7550,8 @@ public class NotificationManagerService extends SystemService {
+                     }
+ 
+                     if (notification.getSmallIcon() != null) {
++                        // helper function to send notification text to host
++                        sendNotificationToHost(pkg, notification, r);
+                         StatusBarNotification oldSbn = (old != null) ? old.getSbn() : null;
+                         mListeners.notifyPostedLocked(r, old);
+                         if ((oldSbn == null || !Objects.equals(oldSbn.getGroup(), n.getGroup()))
+@@ -7622,6 +7628,74 @@ public class NotificationManagerService extends SystemService {
+         return group.getSbn().getInstanceId();
+     }
+ 
++    private void sendNotificationToHost(String pkgName, Notification notification, NotificationRecord nr) {
++        PackageManager pm = getContext().getPackageManager();
++        ApplicationInfo ai;
++
++        if(notification.isGroupSummary()) {
++            if(DBG)
++            Slog.d(TAG, "Not sending group summary notification");
++            return;
++        }
++
++        int progress = notification.extras.getInt(notification.EXTRA_PROGRESS);
++        int progressMax = notification.extras.getInt(notification.EXTRA_PROGRESS_MAX);
++
++        if (progress != 0 || progressMax != 0) {
++            return;
++        }
++
++        //ROB-4252: If the notification is an update to an older notification and is of low priority, do not send it to host.
++        if (nr.isUpdate && (nr.getImportance() <= IMPORTANCE_LOW)) {
++            if (DBG) Slog.d(TAG, "Low importance update notification, not sending to host");
++            return;
++        }
++
++        try {
++            ai = pm.getApplicationInfo(pkgName, PackageManager.GET_META_DATA);
++            int mask = ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
++            boolean isSystemApp = ((ai.flags & mask) != 0);
++            if(isSystemApp) {
++                if(DBG)
++                    Slog.d(TAG, "Not sending notification for system app: " + pkgName);
++                return;
++            }
++        } catch(Exception e) {
++            Log.e(TAG, "Error in sendNotificationToHost: " + e.getMessage());
++            e.printStackTrace();
++            return;
++        }
++        String packageName = pkgName ;
++        String appName = (String) pm.getApplicationLabel(ai);
++        String contentTitle = notification.extras.getCharSequence(notification.EXTRA_TITLE,"").toString();
++        String contentText = notification.extras.getCharSequence(notification.EXTRA_TEXT, "").toString();
++        long mSecs = notification.when;
++        String notificationData = "";
++
++        try {
++            JSONObject json = new JSONObject();
++            json.put("packageName", packageName);
++            json.put("appName", appName);
++            json.put("contentTitle", contentTitle);
++            json.put("contentText", contentText);
++            json.put("mSecsFromEpochUTC", mSecs);
++            notificationData = json.toString();
++        } catch(Exception e) {
++            Log.e (TAG, "Error in sendNotificationInfo: " + e.getMessage());
++            e.printStackTrace();
++            notificationData = "Exception while processing notificationData";
++            return;
++        }
++
++        if (DBG) {
++            Slog.d(TAG, "Sending Notification data to host : " + notificationData);
++        }
++        mBstHostCallManagerService = (BstHostCallManager) getContext().getSystemService(Context.BST_HOST_CALL);
++        int rval = mBstHostCallManagerService.onAppNotificationReceived(notificationData);
++        if(rval != 0)
++            Slog.w(TAG, "Error: Failed to send notification data to host, rval = " + rval);
++    }
++
+     /**
+      * If the notification differs enough visually, consider it a new interruptive notification.
+      */
+diff --git a/services/core/java/com/android/server/wm/ActivityStarter.java b/services/core/java/com/android/server/wm/ActivityStarter.java
+index ca3f75ba2e1c..505df08a823a 100644
+--- a/services/core/java/com/android/server/wm/ActivityStarter.java
++++ b/services/core/java/com/android/server/wm/ActivityStarter.java
+@@ -66,6 +66,7 @@ import static com.android.server.wm.ActivityRecord.State.RESUMED;
+ import static com.android.server.wm.ActivityTaskManagerDebugConfig.DEBUG_ACTIVITY_STARTS;
+ import static com.android.server.wm.ActivityTaskManagerDebugConfig.DEBUG_PERMISSIONS_REVIEW;
+ import static com.android.server.wm.ActivityTaskManagerDebugConfig.DEBUG_RESULTS;
++import static com.android.server.wm.ActivityTaskManagerDebugConfig.DEBUG_TASKS;
+ import static com.android.server.wm.ActivityTaskManagerDebugConfig.DEBUG_USER_LEAVING;
+ import static com.android.server.wm.ActivityTaskManagerDebugConfig.POSTFIX_CONFIGURATION;
+ import static com.android.server.wm.ActivityTaskManagerDebugConfig.POSTFIX_FOCUS;
+@@ -96,6 +97,7 @@ import android.app.IApplicationThread;
+ import android.app.PendingIntent;
+ import android.app.ProfilerInfo;
+ import android.app.WaitResult;
++import android.content.Context;
+ import android.app.WindowConfiguration;
+ import android.compat.annotation.ChangeId;
+ import android.compat.annotation.EnabledSince;
+@@ -141,6 +143,7 @@ import com.android.server.uri.NeededUriGrants;
+ import com.android.server.wm.ActivityMetricsLogger.LaunchingState;
+ import com.android.server.wm.LaunchParamsController.LaunchParams;
+ import com.android.server.wm.TaskFragment.EmbeddingCheckResult;
++import com.bluestacks.os.BstHostCallManager;
+ 
+ import java.io.PrintWriter;
+ import java.text.DateFormat;
+@@ -243,6 +246,8 @@ class ActivityStarter {
+     // The reason we were trying to start the last activity
+     private String mLastStartReason;
+ 
++    private BstHostCallManager mBstHostCallManagerService;
++
+     /*
+      * Request details provided through setter methods. Should be reset after {@link #execute()}
+      * to avoid unnecessarily retaining parameters. Note that the request is ignored when
+@@ -903,6 +908,34 @@ class ActivityStarter {
+         final int userId = aInfo != null && aInfo.applicationInfo != null
+                 ? UserHandle.getUserId(aInfo.applicationInfo.uid) : 0;
+         if (err == ActivityManager.START_SUCCESS) {
++            if (intent.getComponent() != null) {
++                final String launchPkg = intent.getComponent().getPackageName();
++                try {
++                    mService.mContext.getPackageManager().getPackageInfo(launchPkg, 0);
++                    boolean bstCheckGrm = (aInfo != null) ? !aInfo.applicationInfo.isSystemApp() : true;
++                    if (DEBUG_TASKS) Slog.i(TAG, "launchPkg = " + launchPkg + ", bstCheckGrm = " + bstCheckGrm + ", callingPackage = " + callingPackage + ", aInfo.application = " + aInfo.applicationInfo + ", intent = " + intent);
++                    if (bstCheckGrm && callingPackage != null && launchPkg != null
++                            && !callingPackage.equals("com.bluestacks.BstCommandProcessor")
++                            && !callingPackage.equals(launchPkg)) {
++                        mBstHostCallManagerService = (mBstHostCallManagerService == null) ? (BstHostCallManager) mService.mContext.getSystemService(Context.BST_HOST_CALL) : mBstHostCallManagerService;
++                        if (mBstHostCallManagerService != null && !mBstHostCallManagerService.isAppLaunchAllowed(launchPkg, false)) {
++                            Slog.i(TAG, "Show grm for pkg = " + launchPkg);
++                            return err;
++                        }
++                    }
++                } catch (PackageManager.NameNotFoundException e) {
++                    Slog.w(TAG, "launchPkg = " + launchPkg + ", is not installed, so not performing the GRM check");
++                }
++
++                //Hiding system update popup window based on package name and intent action
++                //{act=android.settings.SYSTEM_UPDATE_COMPLETE flg=0x10048000 pkg=com.google.android.gms cmp=com.google.android.gms/.update.phone.PopupDialog (has extras)}
++                if (intent.getAction() != null &&
++                        intent.getAction().equals("android.settings.SYSTEM_UPDATE_COMPLETE") &&
++                        launchPkg.equals("com.google.android.gms")) {
++                    Slog.i(TAG, "Not launching system update popup dialog.");
++                    return err;
++                }
++            }
+             Slog.i(TAG, "START u" + userId + " {" + intent.toShortString(true, true, true, false)
+                     + "} from uid " + callingUid);
+         }
+diff --git a/services/core/java/com/android/server/wm/ActivityTaskManagerDebugConfig.java b/services/core/java/com/android/server/wm/ActivityTaskManagerDebugConfig.java
+index 33d1b44b9743..e8822cadae0c 100644
+--- a/services/core/java/com/android/server/wm/ActivityTaskManagerDebugConfig.java
++++ b/services/core/java/com/android/server/wm/ActivityTaskManagerDebugConfig.java
+@@ -47,6 +47,7 @@ public class ActivityTaskManagerDebugConfig {
+     static final boolean DEBUG_RECENTS_TRIM_TASKS = DEBUG_RECENTS || false;
+     static final boolean DEBUG_ROOT_TASK = DEBUG_ALL || false;
+     public static final boolean DEBUG_SWITCH = DEBUG_ALL || false;
++    static final boolean DEBUG_TASKS = DEBUG_ALL || false;
+     static final boolean DEBUG_TRANSITION = DEBUG_ALL || false;
+     static final boolean DEBUG_VISIBILITY = DEBUG_ALL || false;
+     static final boolean DEBUG_APP = DEBUG_ALL_ACTIVITIES || false;

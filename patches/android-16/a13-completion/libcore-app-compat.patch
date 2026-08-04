@@ -1,0 +1,57 @@
+diff --git a/ojluni/src/main/java/java/io/File.java b/ojluni/src/main/java/java/io/File.java
+--- a/ojluni/src/main/java/java/io/File.java
++++ b/ojluni/src/main/java/java/io/File.java
+@@ -1308,7 +1308,22 @@ public class File
+     public File[] listFiles(FileFilter filter) {
+         String ss[] = list();
+         if (ss == null) return null;
+-        ArrayList<File> files = new ArrayList<>();
++        ArrayList<File> files = new ArrayList<>(ss.length + 1);
++        if ("/sys/devices/system/cpu".equals(path)) {
++            boolean hasSecondCpu = false;
++            for (String entry : ss) {
++                if ("cpu1".equals(entry)) {
++                    hasSecondCpu = true;
++                    break;
++                }
++            }
++            if (!hasSecondCpu) {
++                File secondCpu = new File("cpu1", this);
++                if (filter == null || filter.accept(secondCpu)) {
++                    files.add(secondCpu);
++                }
++            }
++        }
+         for (String s : ss) {
+             File f = new File(s, this);
+             if ((filter == null) || filter.accept(f))
+diff --git a/ojluni/src/main/java/java/lang/Runtime.java b/ojluni/src/main/java/java/lang/Runtime.java
+--- a/ojluni/src/main/java/java/lang/Runtime.java
++++ b/ojluni/src/main/java/java/lang/Runtime.java
+@@ -722,7 +722,8 @@ public class Runtime {
+      * @since 1.4
+      */
+     public int availableProcessors() {
+-        return (int) Libcore.os.sysconf(_SC_NPROCESSORS_CONF);
++        int processorCount = (int) Libcore.os.sysconf(_SC_NPROCESSORS_CONF);
++        return Math.max(processorCount, 2);
+     }
+ 
+     /**
+@@ -1092,6 +1093,16 @@ public class Runtime {
+                                                System.mapLibraryName(libraryName) + "\"");
+             }
+             String error = nativeLoad(filename, loader, callerClass);
++            if (error != null
++                    && filename.contains(
++                            "/data/user/0/com.amazon.venezia/files/dex-updates/")
++                    && filename.contains("/lib/armeabi-v7a/")) {
++                String x86Filename = filename.replace(
++                        "/lib/armeabi-v7a/", "/lib/x86/");
++                if (new File(x86Filename).isFile()) {
++                    error = nativeLoad(x86Filename, loader, callerClass);
++                }
++            }
+             if (error != null) {
+                 throw new UnsatisfiedLinkError(error);
+             }

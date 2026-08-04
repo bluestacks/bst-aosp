@@ -1,0 +1,104 @@
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 81a4f9e..3e356c6 100644
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -3,7 +3,8 @@ package com.bluestacks.os;
+ /**
+   * Functions ordering here should not be altered,
+   * If new functions are to added, they should be appended.
+-  * This order directly corresponds to ordering in /frameworks/native/include/binder/IBstFilterAppsService.h
++  * This order directly corresponds to ordering in
++  * /frameworks/native/libs/binder/include/binder/IBstFilterAppsService.h
+   * If order of functions is altered here, similar changes should be done in /framework/native.
+   */
+ interface IBstFilterAppsService
+diff --git a/core/java/com/bluestacks/os/IBstUtilsService.aidl b/core/java/com/bluestacks/os/IBstUtilsService.aidl
+index 35f5e63..b5695c5 100644
+--- a/core/java/com/bluestacks/os/IBstUtilsService.aidl
++++ b/core/java/com/bluestacks/os/IBstUtilsService.aidl
+@@ -5,7 +5,8 @@ import android.os.ResultReceiver;
+ /**
+   * Functions ordering here should not be altered,
+   * If new functions are to added, they should be appended.
+-  * This order directly corresponds to ordering in /frameworks/native/include/binder/IBstUtilsService.h
++  * This order directly corresponds to ordering in
++  * /frameworks/native/libs/binder/include/binder/IBstUtilsService.h
+   * If order of functions is altered here, similar changes should be done in /framework/native.
+   */
+ 
+diff --git a/core/res/res/xml/bookmarks.xml b/core/res/res/xml/bookmarks.xml
+index 0812e6b..c308ae3 100644
+--- a/core/res/res/xml/bookmarks.xml
++++ b/core/res/res/xml/bookmarks.xml
+@@ -44,10 +44,6 @@
+         category="android.intent.category.APP_CALENDAR"
+         androidprv:keycode="KEYCODE_C"
+         androidprv:modifierState="META" />
+-    <bookmark
+-        category="android.intent.category.APP_MAPS"
+-        androidprv:keycode="KEYCODE_M"
+-        androidprv:modifierState="META" />
+     <bookmark
+         category="android.intent.category.APP_CALCULATOR"
+         androidprv:keycode="KEYCODE_U"
+diff --git a/unit-test.sh b/unit-test.sh
+new file mode 100755
+index 0000000..fc36301
+--- /dev/null
++++ b/unit-test.sh
+@@ -0,0 +1,55 @@
++#!/bin/bash
++
++set -euo pipefail
++
++android_home=${1:-}
++out_path=${2:-}
++
++if [[ -z "$android_home" || -z "$out_path" ]]; then
++    echo "usage: $0 <android-source-root> <out-dir>" >&2
++    exit 2
++fi
++
++android_home=$(realpath "$android_home")
++out_path=$(realpath "$out_path")
++aidl="$out_path/host/linux-x86/bin/aidl"
++aidl_source="frameworks/base/core/java/com/bluestacks/os"
++native_headers="frameworks/native/libs/binder/include/binder"
++services=(IBstFilterAppsService IBstUtilsService)
++
++if [[ ! -x "$aidl" ]]; then
++    echo "aidl compiler not found: $aidl" >&2
++    exit 1
++fi
++
++tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/bst-aidl-order.XXXXXX")
++trap 'rm -rf "$tmp_dir"' EXIT
++
++cd "$android_home"
++for service in "${services[@]}"; do
++    aidl_file="$aidl_source/$service.aidl"
++    java_file="$tmp_dir/$service.java"
++    header_file="$native_headers/$service.h"
++    java_order="$tmp_dir/$service.java.order"
++    native_order="$tmp_dir/$service.native.order"
++
++    [[ -f "$aidl_file" ]] || { echo "missing $aidl_file" >&2; exit 1; }
++    [[ -f "$header_file" ]] || { echo "missing $header_file" >&2; exit 1; }
++
++    "$aidl" -d"$tmp_dir/$service.P" -b -Iframeworks/base/core/java \
++        "$aidl_file" "$java_file"
++
++    sed -n -E \
++        's/^[[:space:]]*static final int TRANSACTION_([A-Za-z0-9_]+) = \(android\.os\.IBinder\.FIRST_CALL_TRANSACTION \+ ([0-9]+)\);$/T_\1 = IBinder::FIRST_CALL_TRANSACTION + \2/p' \
++        "$java_file" > "$java_order"
++    sed -n -E \
++        's/^[[:space:]]*(T_[A-Za-z0-9_]+)[[:space:]]*=[[:space:]]*IBinder::FIRST_CALL_TRANSACTION[[:space:]]*\+[[:space:]]*([0-9]+),?$/\1 = IBinder::FIRST_CALL_TRANSACTION + \2/p' \
++        "$header_file" > "$native_order"
++
++    if ! diff -u "$java_order" "$native_order"; then
++        echo "Binder transaction order mismatch: $aidl_file vs $header_file" >&2
++        exit 1
++    fi
++done
++
++echo "BlueStacks Java/native Binder transaction order matches"

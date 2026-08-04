@@ -1,0 +1,126 @@
+From eb058ebb47db4588754ac22b868258bbd147e7bc Mon Sep 17 00:00:00 2001
+From: Jason Zhou <jason.zhou@bluestacks.com>
+Date: Thu, 9 Jan 2025 10:14:02 +0800
+Subject: [PATCH 158/224] ROB-14931: add config entry iagf
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 51 +++++++++++++++++++
+ 3 files changed, 67 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index f30c1d926f99..024061baea23 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1830,4 +1830,19 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isIntelAutoGLFlushApp(String pkgName)
++    {
++        try{
++            return mService.isIntelAutoGLFlushApp(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index ec63f8cce74a..6676cf7623a3 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -118,4 +118,5 @@ interface IBstFilterAppsService
+     String getGLExtensionsIgnore(String pkgName);
+     boolean isEGLSurfaceIgnore(String pkgName);
+     boolean isHardKeyBoard(String pkgName);
++    boolean isIntelAutoGLFlushApp(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 0420f225ac63..587dd401f38e 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -191,6 +191,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Map<String, String>   mGLExtensionsIgnoreList = new HashMap<String, String>();
+     private Set<String>           mEGLSurfaceIgnoreAppList = new TreeSet<String>();
+     private Set<String>           mHardKeyBoardAppList = new TreeSet<String>();
++    private Set<String>           mIntelAutoGLFlushAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2609,6 +2610,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mHardKeyBoardAppList, pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("iagf")) {
++                                    synchronized (mIntelAutoGLFlushAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mIntelAutoGLFlushAppList \n");
++                                        mIntelAutoGLFlushAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mIntelAutoGLFlushAppList \n");
++                                            mIntelAutoGLFlushAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mIntelAutoGLFlushAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3306,6 +3323,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mHardKeyBoardAppList.clear();
+         }
+ 
++        synchronized (mIntelAutoGLFlushAppList)
++        {
++            mIntelAutoGLFlushAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7483,4 +7505,33 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * Check if this app need auto glFlush on intel gpu
++     * case ROB-14931: Adding a new entry name: IntelAutoGLFlush
++     * @hide
++     */
++    public boolean isIntelAutoGLFlushApp(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in IntelAutoGLFlush app list\n");
++        initLists();
++
++        synchronized (mIntelAutoGLFlushAppList)
++        {
++            if (mIntelAutoGLFlushAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mIntelAutoGLFlushAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in IntelAutoGLFlush App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

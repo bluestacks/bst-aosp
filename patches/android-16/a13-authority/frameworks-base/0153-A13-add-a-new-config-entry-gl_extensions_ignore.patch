@@ -1,0 +1,123 @@
+From 726063b56e8ebc1e4637f55cb0858b4bb77432ed Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Mon, 30 Sep 2024 12:22:26 +0800
+Subject: [PATCH 153/224] [A13] add a new config entry gl_extensions_ignore
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 17 +++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 46 +++++++++++++++++++
+ 3 files changed, 64 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 8113a45a2b4b..eb1bb54e59b1 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1783,4 +1783,21 @@ public class BstFilterAppsManager {
+             return "";
+         }
+     }
++
++    /**
++     * Provide app specific GLExtensionsIgnore value if entry exists in config.db
++     * @hide
++     */
++    public String getGLExtensionsIgnore(String pkgName)
++    {
++        try {
++            return mService.getGLExtensionsIgnore(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return "";
++        }
++    }
++
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 2ef91be399b9..775a58aa15f7 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -115,4 +115,5 @@ interface IBstFilterAppsService
+     boolean isGLVBOCacheDisableApp(String pkgName);
+     boolean isBlockEditWhenComposing(String pkgName);
+     String getGLHostInfo(String pkgName);
++    String getGLExtensionsIgnore(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 528e02b84980..e83e19e072e3 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -188,6 +188,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mGLVBOCacheDisableAppList = new TreeSet<String>();
+     private Set<String>           mBlockEditWhenComposingAppList = new TreeSet<String>();
+     private Map<String, String>   mGLHostInfoList = new HashMap<String, String>();
++    private Map<String, String>   mGLExtensionsIgnoreList = new HashMap<String, String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2563,6 +2564,17 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mGLHostInfoList,pkgException,value);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("gl_extensions_ignore")) {
++                                    synchronized (mGLExtensionsIgnoreList) {
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + ";" + value + " to GLExtensionsIgnoreList \n");
++                                        mGLExtensionsIgnoreList.put(packageName, value);
++                                        if (packageName.startsWith("~")) {
++                                            mGLExtensionsIgnoreList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mGLExtensionsIgnoreList,pkgException,value);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3245,6 +3257,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+            mGLHostInfoList.clear();
+         }
+ 
++        synchronized (mGLExtensionsIgnoreList)
++        {
++           mGLExtensionsIgnoreList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7343,4 +7360,33 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return res;
+     }
+ 
++    /**
++     * getGLExtensionsIgnore value for app
++     * @hide
++     */
++    public String getGLExtensionsIgnore(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GLExtensionsIgnore list\n");
++        initLists();
++        String res = "";
++        synchronized (mGLExtensionsIgnoreList)
++        {
++            if (mGLExtensionsIgnoreList.containsKey(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in GLExtensionsIgnore List\n");
++                res = mGLExtensionsIgnoreList.get(pkgName);
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGLExtensionsIgnoreList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in GLExtensionsIgnore List\n");
++                    res = mGLExtensionsIgnoreList.get(wildcardMatchedPackageName);
++                }
++            }
++        }
++        return res;
++    }
++
+ }

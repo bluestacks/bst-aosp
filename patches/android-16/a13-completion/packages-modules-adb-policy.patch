@@ -1,0 +1,166 @@
+From 361c29e743452cf1a6d944aa2d836de5fa776c1f Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 22:54:52 +0800
+Subject: [PATCH] [A16] Complete ADB access policy
+
+---
+ adb.cpp                      | 72 ++++++++++++++++++++++++++++--------
+ adb.h                        |  3 +-
+ daemon/file_sync_service.cpp | 14 +++++--
+ daemon/main.cpp              |  2 +
+ 4 files changed, 71 insertions(+), 20 deletions(-)
+
+diff --git a/adb.cpp b/adb.cpp
+index fcd79f9d..0a5a7d11 100644
+--- a/adb.cpp
++++ b/adb.cpp
+@@ -81,24 +81,58 @@ using namespace std::chrono_literals;
+ 
+ #if !ADB_HOST && defined(__ANDROID__)
+ #include "daemon/watchdog.h"
+-// A16DBG:P2:MECH BST ADB command whitelist (a13)
+-#if !ADB_HOST
+-#include <cstdio>
+-#include <cstring>
+-#define BST_ADBCMD_FILE "/data/downloads/.adbcmd"
+-int _bst_allow_adb_cmd(const char* cmd) {
+-    FILE* fp = fopen(BST_ADBCMD_FILE, "r");
+-    if (fp == nullptr) return 1;
+-    char line[256];
+-    while (fgets(line, sizeof(line), fp)) {
+-        line[strlen(line)-1] = 0;
+-        if (strstr(cmd, line) != nullptr) { fclose(fp); return 1; }
+-    }
+-    fclose(fp);
+-    return 0;
++
++static constexpr char kBstAllowedCommandFile[] = "/data/downloads/.adbcmd";
++static constexpr size_t kBstAllowedCommandDataSize = 1024;
++static constexpr size_t kBstMaxAllowedCommands = 32;
++
++static bool bst_allow_adb_cmd(std::string_view command) {
++    if (android::base::GetIntProperty("bst.enable_adb_access", 0) > 0) {
++        return true;
++    }
++    if (command.empty()) {
++        return false;
++    }
++
++    char data[kBstAllowedCommandDataSize] = {};
++    FILE* file = fopen(kBstAllowedCommandFile, "re");
++    if (file == nullptr) {
++        D("adb: could not read %s: %s", kBstAllowedCommandFile, strerror(errno));
++        return false;
++    }
++    const bool read = fgets(data, sizeof(data), file) != nullptr;
++    fclose(file);
++    if (!read) {
++        return false;
++    }
++
++    size_t command_count = 0;
++    for (std::string allowed : android::base::Split(data, ",")) {
++        if (command_count++ >= kBstMaxAllowedCommands) {
++            break;
++        }
++        allowed = android::base::Trim(allowed);
++        if (allowed.empty()) {
++            continue;
++        }
++        if (allowed[0] == '*' || android::base::StartsWith(command, allowed)) {
++            return true;
++        }
++    }
++    return false;
+ }
+-#endif
+ 
++int _bst_allow_adb_cmd(const char* command) {
++    return command != nullptr && bst_allow_adb_cmd(command);
++}
++
++static bool bst_allow_adb_service(std::string_view service) {
++    const size_t delimiter = service.find(':');
++    if (delimiter != std::string_view::npos && delimiter + 1 < service.size()) {
++        return bst_allow_adb_cmd(service.substr(delimiter + 1));
++    }
++    return bst_allow_adb_cmd(service);
++}
+ 
+ static std::atomic<int> active_connections = 0;
+ 
+@@ -534,6 +568,12 @@ void handle_packet(apacket* p, atransport* t) {
+         // byte. The client sent strings with null termination, which post-string_view, start
+         // being interpreted as part of the string, unless we explicitly strip them.
+         address = StripTrailingNulls(address);
++#if !ADB_HOST && defined(__ANDROID__)
++        if (!bst_allow_adb_service(address)) {
++            send_close(0, p->msg.arg0, t);
++            break;
++        }
++#endif
+ #if ADB_HOST
+         // The incoming address (from the payload) might be some other
+         // target (e.g tcp:<ip>:8000), however we do not allow *any*
+diff --git a/adb.h b/adb.h
+index 3e5c256c..29fc22fb 100644
+--- a/adb.h
++++ b/adb.h
+@@ -253,5 +253,6 @@ void adb_set_reject_kill_server(bool reject);
+ #endif
+ 
+ void usb_init();
+-// A16DBG:P2:MECH BST ADB command whitelist (a13)
++#if !ADB_HOST
+ int _bst_allow_adb_cmd(const char* cmd);
++#endif
+diff --git a/daemon/file_sync_service.cpp b/daemon/file_sync_service.cpp
+index 1f6dc642..12793fe8 100644
+--- a/daemon/file_sync_service.cpp
++++ b/daemon/file_sync_service.cpp
+@@ -78,11 +78,13 @@ static bool should_use_fs_config([[maybe_unused]] const std::string& path) {
+     // prior to https://r.android.com/2980341 i.e. leave behavior unchanged unless the system is
+     // updated as well.
+ #if defined(__ANDROID__)
++    if (android::base::StartsWith(path, "/mnt/windows/")) {
++        return false;
++    }
+     if (android_get_device_api_level() < __ANDROID_API_V__) {
+-        // A16DBG:P2:MECH BST: allow /data/ + /sdcard/ + /mnt/windows/ (a13)
++        // Legacy systems require host permissions for /data and /sdcard pushes.
+         return !android::base::StartsWith(path, "/data/") &&
+-               !android::base::StartsWith(path, "/sdcard/") &&
+-               !android::base::StartsWith(path, "/mnt/windows/");
++               !android::base::StartsWith(path, "/sdcard/");
+     }
+ #endif
+     return true;
+@@ -826,6 +828,12 @@ static bool handle_sync_command(int fd, std::vector<char>& buffer) {
+     std::string id_name = sync_id_to_name(request.id);
+ 
+     D("sync: %s('%s')", id_name.c_str(), name);
++#if !ADB_HOST && defined(__ANDROID__)
++    if (!_bst_allow_adb_cmd(name)) {
++        SendSyncFail(fd, StringPrintf("command not allowed: %s", id_name.c_str()));
++        return false;
++    }
++#endif
+     switch (request.id) {
+         case ID_LSTAT_V1:
+             if (!do_lstat_v1(fd, name)) return false;
+diff --git a/daemon/main.cpp b/daemon/main.cpp
+index 3d3f3024..df6e2fdc 100644
+--- a/daemon/main.cpp
++++ b/daemon/main.cpp
+@@ -92,6 +92,8 @@ static bool should_drop_privileges() {
+         drop = true;
+     }
+ 
++    // BlueStacks adbd always runs with shell privileges.
++    drop = true;
+     return drop;
+ }
+ 
+-- 
+2.34.1
+

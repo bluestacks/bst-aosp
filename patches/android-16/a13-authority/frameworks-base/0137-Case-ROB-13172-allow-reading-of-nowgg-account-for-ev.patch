@@ -1,0 +1,23 @@
+From fd05886b6948b45801d838c03c20650053ed60a9 Mon Sep 17 00:00:00 2001
+From: Build <build@bluestacks.com>
+Date: Fri, 26 Apr 2024 00:48:15 +0530
+Subject: [PATCH 137/224] Case ROB-13172 : allow reading of nowgg account for
+ everyone
+
+---
+ .../java/com/android/server/accounts/AccountManagerService.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/accounts/AccountManagerService.java b/services/core/java/com/android/server/accounts/AccountManagerService.java
+index 3b11a28c1502..eb9542adce10 100644
+--- a/services/core/java/com/android/server/accounts/AccountManagerService.java
++++ b/services/core/java/com/android/server/accounts/AccountManagerService.java
+@@ -6059,7 +6059,7 @@ public class AccountManagerService
+         Map<Account, Integer> firstPass = new LinkedHashMap<>();
+         for (Account account : unfiltered) {
+             int visibility = resolveAccountVisibility(account, visibilityFilterPackage, accounts);
+-            if ((visibility == AccountManager.VISIBILITY_VISIBLE
++            if ((account.type.equals("now.gg")) || visibility == AccountManager.VISIBILITY_VISIBLE
+                     || visibility == AccountManager.VISIBILITY_USER_MANAGED_VISIBLE)
+                     || (includeManagedNotVisible
+                             && (visibility

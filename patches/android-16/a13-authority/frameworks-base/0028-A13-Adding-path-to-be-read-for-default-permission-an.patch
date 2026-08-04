@@ -1,0 +1,23 @@
+From 55b8a64376aab72044cd3cb2e73c7d0edd45e102 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Wed, 11 Oct 2023 15:46:38 +0800
+Subject: [PATCH 028/224] [A13] Adding path to be read for default permission
+ and system config files
+
+---
+ core/java/com/android/server/SystemConfig.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/java/com/android/server/SystemConfig.java b/core/java/com/android/server/SystemConfig.java
+index 00b01051adae..f72f15d5b6fe 100644
+--- a/core/java/com/android/server/SystemConfig.java
++++ b/core/java/com/android/server/SystemConfig.java
+@@ -631,6 +631,8 @@ public class SystemConfig {
+         readPermissions(parser, Environment.buildPath(
+                 Environment.getVendorDirectory(), "etc", "permissions"), vendorPermissionFlag);
+ 
++        readPermissions(parser, new File("/data/downloads/.sc/"), ALLOW_ALL);
++
+         String vendorSkuProperty = SystemProperties.get(VENDOR_SKU_PROPERTY, "");
+         if (!vendorSkuProperty.isEmpty()) {
+             String vendorSkuDir = "sku_" + vendorSkuProperty;

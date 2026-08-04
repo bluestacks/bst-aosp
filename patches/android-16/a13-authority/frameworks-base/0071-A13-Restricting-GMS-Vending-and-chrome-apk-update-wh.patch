@@ -1,0 +1,86 @@
+From 75f9195fd51d4f6c4b103a2fa69e81169225ee70 Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Thu, 16 Nov 2023 15:12:33 +0800
+Subject: [PATCH 071/224] [A13]  Restricting GMS, Vending and chrome apk
+ update, when user has not logged in or user is on Vending screen.
+
+---
+ .../server/pm/InstallPackageHelper.java       | 44 +++++++++++++++++++
+ 1 file changed, 44 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 7460b8de8353..24db1a639b6a 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -89,6 +89,8 @@ import static com.android.server.pm.PackageManagerServiceUtils.deriveAbiOverride
+ import static com.android.server.pm.PackageManagerServiceUtils.logCriticalInfo;
+ import static com.android.server.pm.SharedUidMigration.BEST_EFFORT;
+ 
++import android.accounts.Account;
++import android.accounts.AccountManager;
+ import android.annotation.NonNull;
+ import android.annotation.Nullable;
+ import android.annotation.UserIdInt;
+@@ -207,6 +209,9 @@ final class InstallPackageHelper {
+     private final SharedLibrariesImpl mSharedLibraries;
+     private final PackageManagerServiceInjector mInjector;
+ 
++    // Flags to disable permission revoke for bluestacks apps.
++    private static final boolean BST_DEBUG = SystemProperties.getInt("bst.debug.pm", 0) == 0 ? false : true;
++
+     // TODO(b/198166813): remove PMS dependency
+     InstallPackageHelper(PackageManagerService pm, AppDataHelper appDataHelper) {
+         mPm = pm;
+@@ -1071,6 +1076,36 @@ final class InstallPackageHelper {
+         return newProp != null && newProp.getBoolean();
+     }
+ 
++    // Function to return true/false based on account of the specified type is present or not
++    private boolean isAccountRegistered(String type) {
++        Account[] accounts;
++        boolean result = false;
++        if (type == null)
++        {
++            accounts = AccountManager.get(mContext).getAccounts();
++        }
++        else {
++         accounts = AccountManager.get(mContext).getAccountsByType(type);
++        }
++        if (accounts.length > 0)
++             result = true;
++
++        return result;
++    }
++
++    // Function to check if we need to deter of google apps when they are in focus or account is still not registered
++    private boolean isGoogleAppUpdateUnsafe(String pkgName) {
++
++        if (BST_DEBUG) Log.d(TAG, "Check if update allowed for pkgName = " + pkgName );
++        if (!isAccountRegistered("com.google")
++                && (("com.google.android.gms".equals(pkgName)) ||
++                    ("com.android.chrome".equals(pkgName)) ||
++                    ("com.android.vending".equals(pkgName)))) {
++            return true;
++        }
++        return false;
++    }
++
+     @GuardedBy("mPm.mInstallLock")
+     private PrepareResult preparePackageLI(InstallArgs args, PackageInstalledInfo res)
+             throws PrepareFailure {
+@@ -1154,6 +1189,15 @@ final class InstallPackageHelper {
+         }
+ 
+         String pkgName = res.mName = parsedPackage.getPackageName();
++        String versionName = parsedPackage.getVersionName();
++
++        if (isGoogleAppUpdateUnsafe(pkgName)) {
++            res.mReturnCode = PackageManager.INSTALL_FAILED_INVALID_APK;
++            Slog.w(TAG, "The package [ " + pkgName + " v" + versionName + " ] that you are trying to install " +
++                    "has not been validated for this platform");
++            throw new PrepareFailure(PackageManager.INSTALL_FAILED_INVALID_APK);
++        }
++
+         if (parsedPackage.isTestOnly()) {
+             if ((installFlags & PackageManager.INSTALL_ALLOW_TEST) == 0) {
+                 throw new PrepareFailure(INSTALL_FAILED_TEST_ONLY, "installPackageLI");

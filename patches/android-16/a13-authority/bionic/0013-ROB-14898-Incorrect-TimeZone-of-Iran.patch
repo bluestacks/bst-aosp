@@ -1,0 +1,42 @@
+From 02cb0f86481ad8044ae85fa69a7577262fef7df5 Mon Sep 17 00:00:00 2001
+From: Emin Huang <emin@bluestacks.com>
+Date: Wed, 26 Feb 2025 15:42:00 +0800
+Subject: [PATCH 13/13] ROB-14898: Incorrect TimeZone of Iran
+
+---
+ libc/tzcode/localtime.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+ mode change 100644 => 100755 libc/tzcode/localtime.c
+
+diff --git a/libc/tzcode/localtime.c b/libc/tzcode/localtime.c
+old mode 100644
+new mode 100755
+index 091bab0bc..8f1c12d08
+--- a/libc/tzcode/localtime.c
++++ b/libc/tzcode/localtime.c
+@@ -677,6 +677,25 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
+ 			}
+ 	}
+ 	sp->defaulttype = i;
++
++	if (!strcmp(name, "Asia/Tehran")) {
++		/**
++		 * ROB-14898: Incorrect TimeZone of Iran
++		 *
++		 * On 21 September 2022, Iran abolished DST and now observes standard time year-round.
++		 * However, the timezone data file in early Android system were not updated in time, so daylight saving time was still used.
++		 *
++		 * Unix timestamp 1663788600 sec is 2022-09-22 03:30:00 (GMT+3:30).
++		 */
++		int index = -1;
++		for (i = 0; i < sp->timecnt; i++) {
++			if (sp->ats[i] == 1663788600L) {
++			    index = i;
++			} else if (index >= 0) {
++			    sp->types[i] = sp->types[index];
++			}
++		}
++	}
+ 	return 0;
+ }
+ 

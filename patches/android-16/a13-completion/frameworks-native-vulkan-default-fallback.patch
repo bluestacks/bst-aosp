@@ -1,0 +1,26 @@
+From 1025aa3a15899e31274c82f00794e6bbbe243a64 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 00:44:12 +0800
+Subject: [PATCH] [A16] Restore default Vulkan driver fallback
+
+---
+ vulkan/libvulkan/driver.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/vulkan/libvulkan/driver.cpp b/vulkan/libvulkan/driver.cpp
+index caa3020e64..a50a08f3a0 100644
+--- a/vulkan/libvulkan/driver.cpp
++++ b/vulkan/libvulkan/driver.cpp
+@@ -184,6 +184,9 @@ int LoadDriver(android_namespace_t* library_namespace,
+         if (so)
+             break;
+     }
++    if (!so && !library_namespace) {
++        so = android_load_sphal_library("vulkan.default.so", LIB_DL_FLAGS);
++    }
+     if (!so)
+         return -ENOENT;
+ 
+-- 
+2.34.1
+

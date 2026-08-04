@@ -1,0 +1,37 @@
+From 7a733b2bbbd5164523c70cf6537c246e41387212 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Tue, 10 Oct 2023 17:57:59 +0800
+Subject: [PATCH 026/224] [A13] Faking 'Esc' key to work as back button in
+ app-player
+
+---
+ data/keyboards/Generic.kcm | 2 +-
+ data/keyboards/Virtual.kcm | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data/keyboards/Generic.kcm b/data/keyboards/Generic.kcm
+index fe6eeeb66e40..3c7178022261 100644
+--- a/data/keyboards/Generic.kcm
++++ b/data/keyboards/Generic.kcm
+@@ -498,7 +498,7 @@ key PLUS {
+ ### Non-printing keys ###
+ 
+ key ESCAPE {
+-    base:                               none
++    base:                               fallback BACK
+     alt, meta:                          fallback HOME
+     ctrl:                               fallback MENU
+ }
+diff --git a/data/keyboards/Virtual.kcm b/data/keyboards/Virtual.kcm
+index 53308e312aaa..45c58743977c 100644
+--- a/data/keyboards/Virtual.kcm
++++ b/data/keyboards/Virtual.kcm
+@@ -495,7 +495,7 @@ key PLUS {
+ ### Non-printing keys ###
+ 
+ key ESCAPE {
+-    base:                               none
++    base:                               fallback BACK
+     alt, meta:                          fallback HOME
+     ctrl:                               fallback MENU
+ }

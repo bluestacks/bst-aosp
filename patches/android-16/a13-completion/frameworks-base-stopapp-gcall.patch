@@ -1,0 +1,248 @@
+diff --git a/core/java/android/app/ActivityManager.java b/core/java/android/app/ActivityManager.java
+index 501394bb5327..a7cafef0f105 100644
+--- a/core/java/android/app/ActivityManager.java
++++ b/core/java/android/app/ActivityManager.java
+@@ -5352,6 +5352,19 @@ public class ActivityManager {
+         }
+     }
+ 
++    /**
++     * Removes a task on behalf of a BlueStacks host request.
++     *
++     * @hide
++     */
++    public void removeTaskWrapper(int taskId, boolean isBstRequest) {
++        try {
++            getService().removeTaskWrapper(taskId, isBstRequest);
++        } catch (RemoteException e) {
++            throw e.rethrowFromSystemServer();
++        }
++    }
++
+     /**
+      * Returns the launch count of each installed package.
+      *
+diff --git a/core/java/android/app/ActivityManagerInternal.java b/core/java/android/app/ActivityManagerInternal.java
+index b575f00c69ba..cc1be5fe7c2e 100644
+--- a/core/java/android/app/ActivityManagerInternal.java
++++ b/core/java/android/app/ActivityManagerInternal.java
+@@ -364,7 +364,8 @@ public abstract class ActivityManagerInternal {
+     public abstract void trimApplications();
+ 
+     /** Kill the processes in the list due to their tasks been removed. */
+-    public abstract void killProcessesForRemovedTask(ArrayList<Object> procsToKill);
++    public abstract void killProcessesForRemovedTask(ArrayList<Object> procsToKill,
++            boolean isBstRequest, boolean isBstForceKill);
+ 
+     /** Kill the process immediately. */
+     public abstract void killProcess(String processName, int uid, String reason);
+diff --git a/core/java/android/app/IActivityManager.aidl b/core/java/android/app/IActivityManager.aidl
+index 739257d41316..dd4c7f730a5a 100644
+--- a/core/java/android/app/IActivityManager.aidl
++++ b/core/java/android/app/IActivityManager.aidl
+@@ -422,6 +422,7 @@ interface IActivityManager {
+     @UnsupportedAppUsage
+     void setStopUserOnSwitch(int value);
+     boolean removeTask(int taskId);
++    boolean removeTaskWrapper(int taskId, boolean isBstRequest);
+     boolean isIntentSenderTargetedToPackage(in IIntentSender sender);
+     @UnsupportedAppUsage
+     void updatePersistentConfiguration(in Configuration values);
+diff --git a/core/java/android/app/IActivityTaskManager.aidl b/core/java/android/app/IActivityTaskManager.aidl
+index c2d4fa902a5b..a53c7034ed9b 100644
+--- a/core/java/android/app/IActivityTaskManager.aidl
++++ b/core/java/android/app/IActivityTaskManager.aidl
+@@ -151,6 +151,7 @@ interface IActivityTaskManager {
+     void setFocusedTask(int taskId);
+     boolean setTaskIsPerceptible(int taskId, boolean isPerceptible);
+     boolean removeTask(int taskId);
++    boolean removeTaskWrapper(int taskId, boolean isBstRequest);
+     void removeAllVisibleRecentTasks();
+     List<ActivityManager.RunningTaskInfo> getTasks(int maxNum, boolean filterOnlyVisibleRecents,
+             boolean keepIntentExtra, int displayId);
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 87c47f487e4e..40b112669aa6 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -6974,6 +6974,11 @@ public class ActivityManagerService extends IActivityManager.Stub
+         return mActivityTaskManager.removeTask(taskId);
+     }
+ 
++    @Override
++    public boolean removeTaskWrapper(int taskId, boolean isBstRequest) {
++        return mActivityTaskManager.removeTaskWrapper(taskId, isBstRequest);
++    }
++
+     @Override
+     public void moveTaskToFront(IApplicationThread appThread, String callingPackage, int taskId,
+             int flags, Bundle bOptions) {
+@@ -17181,15 +17186,17 @@ public class ActivityManagerService extends IActivityManager.Stub
+             ActivityManagerService.this.trimApplications(true, OOM_ADJ_REASON_ACTIVITY);
+         }
+ 
+-        public void killProcessesForRemovedTask(ArrayList<Object> procsToKill) {
++        public void killProcessesForRemovedTask(ArrayList<Object> procsToKill,
++                boolean isBstRequest, boolean isBstForceKill) {
+             synchronized (ActivityManagerService.this) {
+                 for (int i = 0; i < procsToKill.size(); i++) {
+                     final WindowProcessController wpc =
+                             (WindowProcessController) procsToKill.get(i);
+                     final ProcessRecord pr = (ProcessRecord) wpc.mOwner;
+-                    if (ActivityManager.isProcStateBackground(pr.getSetProcState())
++                    if ((ActivityManager.isProcStateBackground(pr.getSetProcState())
+                             && !pr.mReceivers.isReceivingBroadcast()
+-                            && !pr.getHasStartedServices()) {
++                            && !pr.getHasStartedServices())
++                            || isBstRequest || isBstForceKill) {
+                         pr.killLocked("remove task", ApplicationExitInfo.REASON_USER_REQUESTED,
+                                 ApplicationExitInfo.SUBREASON_REMOVE_TASK, true);
+                     } else {
+diff --git a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
+index f24cf8dfe8da..bf06e1eac43c 100644
+--- a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
++++ b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
+@@ -2239,6 +2239,22 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
+         }
+     }
+ 
++    @Override
++    public boolean removeTaskWrapper(int taskId, boolean isBstRequest) {
++        mAmInternal.enforceCallingPermission(REMOVE_TASKS, "removeTaskWrapper()");
++        synchronized (mGlobalLock) {
++            final int callingUid = Binder.getCallingUid();
++            final int callingPid = Binder.getCallingPid();
++            final long ident = Binder.clearCallingIdentity();
++            try {
++                return mTaskSupervisor.removeTaskById(taskId, true, REMOVE_FROM_RECENTS,
++                        "bst-remove-by-pid#" + callingPid, callingUid, callingPid, isBstRequest);
++            } finally {
++                Binder.restoreCallingIdentity(ident);
++            }
++        }
++    }
++
+     boolean removeTask(int taskId, @NonNull String reason) {
+         final Task task = mRootWindowContainer.anyTaskForId(taskId,
+                 MATCH_ATTACHED_TASK_OR_RECENT_TASKS);
+diff --git a/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java b/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
+index b361393fd250..f8e0add973e5 100644
+--- a/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
++++ b/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
+@@ -169,6 +169,7 @@ import com.android.server.companion.virtual.VirtualDeviceManagerInternal;
+ import com.android.server.pm.SaferIntentUtils;
+ import com.android.server.utils.Slogf;
+ import com.android.server.wm.ActivityMetricsLogger.LaunchingState;
++import com.bluestacks.os.BstFilterAppsManager;
+ 
+ import java.io.FileDescriptor;
+ import java.io.PrintWriter;
+@@ -1842,10 +1843,17 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+      */
+     boolean removeTaskById(int taskId, boolean killProcess, boolean removeFromRecents,
+             String reason, int callingUid, int callingPid) {
++        return removeTaskById(taskId, killProcess, removeFromRecents, reason, callingUid,
++                callingPid, false);
++    }
++
++    boolean removeTaskById(int taskId, boolean killProcess, boolean removeFromRecents,
++            String reason, int callingUid, int callingPid, boolean isBstRequest) {
+         final Task task =
+                 mRootWindowContainer.anyTaskForId(taskId, MATCH_ATTACHED_TASK_OR_RECENT_TASKS);
+         if (task != null) {
+-            removeTask(task, killProcess, removeFromRecents, reason, callingUid, callingPid, null);
++            removeTask(task, killProcess, removeFromRecents, reason, callingUid, callingPid, null,
++                    isBstRequest);
+             return true;
+         }
+         Slog.w(TAG, "Request to remove task ignored for non-existent task " + taskId);
+@@ -1853,11 +1861,19 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+     }
+ 
+     void removeTask(Task task, boolean killProcess, boolean removeFromRecents, String reason) {
+-        removeTask(task, killProcess, removeFromRecents, reason, SYSTEM_UID, INVALID_PID, null);
++        removeTask(task, killProcess, removeFromRecents, reason, SYSTEM_UID, INVALID_PID, null,
++                false);
+     }
+ 
+     void removeTask(Task task, boolean killProcess, boolean removeFromRecents, String reason,
+             int callingUid, int callingPid, String callerActivityClassName) {
++        removeTask(task, killProcess, removeFromRecents, reason, callingUid, callingPid,
++                callerActivityClassName, false);
++    }
++
++    private void removeTask(Task task, boolean killProcess, boolean removeFromRecents,
++            String reason, int callingUid, int callingPid, String callerActivityClassName,
++            boolean isBstRequest) {
+         if (task.mInRemoveTask) {
+             // Prevent recursion.
+             return;
+@@ -1906,7 +1922,7 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+         task.mInRemoveTask = true;
+         try {
+             task.removeActivities(reason, false /* excludingTaskOverlay */);
+-            cleanUpRemovedTask(task, killProcess, removeFromRecents);
++            cleanUpRemovedTask(task, killProcess, removeFromRecents, isBstRequest);
+             mService.getLockTaskController().clearLockedTask(task);
+             mService.getTaskChangeNotificationController().notifyTaskStackChanged();
+             if (task.isPersistable) {
+@@ -1930,7 +1946,8 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+     }
+ 
+     /** This method should only be called for leaf task. */
+-    private void cleanUpRemovedTask(Task task, boolean killProcess, boolean removeFromRecents) {
++    private void cleanUpRemovedTask(Task task, boolean killProcess, boolean removeFromRecents,
++            boolean isBstRequest) {
+         if (removeFromRecents) {
+             mRecentTasks.remove(task);
+         }
+@@ -1940,6 +1957,10 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+             Slog.w(TAG, "No component for base intent of task: " + task);
+             return;
+         }
++        final BstFilterAppsManager filterApps = (BstFilterAppsManager)
++                mService.mContext.getSystemService(Context.BST_FILTER_APPS);
++        final boolean isBstForceKill = filterApps != null
++                && filterApps.isForceKillApp(component.getPackageName());
+ 
+         // Find any running services associated with this app and stop if needed.
+         final Message msg = PooledLambda.obtainMessage(ActivityManagerInternal::cleanUpServices,
+@@ -1953,7 +1974,8 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+         // onDestroy because the client defers to report completion of stopped, the callback from
+         // DestroyActivityItem may be called first.
+         final ActivityRecord top = task.getTopMostActivity();
+-        if (top != null && top.finishing && !top.mAppStopped && top.lastVisibleTime > 0
++        if (!isBstRequest && !isBstForceKill
++                && top != null && top.finishing && !top.mAppStopped && top.lastVisibleTime > 0
+                 && !task.mKillProcessesOnDestroyed && top.hasProcess()) {
+             task.mKillProcessesOnDestroyed = true;
+             mHandler.sendMessageDelayed(
+@@ -1961,7 +1983,7 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+                     KILL_TASK_PROCESSES_TIMEOUT_MS);
+             return;
+         }
+-        killTaskProcessesIfPossible(task);
++        killTaskProcessesIfPossible(task, isBstRequest, isBstForceKill);
+     }
+ 
+     void removeTimeoutOfKillProcessesOnProcessDied(@NonNull ActivityRecord r, @NonNull Task task) {
+@@ -1990,6 +2012,11 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+ 
+     /** Kills the processes in the task if it doesn't contain perceptible components. */
+     private void killTaskProcessesIfPossible(Task task) {
++        killTaskProcessesIfPossible(task, false, false);
++    }
++
++    private void killTaskProcessesIfPossible(Task task, boolean isBstRequest,
++            boolean isBstForceKill) {
+         task.mKillProcessesOnDestroyed = false;
+         final String pkg = task.getBasePackageName();
+         ArrayList<Object> procsToKill = null;
+@@ -2037,7 +2064,7 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+         // while calling into AM.
+         final Message m = PooledLambda.obtainMessage(
+                 ActivityManagerInternal::killProcessesForRemovedTask, mService.mAmInternal,
+-                procsToKill);
++                procsToKill, isBstRequest, isBstForceKill);
+         mService.mH.sendMessage(m);
+     }
+ 

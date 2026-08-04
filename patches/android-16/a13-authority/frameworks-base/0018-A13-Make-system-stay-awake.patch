@@ -1,0 +1,22 @@
+From 75860ab8e437945dc5e0b42291e211a35e967ab2 Mon Sep 17 00:00:00 2001
+From: muzhong-bst <muzhong@bluestacks.com>
+Date: Thu, 14 Sep 2023 14:46:16 +0800
+Subject: [PATCH 018/224] [A13] Make system stay awake
+
+---
+ .../src/com/android/systemui/keyguard/KeyguardViewMediator.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java b/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
+index 1b0356141432..8003ce0cbfdc 100644
+--- a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
++++ b/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
+@@ -236,7 +236,7 @@ public class KeyguardViewMediator implements CoreStartable, Dumpable,
+      * turning on the keyguard (i.e, the user has this much time to turn
+      * the screen back on without having to face the keyguard).
+      */
+-    private static final int KEYGUARD_LOCK_AFTER_DELAY_DEFAULT = 5000;
++    private static final int KEYGUARD_LOCK_AFTER_DELAY_DEFAULT = 604800000;
+ 
+     /**
+      * How long we'll wait for the {@link ViewMediatorCallback#keyguardDoneDrawing()}

@@ -1,0 +1,95 @@
+From e5b21e2e2fa20723c5309187c47b5791d83f3fc7 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 26 Apr 2024 10:58:10 +0800
+Subject: [PATCH 138/224] [A13] ROB-12555: Adding onAdsInfoClick hCall
+
+---
+ core/java/com/bluestacks/os/BstHostCallManager.java   | 11 +++++++++++
+ core/java/com/bluestacks/os/IBstHostCallService.aidl  |  1 +
+ .../com/bluestacks/server/BstHostCallService.java     |  9 +++++++++
+ .../com_bluestacks_server_BstHostCallService.cpp      | 10 +++++++++-
+ 4 files changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index 2c6a5faa26f7..a84f60e7598e 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -505,4 +505,15 @@ public class BstHostCallManager {
+             throw new RuntimeException(e);
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public int onAdsInfoClick() {
++        try {
++            return mBstHostCallService.onAdsInfoClick();
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index b5de0d2c5a76..90e7d0d6d900 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -45,4 +45,5 @@ interface IBstHostCallService {
+     int onCustomAppOrientationCompleted(String pkg);
+     int screenRecordingStarted(boolean started, boolean showTaps, int audioSource);
+     int handleCustomIap(String actionType, String actionData);
++    int onAdsInfoClick();
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index b1ea6be72f86..ecccad50a799 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -361,6 +361,14 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_screenRecordingStarted(started, showTaps, audioSource);
+     }
+ 
++    /**
++     * @hide
++     */
++    public int onAdsInfoClick() {
++        if (DBG) Slog.d(TAG, "in BstHostCallService onAdsInfoClick");
++        return native_onAdsInfoClick();
++    }
++
+     /**
+      * @hide
+      */
+@@ -429,4 +437,5 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_onCustomAppOrientationCompleted(String pkg);
+     private static native int native_screenRecordingStarted(boolean started, boolean showTaps, int audioSource);
+     private static native int native_handleCustomIap(String actionType, String actionData);
++    private static native int native_onAdsInfoClick();
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index c29bf82d7341..16ddd188d083 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -818,6 +818,13 @@ static jint handleCustomIap(JNIEnv* env, jobject clazz, jstring actionTypeStr, j
+     return 0;
+ }
+ 
++static jint onAdsInfoClick(JNIEnv* env, jobject clazz) {
++    if (dbg) ALOGD("%s", __func__);
++    jint rval = hcallOnAdsInfoClickRpc();
++    if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++    return rval;
++}
++
+ /*
+  * JNI registration.
+  */
+@@ -867,7 +874,8 @@ static const JNINativeMethod gMethods[] = {
+     { "native_onDifferentImagePkgClicked", "(Ljava/lang/String;)I", (void*)onDifferentImagePkgClicked },
+     { "native_onCustomAppOrientationCompleted", "(Ljava/lang/String;)I", (void*)onCustomAppOrientationCompleted },
+     { "native_screenRecordingStarted", "(ZZI)I", (void*)screenRecordingStarted },
+-    { "native_handleCustomIap", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)handleCustomIap }
++    { "native_handleCustomIap", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)handleCustomIap },
++    { "native_onAdsInfoClick", "()I", (void*)onAdsInfoClick }
+ };
+ 
+ // This function only registers the native methods

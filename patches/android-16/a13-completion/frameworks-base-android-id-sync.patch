@@ -1,0 +1,69 @@
+From 6502086e164d045af39c38ddd11d773aa05ebf65 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 14:41:19 +0800
+Subject: [PATCH] [A16] Restore BlueStacks Android ID synchronization
+
+---
+ .../providers/settings/SettingsProvider.java  | 35 ++++++++++++++++---
+ 1 file changed, 30 insertions(+), 5 deletions(-)
+
+diff --git a/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java b/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
+index 3927a6f032cf..0c54509c968d 100644
+--- a/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
++++ b/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
+@@ -4042,14 +4042,24 @@ public class SettingsProvider extends ContentProvider {
+             }
+         }
+ 
++        private void deleteAllSsaidKeysLocked(int userId) {
++            final long ssaidKey = makeKey(SETTINGS_TYPE_SSAID, userId,
++                    Context.DEVICE_ID_DEFAULT);
++            ensureSettingsStateLocked(ssaidKey);
++            final SettingsState ssaidSettings = getSettingsLocked(SETTINGS_TYPE_SSAID, userId,
++                    Context.DEVICE_ID_DEFAULT);
++            final List<String> ssaidKeys = new ArrayList<>(getSettingsNamesLocked(
++                    SETTINGS_TYPE_SSAID, userId, Context.DEVICE_ID_DEFAULT));
++            for (String key : ssaidKeys) {
++                ssaidSettings.deleteSettingLocked(key);
++            }
++        }
++
+         private void ensureSecureSettingAndroidIdSetLocked(SettingsState secureSettings) {
+             Setting value = secureSettings.getSettingLocked(Settings.Secure.ANDROID_ID);
+ 
+-            if (!value.isNull()) {
+-                return;
+-            }
+-
+             final int userId = SettingsState.getUserIdFromKey(secureSettings.mKey);
++            final int deviceId = SettingsState.getDeviceIdFromKey(secureSettings.mKey);
+ 
+             final UserInfo user;
+             final long identity = Binder.clearCallingIdentity();
+@@ -4063,7 +4073,22 @@ public class SettingsProvider extends ContentProvider {
+                 return;
+             }
+ 
+-            String androidId = Long.toHexString(new SecureRandom().nextLong());
++            final String savedAndroidId = value == null || value.isNull() ? null : value.getValue();
++            final String configuredAndroidId = deviceId == Context.DEVICE_ID_DEFAULT
++                    ? SystemProperties.get("bst.android_id") : "";
++            if (savedAndroidId != null && (configuredAndroidId.isEmpty()
++                    || savedAndroidId.equals(configuredAndroidId))) {
++                return;
++            }
++
++            final String androidId = configuredAndroidId.isEmpty()
++                    ? Long.toHexString(new SecureRandom().nextLong()) : configuredAndroidId;
++            if (deviceId == Context.DEVICE_ID_DEFAULT) {
++                deleteAllSsaidKeysLocked(userId);
++                if (savedAndroidId != null) {
++                    SystemProperties.set("persist.sys.cleardata", "true");
++                }
++            }
+             secureSettings.insertSettingLocked(Settings.Secure.ANDROID_ID, androidId,
+                     null, true, SettingsState.SYSTEM_PACKAGE_NAME);
+ 
+-- 
+2.34.1
+

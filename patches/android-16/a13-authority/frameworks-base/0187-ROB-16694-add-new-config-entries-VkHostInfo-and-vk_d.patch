@@ -1,0 +1,190 @@
+From 7af0f46cc046a8064c7b49b3c0bb2df9b6546456 Mon Sep 17 00:00:00 2001
+From: dailongzhong-bst <longzhong.dai@bluestacks.com>
+Date: Tue, 20 May 2025 15:53:11 +0800
+Subject: [PATCH 187/224] ROB-16694 add new config entries VkHostInfo and
+ vk_device_ext_ignore
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 32 +++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  2 +
+ .../server/BstFilterAppsService.java          | 92 +++++++++++++++++++
+ 3 files changed, 126 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index d465738f7177..9c84cc739644 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1815,6 +1815,38 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * Provide app specific VkHostInfo value if entry exists in config.db
++     * @hide
++     */
++    public String getVkHostInfo(String pkgName)
++    {
++        try {
++            return mService.getVkHostInfo(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return "";
++        }
++    }
++
++    /**
++     * Provide app specific VKDeviceExtIgnore value if entry exists in config.db
++     * @hide
++     */
++    public String getVKDeviceExtIgnore(String pkgName)
++    {
++        try {
++            return mService.getVKDeviceExtIgnore(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return "";
++        }
++    }
++
+     /**
+      * Check if EGLSurface is Ignore for this app or not.
+      * @hide
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index b175c97f2cbb..6ef5d4e115fa 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -125,4 +125,6 @@ interface IBstFilterAppsService
+     boolean isBptcApp(String pkgName);
+     boolean isExtractNativeLibs(String pkgName);
+     boolean isEtherNetType(String pkgName);
++    String getVkHostInfo(String pkgName);
++    String getVKDeviceExtIgnore(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 081985c2726e..fc1f611220c0 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -190,6 +190,8 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mBlockEditWhenComposingAppList = new TreeSet<String>();
+     private Map<String, String>   mGLHostInfoList = new HashMap<String, String>();
+     private Map<String, String>   mGLExtensionsIgnoreList = new HashMap<String, String>();
++    private Map<String, String>   mVkHostInfoList = new HashMap<String, String>();
++    private Map<String, String>   mVKDeviceExtIgnoreList = new HashMap<String, String>();
+     private Set<String>           mEGLSurfaceIgnoreAppList = new TreeSet<String>();
+     private Set<String>           mHardKeyBoardAppList = new TreeSet<String>();
+     private Set<String>           mIntelAutoGLFlushAppList = new TreeSet<String>();
+@@ -2597,6 +2599,28 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mGLExtensionsIgnoreList,pkgException,value);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("VkHostInfo")) {
++                                    synchronized (mVkHostInfoList) {
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + ";" + value + " to VkHostInfoList \n");
++                                        mVkHostInfoList.put(packageName, value);
++                                        if (packageName.startsWith("~")) {
++                                            mVkHostInfoList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mVkHostInfoList,pkgException,value);
++                                    }
++                                }
++                                else if (key.equalsIgnoreCase("vk_device_ext_ignore")) {
++                                    synchronized (mVKDeviceExtIgnoreList) {
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + ";" + value + " to VKDeviceExtIgnoreList \n");
++                                        mVKDeviceExtIgnoreList.put(packageName, value);
++                                        if (packageName.startsWith("~")) {
++                                            mVKDeviceExtIgnoreList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mVKDeviceExtIgnoreList,pkgException,value);
++                                    }
++                                }
+                                 else if (key.equalsIgnoreCase("EGLSurfaceIgnore")) {
+                                     synchronized (mEGLSurfaceIgnoreAppList) {
+                                         if (value.equalsIgnoreCase("false")) {
+@@ -3401,6 +3425,16 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+            mGLExtensionsIgnoreList.clear();
+         }
+ 
++        synchronized (mVkHostInfoList)
++        {
++           mVkHostInfoList.clear();
++        }
++
++        synchronized (mVKDeviceExtIgnoreList)
++        {
++           mVKDeviceExtIgnoreList.clear();
++        }
++
+         synchronized (mEGLSurfaceIgnoreAppList)
+         {
+             mEGLSurfaceIgnoreAppList.clear();
+@@ -7599,6 +7633,64 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return res;
+     }
+ 
++    /**
++     * getVkHostInfo value for app
++     * @hide
++     */
++    public String getVkHostInfo(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in VkHostInfo list\n");
++        initLists();
++        String res = "";
++        synchronized (mVkHostInfoList)
++        {
++            if (mVkHostInfoList.containsKey(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in VkHostInfo List\n");
++                res = mVkHostInfoList.get(pkgName);
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mVkHostInfoList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in VkHostInfo List\n");
++                    res = mVkHostInfoList.get(wildcardMatchedPackageName);
++                }
++            }
++        }
++        return res;
++    }
++
++    /**
++     * getVKDeviceExtIgnore value for app
++     * @hide
++     */
++    public String getVKDeviceExtIgnore(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in VKDeviceExtIgnore list\n");
++        initLists();
++        String res = "";
++        synchronized (mVKDeviceExtIgnoreList)
++        {
++            if (mVKDeviceExtIgnoreList.containsKey(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in VKDeviceExtIgnore List\n");
++                res = mVKDeviceExtIgnoreList.get(pkgName);
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mVKDeviceExtIgnoreList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in VKDeviceExtIgnore List\n");
++                    res = mVKDeviceExtIgnoreList.get(wildcardMatchedPackageName);
++                }
++            }
++        }
++        return res;
++    }
++
+     public boolean isEGLSurfaceIgnore(String pkgName)
+     {
+         if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in EGLSurfaceIgnore app list\n");

@@ -1,0 +1,82 @@
+From cb36d31480c2643fb231d6a7ee01d3d690b1040f Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Mon, 20 Nov 2023 17:50:29 +0800
+Subject: [PATCH 084/224] [A13] Porting clear setting impl
+
+---
+ .../server/pm/InstallPackageHelper.java       | 41 ++++++++++++++++++-
+ 1 file changed, 39 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 0f9876008d88..f242b7dea0f4 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -147,6 +147,7 @@ import android.util.Log;
+ import android.util.Pair;
+ import android.util.Slog;
+ import android.util.SparseArray;
++import android.util.Features;
+ 
+ import com.android.internal.annotations.GuardedBy;
+ import com.android.internal.content.F2fsUtils;
+@@ -177,8 +178,6 @@ import com.android.server.rollback.RollbackManagerInternal;
+ import com.android.server.utils.WatchedArrayMap;
+ import com.android.server.utils.WatchedLongSparseArray;
+ 
+-import com.bluestacks.os.BstFilterAppsManager;
+-
+ import dalvik.system.VMRuntime;
+ 
+ import java.io.File;
+@@ -1117,6 +1116,37 @@ final class InstallPackageHelper {
+         return false;
+     }
+ 
++    private void bstforceClearAppDataBeforeInstall(final AndroidPackage pkg, final String pkgName, String nativeLibraryDirPath)
++    {
++        if (mBstfilter == null)
++            mBstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++        boolean isClearInstallApp = mBstfilter.isClearInstallApp(pkgName);
++        if (isClearInstallApp)
++        {
++            boolean isForcedArmApp = mBstfilter.forceArmInstall(pkgName);
++            boolean isForcedX86App = mBstfilter.forceX86Install(pkgName);
++            File hasArmLibs = new File (nativeLibraryDirPath, Features.GetArmAppMarker());
++            Slog.d(TAG, "package : " + pkgName + " isForcedArmApp: " + isForcedArmApp + " isForcedX86App: " + isForcedX86App + " ArmFileExists: " + hasArmLibs.exists());
++
++            if ((hasArmLibs.exists() && isForcedX86App == true) || (!hasArmLibs.exists() && isForcedArmApp == true))
++            {
++                Slog.d(TAG, "removeDataDirsLI for package : " + pkgName + " isForcedArmApp: " + isForcedArmApp + " isForcedX86App: " + isForcedX86App);
++                // Bst - removeDataDirsLI args changes from lollipop-bst
++                /*
++                   int ret = removeDataDirsLI(null, pkgName);
++                   if (ret >= 0)
++                   Slog.d(TAG, "removeDataDirsLI done Successfully for " + pkgName);
++                   else
++                   Slog.e(TAG, "removeDataDirsLI FAILED for " + pkgName);
++                   */
++                // Bst - removeDataDirsLI changed to destroyAppDataLIF In Nougat
++                mAppDataHelper.destroyAppDataLIF(pkg, UserHandle.USER_ALL,
++                        StorageManager.FLAG_STORAGE_DE | StorageManager.FLAG_STORAGE_CE);
++                //destroyAppProfilesLIF(pkg, UserHandle.USER_ALL); ??
++            }
++        }
++    }
++
+     @GuardedBy("mPm.mInstallLock")
+     private PrepareResult preparePackageLI(InstallArgs args, PackageInstalledInfo res)
+             throws PrepareFailure {
+@@ -1199,6 +1229,13 @@ final class InstallPackageHelper {
+             }
+         }
+ 
++        // If ;clear is found for an installed app and its mode is different in settings.db, then clearing
++        // the app's data.
++        final PackageSetting bstPkgSetting = mPm.mSettings.getPackageLPr(parsedPackage.getPackageName());
++        if (bstPkgSetting != null) {
++            bstforceClearAppDataBeforeInstall(bstPkgSetting.getPkg(), parsedPackage.getPackageName(), bstPkgSetting.getLegacyNativeLibraryPath());
++        }
++
+         String pkgName = res.mName = parsedPackage.getPackageName();
+         String versionName = parsedPackage.getVersionName();
+         BstFilterAppsManager bstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);

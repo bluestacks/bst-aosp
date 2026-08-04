@@ -1,0 +1,225 @@
+# A13 Authority Completion Review
+
+## Scope And Identity
+
+This review treats `~/app-player/android-13` branch `bst-v5.22.210` as the
+product customization authority. `~/aosp16` is read-only implementation and
+historical validation evidence, not the authority for deciding whether an A13
+patch is required.
+
+- Target tree: `~/android-16`
+- Target branch: `aosp16-bst-merge`
+- Target product: `android_x86_64-trunk_staging-eng`
+- Current root: `f0947d915915e45d69a683679895553780161a61`
+- Build output: target-local `~/android-16/out`
+- AOSP16 output use: none
+- Push or PR: none
+- Current-tree boot validation: not run
+- Current-tree full `m droid`: not run
+
+The prior PR #2 root `298403a` and its 7/7 boot result are historical. They do
+not validate the current authority-completion commits.
+
+## Confirmed Missing Patch Groups
+
+### Android Userspace SELinux State
+
+- Authority: `external/selinux`
+  `d42add96533decac77101c314e5abceae20070d7`.
+- Finding: AOSP16 and the initial Android-16 promotion kept upstream
+  `is_selinux_enabled()`, despite already forcing init permissive and relaxing
+  domain-transition/property checks.
+- A16 component: `62b46b73374cc636e3e0aeb0d492ee077cc2210b`.
+- Root pointer: `8dc66a08a561d746c8a26c39435eb52827104793`.
+- Adaptation: Android builds report disabled; host libselinux keeps upstream
+  detection.
+- Necessity: restores the A13 paths used by `installd`, `cmd`, restorecon and
+  Android libselinux helpers.
+- Performance: skips context and restorecon work; no new cost.
+- Security: broad defense-in-depth reduction. Android userspace suppresses
+  SELinux handling even though the kernel remains permissive.
+- Validation: `libselinux`, `init`, `installd` and host tests built; host tests
+  passed 12/12 for both host variants; 32/64 target disassembly returns zero.
+
+Artifact hashes:
+
+- `system/lib64/libselinux.so`:
+  `2c4cb4e5f7e1dac4420c91dbd034fd71f0e037b126535d2687d6a44eb7f0aa51`
+- `system/lib/libselinux.so`:
+  `924cc4ca2f8401ddf3533dcfd5bbb44e61842ffd7dd049c61881c49d0fce36a0`
+
+### PRNG Seeder Startup
+
+- Authority: `system/security`
+  `ef05d6c885bc1a74ff8bf37d322b0b9c1d86d31a`.
+- Finding: AOSP16 and Android-16 still registered `prng_seeder.rc`, although
+  the App Player VM does not expose the hardware random device expected by the
+  early-init service.
+- A16 component: `6443d21a351b50b343ea7f037cb045585c4d0f26`.
+- Root pointer: `53eb20abecc1b8b1a2d7e55fc1f3637e34a4fc39`.
+- Adaptation: disable the `init_rc` property in A16 defaults while preserving
+  the regular binary, Microdroid variant, source and tests.
+- Performance: removes a possible early-boot entropy wait.
+- Security: removes this daemon reseed path and therefore requires a boot-time
+  kernel entropy-source readback.
+- Validation: binary and 32/64 tests built; independent install-tree readback
+  found `system/bin/prng_seeder` and confirmed that
+  `system/etc/init/prng_seeder.rc` is absent.
+
+Artifact hashes:
+
+- `system/bin/prng_seeder`:
+  `388f66f80b3e8950227babf3b010402b2adb4013023111c3fdb0eaad3f7d0dfe`
+- 64-bit test:
+  `9918993a423f521d0514bd24a258bb58a3a222e55daeecef391ddd40ba951599`
+- 32-bit test:
+  `62bdcd88be0fcf7d9de1630ec2eee831c21609a5ce42f6a6bf9f5b11de1b421e`
+
+### Connectivity Presentation And Policy
+
+The previous A16 component commit `204b126ff740dfa008a2b05023cce520a8052e6d`
+contained only the static-IP portion of A13. Five final A13 commits still had
+missing semantics.
+
+#### Ethernet And Wi-Fi Presentation
+
+- Authorities:
+  `eb7ce30646385250ec05e673aafedee4c33363b5`,
+  `6bbe6af294c67c9af56f4d3e7c8a4553f2b6483f`, and the network-agent part of
+  `d86f187aea77c164213462d377884fa3473d1e47`.
+- A16 component: `2f0481f305cadd2280cee75506be803219ad6629`.
+- Root pointer: `36afb8e5b225e9c46bc8fbc9a5917816eca9cfa0`.
+- Adaptation: A16 transport selection moved into `EthernetConfigParser`; the
+  already-started `BstFilterAppsService` is queried there. Legacy type policy
+  moved into the refactored `EthernetNetworkFactory` and is exposed through a
+  dependency method for deterministic tests.
+- Performance: one binder call per configured interface at startup and one
+  property read when provisioning.
+- Security: intentionally changes the network identity visible to apps and
+  policy code; it adds no new privilege.
+
+#### DSCP Program Loading
+
+- Authority: `56a3aff5be6304f88eba2fcdee09cde8ad42fd5c`.
+- A16 component: `ce5d67fa66f1f56450a22f274ccc39a6207108a6`.
+- Root pointer: `01328ab7feb121873313529116b460cc6073d481`.
+- Adaptation: apply `#pragma unroll` to the relocated A16
+  `bpf/progs/dscpPolicy.c` loop.
+- Performance: larger generated BPF instruction stream in exchange for less
+  verifier loop analysis; packet matching semantics are unchanged.
+- Security: no policy matching or packet mutation change.
+
+#### China Captive Portal Default
+
+- Authorities: `33b855c9022604cec5944afbbffad06ff85eb50e` and API-fix follow-up
+  `f082bfff816777d3b0133e249038aac079dcbd43`.
+- A16 component: `b3f8ca2c95e4c5f4211b8e6bccb0a0a7d9e92ed6`.
+- Root pointer: `6f242cafabcd7271ecd78cc72d99498fbf988da5`.
+- Adaptation: retain the A16 `NetworkAgentInfo` Wear/Bluetooth exception and
+  use `IGNORE` only as the `nxt_cn` default. An explicit global setting still
+  wins.
+- Performance: property lookup only when portal mode is evaluated.
+- Security: `nxt_cn` can suppress portal prompting by default, which is an
+  intentional A13 product policy with interception risk.
+
+Combined Connectivity validation:
+
+- `FrameworksNetTests` and `ConnectivityUnitTestsLib` built successfully.
+- Dedicated Wi-Fi transport and legacy-type tests are present in the compiled
+  unit-test jar; tests were compiled but not executed on a device.
+- `dscpPolicy.o` built with `-Werror`; APEX and system copies are identical.
+- Service jars independently contain `bstfilterapps`, `isEtherNetType`,
+  `bst.config.modify_network`, `bst.oem`, `nxt_cn` and `captivePortalMode`.
+
+Artifact hashes:
+
+- Connectivity test library:
+  `7fcb380b07d6e2c1a7e7d0da3e7ebb4414d513b8b82d5387a820d2c711405e20`
+- Tiramisu service jar:
+  `459c71f4bdc9c7523b5b388a133d67e0b661c25fc609f5cff07b4ea54caea92b`
+- Core service jar:
+  `642b557cdb4a1b997ad8021035445b2d96230b3d53e21bc8ea56c66831768771`
+- Installed BPF object:
+  `6796c9c678c6134130bf8e8cd549081783c4264dd2fd687f5541b8e7f8ff74f2`
+
+### Project Quota Compatibility
+
+- Authority: `system/vold`
+  `fb129833c9b27047bd529da67ce56fe248969075`.
+- Finding: both AOSP16 and the initial Android-16 promotion still issued
+  `FS_IOC_GETFLAGS`, `FS_IOC_SETFLAGS`, `FS_IOC_FSGETXATTR` and
+  `FS_IOC_FSSETXATTR`. The final A13 tree intentionally treats project-quota
+  setup as successful because App Player storage does not implement these
+  ioctls.
+- A16 component: `bf57a99ee447bc089e29ff52ac3624fae61a5fde`.
+- Root pointer: `f0947d915915e45d69a683679895553780161a61`.
+- Adaptation: preserve the A13 no-op semantics without carrying its dead
+  `#if 0` implementation. Both helpers explicitly consume their arguments and
+  return zero; all directory creation and shared-folder mount behavior remains
+  unchanged.
+- Necessity: prevents unsupported project-quota operations from failing app
+  directory preparation on the virtual storage backend.
+- Performance: removes two opens and up to four ioctls per affected quota
+  setup path; no new work is introduced.
+- Security: project IDs and inheritance are not applied by vold. Isolation must
+  therefore come from the App Player storage model, UID/GID ownership and
+  mount boundaries; this matches the final A13 product policy but requires
+  runtime storage-isolation verification.
+- Validation: `vold`, `vold_prepare_subdirs` and both 32/64-bit `vold_tests`
+  built successfully in 607 actions. The x86_64 object disassembly for both
+  helpers is `xor eax,eax; ret`. The tests were compiled, not run on a guest.
+
+Artifact hashes:
+
+- `system/bin/vold`:
+  `9bc12768510f5cb5326a4bbe707465c61fad21d6f6a4031338a59705f575dd1a`
+- `system/bin/vold_prepare_subdirs`:
+  `da4dfce68a5d4bf29d1201570b26687229d678793ee41b4e87cc5fd64e6370c3`
+- 64-bit test:
+  `798b98dc750b6af62436562de2ad698416c8f7aeabf6a12d80471d3cef0c0a4e`
+- 32-bit test:
+  `3c6a0873a0a54a8fcc3046f916e7870060906e64281796f57382bf2c450e3d9a`
+
+### Restricted Widevine Payload Evidence
+
+The A13 Widevine commit `bb15209c81865750681a87e371fa645797818492`
+contains both source changes and a 1,250,188-byte prebuilt. The review
+repository keeps one `git format-patch --no-binary` code record and the exact
+source/target blob and SHA-256 mapping in
+`patches/android-16/a13-authority/restricted-binary-evidence.json`. Two
+equivalent patch exports with embedded binary data had stable patch ID
+`cecfbbfa2d6a65e1764e40e4ab0172986eace92d` and were excluded. The target
+component still contains the authority blob introduced by A16 commit
+`0edb96a328b99742a8c3583e3d1aafc501308252`; publication remains subject to
+provenance and redistribution authorization.
+
+## Reviewed Equivalent Or Superseded Areas
+
+- `external/boringssl`: A13 RSA-PSS Widevine wrappers are present in the A16
+  decrepit RSA implementation. Vendor self-test rc registration is already
+  absent; no code change is required.
+- `external/icu`: current tzdata `2025b` already ends the Tehran transition at
+  the required 2022 boundary. The A13 hand-edited timezone workaround must not
+  override current authoritative data.
+- `device/google/cuttlefish`: the 36 A13 deleted Cuttlefish APEX files are
+  already absent upstream in A16.
+- `hardware/bst/{audio,camera,lights,memtrack,power}`: product C/C++ sources are
+  exact or high-coverage A16 adaptations; build metadata differs only where
+  Soong/header migration requires it.
+- `.github` deletion, deinitialized third-party links and bulk external sync
+  commits are repository hygiene, not guest runtime patches.
+
+## Required Next Gates
+
+1. Continue code-level review of every remaining A13 product-signal commit,
+   prioritizing projects without independent patch evidence.
+2. Regenerate the A13 coverage and Android-16 delta reports at root
+   `f0947d915915e45d69a683679895553780161a61`.
+3. Run target-only full `m droid`, stage and package with identity-bound hashes.
+4. Run Windows boot, FPS, network-presentation, captive-portal, SELinux and
+   entropy readback oracles.
+5. Audit all component branches/gitlinks and remote SHA reachability before any
+   push or replacement PR.
+
+No current commit is eligible for publication or completion claims until these
+gates pass.

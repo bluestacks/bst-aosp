@@ -1,0 +1,27 @@
+From c724771c911ee8730f829e2d6bcb513bf0038945 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 16:32:21 +0800
+Subject: [PATCH] [A16] Build xmllint for guest data recovery
+
+---
+ Android.bp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/Android.bp b/Android.bp
+index 038a223f..68ca6e71 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -173,8 +173,9 @@ cc_library_static {
+     sdk_version: "current",
+ }
+ 
+-cc_binary_host {
++cc_binary {
+     name: "xmllint",
++    host_supported: true,
+     srcs: [
+         "lintmain.c",
+         "shell.c",
+-- 
+2.34.1
+

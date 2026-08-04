@@ -1,0 +1,81 @@
+diff --git a/services/core/java/com/android/server/wm/ActivityClientController.java b/services/core/java/com/android/server/wm/ActivityClientController.java
+index 3d249aa964b8..b93025a75ab5 100644
+--- a/services/core/java/com/android/server/wm/ActivityClientController.java
++++ b/services/core/java/com/android/server/wm/ActivityClientController.java
+@@ -215,6 +215,7 @@ class ActivityClientController extends IActivityClientController.Stub {
+         final long origId = Binder.clearCallingIdentity();
+         synchronized (mGlobalLock) {
+             ActivityRecord.activityRefreshedLocked(token);
++            mService.mWindowManager.changeDisplayDensity(null, null);
+         }
+         Binder.restoreCallingIdentity(origId);
+     }
+diff --git a/services/core/java/com/android/server/wm/ActivityStartController.java b/services/core/java/com/android/server/wm/ActivityStartController.java
+index 51025d204b46..ec778b16ea36 100644
+--- a/services/core/java/com/android/server/wm/ActivityStartController.java
++++ b/services/core/java/com/android/server/wm/ActivityStartController.java
+@@ -131,6 +131,11 @@ public class ActivityStartController {
+      *         considered invalid and no longer modified or used.
+      */
+     ActivityStarter obtainStarter(Intent intent, String reason) {
++        if (intent != null && intent.getComponent() != null) {
++            mService.mWindowManager.changeDisplayDensity(
++                    intent.getComponent().getPackageName(),
++                    intent.getComponent().getClassName());
++        }
+         return mFactory.obtain().setIntent(intent).setReason(reason);
+     }
+ 
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 45e99099fb16..1c8b577e2a2b 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -4180,6 +4180,48 @@ public class WindowManagerService extends IWindowManager.Stub
+         mPolicy.setBstProposedRotation(proposedRotation);
+     }
+ 
++    /** Updates the default display density for the package being launched or refreshed. */
++    public void changeDisplayDensity(String packageName, String activityName) {
++        final String topPackageName = packageName != null
++                ? packageName
++                : SystemProperties.get("bst.config.top_package_name", null);
++        if (topPackageName == null || topPackageName.isEmpty() || mBstFilterApps == null) {
++            return;
++        }
++
++        final String customDpi = mBstFilterApps.getCustomDpi(topPackageName);
++        final int density;
++        if ("160".equals(customDpi) || "240".equals(customDpi)
++                || "320".equals(customDpi) || "400".equals(customDpi)
++                || "480".equals(customDpi)) {
++            density = Integer.parseInt(customDpi);
++        } else {
++            density = 0;
++        }
++
++        try {
++            synchronized (mGlobalLock) {
++                final DisplayContent displayContent =
++                        mRoot.getDisplayContent(Display.DEFAULT_DISPLAY);
++                if (displayContent == null) {
++                    return;
++                }
++                final int initialDensity = displayContent.getInitialDisplayDensity();
++                final int currentDensity = displayContent.mBaseDisplayDensity;
++                if (density > 0 && currentDensity != density) {
++                    setForcedDensityLockedInternal(
++                            Display.DEFAULT_DISPLAY, density, mCurrentUserId);
++                } else if (density == 0 && initialDensity != currentDensity) {
++                    displayContent.setForcedDensity(initialDensity, mCurrentUserId);
++                    displayContent.clearForcedDensityRatio();
++                }
++            }
++        } catch (RuntimeException e) {
++            Slog.w(TAG, "Unable to update display density to " + density
++                    + " for " + topPackageName, e);
++        }
++    }
++
+     private void performEnableScreen() {
+         synchronized (mGlobalLock) {
+             ProtoLog.i(WM_DEBUG_BOOT, "performEnableScreen: mDisplayEnabled=%b"

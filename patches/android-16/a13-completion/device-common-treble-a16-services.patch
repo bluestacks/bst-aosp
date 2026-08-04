@@ -1,0 +1,43 @@
+diff --git a/treble.mk b/treble.mk
+--- a/treble.mk
++++ b/treble.mk
+@@ -7,8 +7,7 @@ PRODUCT_PACKAGES += \
+ 
+ # HWComposer HAL
+ PRODUCT_PACKAGES += \
+-    android.hardware.graphics.composer@2.1-service \
+-    android.hardware.graphics.composer@2.1-service.drmfb
++    android.hardware.graphics.composer@2.1-service
+ 
+ # Audio HAL
+ PRODUCT_PACKAGES += \
+@@ -28,7 +27,7 @@ PRODUCT_PACKAGES += \
+ 
+ # Media codec
+ PRODUCT_PACKAGES += \
+-    android.hardware.media.c2@1.0-service \
++    com.android.media.swcodec \
+     android.hardware.media.omx@1.0-service
+ 
+ # DumpState HAL
+@@ -58,9 +57,7 @@ PRODUCT_PACKAGES += \
+ 
+ # Memtrack HAL
+ PRODUCT_PACKAGES += \
+-    memtrack.default \
+-    android.hardware.memtrack@1.0-impl \
+-    android.hardware.memtrack@1.0-service
++    com.android.hardware.memtrack
+ 
+ # Power HAL
+ PRODUCT_PACKAGES += \
+@@ -87,8 +84,7 @@ PRODUCT_PACKAGES += \
+ 
+ # GPS HAL
+ PRODUCT_PACKAGES += \
+-    android.hardware.gnss@1.0-impl \
+-    android.hardware.gnss@1.0-service
++    com.android.hardware.gnss
+ 
+ # ConfigStore HAL
+ PRODUCT_PACKAGES += \

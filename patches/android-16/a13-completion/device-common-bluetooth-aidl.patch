@@ -1,0 +1,12 @@
+diff --git a/treble.mk b/treble.mk
+--- a/treble.mk
++++ b/treble.mk
+@@ -19,7 +19,7 @@ PRODUCT_PACKAGES += \
+ 
+ # Bluetooth HAL
+ PRODUCT_PACKAGES += \
+-    android.hardware.bluetooth@1.0-service.btlinux
++    android.hardware.bluetooth-service.default
+ 
+ # Camera HAL
+ PRODUCT_PACKAGES += \

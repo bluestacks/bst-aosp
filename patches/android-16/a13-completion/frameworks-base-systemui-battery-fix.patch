@@ -1,0 +1,29 @@
+diff --git a/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java b/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java
+index c1d30e6f0d81..c9e9094a77ac 100644
+--- a/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java
++++ b/packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java
+@@ -523,8 +523,6 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
+     }
+ 
+     void updateShowPercent() {
+-        setPercentShowMode(MODE_OFF);
+-
+         if (!NewStatusBarIcons.isEnabled()) {
+             updateShowPercentLegacy();
+             return;
+@@ -542,6 +540,7 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
+                     com.android.internal.R.bool.config_defaultBatteryPercentageSetting)
+                     ? 1 : 0, UserHandle.USER_CURRENT));
+         }
++        shouldShow = false;
+ 
+         setBatteryDrawableState(
+                 new BatteryDrawableState(
+@@ -575,6 +574,6 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
+                 (mShowPercentAvailable && systemSetting && mShowPercentMode != MODE_OFF)
+                 || mShowPercentMode == MODE_ON
+                 || mShowPercentMode == MODE_ESTIMATE;
+-        shouldShow = shouldShow && !mBatteryStateUnknown;
++        shouldShow = false;
+ 
+         if (shouldShow) {

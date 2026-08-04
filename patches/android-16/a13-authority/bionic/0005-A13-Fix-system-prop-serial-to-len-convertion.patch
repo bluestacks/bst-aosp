@@ -1,0 +1,104 @@
+From e7687413bac802b330b05da715deadbd88df9cad Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Wed, 15 Nov 2023 14:36:35 +0800
+Subject: [PATCH 05/13] [A13] Fix system prop serial to len convertion
+
+---
+ libc/system_properties/system_properties.cpp | 52 +++++++++++++-------
+ 1 file changed, 33 insertions(+), 19 deletions(-)
+
+diff --git a/libc/system_properties/system_properties.cpp b/libc/system_properties/system_properties.cpp
+index 2cbd62c6c..d138b51ba 100644
+--- a/libc/system_properties/system_properties.cpp
++++ b/libc/system_properties/system_properties.cpp
+@@ -49,6 +49,7 @@
+ 
+ #define SERIAL_DIRTY(serial) ((serial)&1)
+ #define SERIAL_VALUE_LEN(serial) ((serial) >> 24)
++#define SERIAL_FROM_LEN(len) ((len) << 24)
+ 
+ extern int bst_hack_system_property(const char *name, char *value);
+ 
+@@ -144,17 +145,10 @@ static bool is_read_only(const char* name) {
+ 
+ uint32_t SystemProperties::ReadMutablePropertyValue(const prop_info* pi, char* value) {
+   // We assume the memcpy below gets serialized by the acquire fence.
+-  uint32_t new_serial;
++  uint32_t new_serial = load_const_atomic(&pi->serial, memory_order_acquire);
+   uint32_t serial;
+   unsigned int len;
+-  int bstval;
+-
+-  bstval = bst_hack_system_property(pi->name, value);
+-  if (bstval > 0){
+-    return bstval;
+-  }
+ 
+-  new_serial = load_const_atomic(&pi->serial, memory_order_acquire);
+   for (;;) {
+     serial = new_serial;
+     len = SERIAL_VALUE_LEN(serial);
+@@ -182,7 +176,28 @@ uint32_t SystemProperties::ReadMutablePropertyValue(const prop_info* pi, char* v
+ }
+ 
+ int SystemProperties::Read(const prop_info* pi, char* name, char* value) {
+-  uint32_t serial = ReadMutablePropertyValue(pi, value);
++
++  // Some properties are not there in the prop_area, in other words they have not
++  // been set yet after booting, so don't have valid @pi. In this case also we need
++  // to fake it's value.
++
++  int len;
++  int bstval;
++  if(pi == nullptr){
++    int bstval = bst_hack_system_property(name, value);
++    if (bstval > 0) {
++      return bstval;
++    }
++    return 0;
++  }
++
++  bstval = bst_hack_system_property(pi->name, value);
++  if (bstval > 0) {
++    len = bstval;
++  } else {
++    uint32_t serial = ReadMutablePropertyValue(pi, value);
++    len = SERIAL_VALUE_LEN(serial);
++  }
+   if (name != nullptr) {
+     size_t namelen = strlcpy(name, pi->name, PROP_NAME_MAX);
+     if (namelen >= PROP_NAME_MAX) {
+@@ -201,7 +216,7 @@ int SystemProperties::Read(const prop_info* pi, char* name, char* value) {
+         " __system_property_read_callback() instead.",
+         pi->name, strlen(pi->long_value()));
+   }
+-  return SERIAL_VALUE_LEN(serial);
++  return len;
+ }
+ 
+ void SystemProperties::ReadCallback(const prop_info* pi,
+@@ -210,16 +225,15 @@ void SystemProperties::ReadCallback(const prop_info* pi,
+                                     void* cookie) {
+   // Read only properties don't need to copy the value to a temporary buffer, since it can never
+   // change.  We use relaxed memory order on the serial load for the same reason.
+-  if (is_read_only(pi->name)) {
+-    char bst_buf[PROP_VALUE_MAX];
+-    int bstval = bst_hack_system_property(pi->name, bst_buf);
+-    if (bstval > 0)
+-    {
+-      uint32_t serial = load_const_atomic(&pi->serial, memory_order_relaxed);
+-      callback(cookie, pi->name, bst_buf, serial);
+-      return;
+-    }
++  char bst_buf[PROP_VALUE_MAX];
++  int bstval = bst_hack_system_property(pi->name, bst_buf);
++  if (bstval != 0) {
++    uint32_t serial = load_const_atomic(&(pi->serial), memory_order_relaxed);
++    callback(cookie, pi->name, bst_buf, serial);
++    return;
++  }
+ 
++  if (is_read_only(pi->name)) {
+     uint32_t serial = load_const_atomic(&pi->serial, memory_order_relaxed);
+     if (pi->is_long()) {
+       callback(cookie, pi->name, pi->long_value(), serial);

@@ -1,0 +1,26 @@
+From 71603f1540a667074eef14840e0a3a1bc96be58c Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Wed, 5 Mar 2025 14:10:22 +0800
+Subject: [PATCH 170/224] [ROB-16058] Fix USB debugging detection
+
+---
+ core/java/android/provider/Settings.java | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 314772a1d665..803a88f2ad30 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -3129,10 +3129,8 @@ public final class Settings {
+             //ROB-4481: com.bandainamcoent.gundamucengage safetynet fix.
+             else if (name != null && (name.equals(Settings.Global.ADB_ENABLED) || name.equals(Settings.Global.DEVELOPMENT_SETTINGS_ENABLED))) {
+                 try {
+-                    int pid = Binder.getCallingPid();
+-                    String callingApp = BstUtils.getAppNameFromPid(pid);
+-                    if (LOCAL_LOGV) Log.w(TAG, "app : " + callingApp + " (" + pid + ") is trying to figure out whether ADB_ENABLED or DEVELOPMENT_SETTINGS_ENABLED is currently enabled or not.");
+-                    if (callingApp != null && callingApp.startsWith("com.bandainamcoent.gundamucengage")) {
++                    int uid = Binder.getCallingUid();
++                    if (uid >= 10000) {
+                         return "0";
+                     }
+                 } catch (Exception e) {

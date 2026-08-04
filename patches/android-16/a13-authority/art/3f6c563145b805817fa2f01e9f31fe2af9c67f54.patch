@@ -1,0 +1,104 @@
+From 3f6c563145b805817fa2f01e9f31fe2af9c67f54 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 17 Nov 2023 16:20:07 +0800
+Subject: [PATCH] [A13] Porting changes for abilist config.db entry (#2)
+
+---
+ libnativebridge/native_bridge.cc | 74 ++++++++++++++++++++++++++++++++
+ 1 file changed, 74 insertions(+)
+
+diff --git a/libnativebridge/native_bridge.cc b/libnativebridge/native_bridge.cc
+index f32e629961..c32919ce60 100755
+--- a/libnativebridge/native_bridge.cc
++++ b/libnativebridge/native_bridge.cc
+@@ -412,6 +412,68 @@ void PreZygoteForkNativeBridge() {
+   }
+ }
+ 
++// BST: Function to modify BUILD.SUPPORTED_*_ABIS list for arm apps running with native bridge
++// and having entry of 'abilist' in config db.
++static void SetCpuAbiList(JNIEnv* env, jclass build_class) {
++#if __LP64__
++  const char *abiprop[] = {"SUPPORTED_ABIS", "SUPPORTED_64_BIT_ABIS", "SUPPORTED_32_BIT_ABIS"};
++  const char *val[] = {"arm64-v8a", "armeabi-v7a", "armeabi"};
++  const char *val64[] = {"arm64-v8a"};
++#else
++  const char *abiprop[] = {"SUPPORTED_ABIS", "SUPPORTED_32_BIT_ABIS"};
++#endif
++  const char *val32[] = {"armeabi-v7a", "armeabi"};
++  const char **temp = nullptr;
++  int val_len = 0;
++
++  for (unsigned long i = 0; i < (sizeof(abiprop)/sizeof(abiprop[0])); i++) {
++    jfieldID field_id = env->GetStaticFieldID(build_class, abiprop[i], "[Ljava/lang/String;");
++    if (field_id == nullptr) {
++      env->ExceptionClear();
++      ALOGW("Could not find %s field.", abiprop[i]);
++      return;
++    }
++
++#if __LP64__
++    // Directly using array index itself as it is inline with abiprop array, any error and we simply return.
++    if (i == 0) {
++      // SUPPORTED_ABIS list
++      temp = val;
++      val_len = 3;
++    } else if (i == 1) {
++      // SUPPORTED_64_BIT_ABIS list
++      temp = val64;
++      val_len = 1;
++    } else {
++      temp = val32;
++      val_len = 2;
++    }
++#else
++    temp = val32;
++    val_len = 2;
++#endif
++    // Create abi array.
++    jobjectArray abi = env->NewObjectArray(val_len, env->FindClass("java/lang/String"), nullptr);
++    if (abi == nullptr) {
++      env->ExceptionClear();
++      ALOGW("Could not create array.");
++      return;
++    }
++
++    // Fill abi array.
++    for (int32_t j = 0; j < val_len ; j++) {
++      jstring str = env->NewStringUTF((temp[j]));
++      if (str == nullptr) {
++        env->ExceptionClear();
++        ALOGW("Could not create string %s.", (temp[j]));
++        return;
++      }
++      env->SetObjectArrayElement(abi, j, str);
++    }
++    env->SetStaticObjectField(build_class, field_id, abi);
++  }
++}
++
+ static void SetCpuAbi(JNIEnv* env, jclass build_class, const char* field, const char* value) {
+   if (value != nullptr) {
+     jfieldID field_id = env->GetStaticFieldID(build_class, field, "Ljava/lang/String;");
+@@ -502,6 +564,18 @@ static void SetupEnvironment(const NativeBridgeCallbacks* cbs, JNIEnv* env, cons
+       if (bclass_id != nullptr) {
+         SetCpuAbi(env, bclass_id, "CPU_ABI", env_values->cpu_abi);
+         SetCpuAbi(env, bclass_id, "CPU_ABI2", env_values->cpu_abi2);
++
++        // Case BS4-5738 Modifying SUPPORTED_ABIS* List for apps having 'abilist' entry in config and running with native bridge to
++        // show only arm abi values. This fixes in-app sdk initialization which fails for x86 abi, if determined via abiList.
++        // Changing behaviour for 32 bit and 64 bit install.
++#if defined(__ANDROID__)
++#define APP_WITH_ABILIST                   "/data/downloads/.tmp/.bstAbilistApps"
++#define MAX_BUFF_LENGTH                    64
++        if (match_uid_helper(APP_WITH_ABILIST, getuid(), MAX_BUFF_LENGTH))
++#endif
++        {
++          SetCpuAbiList(env, bclass_id);
++        }
+       } else {
+         // For example in a host test environment.
+         env->ExceptionClear();
+-- 
+2.34.1
+

@@ -1,0 +1,54 @@
+From 8c4cc6cd4ca7c082f018507d08adb201eb15a1eb Mon Sep 17 00:00:00 2001
+From: "jace@bluestacks.com" <jace-bst>
+Date: Tue, 18 Nov 2025 14:22:55 +0800
+Subject: [PATCH 208/224] Revert "ROB-16741: Auto detect gms get-token
+ exception to post debug info to cloud (#210)"
+
+This reverts commit 2068e63a3a6bcb562a8ae9e6cc5576c92e2a97fb.
+---
+ .../server/accounts/AccountManagerService.java | 18 ------------------
+ 1 file changed, 18 deletions(-)
+
+diff --git a/services/core/java/com/android/server/accounts/AccountManagerService.java b/services/core/java/com/android/server/accounts/AccountManagerService.java
+index 2f797a502d04..6b8326963c0d 100644
+--- a/services/core/java/com/android/server/accounts/AccountManagerService.java
++++ b/services/core/java/com/android/server/accounts/AccountManagerService.java
+@@ -272,7 +272,6 @@ public class AccountManagerService
+ 
+     private static AtomicReference<AccountManagerService> sThis = new AtomicReference<>();
+     private static final Account[] EMPTY_ACCOUNT_ARRAY = new Account[]{};
+-    private static boolean isCleanUpGMSUserData = true;
+ 
+     /**
+      * This should only be called by system code. One should only call this after the service
+@@ -2979,13 +2978,6 @@ public class AccountManagerService
+ 
+         // Get the calling package. We will use it for the purpose of caching.
+         final String callerPkg = loginOptions.getString(AccountManager.KEY_ANDROID_PACKAGE_NAME);
+-        if (callerUid >= 10000 && callerPkg.equals("com.android.vending")) {
+-            if (isCleanUpGMSUserData && SystemProperties.get("bst.force_clear_gms", "").equals("1")) {
+-                cleanUpGMSUserData();
+-                isCleanUpGMSUserData = false;
+-                SystemProperties.set("bst.force_clear_gms", "0");
+-            }
+-        }
+         String[] callerOwnedPackageNames;
+         final long ident2 = Binder.clearCallingIdentity();
+         try {
+@@ -6339,16 +6331,6 @@ public class AccountManagerService
+         return;
+     }
+ 
+-    private void cleanUpGMSUserData() {
+-        Intent intent = new Intent();
+-        ComponentName cn = new ComponentName("com.bluestacks.BstCommandProcessor",
+-                "com.bluestacks.BstCommandProcessor.BstCommandProcessorService");
+-        intent.setAction("cleanUpGMSUserData");
+-        intent.setComponent(cn);
+-        mContext.startServiceAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
+-        return;
+-    }
+-
+     private final class AccountManagerInternalImpl extends AccountManagerInternal {
+         private final Object mLock = new Object();
+ 

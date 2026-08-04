@@ -1,0 +1,33 @@
+From c57571d5cd966c7b4b3612898be7b5a2c7c77965 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 01:28:39 +0800
+Subject: [PATCH] [A16] Start servicemanager readiness probe
+
+---
+ cmds/servicemanager/servicemanager.rc | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/cmds/servicemanager/servicemanager.rc b/cmds/servicemanager/servicemanager.rc
+index 6c450ab4e3..2753636bcd 100644
+--- a/cmds/servicemanager/servicemanager.rc
++++ b/cmds/servicemanager/servicemanager.rc
+@@ -6,6 +6,7 @@ service servicemanager /system/bin/servicemanager
+     file /dev/kmsg w
+     onrestart setprop servicemanager.ready false
+     onrestart restart --only-if-running apexd
++    onrestart restart bstsvcmgrtest
+     onrestart restart audioserver
+     onrestart restart gatekeeperd
+     onrestart class_restart --only-enabled main
+@@ -13,3 +14,8 @@ service servicemanager /system/bin/servicemanager
+     onrestart class_restart --only-enabled early_hal
+     task_profiles ProcessCapacityHigh
+     shutdown critical
++
++service bstsvcmgrtest /system/bin/logwrapper /system/bin/bstsvcmgrtest
++    class core
++    user media
++    group inet drmrpc mediadrm log
+-- 
+2.34.1
+

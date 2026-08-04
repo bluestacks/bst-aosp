@@ -1,0 +1,44 @@
+From 44b9c0be3e3b5b4886d11ca8c48ad04b77dfd977 Mon Sep 17 00:00:00 2001
+From: allen-bst <70563899+allen-bst@users.noreply.github.com>
+Date: Tue, 12 Mar 2024 18:27:34 +0800
+Subject: [PATCH 128/224] [A13] ROB-11067 ROB-11494 ROB-12069: block
+ EditText-setText when ime is composing for some games (#141)
+
+---
+ core/java/android/widget/EditText.java | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/core/java/android/widget/EditText.java b/core/java/android/widget/EditText.java
+index 9c0900b35de6..6f046b0ee786 100644
+--- a/core/java/android/widget/EditText.java
++++ b/core/java/android/widget/EditText.java
+@@ -25,6 +25,8 @@ import android.text.TextUtils;
+ import android.text.method.ArrowKeyMovementMethod;
+ import android.text.method.MovementMethod;
+ import android.util.AttributeSet;
++import android.util.BstUtils;
++import android.os.Binder;
+ 
+ /*
+  * This is supposed to be a *very* thin veneer over TextView.
+@@ -119,6 +121,20 @@ public class EditText extends TextView {
+ 
+     @Override
+     public void setText(CharSequence text, BufferType type) {
++        // ROB-11067, block setText when ime is composing
++        boolean isComposing = android.os.SystemProperties.getInt("bst.ime_is_composing", 0) == 1;
++        if (isComposing) {
++            int uid = Binder.getCallingUid();
++            if (uid >= 10000) {
++                String packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
++                if (packageName.equals("com.higreor.gp") ||
++                    packageName.equals("com.tdfs.rouge.gp") ||
++                    packageName.equals("com.ldweishuwu.shark") ||
++                    packageName.equals("com.ldweishuwutw.shark")) {
++                    return;
++                }
++            }
++        }
+         super.setText(text, BufferType.EDITABLE);
+     }
+ 

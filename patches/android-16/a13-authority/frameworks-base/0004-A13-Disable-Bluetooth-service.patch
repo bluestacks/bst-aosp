@@ -1,0 +1,23 @@
+From 0999276c8eb6e78456e45f36e7808b5a2b3c7972 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 17 Aug 2023 17:52:29 +0800
+Subject: [PATCH 004/224] [A13] Disable Bluetooth service
+
+---
+ services/java/com/android/server/SystemServer.java | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
+index 96a05c0aafd8..d0ff9c906037 100755
+--- a/services/java/com/android/server/SystemServer.java
++++ b/services/java/com/android/server/SystemServer.java
+@@ -1656,8 +1656,7 @@ public final class SystemServer implements Dumpable {
+                 Slog.i(TAG, "No Bluetooth Service (Bluetooth Hardware Not Present)");
+             } else {
+                 t.traceBegin("StartBluetoothService");
+-                mSystemServiceManager.startServiceFromJar(BLUETOOTH_SERVICE_CLASS,
+-                    BLUETOOTH_APEX_SERVICE_JAR_PATH);
++                // mSystemServiceManager.startServiceFromJar(BLUETOOTH_SERVICE_CLASS, BLUETOOTH_APEX_SERVICE_JAR_PATH);
+                 t.traceEnd();
+             }
+ 

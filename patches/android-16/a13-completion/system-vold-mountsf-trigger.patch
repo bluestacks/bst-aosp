@@ -1,0 +1,21 @@
+diff --git a/VolumeManager.cpp b/VolumeManager.cpp
+index e382e78..53b6363 100644
+--- a/VolumeManager.cpp
++++ b/VolumeManager.cpp
+@@ -72,6 +72,7 @@
+ 
+ using android::OK;
+ using android::base::GetBoolProperty;
++using android::base::SetProperty;
+ using android::base::StartsWith;
+ using android::base::StringAppendF;
+ using android::base::StringPrintf;
+@@ -178,6 +179,8 @@ int VolumeManager::start() {
+ 
+     Loop::destroyAll();
+ 
++    SetProperty("bst.config.mountsf", "1");
++
+     // Assume that we always have an emulated volume on internal
+     // storage; the framework will decide if it should be mounted.
+     CHECK(mInternalEmulatedVolumes.empty());

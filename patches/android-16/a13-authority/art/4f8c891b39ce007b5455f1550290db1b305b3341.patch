@@ -1,0 +1,26 @@
+From 4f8c891b39ce007b5455f1550290db1b305b3341 Mon Sep 17 00:00:00 2001
+From: levi <levi@bluestacks.com>
+Date: Thu, 25 Jan 2024 10:08:42 +0800
+Subject: [PATCH] export package name
+
+---
+ libnativebridge/native_bridge.cc | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/libnativebridge/native_bridge.cc b/libnativebridge/native_bridge.cc
+index 067d0e5332..c6ea637973 100755
+--- a/libnativebridge/native_bridge.cc
++++ b/libnativebridge/native_bridge.cc
+@@ -377,6 +377,9 @@ static void MountCpuinfoForInstructionSet(const char* instruction_set) {
+ 
+ static char g_pkgname[256];
+ 
++// For Houdini use.
++extern "C" const char* bst_nbpname() { return g_pkgname; }
++
+ static inline void init_pkgname(const char* app_data_dir_in)
+ {
+   g_pkgname[0] = 0;
+-- 
+2.34.1
+

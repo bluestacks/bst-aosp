@@ -1,0 +1,65 @@
+From 77340fd11be44794f06cfd3f1bdbee4bca1b3e39 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 31 Oct 2023 13:50:47 +0800
+Subject: [PATCH 050/224] [A13] Porting changes for dxflag config.db entry
+
+---
+ .../com/android/server/pm/DexOptHelper.java   | 20 +++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/DexOptHelper.java b/services/core/java/com/android/server/pm/DexOptHelper.java
+index aabe8a163df7..54f7b101379c 100644
+--- a/services/core/java/com/android/server/pm/DexOptHelper.java
++++ b/services/core/java/com/android/server/pm/DexOptHelper.java
+@@ -27,6 +27,7 @@ import static com.android.server.pm.PackageManagerService.REASON_CMDLINE;
+ import static com.android.server.pm.PackageManagerService.REASON_FIRST_BOOT;
+ import static com.android.server.pm.PackageManagerService.STUB_SUFFIX;
+ import static com.android.server.pm.PackageManagerService.TAG;
++import static com.android.server.pm.PackageManagerService.REASON_INSTALL;
+ import static com.android.server.pm.PackageManagerServiceCompilerMapping.getCompilerFilterForReason;
+ import static com.android.server.pm.PackageManagerServiceCompilerMapping.getDefaultCompilerFilter;
+ import static com.android.server.pm.PackageManagerServiceUtils.REMOVE_IF_NULL_PKG;
+@@ -37,6 +38,7 @@ import android.annotation.RequiresPermission;
+ import android.app.ActivityManager;
+ import android.app.AppGlobals;
+ import android.content.Intent;
++import android.content.Context;
+ import android.content.pm.ResolveInfo;
+ import android.content.pm.SharedLibraryInfo;
+ import android.content.pm.dex.ArtManager;
+@@ -77,10 +79,13 @@ import java.util.Set;
+ import java.util.concurrent.TimeUnit;
+ import java.util.function.Predicate;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++
+ final class DexOptHelper {
+     private static final long SEVEN_DAYS_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
+ 
+     private final PackageManagerService mPm;
++    BstFilterAppsManager mBstfilter = null;
+ 
+     public boolean isDexOptDialogShown() {
+         synchronized (mLock) {
+@@ -418,6 +423,21 @@ final class DexOptHelper {
+     // Run dexopt on a given package. Returns true if dexopt did not fail, i.e.
+     // if the package can now be considered up to date for the given filter.
+     private int performDexOptInternal(DexoptOptions options) {
++        String packageName = options.getPackageName();
++
++        if (mBstfilter == null)
++            mBstfilter = (BstFilterAppsManager) mPm.mContext.getSystemService(Context.BST_FILTER_APPS);
++
++        if (mBstfilter.isForcedDexoptWithInstallFlag(packageName)) {
++            Log.d(TAG, "performDexOptInternal: packageName = " + packageName  + " targetCompilerFilter = " +
++                    options.getCompilerFilter());
++            String targetCompilerFilter = PackageManagerServiceCompilerMapping.getCompilerFilterForReason(REASON_INSTALL);
++            options = new DexoptOptions(options.getPackageName(), REASON_INSTALL, targetCompilerFilter,
++                    options.getSplitName(), options.getFlags());
++            Log.d(TAG, "performDexOptInternal: changed packageName = " + packageName  + " targetCompilerFilter = " +
++                    options.getCompilerFilter());
++        }
++
+         AndroidPackage p;
+         PackageSetting pkgSetting;
+         synchronized (mPm.mLock) {

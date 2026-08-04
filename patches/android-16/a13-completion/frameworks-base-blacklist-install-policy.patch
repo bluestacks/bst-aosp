@@ -1,0 +1,28 @@
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 6b4c3ccefac3..06277afd0da1 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -1504,6 +1504,12 @@ final class InstallPackageHelper {
+                 && AccountManager.get(mContext).getAccountsByType("com.google").length == 0;
+     }
+ 
++    private boolean isBstBlacklisted(String packageName, String versionName) {
++        final BstFilterAppsManager filterApps = (BstFilterAppsManager)
++                mContext.getSystemService(Context.BST_FILTER_APPS);
++        return filterApps != null && filterApps.isBlackListed(packageName, versionName);
++    }
++
+     private void clearBstAppDataForAbiModeChange(String packageName, int installFlags) {
+         if ((installFlags & PackageManager.INSTALL_REPLACE_EXISTING) == 0) {
+             return;
+@@ -1747,6 +1753,10 @@ final class InstallPackageHelper {
+                     "Instant app package must be signed with APK Signature Scheme v2 or greater");
+         }
+ 
++        if (isBstBlacklisted(pkgName, parsedPackage.getVersionName())) {
++            throw new PrepareFailure(INSTALL_FAILED_INVALID_APK,
++                    "Package is blocked by the BlueStacks blacklist: " + pkgName);
++        }
+         if (isGoogleAppUpdateUnsafe(pkgName)) {
+             throw new PrepareFailure(INSTALL_FAILED_INVALID_APK,
+                     "Google app update is not allowed before account registration: " + pkgName);

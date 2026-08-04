@@ -1,0 +1,131 @@
+From af2af26ebba1e52e355cb919b3bf326075e18c35 Mon Sep 17 00:00:00 2001
+From: jace-bst <88761019+jace-bst@users.noreply.github.com>
+Date: Thu, 21 Aug 2025 18:07:58 +0800
+Subject: [PATCH 202/224] ROB-16097: Set vms entry as global by default for A11
+ and A13 (#208)
+
+Co-authored-by: jace@bluestacks.com <jace-bst>
+---
+ core/jni/com_android_internal_os_Zygote.cpp   | 52 ++++++++++++++++++-
+ .../server/BstFilterAppsService.java          | 23 +++++++-
+ 2 files changed, 72 insertions(+), 3 deletions(-)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index b4714d44ba76..ea85e17a1018 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -33,6 +33,7 @@
+ #include <functional>
+ #include <iterator>
+ #include <list>
++#include <regex>
+ #include <optional>
+ #include <sstream>
+ #include <string>
+@@ -1969,6 +1970,55 @@ out:
+     return ret;
+ }
+ 
++static std::string convertWildcardToRegex(const std::string& wildcard) {
++    std::string regexPattern;
++    regexPattern.reserve(wildcard.size() * 2); // Reserve space
++
++    // Special character escape table
++    static const std::string regexSpecialChars = ".^$|()[]{}*+?\\";
++    for(char c : wildcard) {
++        switch(c) {
++            case '*':
++                regexPattern += ".*";
++                break;
++            case '?':
++                regexPattern += ".";
++                break;
++            default:
++                if(regexSpecialChars.find(c) != std::string::npos) {
++                    regexPattern += '\\';
++                }
++                regexPattern += c;
++        }
++    }
++
++    // Ensure the full string matches
++    return "^" + regexPattern + "$";
++}
++
++/**
++ * Using wildcards to match package names
++ * @param wildcardPkgName A package name pattern containing wildcard characters (e.g. com.example.*)
++ * @param pkgName The actual package name to be matched
++ * @return Returns the longest matching part, or an empty string if there is no match
++ * ROB-16097: To ensure configuration priority, MAP entries are sorted in the following order:
++ * com.example.xxx > com.example.* > *
++ */
++static std::string isPackageMatchedWildcard(const std::string& wildcardPkgName, const std::string& pkgName) {
++    if (wildcardPkgName.find("*") == std::string::npos || wildcardPkgName.empty() || wildcardPkgName.find_first_not_of(' ') == std::string::npos) {
++        return "";
++    }
++
++    std::string regexPattern = convertWildcardToRegex(wildcardPkgName);
++
++    std::regex pattern(regexPattern);
++    if (std::regex_match(pkgName, pattern)) {
++        return pkgName;
++    }
++
++    return "";
++}
++
+ bool bst_get_memorysize_app(const char *calling_pkg, char *pbuf, int bufsize)
+ {
+ #define MEMORYSIZE_FILE_PATH "/data/downloads/.tmp/.bstMemorySizeApps"
+@@ -1987,7 +2037,7 @@ bool bst_get_memorysize_app(const char *calling_pkg, char *pbuf, int bufsize)
+         if ((token = strchr(token, ';')) != NULL && strlen(token) > 0) {
+             subtoken_value = token + 1;
+             *token = '\0';
+-            if (strcmp(subtoken_pkg, calling_pkg) == 0) {
++            if (strcmp(subtoken_pkg, calling_pkg) == 0 || isPackageMatchedWildcard(subtoken_pkg, calling_pkg) != "") {
+                 len = bufsize > strlen(subtoken_value) ? bufsize - 1 : strlen(subtoken_value);
+                 memcpy(pbuf, subtoken_value, len);
+                 ret = true;
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index b4c3afb8daba..0d235758cfcb 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -44,6 +44,7 @@ import java.io.ObjectInputStream;
+ import java.io.ObjectOutputStream;
+ import java.util.ArrayList;
+ import java.util.Arrays;
++import java.util.TreeMap;
+ import java.util.HashMap;
+ import java.util.Iterator;
+ import java.util.List;
+@@ -5576,9 +5577,27 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                         }
+             fw = new FileWriter(outputFile, false);
+             out = new BufferedWriter(fw);
+-            Iterator<HashMap.Entry<String, String>> it = map.entrySet().iterator();
++            // ROB-16097: To ensure configuration priority, MAP entries are sorted in the following order:
++            // com.example.xxx > com.example.* > *
++            Map<String, String> sortedMap = new TreeMap<>((k1, k2) -> {
++                // All matches "*" are placed last
++                if (k1.equals("*") && !k2.equals("*")) return 1;
++                if (!k1.equals("*") && k2.equals("*")) return -1;
++                if (k1.equals("*") && k2.equals("*")) return 0;
++
++                // The wildcard "*" ends in the middle
++                if (k1.endsWith("*") && !k2.endsWith("*")) return 1;
++                if (!k1.endsWith("*") && k2.endsWith("*")) return -1;
++                if (k1.endsWith("*") && k2.endsWith("*")) return k1.compareTo(k2);
++
++                // Ordinary keys are sorted first in lexicographical order
++                return k1.compareTo(k2);
++            });
++            sortedMap.putAll(map);
++
++            Iterator<Map.Entry<String, String>> it = sortedMap.entrySet().iterator();
+             while (it.hasNext()) {
+-                HashMap.Entry<String, String> ent = it.next();
++                Map.Entry<String, String> ent = it.next();
+                 String entry = ent.getKey().toString() + ";".toString() + ent.getValue().toString();
+                 out.write(entry);
+                 out.newLine();

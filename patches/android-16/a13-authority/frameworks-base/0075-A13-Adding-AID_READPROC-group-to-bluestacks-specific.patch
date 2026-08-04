@@ -1,0 +1,96 @@
+From 6ded277e4530b6ae03ad5ad0c3dc6a267455717c Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Fri, 17 Nov 2023 16:28:30 +0800
+Subject: [PATCH 075/224] [A13] Adding AID_READPROC group to bluestacks
+ specific apps
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 68 ++++++++++++++++++++-
+ 1 file changed, 67 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index 3b13804a3b17..6648a9dc2c69 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -943,6 +943,63 @@ static void BstSetDeviceProperties(JNIEnv* env, const char* prop_name, jclass bu
+     env->SetStaticObjectField(build_class, field_id, str);
+ }
+ 
++/*
++ * Add READPROC (3009) group to process group list so that
++ * it can read all proc entries.
++ * This function will return 0 if this process is one of ours and 3009
++ * group is added successfully for this process else it will return -1.
++ */
++static int  bstSetGidHack(JNIEnv* env, jintArray javaGids, bool is_child_zygote, const char* se_name_c_str, fail_fn_t fail_fn) {
++    int retval = -1;
++    jint *java_elems= NULL;
++    jint *bst_java_elems= NULL;
++    jintArray bstjavaGids;
++    jsize javaGidsLength;
++
++    // Adding 3009 (readproc) group only for our apps currently.
++    if (se_name_c_str == nullptr ||
++            (strncmp(se_name_c_str, "com.bluestacks", strlen("com.bluestacks"))
++                && strncmp(se_name_c_str, "com.uncube", strlen("com.uncube")))) {
++        return retval;
++    }
++
++    // Copy current gids of this process into new int array list
++    if (javaGids != NULL) {
++        java_elems = env->GetIntArrayElements(javaGids, 0);
++        if (java_elems == NULL)
++            goto error;
++        javaGidsLength = env->GetArrayLength(javaGids);
++    } else {
++        javaGidsLength = 0;
++    }
++
++    bstjavaGids = env->NewIntArray(javaGidsLength + 1);
++    if (bstjavaGids == NULL)
++        goto error;
++    if (javaGidsLength > 0)
++        env->SetIntArrayRegion(bstjavaGids, 0, javaGidsLength, java_elems);
++
++    bst_java_elems = env->GetIntArrayElements(bstjavaGids, 0);
++    if (bst_java_elems == NULL)
++        goto error;
++
++    // Adding 3009(readproc) group as last member
++    bst_java_elems[javaGidsLength] = AID_READPROC;
++    env->ReleaseIntArrayElements(bstjavaGids, bst_java_elems, 0);
++    // Calling setgids with new list
++    SetGids(env, bstjavaGids, is_child_zygote, fail_fn);
++
++    retval = 0;
++error:
++    if (java_elems != NULL)
++        env->ReleaseIntArrayElements(javaGids, java_elems, 0);
++    if (retval)
++        env->ExceptionClear();
++
++    //ALOGE("%s:%d package %s, javaGids %u retval %d", __func__, __LINE__, se_name_c_str, javaGids, retval);
++    return retval;
++}
++
+ static void SetCpuAbiList(JNIEnv* env, jclass build_class, const char* field, std::vector <std::string> val) {
+   jfieldID field_id = env->GetStaticFieldID(build_class, field, "[Ljava/lang/String;");
+   if (field_id == nullptr) {
+@@ -1962,7 +2019,16 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+         }
+     }
+ 
+-    SetGids(env, gids, is_child_zygote, fail_fn);
++    /*
++     * If SetGid is called from bluestacks wrapper function, no need to call it again.
++     * Our wrapper function will add READPROC(3009) group to process group list
++     * so that it can read all proc entries.
++     */
++    const char* se_name_c_str = nice_name.has_value() ? nice_name.value().c_str() : nullptr;
++    if (bstSetGidHack(env, gids, is_child_zygote, se_name_c_str, fail_fn)) {
++        SetGids(env, gids, is_child_zygote, fail_fn);
++    }
++
+     SetRLimits(env, rlimits, fail_fn);
+ 
+     if (need_pre_initialize_native_bridge) {

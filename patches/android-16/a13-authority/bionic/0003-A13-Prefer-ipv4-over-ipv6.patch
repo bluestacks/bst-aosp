@@ -1,0 +1,60 @@
+From aab5aaabd675c329a83cbaccfda5b4c5b83fdce4 Mon Sep 17 00:00:00 2001
+From: muzhong-bst <muzhong@bluestacks.com>
+Date: Wed, 8 Nov 2023 14:54:21 +0800
+Subject: [PATCH 03/13] [A13] Prefer ipv4 over ipv6
+
+---
+ libc/dns/net/getaddrinfo.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+ mode change 100644 => 100755 libc/dns/net/getaddrinfo.c
+
+diff --git a/libc/dns/net/getaddrinfo.c b/libc/dns/net/getaddrinfo.c
+old mode 100644
+new mode 100755
+index d0c11d2b0..de3096481
+--- a/libc/dns/net/getaddrinfo.c
++++ b/libc/dns/net/getaddrinfo.c
+@@ -666,11 +666,14 @@ android_getaddrinfofornetcontext(const char *hostname, const char *servname,
+ 		ai0 = *pai;	/* backup *pai */
+ 
+ 		if (pai->ai_family == PF_UNSPEC) {
++			pai->ai_family = PF_INET;
++/**
+ #ifdef PF_INET6
+ 			pai->ai_family = PF_INET6;
+ #else
+ 			pai->ai_family = PF_INET;
+ #endif
++*/
+ 		}
+ 		error = get_portmatch(pai, servname);
+ 		if (error)
+@@ -1926,7 +1929,7 @@ _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
+ 
+ 	switch (pai->ai_family) {
+ 	case AF_UNSPEC:
+-		/* prefer IPv6 */
++		/* prefer IPv4 */
+ 		q.name = name;
+ 		q.qclass = C_IN;
+ 		q.answer = buf->buf;
+@@ -1936,7 +1939,9 @@ _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
+ 			query_ipv6 = _have_ipv6(netcontext->app_mark, netcontext->uid);
+ 			query_ipv4 = _have_ipv4(netcontext->app_mark, netcontext->uid);
+ 		}
+-		if (query_ipv6) {
++		if (query_ipv4) {
++			q.qtype = T_A;
++		} else if (query_ipv6) {
+ 			q.qtype = T_AAAA;
+ 			if (query_ipv4) {
+ 				q.next = &q2;
+@@ -1946,8 +1951,6 @@ _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
+ 				q2.answer = buf2->buf;
+ 				q2.anslen = sizeof(buf2->buf);
+ 			}
+-		} else if (query_ipv4) {
+-			q.qtype = T_A;
+ 		} else {
+ 			free(buf);
+ 			free(buf2);

@@ -1,0 +1,136 @@
+From 466ffb9ee944d937c75db76c491698bfd64b1da6 Mon Sep 17 00:00:00 2001
+From: jammy <jammy@bluestacks.com>
+Date: Mon, 26 Jan 2026 11:27:46 +0800
+Subject: [PATCH 216/224] ROB-18546: add new entry FBCCDisabled
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 27 ++++++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 49 +++++++++++++++++++
+ 3 files changed, 77 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 7757b53fee8c..8529c0886120 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -2013,4 +2013,31 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isFbCompleteCheckDisabled(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mFbCompleteCheckDisabledAppList app list\n");
++        initLists();
++
++        synchronized (mFbCompleteCheckDisabledAppList)
++        {
++            if (mFbCompleteCheckDisabledAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mFbCompleteCheckDisabledAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in isFbCompleteCheckDisabled App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 6bfb334e0047..81a4f9e9bf12 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -130,4 +130,5 @@ interface IBstFilterAppsService
+     boolean isDefaultXYDpi(String pkgName);
+     int getPScoreAbove(String pkgName);
+     boolean isMapBufRangeReadOnceEnabled(String pkgName);
++    boolean isFbCompleteCheckDisabled(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 0a12435f6b84..e62c82e0358b 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -204,6 +204,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mDefaultXYDpiAppList = new TreeSet<String>();
+     private Map<String, Integer>  mPScoreAboveAppList = new HashMap<String, Integer>();
+     private Set<String>           mGlMapBufferRangeReadOnceAppList = new TreeSet<String>();
++    private Set<String>           mFbCompleteCheckDisabledAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2786,6 +2787,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mGlMapBufferRangeReadOnceAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("FBCCDisabled")) {
++                                    synchronized (mFbCompleteCheckDisabledAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mFbCompleteCheckDisabledAppList \n");
++                                        mFbCompleteCheckDisabledAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mFbCompleteCheckDisabledAppList \n");
++                                            mFbCompleteCheckDisabledAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mFbCompleteCheckDisabledAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3544,6 +3561,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mGlMapBufferRangeReadOnceAppList.clear();
+         }
+ 
++        synchronized (mFbCompleteCheckDisabledAppList)
++        {
++            mFbCompleteCheckDisabledAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -8155,4 +8177,31 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isFbCompleteCheckDisabled(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mFbCompleteCheckDisabledAppList app list\n");
++        initLists();
++
++        synchronized (mFbCompleteCheckDisabledAppList)
++        {
++            if (mFbCompleteCheckDisabledAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mFbCompleteCheckDisabledAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in isFbCompleteCheckDisabled App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

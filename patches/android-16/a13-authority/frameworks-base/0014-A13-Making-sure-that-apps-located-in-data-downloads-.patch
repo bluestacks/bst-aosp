@@ -1,0 +1,65 @@
+From 78ac1ee0e09d956cfec05457def56fba2b64befa Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 14 Sep 2023 13:37:46 +0800
+Subject: [PATCH 014/224] [A13] Making sure that apps located in
+ /data/downloads & /data/priv-downloads
+
+      location is also read at boot time and treated as system app.
+---
+ .../java/com/android/server/pm/InitAppsHelper.java  | 13 +++++++++++++
+ .../com/android/server/pm/InstallPackageHelper.java | 11 +++++++++++
+ 2 files changed, 24 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/InitAppsHelper.java b/services/core/java/com/android/server/pm/InitAppsHelper.java
+index a03a16ad7bc3..a36d7407efe8 100644
+--- a/services/core/java/com/android/server/pm/InitAppsHelper.java
++++ b/services/core/java/com/android/server/pm/InitAppsHelper.java
+@@ -343,6 +343,19 @@ final class InitAppsHelper {
+                     mSystemParseFlags, mSystemScanFlags | partition.scanFlag,
+                     packageParser, executorService);
+         }
++        // Collect all BlueStacks packages and treat them as priviliged system packages.
++        final File blueStacksPrivAppDir = new File(Environment.getDataDirectory(), "priv-downloads");
++        scanDirTracedLI(blueStacksPrivAppDir, null,
++                mSystemParseFlags,
++                mSystemScanFlags | SCAN_AS_PRIVILEGED,
++                packageParser, executorService);
++
++        // Collect ordinary system packages.
++        final File blueStacksAppDir = new File(Environment.getDataDirectory(), "downloads");
++        scanDirTracedLI(blueStacksAppDir, null,
++                mSystemParseFlags,
++                mSystemScanFlags | SCAN_AS_SYSTEM,
++                packageParser, executorService);
+     }
+ 
+     @GuardedBy("mPm.mLock")
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index c32a57c68ede..7460b8de8353 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -122,6 +122,7 @@ import android.os.Binder;
+ import android.os.Build;
+ import android.os.Bundle;
+ import android.os.Environment;
++import android.os.FileUtils;
+ import android.os.Message;
+ import android.os.Process;
+ import android.os.RemoteException;
+@@ -3528,6 +3529,16 @@ final class InstallPackageHelper {
+             @PackageManagerService.ScanFlags int rescanFlags = rescanAndReparseFlags.first;
+             @ParsingPackageUtils.ParseFlags int reparseFlags = rescanAndReparseFlags.second;
+ 
++            final File blueStacksPrivAppDir = new File(Environment.getDataDirectory(), "priv-downloads");
++            final File blueStacksAppDir = new File(Environment.getDataDirectory(), "downloads");
++            if (FileUtils.contains(blueStacksPrivAppDir, scanFile)) {
++                reparseFlags = systemParseFlags;
++                rescanFlags =  systemScanFlags | SCAN_AS_PRIVILEGED | SCAN_AS_SYSTEM;
++            } else if (FileUtils.contains(blueStacksAppDir, scanFile)) {
++                reparseFlags = systemParseFlags;
++                rescanFlags = systemScanFlags | SCAN_AS_SYSTEM;
++            }
++
+             if (rescanFlags == 0) {
+                 Slog.e(TAG, "Ignoring unexpected fallback path " + scanFile);
+                 continue;

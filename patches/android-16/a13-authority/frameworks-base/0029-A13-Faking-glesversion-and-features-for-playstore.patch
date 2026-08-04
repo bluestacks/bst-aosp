@@ -1,0 +1,243 @@
+From 15f58d06e049c579812e075a3ae0685e990ecdba Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Wed, 11 Oct 2023 10:49:57 +0800
+Subject: [PATCH 029/224] [A13] Faking glesversion and features for playstore
+
+1. Read gles version from config.db with higher priority
+2. Fake reqiured features for vending app
+3. Hide unused features from apps
+---
+ .../server/pm/PackageManagerService.java      | 122 +++++++++++++++++-
+ .../server/wm/ActivityTaskManagerService.java |  21 +++
+ 2 files changed, 141 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 47860373156b..91aed93ec864 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -157,6 +157,7 @@ import android.text.TextUtils;
+ import android.text.format.DateUtils;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.DisplayMetrics;
+ import android.util.EventLog;
+ import android.util.ExceptionUtils;
+@@ -276,6 +277,8 @@ import java.util.concurrent.atomic.AtomicInteger;
+ import java.util.concurrent.atomic.AtomicReference;
+ import java.util.function.Consumer;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++
+ /**
+  * Keep track of all those APKs everywhere.
+  * <p>
+@@ -355,6 +358,9 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+     private static final int NETWORKSTACK_UID = Process.NETWORK_STACK_UID;
+     private static final int UWB_UID = Process.UWB_UID;
+ 
++    // Flags to disable permission revoke for bluestacks apps.
++    private static final boolean BST_DEBUG = SystemProperties.getInt("bst.debug.pm", 0) == 0 ? false : true;
++
+     static final int SCAN_NO_DEX = 1 << 0;
+     static final int SCAN_UPDATE_SIGNATURE = 1 << 1;
+     static final int SCAN_NEW_INSTALL = 1 << 2;
+@@ -663,6 +669,7 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+     private final String mIncrementalVersion;
+ 
+     PackageManagerInternal.ExternalSourcesPolicy mExternalSourcesPolicy;
++    BstFilterAppsManager mBstfilter = null;
+ 
+     @GuardedBy("mAvailableFeatures")
+     private final ArrayMap<String, FeatureInfo> mAvailableFeatures;
+@@ -2750,6 +2757,54 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+     }
+ 
+     public boolean hasSystemFeature(String name, int version) {
++        /* Hide android.hardware.faketouch */
++        if (("android.hardware.faketouch".equalsIgnoreCase(name))
++                && (Binder.getCallingUid() >= 10000)) {
++            return false;
++        }
++
++        /* Hide android.hardware.ethernet */
++        if (("android.hardware.ethernet".equalsIgnoreCase(name))
++                && (Binder.getCallingUid() >= 10000)) {
++            return false;
++        }
++
++        if ("android.hardware.opengles.aep".equalsIgnoreCase(name)) {
++            int pid = Binder.getCallingPid();
++            int uid = Binder.getCallingUid();
++            if (uid >= 10000) {
++                String pkgName = BstUtils.getAppNameFromPid(pid);
++                if ("com.android.vending".equalsIgnoreCase(pkgName)) {
++                    return true;
++                }
++            }
++        }
++
++        /* Making sure that this check for partner app happens irrespective of whether its a china build or not. */
++        if (("android.hardware.bluestacks".equalsIgnoreCase(name))
++                || ("android.hardware.nap".equalsIgnoreCase(name))) {
++            // When an app enquires about Bluestacks from System Features we confirm them that they are running on Bluestacks
++            // if they are one of our partner apps.
++            int pid = Binder.getCallingPid();
++            int uid = Binder.getCallingUid();
++            if (uid >= 10000) {
++                String callingApp = BstUtils.getAppNameFromPid(pid);
++                if (mBstfilter == null) {
++                    mBstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++                }
++                if (mBstfilter.isBluestacksPartnerApp(callingApp)) {
++                    return true;
++                }
++            }
++        }
++
++        if ("android.hardware.nowgg".equalsIgnoreCase(name)) {
++            int pid = Binder.getCallingPid();
++            String pkgName = BstUtils.getAppNameFromPid(pid);
++            if (BST_DEBUG) Log.d(TAG, "Package "+pkgName+" queried for feature "+name);
++            reportNowggPltfDetectionToCloud(pkgName);
++            return true ;
++        }
+         // allow instant applications
+         synchronized (mAvailableFeatures) {
+             final FeatureInfo feat = mAvailableFeatures.get(name);
+@@ -2761,6 +2816,31 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+         }
+     }
+ 
++
++    private void reportNowggPltfDetectionToCloud(String packageName) {
++        String versionName = "";
++        String versionCode = "";
++        try {
++            Computer computer = snapshotComputer();
++            PackageInfo pkgInfo = computer.getPackageInfo(packageName, 0 ,0);
++            versionName = pkgInfo.versionName;
++            versionCode = Integer.toString(pkgInfo.versionCode);
++        } catch (Exception ex) {
++            Log.e(TAG, "Exception: " + ex.getMessage());
++            if (BST_DEBUG) ex.printStackTrace();
++        }
++        Intent intent = new Intent();
++        ComponentName cn = new ComponentName("com.bluestacks.BstCommandProcessor",
++                "com.bluestacks.BstCommandProcessor.BstCommandProcessorService");
++        intent.setAction("reportNowggPlatformDetection");
++        intent.setComponent(cn);
++        intent.putExtra("pkgname", packageName);
++        intent.putExtra("versionname", versionName != null ? versionName : "");
++        intent.putExtra("versioncode", versionCode);
++        mContext.startServiceAsUser(intent, Process.myUserHandle());
++    }
++
++
+     // NOTE: Can't remove due to unsupported app usage
+     public int checkPermission(String permName, String pkgName, int userId) {
+         return mPermissionManager.checkPermission(pkgName, permName, userId);
+@@ -5046,6 +5126,19 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+ 
+         @Override
+         public @NonNull ParceledListSlice<FeatureInfo> getSystemAvailableFeatures() {
++            int pid = Binder.getCallingPid();
++            int uid = Binder.getCallingUid();
++            String pkgName = "";
++            int reqGlEsVersion = -1;
++
++            if (uid >= 10000) {
++                if (mBstfilter == null) {
++                    mBstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++                }
++                pkgName = BstUtils.getAppNameFromPid(pid);
++                reqGlEsVersion = mBstfilter.getGlVersion(pkgName);
++            }
++
+             // allow instant applications
+             ArrayList<FeatureInfo> res;
+             synchronized (mAvailableFeatures) {
+@@ -5053,10 +5146,35 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+                 res.addAll(mAvailableFeatures.values());
+             }
+             final FeatureInfo fi = new FeatureInfo();
+-            fi.reqGlEsVersion = SystemProperties.getInt("ro.opengles.version",
+-                    FeatureInfo.GL_ES_VERSION_UNDEFINED);
++            fi.reqGlEsVersion = reqGlEsVersion != -1
++                ? reqGlEsVersion : SystemProperties.getInt("ro.opengles.version", FeatureInfo.GL_ES_VERSION_UNDEFINED);
+             res.add(fi);
+ 
++            /*
++              We show gl version as 3.0 from /data/bluestacks.prop (ro.opengles.version=196608)
++              But for Play store show this value as 3.2 as it filters app based on this property
++              <uses-feature android:glEsVersion="0x00030002" android:required="true"/>
++              Adding feature as this is also used for filtering
++              <uses-feature android:name="android.hardware.opengles.aep" android:required="true"/>
++            */
++
++            if ("com.android.vending".equalsIgnoreCase(pkgName)) {
++                final FeatureInfo featureInfo = new FeatureInfo();
++                featureInfo.name = "android.hardware.opengles.aep";
++                res.add(featureInfo);
++            }
++
++            if (uid >= 10000) {
++                int size = res.size();
++                for (int i = 0; i < size; i++) {
++                    if ("android.hardware.faketouch".equalsIgnoreCase(res.get(i).name)
++                            || "android.hardware.ethernet".equalsIgnoreCase(res.get(i).name)) {
++                        res.remove(i);
++                        size--;
++                    }
++                }
++            }
++
+             return new ParceledListSlice<>(res);
+         }
+ 
+diff --git a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
+index 49e132cda3d3..e7eac667a3a8 100644
+--- a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
++++ b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
+@@ -215,6 +215,7 @@ import android.telecom.TelecomManager;
+ import android.text.format.TimeMigrationUtils;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.IntArray;
+ import android.util.Log;
+ import android.util.Slog;
+@@ -294,6 +295,8 @@ import java.util.Map;
+ import java.util.Objects;
+ import java.util.Set;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++
+ /**
+  * System service for managing activities and their containers (task, displays,... ).
+  *
+@@ -1150,6 +1153,24 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
+             }
+             config.reqGlEsVersion = GL_ES_VERSION;
+         }
++         // show gl version based on .config.db
++        int pid = Binder.getCallingPid();
++        int uid = Binder.getCallingUid();
++        BstFilterAppsManager mBstFilterApps = null;
++
++        if (uid < 10000) {
++            return config;
++        }
++        if (mBstFilterApps == null) {
++            mBstFilterApps = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++        }
++
++        String pkgName = BstUtils.getAppNameFromPid(pid);
++        int glVersion = mBstFilterApps.getGlVersion(pkgName);
++        if (glVersion != -1) {
++            config.reqGlEsVersion = glVersion;
++        }
++
+         return config;
+     }
+ 

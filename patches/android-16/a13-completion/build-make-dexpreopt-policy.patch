@@ -1,0 +1,27 @@
+From 90781461de1d7e7fa6806e622a2a3c6b0fa39d6f Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 17:39:19 +0800
+Subject: [PATCH] [A16] Honor full BlueStacks dex preoptimization
+
+---
+ target/product/runtime_libart.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/target/product/runtime_libart.mk b/target/product/runtime_libart.mk
+index 71138ac560..8c30d64528 100644
+--- a/target/product/runtime_libart.mk
++++ b/target/product/runtime_libart.mk
+@@ -127,8 +127,10 @@ PRODUCT_SYSTEM_PROPERTIES += \
+     pm.dexopt.shared?=speed
+ 
+ ifneq (,$(filter eng,$(TARGET_BUILD_VARIANT)))
++ifneq (true,$(BST_BUILD_WITH_DEXPREOPT))
+     OVERRIDE_DISABLE_DEXOPT_ALL ?= true
+ endif
++endif
+ 
+ # OVERRIDE_DISABLE_DEXOPT_ALL disables all dexpreopt (build-time) and dexopt (on-device) activities.
+ # This option is for faster iteration during development and should never be enabled for production.
+-- 
+2.34.1
+

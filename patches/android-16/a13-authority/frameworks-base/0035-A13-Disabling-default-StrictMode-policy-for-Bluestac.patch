@@ -1,0 +1,24 @@
+From 4f6786867b48f53f87342d06326fa4f634c0bf61 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Mon, 16 Oct 2023 11:00:36 +0800
+Subject: [PATCH 035/224] [A13] Disabling default StrictMode policy for
+ Bluestacks apps
+
+---
+ core/java/android/app/ActivityThread.java | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index b26504dd1c49..acc98b2bc978 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -6779,7 +6779,8 @@ public final class ActivityThread extends ClientTransactionHandler
+         } finally {
+             // If the app targets < O-MR1, or doesn't change the thread policy
+             // during startup, clobber the policy to maintain behavior of b/36951662
+-            if (data.appInfo.targetSdkVersion < Build.VERSION_CODES.O_MR1
++            boolean isBstPkg = data.info.getPackageName().toLowerCase().startsWith("com.bluestacks.");
++            if (!isBstPkg && data.appInfo.targetSdkVersion < Build.VERSION_CODES.O_MR1
+                     || StrictMode.getThreadPolicy().equals(writesAllowedPolicy)) {
+                 StrictMode.setThreadPolicy(savedPolicy);
+             }

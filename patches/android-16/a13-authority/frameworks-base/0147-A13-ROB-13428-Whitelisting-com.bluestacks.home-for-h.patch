@@ -1,0 +1,22 @@
+From 7226c38bb94a64ad64eae72fbc985260e3e47ba6 Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Wed, 5 Jun 2024 15:28:17 +0800
+Subject: [PATCH 147/224] [A13] ROB-13428:Whitelisting com.bluestacks.home for
+ hidden APIs
+
+---
+ data/etc/hiddenapi-package-whitelist.xml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/data/etc/hiddenapi-package-whitelist.xml b/data/etc/hiddenapi-package-whitelist.xml
+index 98f5824011ae..63df7c8e1f33 100644
+--- a/data/etc/hiddenapi-package-whitelist.xml
++++ b/data/etc/hiddenapi-package-whitelist.xml
+@@ -60,6 +60,7 @@ Do NOT include any apps that are updatable via Play Store!
+   <hidden-api-whitelisted-app package="com.android.systemui.plugins" />
+   <hidden-api-whitelisted-app package="com.android.terminal" />
+   <hidden-api-whitelisted-app package="com.android.wallpaper" />
++  <hidden-api-whitelisted-app package="com.bluestacks.home" />
+   <hidden-api-whitelisted-app package="jp.co.omronsoft.openwnn" />
+   <!-- TODO: Remove NetworkStack whitelisting -->
+   <hidden-api-whitelisted-app package="com.android.networkstack" />

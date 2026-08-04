@@ -1,0 +1,34 @@
+From 78497893ae239c445c6ee2792518ffc4988fcb30 Mon Sep 17 00:00:00 2001
+From: muzhong-bst <muzhong@bluestacks.com>
+Date: Mon, 4 Sep 2023 14:41:57 +0800
+Subject: [PATCH 012/224] [A13] Inherit parent capabilities into the children
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index c8b85c314aca..fafcf5c84b94 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -658,6 +658,12 @@ static void EnableKeepCapabilities(fail_fn_t fail_fn) {
+ }
+ 
+ static void DropCapabilitiesBoundingSet(fail_fn_t fail_fn) {
++  /*
++     Don't remove capabilities from forked child process capability bounding set
++     as we would still like to run older su binary on current platform which
++     needs uid and gid permission/capability set.
++  */
++  /*
+   for (int i = 0; prctl(PR_CAPBSET_READ, i, 0, 0, 0) >= 0; i++) {;
+     if (prctl(PR_CAPBSET_DROP, i, 0, 0, 0) == -1) {
+       if (errno == EINVAL) {
+@@ -668,6 +674,7 @@ static void DropCapabilitiesBoundingSet(fail_fn_t fail_fn) {
+       }
+     }
+   }
++  */
+ }
+ 
+ static void SetInheritable(uint64_t inheritable, fail_fn_t fail_fn) {

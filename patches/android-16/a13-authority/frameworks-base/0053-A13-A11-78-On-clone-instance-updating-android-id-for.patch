@@ -1,0 +1,101 @@
+From c35a667e804ae56679e29a06f6ac0c9d369551bd Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 31 Oct 2023 16:52:14 +0800
+Subject: [PATCH 053/224] [A13] [A11-78] On clone instance, updating android-id
+ for secure settings
+
+---
+ .../providers/settings/SettingsProvider.java  | 67 ++++++++++++++-----
+ 1 file changed, 52 insertions(+), 15 deletions(-)
+
+diff --git a/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java b/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
+index 84a559391343..8fee6eec14c5 100644
+--- a/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
++++ b/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
+@@ -3367,13 +3367,35 @@ public class SettingsProvider extends ContentProvider {
+             }
+         }
+ 
++        private void deletAllSsaidKeysLocked(int userId) {
++            Slog.d(LOG_TAG, "deletAllSsaidKeysLocked: userId=" + userId);
++
++            final int ssaidKey = makeKey(SETTINGS_TYPE_SSAID, userId);
++            ensureSettingsStateLocked(ssaidKey);
++            SettingsState ssaidSettingsState = mSettingsStates.get(ssaidKey);
++
++            if(ssaidSettingsState == null){
++                if(DEBUG) Slog.i(LOG_TAG, "deletAllSsaidKeysLocked: ssaid is NULL so EXIT");
++                return;
++            }
++            // Get all uids currently stored in the user's ssaid table.
++            final Set<String> ssaidUids = new HashSet<>(
++            getSettingsNamesLocked(SETTINGS_TYPE_SSAID, userId));
++
++            for (String uid : ssaidUids) {
++                 Slog.d(LOG_TAG, "deletAllSsaidKeysLocked: deleting ssaid for uid="+uid);
++                 ssaidSettingsState.deleteSettingLocked(uid);
++            }
++        }
++
+         @GuardedBy("secureSettings.mLock")
+         private void ensureSecureSettingAndroidIdSetLocked(SettingsState secureSettings) {
+             Setting value = secureSettings.getSettingLocked(Settings.Secure.ANDROID_ID);
+-
++            /*
+             if (!value.isNull()) {
+                 return;
+             }
++            */
+ 
+             final int userId = getUserIdFromKey(secureSettings.mKey);
+ 
+@@ -3389,20 +3411,35 @@ public class SettingsProvider extends ContentProvider {
+                 return;
+             }
+ 
+-            String androidId = Long.toHexString(new SecureRandom().nextLong());
+-            secureSettings.insertSettingLocked(Settings.Secure.ANDROID_ID, androidId,
+-                    null, true, SettingsState.SYSTEM_PACKAGE_NAME);
+-
+-            Slog.d(LOG_TAG, "Generated and saved new ANDROID_ID [" + androidId
+-                    + "] for user " + userId);
+-
+-            // Write a drop box entry if it's a restricted profile
+-            if (user.isRestricted()) {
+-                DropBoxManager dbm = (DropBoxManager) getContext().getSystemService(
+-                        Context.DROPBOX_SERVICE);
+-                if (dbm != null && dbm.isTagEnabled(DROPBOX_TAG_USERLOG)) {
+-                    dbm.addText(DROPBOX_TAG_USERLOG, System.currentTimeMillis()
+-                            + "," + DROPBOX_TAG_USERLOG + "," + androidId + "\n");
++            String savedAndroidId = null;
++            if(value != null){
++                savedAndroidId = value.getValue();
++                Slog.d(LOG_TAG, "savedAndroidId = " + savedAndroidId);
++            }
++            String newAndroidId = SystemProperties.get("bst.android_id", null);
++            Slog.d(LOG_TAG, "newAndroidId = " + newAndroidId);
++            if (savedAndroidId == null || (newAndroidId != null && !savedAndroidId.equals(newAndroidId))) {
++                Slog.d(LOG_TAG, "android-id got changed !");
++                deletAllSsaidKeysLocked(userId);
++                if (savedAndroidId != null) {
++                    // AndroidID value change - clear google apps data
++                    Slog.d(LOG_TAG, "androidId value is set : " + savedAndroidId);
++                    SystemProperties.set("persist.sys.cleardata", "true");
++                }
++                secureSettings.insertSettingLocked(Settings.Secure.ANDROID_ID, newAndroidId,
++                        null, true, SettingsState.SYSTEM_PACKAGE_NAME);
++
++                Slog.d(LOG_TAG, "Generated and saved new ANDROID_ID [" + newAndroidId
++                        + "] for user " + userId);
++
++                // Write a drop box entry if it's a restricted profile
++                if (user.isRestricted()) {
++                    DropBoxManager dbm = (DropBoxManager) getContext().getSystemService(
++                            Context.DROPBOX_SERVICE);
++                    if (dbm != null && dbm.isTagEnabled(DROPBOX_TAG_USERLOG)) {
++                        dbm.addText(DROPBOX_TAG_USERLOG, System.currentTimeMillis()
++                                + "," + DROPBOX_TAG_USERLOG + "," + newAndroidId + "\n");
++                    }
+                 }
+             }
+         }

@@ -1,0 +1,148 @@
+From b905627e4541b4747abaf54ed38a8f81757577fb Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Sun, 29 Sep 2024 17:44:17 +0800
+Subject: [PATCH 151/224] [A13] Adding hcall for iap completed
+
+---
+ .../com/bluestacks/os/BstHostCallManager.java | 22 ++++++++++++
+ .../bluestacks/os/IBstHostCallService.aidl    |  2 ++
+ .../bluestacks/server/BstHostCallService.java | 20 +++++++++++
+ ...m_bluestacks_server_BstHostCallService.cpp | 36 +++++++++++++++++++
+ 4 files changed, 80 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index 2d1bd1bdbba9..7e3219ad8abd 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -550,6 +550,28 @@ public class BstHostCallManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public int commonCommand(int code, String name, String data) {
++        try {
++            return mBstHostCallService.commonCommand(code, name, data);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
++
++    /**
++     * @hide
++     */
++    public int onIAPCompleted(String source, String data) {
++        try {
++            return mBstHostCallService.onIAPCompleted(source, data);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
++
+     /**
+      * @hide
+      */
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index ebfceeed8006..725d3100a61e 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -49,5 +49,7 @@ interface IBstHostCallService {
+     int removeBootLoadingScreen(boolean onAdShown);
+     int interstitialAdCompleted(String source, String action);
+     int onNowbuxUpdated();
++    int commonCommand(int code, String name, String data);
++    int onIAPCompleted(String source, String data);
+     int unzipFile(String fileName, String attemptId, String source, String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index 5745f7f7f04e..1e8124050aef 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -417,6 +417,24 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_onNowbuxUpdated();
+     }
+ 
++    /**
++     * @hide
++     */
++    public int commonCommand(int code, String name, String data) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService commonCommand, code: " + code);
++        String nameStr = name == null ? "" : name;
++        String dataStr = data == null ? "" : data;
++        return native_commonCommand(code, nameStr, dataStr);
++    }
++
++    /**
++     * @hide
++     */
++    public int onIAPCompleted(String source, String data) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService onIAPCompleted source : " + source + ", data: " + data);
++        return native_onIAPCompleted(source, data);
++    }
++
+     /**
+      * @hide
+      */
+@@ -473,5 +491,7 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_removeBootLoadingScreen(boolean isAdShown);
+     private static native int native_interstitialAdCompleted(String source, String action);
+     private static native int native_onNowbuxUpdated();
++    private static native int native_commonCommand(int code, String name, String data);
++    private static native int native_onIAPCompleted(String source, String data);
+     private static native int native_unzipFile(String fileName, String attemptId, String source, String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index 804c73660988..08e0fd286d46 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -862,6 +862,40 @@ static jint onNowbuxUpdated(JNIEnv* env, jobject clazz) {
+     return 0;
+ }
+ 
++static jint commonCommand(JNIEnv* env, jobject clazz, jint code, jstring name, jstring data) {
++    if (dbg) ALOGD("%s: called", __func__);
++
++    string nameString = getStringFromJstring(env, clazz, name);
++    string dataString = getStringFromJstring(env, clazz, data);
++
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallCommonCommandRpc(code, nameString.c_str(), dataString.c_str());
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
++
++static jint onIAPCompleted(JNIEnv* env, jobject clazz, jstring sourceStr, jstring dataStr) {
++    if (dbg) ALOGD("%s", __func__);
++
++    string source = getStringFromJstring(env, clazz, sourceStr);
++    string data = getStringFromJstring(env, clazz, dataStr);
++
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallOnIAPCompletedRpc(source.c_str(), data.c_str());
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
++
+ static jint unzipFile(JNIEnv* env, jobject clazz, jstring fileNameStr, jstring attemptIdStr, jstring sourceStr, jstring pkgNameStr) {
+     if (dbg) ALOGD("%s", __func__);
+ 
+@@ -934,6 +968,8 @@ static const JNINativeMethod gMethods[] = {
+     { "native_removeBootLoadingScreen", "(Z)I", (void*)removeBootLoadingScreen },
+     { "native_interstitialAdCompleted", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)interstitialAdCompleted },
+     { "native_onNowbuxUpdated", "()I", (void *)onNowbuxUpdated},
++    { "native_commonCommand", "(ILjava/lang/String;Ljava/lang/String;)I", (void*)commonCommand },
++    { "native_onIAPCompleted", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)onIAPCompleted },
+     { "native_unzipFile", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)unzipFile }
+ };
+ 

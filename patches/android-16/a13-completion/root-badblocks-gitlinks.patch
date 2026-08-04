@@ -1,0 +1,27 @@
+From e10c302ccf5a83a4182ee56e89a143b268eabb44 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 20:44:50 +0800
+Subject: [PATCH] [A16] Restore the guest badblocks tool
+
+---
+ device/generic/common | 2 +-
+ external/e2fsprogs    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/device/generic/common b/device/generic/common
+index 63d2d5d..76b4525 160000
+--- a/device/generic/common
++++ b/device/generic/common
+@@ -1 +1 @@
+-Subproject commit 63d2d5dd4d754df03194962da0cc05913df37413
++Subproject commit 76b4525dc9473485221c2e6b80b6dddb11fa4b38
+diff --git a/external/e2fsprogs b/external/e2fsprogs
+index 3016036..d1bad9c 160000
+--- a/external/e2fsprogs
++++ b/external/e2fsprogs
+@@ -1 +1 @@
+-Subproject commit 3016036da669bb54ea591e00cfd22a56e3b22a83
++Subproject commit d1bad9cd14446d8b131b8de59a6e8655a4b4f6d4
+-- 
+2.34.1
+

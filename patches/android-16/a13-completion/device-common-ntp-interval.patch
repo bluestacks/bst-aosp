@@ -1,0 +1,11 @@
+diff --git a/overlay/frameworks/base/core/res/res/values/config.xml b/overlay/frameworks/base/core/res/res/values/config.xml
+index d851971..0c37830 100755
+--- a/overlay/frameworks/base/core/res/res/values/config.xml
++++ b/overlay/frameworks/base/core/res/res/values/config.xml
+@@ -125,3 +125,6 @@
+     <integer name="config_navBarOpacityMode">1</integer>
+     <integer name="config_minimumScreenOffTimeout">604800000</integer>
++
++    <!-- Preserve the A13 BlueStacks NTP refresh cadence using the A16 polling engine. -->
++    <integer name="config_ntpPollingInterval">1800000</integer>
+ </resources>

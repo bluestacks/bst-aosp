@@ -1,0 +1,24 @@
+From 2b29403f59bb372fbd5b7bc24b0c00407097ee6c Mon Sep 17 00:00:00 2001
+From: allen-bst <70563899+allen-bst@users.noreply.github.com>
+Date: Tue, 30 Jan 2024 10:03:47 +0800
+Subject: [PATCH 110/224] [A13] fix com.sgra.dragon crash issue (#123)
+
+---
+ .../com/android/internal/telephony/TelephonyPermissions.java  | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/telephony/common/com/android/internal/telephony/TelephonyPermissions.java b/telephony/common/com/android/internal/telephony/TelephonyPermissions.java
+index 1a0b8edb0e7d..df1515422480 100644
+--- a/telephony/common/com/android/internal/telephony/TelephonyPermissions.java
++++ b/telephony/common/com/android/internal/telephony/TelephonyPermissions.java
+@@ -153,6 +153,10 @@ public final class TelephonyPermissions {
+             Context context, int subId, int pid, int uid, String callingPackage,
+             @Nullable  String callingFeatureId, String message) {
+         try {
++            // Passing the READ_PRIVILEGED_PHONE_STATE permission check for com.gamamobi.wog.
++            if(callingPackage.equals("com.gamamobi.wog"))
++                return true ;
++
+             context.enforcePermission(
+                     android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE, pid, uid, message);
+ 

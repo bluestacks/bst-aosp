@@ -1,0 +1,109 @@
+From b5055d9f5dc8076e980d17bc3c828dc7f27074c4 Mon Sep 17 00:00:00 2001
+From: amit-bst <amit@bluestacks.com>
+Date: Mon, 1 Dec 2025 17:35:56 +0530
+Subject: [PATCH 210/224] Case  ROB-18242 : adding changes for hcall (#398)
+
+Co-authored-by: Build Master <build@bluestacks.com>
+(cherry picked from commit 666a0af17614768fbb7dccf1d79de90a64ef48bc)
+---
+ .../com/bluestacks/os/BstHostCallManager.java | 11 ++++++++++
+ .../bluestacks/os/IBstHostCallService.aidl    |  1 +
+ .../bluestacks/server/BstHostCallService.java |  9 ++++++++
+ ...m_bluestacks_server_BstHostCallService.cpp | 22 ++++++++++++++++++-
+ 4 files changed, 42 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index 048de29eaa6b..aa97403d52d7 100755
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -615,4 +615,15 @@ public class BstHostCallManager {
+             throw new RuntimeException(e);
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public int onUiDumpCompleted(String uiDump) {
++        try {
++            return mBstHostCallService.onUiDumpCompleted(uiDump);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index 9117ab6b0086..324382d958f7 100755
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -55,4 +55,5 @@ interface IBstHostCallService {
+     int unzipFile(String fileName, String attemptId, String source, String pkgName);
+     int allowInstallApkGameCenter(String pkg);
+     int onNowggSigninClicked(String pkg, String actionType);
++    int onUiDumpCompleted(String uiDump);
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index 5db3cf2f7f4c..74b18c078434 100755
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -467,6 +467,14 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_onNowggSigninClicked(pkg, actionType);
+     }
+ 
++    /**
++     * @hide
++     */
++    public int onUiDumpCompleted(String uiDump) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService onUiDumpCompleted, uiDump: " + uiDump);
++        return native_onUiDumpCompleted(uiDump);
++    }
++
+     private static native final int native_init();
+     private static native int native_initImeStatus(String imeName);
+     private static native int native_initInputDebuggingStatus(boolean showTouches, boolean showPointerLocation);
+@@ -521,4 +529,5 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_unzipFile(String fileName, String attemptId, String source, String pkgName);
+     private static native int native_allowInstallApkGameCenter(String pkg);
+     private static native int native_onNowggSigninClicked(String pkg, String actionType);
++    private static native int native_onUiDumpCompleted(String uiDump);
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index d315a8c40a90..3bfa3f514a46 100755
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -957,6 +957,25 @@ static jint onNowggSigninClicked(JNIEnv* env, jobject clazz, jstring pkg, jstrin
+     return 0;
+ }
+ 
++static jint onUiDumpCompleted(JNIEnv* env, jobject clazz, jstring uiDumpStr) {
++    if (dbg) ALOGD("%s: called", __func__);
++    string uiDump = getStringFromJstring(env, clazz, uiDumpStr);
++
++    if (uiDump.empty()) return -1;
++
++    if (dbg) ALOGD("%s: uiDump = %s", __func__, uiDump.c_str());
++
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallOnUiDumpCompletedRpc(uiDump.c_str());
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
++
+ /*
+  * JNI registration.
+  */
+@@ -1016,7 +1035,8 @@ static const JNINativeMethod gMethods[] = {
+     { "native_onIAPCompleted", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)onIAPCompleted },
+     { "native_unzipFile", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)unzipFile },
+     { "native_allowInstallApkGameCenter", "(Ljava/lang/String;)I", (void*)allowInstallApkGameCenter },
+-    { "native_onNowggSigninClicked", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)onNowggSigninClicked }
++    { "native_onNowggSigninClicked", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)onNowggSigninClicked },
++    { "native_onUiDumpCompleted", "(Ljava/lang/String;)I", (void *)onUiDumpCompleted }
+ };
+ 
+ // This function only registers the native methods

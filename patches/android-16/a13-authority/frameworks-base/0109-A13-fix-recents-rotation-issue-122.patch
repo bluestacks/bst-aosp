@@ -1,0 +1,59 @@
+From c9c9fdde981d1d62cdb24ecb2e7dc92173e84dab Mon Sep 17 00:00:00 2001
+From: allen-bst <70563899+allen-bst@users.noreply.github.com>
+Date: Tue, 30 Jan 2024 10:02:54 +0800
+Subject: [PATCH 109/224] [A13] fix recents rotation issue (#122)
+
+---
+ .../server/wm/RecentsAnimationController.java  | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/RecentsAnimationController.java b/services/core/java/com/android/server/wm/RecentsAnimationController.java
+index 353ca53a2e50..f3590a01c4bc 100644
+--- a/services/core/java/com/android/server/wm/RecentsAnimationController.java
++++ b/services/core/java/com/android/server/wm/RecentsAnimationController.java
+@@ -19,6 +19,7 @@ package com.android.server.wm;
+ import static android.app.ActivityTaskManager.INVALID_TASK_ID;
+ import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++import static android.view.Display.DEFAULT_DISPLAY;
+ import static android.view.RemoteAnimationTarget.MODE_CLOSING;
+ import static android.view.RemoteAnimationTarget.MODE_OPENING;
+ import static android.view.WindowManager.INPUT_CONSUMER_RECENTS_ANIMATION;
+@@ -155,6 +156,8 @@ public class RecentsAnimationController implements DeathRecipient {
+ 
+     private final ArrayList<RemoteAnimationTarget> mPendingTaskAppears = new ArrayList<>();
+ 
++    private int mBackupRotate = -1;
++
+     /**
+      * An app transition listener to cancel the recents animation only after the app transition
+      * starts or is canceled.
+@@ -568,6 +571,13 @@ public class RecentsAnimationController implements DeathRecipient {
+             mService.mAtmService.mTaskSupervisor.getActivityMetricsLogger()
+                     .notifyTransitionStarting(reasons);
+         }
++
++        int rotation = mService.getDefaultDisplayRotation();
++        mBackupRotate = -1;
++        if (rotation != mService.getDisplayUserRotation(DEFAULT_DISPLAY)) {
++            mBackupRotate = rotation;
++            mService.sendOrientationToHostAsync( mService.getDisplayUserRotation(DEFAULT_DISPLAY));
++        }
+     }
+ 
+     boolean isNavigationBarAttachedToApp() {
+@@ -925,6 +935,14 @@ public class RecentsAnimationController implements DeathRecipient {
+                         "cleanupAnimation(): Notify animation finished mPendingAnimations=%d "
+                                 + "reorderMode=%d",
+                         mPendingAnimations.size(), reorderMode);
++
++        // If move to original task, we need to restore the desired rotation
++        if (REORDER_MOVE_TO_ORIGINAL_POSITION == reorderMode
++                && 2 == mPendingAnimations.size() && mBackupRotate >= 0) {
++            mService.sendOrientationToHostAsync(mBackupRotate);
++            mBackupRotate = -1;
++        }
++
+         if (reorderMode != REORDER_MOVE_TO_ORIGINAL_POSITION
+                 && mTargetActivityRecord != mDisplayContent.topRunningActivity()) {
+             // Notify the state at the beginning because the removeAnimation may notify the

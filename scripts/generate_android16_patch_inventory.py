@@ -63,7 +63,8 @@ def parse_patch(path: Path) -> dict:
     additions = 0
     deletions = 0
     hunks = 0
-    binary = False
+    embedded_binary = False
+    binary_reference = False
 
     for line in lines:
         if line.startswith("diff --git "):
@@ -82,12 +83,10 @@ def parse_patch(path: Path) -> dict:
         elif line.startswith("-") and not line.startswith("---"):
             deletions += 1
 
-        if (
-            line.startswith("GIT binary patch")
-            or line.startswith("Binary files ")
-            or line.startswith("literal ")
-        ):
-            binary = True
+        if line.startswith("GIT binary patch"):
+            embedded_binary = True
+        elif line.startswith("Binary files "):
+            binary_reference = True
 
     files = sorted(set(files))
     rel = path.relative_to(ROOT).as_posix()
@@ -102,7 +101,8 @@ def parse_patch(path: Path) -> dict:
         "hunks": hunks,
         "additions": additions,
         "deletions": deletions,
-        "contains_binary_patch": binary,
+        "contains_binary_patch": embedded_binary,
+        "references_binary_difference": binary_reference,
         "files": files,
     }
 
@@ -185,6 +185,8 @@ def markdown(artifacts: list[dict]) -> str:
         f"- Total size: **{total_bytes / 1024 / 1024:.2f} MiB**",
         f"- Artifacts containing binary patch data: "
         f"**{sum(1 for item in artifacts if item['contains_binary_patch'])}**",
+        f"- Payload-free artifacts referencing binary differences: "
+        f"**{sum(1 for item in artifacts if item['references_binary_difference'])}**",
         f"- Unique changed paths: "
         f"**{len({path for item in artifacts for path in item['files']})}**",
         "",
@@ -209,7 +211,7 @@ def markdown(artifacts: list[dict]) -> str:
             f"| [`{item['name']}`]({artifact_link}) | {item['category']} | "
             f"{item['files_changed']} | {item['hunks']} | {item['additions']} | "
             f"{item['deletions']} | {item['bytes'] / 1024:.1f} | "
-            f"{'yes' if item['contains_binary_patch'] else 'no'} | "
+            f"{'embedded' if item['contains_binary_patch'] else 'reference-only' if item['references_binary_difference'] else 'no'} | "
             f"{len(item['registry'])} |"
         )
 
@@ -224,7 +226,8 @@ def markdown(artifacts: list[dict]) -> str:
                 f"- SHA-256: `{item['sha256']}`",
                 f"- Size/stat: {item['bytes']} bytes, {item['files_changed']} files, "
                 f"{item['hunks']} hunks, +{item['additions']}/-{item['deletions']}",
-                f"- Binary payload: {'yes' if item['contains_binary_patch'] else 'no'}",
+                f"- Binary evidence: "
+                f"{'embedded payload' if item['contains_binary_patch'] else 'reference only; no payload bytes' if item['references_binary_difference'] else 'none'}",
             ]
         )
         if item["registry"]:

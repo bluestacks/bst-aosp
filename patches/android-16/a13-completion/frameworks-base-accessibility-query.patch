@@ -1,0 +1,22 @@
+diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
+index 3f0c0e1aead4..57d3c4b41271 100644
+--- a/services/core/java/com/android/server/pm/ComputerEngine.java
++++ b/services/core/java/com/android/server/pm/ComputerEngine.java
+@@ -115,6 +115,7 @@ import android.provider.ContactsContract;
+ import android.text.TextUtils;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.Log;
+ import android.util.LogPrinter;
+ import android.util.LongSparseLongArray;
+@@ -1348,7 +1349,8 @@ public class ComputerEngine implements Computer {
+             }
+             resolveInfos.remove(i);
+         }
+-        return resolveInfos;
++        // Hide BlueStacks accessibility services from third-party service queries.
++        return BstUtils.applyAccessibilityServiceFilter(resolveInfos, filterCallingUid);
+     }
+ 
+     /**

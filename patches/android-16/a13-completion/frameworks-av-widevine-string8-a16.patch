@@ -1,0 +1,35 @@
+diff --git a/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp b/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp
+--- a/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp
++++ b/drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp
+@@ -164,6 +164,6 @@ Return<void> DrmPlugin::getKeyRequest(const hidl_vec<uint8_t>& scope,
+                 legacyRequest, requestType, defaultUrl);
+ 
+         _hidl_cb(toStatus(status), toHidlVec(legacyRequest), static_cast<drm::V1_0::KeyRequestType>(requestType),
+-                 defaultUrl.string());
++                 defaultUrl.c_str());
+         return Void();
+     }
+@@ -182,6 +182,6 @@ Return<void> DrmPlugin::getKeyRequest_1_1(const hidl_vec<uint8_t>& scope,
+                 legacyRequest, requestType, defaultUrl);
+ 
+         _hidl_cb(toStatus(status), toHidlVec(legacyRequest), requestType,
+-                 defaultUrl.string());
++                 defaultUrl.c_str());
+         return Void();
+     }
+@@ -200,6 +200,6 @@ Return<void> DrmPlugin::getKeyRequest_1_2(const hidl_vec<uint8_t>& scope,
+                 legacyRequest, requestType, defaultUrl);
+ 
+         _hidl_cb(toStatus_1_2(toStatus(status)), toHidlVec(legacyRequest), requestType,
+-                 defaultUrl.string());
++                 defaultUrl.c_str());
+         return Void();
+     }
+@@ -514,6 +514,6 @@ Return<void> DrmPlugin::getPropertyString(const hidl_string& propertyName,
+         String8 legacyValue;
+         status_t status = mLegacyPlugin->getPropertyString(
+                 String8(propertyName.c_str()), legacyValue);
+-        _hidl_cb(toStatus(status), legacyValue.string());
++        _hidl_cb(toStatus(status), legacyValue.c_str());
+         return Void();
+     }

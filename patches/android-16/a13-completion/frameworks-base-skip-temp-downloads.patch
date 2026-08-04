@@ -1,0 +1,43 @@
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 2ce0e56dd5f6..82061f6fd813 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -3966,6 +3966,12 @@ final class InstallPackageHelper {
+         }
+     }
+ 
++    private static boolean isBstTemporaryDownload(File file) {
++        final String path = file.getAbsolutePath();
++        return "/data/downloads/.tmp".equals(path)
++                || path.startsWith("/data/downloads/.tmp/");
++    }
++
+     @GuardedBy({"mPm.mInstallLock", "mPm.mLock"})
+     private int scanDirectoryForFilesToParse(ParallelPackageParser parallelPackageParser,
+             ScanParams scanParams) {
+@@ -3990,6 +3996,12 @@ final class InstallPackageHelper {
+                 // Ignore entries which are not packages
+                 continue;
+             }
++            if (isBstTemporaryDownload(file)) {
++                if (DEBUG_PACKAGE_SCANNING) {
++                    Log.d(TAG, "Skipping temporary download " + file.getAbsolutePath());
++                }
++                continue;
++            }
+             if ((scanParams.scanFlags & SCAN_DROP_CACHE) != 0) {
+                 final PackageCacher cacher = new PackageCacher(mPm.getCacheDir(),
+                         mPm.mPackageParserCallback);
+@@ -4029,6 +4041,12 @@ final class InstallPackageHelper {
+                 // Ignore entries which are not packages
+                 continue;
+             }
++            if (isBstTemporaryDownload(file)) {
++                if (DEBUG_PACKAGE_SCANNING) {
++                    Log.d(TAG, "Skipping temporary download " + file.getAbsolutePath());
++                }
++                continue;
++            }
+             if ((scanParams.scanFlags & SCAN_DROP_CACHE) != 0) {
+                 final PackageCacher cacher = new PackageCacher(mPm.getCacheDir(),
+                         mPm.mPackageParserCallback);

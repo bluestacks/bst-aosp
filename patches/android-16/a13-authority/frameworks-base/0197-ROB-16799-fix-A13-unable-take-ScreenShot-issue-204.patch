@@ -1,0 +1,41 @@
+From fe57e2b693342bcbdef5532367aa64dbf8d82599 Mon Sep 17 00:00:00 2001
+From: MarkJiang-bst <97725346+MarkJiang-bst@users.noreply.github.com>
+Date: Wed, 16 Jul 2025 11:07:24 +0800
+Subject: [PATCH 197/224] ROB-16799: fix A13 unable take ScreenShot issue
+ (#204)
+
+---
+ .../android/server/policy/PhoneWindowManager.java   | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index d0e2f1f7450e..da696a8b145f 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -2903,6 +2903,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                 Slog.wtf(TAG, "KEYCODE_VOICE_ASSIST should be handled in"
+                         + " interceptKeyBeforeQueueing");
+                 return key_consumed;
++            case KeyEvent.KEYCODE_SYSRQ:
++                if (down && repeatCount == 0) {
++                    interceptScreenshotChord(
++                            TAKE_SCREENSHOT_FULLSCREEN, SCREENSHOT_KEY_OTHER, 0 /*pressDelay*/);
++                    return key_consumed;
++                }
++                break;
+             case KeyEvent.KEYCODE_VIDEO_APP_1:
+             case KeyEvent.KEYCODE_VIDEO_APP_2:
+             case KeyEvent.KEYCODE_VIDEO_APP_3:
+@@ -3237,12 +3244,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                     }
+                 }
+                 break;
+-            case KeyEvent.KEYCODE_SYSRQ:
+-                if (down && repeatCount == 0) {
+-                    interceptScreenshotChord(
+-                            TAKE_SCREENSHOT_FULLSCREEN, SCREENSHOT_KEY_OTHER, 0 /*pressDelay*/);
+-                }
+-                return true;
+         }
+ 
+         return false;

@@ -1,0 +1,122 @@
+From cb562d44bb7834898275f89075cabb90e60649d8 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Mon, 13 Nov 2023 16:30:13 +0800
+Subject: [PATCH 062/224] [A13] Add config.db entry xarch
+
+---
+ .../server/pm/InstallPackageHelper.java       | 38 +++++++++++++++++++
+ .../server/pm/RemovePackageHelper.java        | 12 ++++++
+ 2 files changed, 50 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 7460b8de8353..316c436fbc20 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -191,6 +191,10 @@ import java.util.Map;
+ import java.util.Set;
+ import java.util.concurrent.ExecutorService;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++import static com.bluestacks.os.BstFilterAppsManager.ADD_ABI2_ENTRY;
++import static com.bluestacks.os.BstFilterAppsManager.REMOVE_ABI2_ENTRY;
++
+ final class InstallPackageHelper {
+     private final PackageManagerService mPm;
+     private final AppDataHelper mAppDataHelper;
+@@ -206,6 +210,7 @@ final class InstallPackageHelper {
+     private final ViewCompiler mViewCompiler;
+     private final SharedLibrariesImpl mSharedLibraries;
+     private final PackageManagerServiceInjector mInjector;
++    BstFilterAppsManager mBstfilter = null;
+ 
+     // TODO(b/198166813): remove PMS dependency
+     InstallPackageHelper(PackageManagerService pm, AppDataHelper appDataHelper) {
+@@ -3481,6 +3486,39 @@ final class InstallPackageHelper {
+                     errorMsg = "Failed to scan " + parseResult.scanFile + ": " + e.getMessage();
+                     Slog.w(TAG, errorMsg);
+                 }
++
++                // BST:
++                // At this point, we have unpacked the package (even for a new install).
++                // Hence if package installed in arm mode, we want to add an entry of uid;packagename in the arm marker file.
++                // Checking if not a system app. We do not want to set entry for system apps.
++                // We save in memory list of apps installed in arm mode. Asking bstfilterappsmanager if
++                // current uid entry exists.
++                // If not then we write the same.
++                if (mBstfilter == null) mBstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++                ParsedPackage pkg = parseResult.parsedPackage;
++                String pkgName = pkg.getPackageName();
++                PackageSetting ps = mPm.mSettings.getPackageLPr(pkgName);
++                if (pkg.getUid() >= 10000)
++                {
++                    if ((ps.getPrimaryCpuAbi() != null && (ps.getPrimaryCpuAbi().startsWith("arm")))) {
++                        if (pkg.getPackageName() != null && !pkg.getPackageName().isEmpty()) {
++                            // App installed in arm mode. Updating entry in BstFilterAppsService.
++                            // We update both the abi2 and xprop (xabi) entry together as they are tightly coupled.
++                            // We write the app Uid entry in bstxABIApps only if installed as an arm app and has entry of
++                            // packageName in settings.db (format "<pkg-name>; xprop").
++                            // We return armeabi values whenever arm apps try to read 'cpu.abi' build properties via getprop/
++                            // Build.<> system property. However, some china apps (com.netease.TCYM.uc,com.zmxyol.union.baidu,
++                            // com.youzu.wzqj.ad.baidu) crash when returning arm abi values.
++                            // Hence, returning default abi values for such apps by adding their UID entry in showDefaultCpuAbi.
++                            mBstfilter.updateAbiEntry(pkg.getUid(), pkg.getPackageName(), ADD_ABI2_ENTRY);
++                        }
++                    } else {
++                        // App installed in X86 mode. Remove this app name from arm DB and relevant files if present.
++                        // We also want to handle situation where an app was earlier installed as arm app, but later forced into x86 mode
++                        // either via bst settings or app update. If apps uid entry is present, then we definitely want to remove it.
++                        mBstfilter.updateAbiEntry(pkg.getUid(), pkg.getPackageName(), REMOVE_ABI2_ENTRY);
++                    }
++                }
+             } else if (throwable instanceof PackageManagerException) {
+                 PackageManagerException e = (PackageManagerException) throwable;
+                 errorCode = e.error;
+diff --git a/services/core/java/com/android/server/pm/RemovePackageHelper.java b/services/core/java/com/android/server/pm/RemovePackageHelper.java
+index 65d3430fe474..ad3d1e23f21c 100644
+--- a/services/core/java/com/android/server/pm/RemovePackageHelper.java
++++ b/services/core/java/com/android/server/pm/RemovePackageHelper.java
+@@ -29,6 +29,7 @@ import static com.android.server.pm.PackageManagerService.RANDOM_DIR_PREFIX;
+ import static com.android.server.pm.PackageManagerService.TAG;
+ 
+ import android.annotation.NonNull;
++import android.content.Context;
+ import android.content.pm.PackageManager;
+ import android.os.Trace;
+ import android.os.UserHandle;
+@@ -50,6 +51,8 @@ import java.io.File;
+ import java.util.Collections;
+ import java.util.List;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++import static com.bluestacks.os.BstFilterAppsManager.REMOVE_ABI2_ENTRY;
+ /**
+  * Removes a package from internal data structures, deletes it data directories if requested,
+  * and clears its app profiles
+@@ -62,11 +65,14 @@ final class RemovePackageHelper {
+     private final PermissionManagerServiceInternal mPermissionManager;
+     private final SharedLibrariesImpl mSharedLibraries;
+     private final AppDataHelper mAppDataHelper;
++    private final Context mContext;
++    BstFilterAppsManager mBstfilter = null;
+ 
+     // TODO(b/198166813): remove PMS dependency
+     RemovePackageHelper(PackageManagerService pm, AppDataHelper appDataHelper) {
+         mPm = pm;
+         mIncrementalManager = mPm.mInjector.getIncrementalManager();
++        mContext = mPm.mInjector.getContext();
+         mInstaller = mPm.mInjector.getInstaller();
+         mUserManagerInternal = mPm.mInjector.getUserManagerInternal();
+         mPermissionManager = mPm.mInjector.getPermissionManagerServiceInternal();
+@@ -141,6 +147,12 @@ final class RemovePackageHelper {
+             final AndroidPackage removedPackage = mPm.mPackages.remove(packageName);
+             if (removedPackage != null) {
+                 cleanPackageDataStructuresLILPw(removedPackage, chatty);
++
++                // BST: if we are removing an arm package, we also need to remove its reference from arm marker file.
++                if (mBstfilter == null) mBstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++                if (removedPackage.getUid() >= 10000) {
++                    mBstfilter.updateAbiEntry(removedPackage.getUid(), removedPackage.getPackageName(), REMOVE_ABI2_ENTRY);
++                }
+             }
+         }
+     }

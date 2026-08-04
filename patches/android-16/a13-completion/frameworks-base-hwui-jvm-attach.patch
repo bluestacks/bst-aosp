@@ -1,0 +1,165 @@
+diff --git a/libs/hwui/HardwareBitmapUploader.cpp b/libs/hwui/HardwareBitmapUploader.cpp
+index 236c3736816e..1a33d5b094f1 100644
+--- a/libs/hwui/HardwareBitmapUploader.cpp
++++ b/libs/hwui/HardwareBitmapUploader.cpp
+@@ -45,6 +45,7 @@
+ namespace android::uirenderer {
+ 
+ static constexpr auto kThreadTimeout = 60000_ms;
++static JVMAttachOrDetachHook gOnJVMHook = nullptr;
+ 
+ class AHBUploader;
+ // This helper uploader classes allows us to upload using either EGL or Vulkan using the same
+@@ -67,6 +68,7 @@ public:
+         std::lock_guard _lock{mLock};
+         LOG_ALWAYS_FATAL_IF(mPendingUploads, "terminate called while uploads in progress");
+         if (mUploadThread) {
++            attachOrDetachUploadThread(true);
+             mUploadThread->requestExit();
+             mUploadThread->join();
+             mUploadThread = nullptr;
+@@ -87,6 +89,16 @@ public:
+         mUploadThread->queue().postDelayed(kThreadTimeout, [this]() { this->idleTimeoutCheck(); });
+     }
+ 
++    void attachOrDetachUploadThread(bool detach = false) {
++        auto hook = HardwareBitmapUploader::getOnJVMHook();
++        if (!mUploadThread || !hook) {
++            return;
++        }
++
++        mUploadThread->queue().runSync(
++                [hook, detach]() { hook("GrallocUploadThread", detach); });
++    }
++
+ protected:
+     std::mutex mLock;
+     sp<ThreadBase> mUploadThread = nullptr;
+@@ -122,6 +134,7 @@ private:
+         }
+         if (!mUploadThread->isRunning()) {
+             mUploadThread->start("GrallocUploadThread");
++            attachOrDetachUploadThread();
+         }
+ 
+         onBeginUpload();
+@@ -486,4 +499,12 @@ void HardwareBitmapUploader::terminate() {
+     }
+ }
+ 
++void HardwareBitmapUploader::setOnJVMHook(JVMAttachOrDetachHook onJVMHook) {
++    gOnJVMHook = onJVMHook;
++}
++
++JVMAttachOrDetachHook HardwareBitmapUploader::getOnJVMHook() {
++    return gOnJVMHook;
++}
++
+ }  // namespace android::uirenderer
+diff --git a/libs/hwui/HardwareBitmapUploader.h b/libs/hwui/HardwareBitmapUploader.h
+index 76cb80b722d0..8b171505ef6d 100644
+--- a/libs/hwui/HardwareBitmapUploader.h
++++ b/libs/hwui/HardwareBitmapUploader.h
+@@ -23,11 +23,16 @@ class SkBitmap;
+ 
+ namespace android::uirenderer {
+ 
++using JVMAttachOrDetachHook = void (*)(const char* name, bool detach);
++
+ class HardwareBitmapUploader {
+ public:
+     static void initialize();
+     static void terminate();
+ 
++    static void setOnJVMHook(JVMAttachOrDetachHook onJVMHook);
++    static JVMAttachOrDetachHook getOnJVMHook();
++
+     static sk_sp<Bitmap> allocateHardwareBitmap(const SkBitmap& sourceBitmap);
+ 
+ #ifdef __ANDROID__
+diff --git a/libs/hwui/jni/android_graphics_HardwareRenderer.cpp b/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
+index 91bdf4fb21ae..4ec437e9d2ce 100644
+--- a/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
++++ b/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
+@@ -1105,9 +1105,25 @@ static void attachRenderThreadToJvm(const char* name) {
+     mJvm->AttachCurrentThreadAsDaemon(&env, (void*) &args);
+ }
+ 
++static void attachOrDetachCurrentThread(const char* name, bool detach) {
++    LOG_ALWAYS_FATAL_IF(!mJvm, "No jvm but we set the hook??");
++
++    if (detach) {
++        mJvm->DetachCurrentThread();
++        return;
++    }
++
++    JavaVMAttachArgs args;
++    args.version = JNI_VERSION_1_4;
++    args.name = name;
++    args.group = NULL;
++    JNIEnv* env;
++    mJvm->AttachCurrentThread(&env, (void*) &args);
++}
++
+ int register_android_view_ThreadedRenderer(JNIEnv* env) {
+     env->GetJavaVM(&mJvm);
+-    RenderThread::setOnStartHook(&attachRenderThreadToJvm);
++    RenderThread::setOnStartHook(&attachRenderThreadToJvm, &attachOrDetachCurrentThread);
+ 
+     jclass hardwareRenderer = FindClassOrDie(env,
+             "android/graphics/HardwareRenderer");
+diff --git a/libs/hwui/platform/host/renderthread/RenderThread.cpp b/libs/hwui/platform/host/renderthread/RenderThread.cpp
+index ece45304e6d5..f819404e6ee0 100644
+--- a/libs/hwui/platform/host/renderthread/RenderThread.cpp
++++ b/libs/hwui/platform/host/renderthread/RenderThread.cpp
+@@ -31,9 +31,11 @@ bool RenderThread::hasInstance() {
+     return gHasRenderThreadInstance;
+ }
+ 
+-void RenderThread::setOnStartHook(JVMAttachHook onStartHook) {
++void RenderThread::setOnStartHook(JVMAttachHook onStartHook,
++                                  JVMAttachOrDetachHook onUploaderStartHook) {
+     LOG_ALWAYS_FATAL_IF(hasInstance(), "can't set an onStartHook after we've started...");
+     gOnStartHook = onStartHook;
++    (void)onUploaderStartHook;
+ }
+ 
+ JVMAttachHook RenderThread::getOnStartHook() {
+diff --git a/libs/hwui/renderthread/RenderThread.cpp b/libs/hwui/renderthread/RenderThread.cpp
+index 0dc7ea3a6cc8..855adcdf3bdb 100644
+--- a/libs/hwui/renderthread/RenderThread.cpp
++++ b/libs/hwui/renderthread/RenderThread.cpp
+@@ -146,9 +146,11 @@ bool RenderThread::hasInstance() {
+     return gHasRenderThreadInstance;
+ }
+ 
+-void RenderThread::setOnStartHook(JVMAttachHook onStartHook) {
++void RenderThread::setOnStartHook(JVMAttachHook onStartHook,
++                                  JVMAttachOrDetachHook onUploaderStartHook) {
+     LOG_ALWAYS_FATAL_IF(hasInstance(), "can't set an onStartHook after we've started...");
+     gOnStartHook = onStartHook;
++    HardwareBitmapUploader::setOnJVMHook(onUploaderStartHook);
+ }
+ 
+ JVMAttachHook RenderThread::getOnStartHook() {
+diff --git a/libs/hwui/renderthread/RenderThread.h b/libs/hwui/renderthread/RenderThread.h
+index f733c7c58ef3..24c4784566b6 100644
+--- a/libs/hwui/renderthread/RenderThread.h
++++ b/libs/hwui/renderthread/RenderThread.h
+@@ -81,13 +81,15 @@ class ChoreographerSource;
+ class DummyVsyncSource;
+ 
+ typedef void (*JVMAttachHook)(const char* name);
++typedef void (*JVMAttachOrDetachHook)(const char* name, bool detach);
+ 
+ class RenderThread : private ThreadBase {
+     PREVENT_COPY_AND_ASSIGN(RenderThread);
+ 
+ public:
+     // Sets a callback that fires before any RenderThread setup has occurred.
+-    static void setOnStartHook(JVMAttachHook onStartHook);
++    static void setOnStartHook(JVMAttachHook onStartHook,
++                               JVMAttachOrDetachHook onUploaderStartHook);
+     static JVMAttachHook getOnStartHook();
+ 
+     WorkQueue& queue() { return ThreadBase::queue(); }

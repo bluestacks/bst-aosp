@@ -1,0 +1,39 @@
+From fbbbba8770f88560f710f37da7fcdc54041c65e4 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 12 Mar 2024 14:44:18 +0800
+Subject: [PATCH 127/224] [A13] ROB-11613 set 60 fps by default for Dungeon
+ Hunter
+
+---
+ core/java/android/app/SharedPreferencesImpl.java | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/core/java/android/app/SharedPreferencesImpl.java b/core/java/android/app/SharedPreferencesImpl.java
+index 2202549b1a51..f732e787206f 100644
+--- a/core/java/android/app/SharedPreferencesImpl.java
++++ b/core/java/android/app/SharedPreferencesImpl.java
+@@ -455,6 +455,14 @@ final class SharedPreferencesImpl implements SharedPreferences {
+         return false;
+     }
+ 
++    // ROB-11613 set 60 fps by default for Dungeon Hunter
++    private int bstPatchForDungeonHunterGetInt(String key,Integer v) {
++        if ((v == null) && mFile.getName().equals("com.goatgames.dhs.gb.gp.v2.playerprefs.xml")) {
++            if(key.startsWith("HighFPS60")) return 1;
++        }
++        return 0;
++    }
++
+     @Override
+     public int getInt(String key, int defValue) {
+         //If the value is present in the list then we will disable the game settings for the package by default it will be on.
+@@ -475,6 +483,9 @@ final class SharedPreferencesImpl implements SharedPreferences {
+             int egameRet = bstPatchForMartialEgameGetInt(key, v);
+             if(egameRet > 0) return egameRet;
+ 
++            int dhsRet = bstPatchForDungeonHunterGetInt(key, v);
++            if(dhsRet > 0) return dhsRet;
++
+             return v != null ? v : defValue;
+         }
+     }

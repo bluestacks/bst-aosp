@@ -1,0 +1,30 @@
+From f2a61c25c74082063d182704f8b4c67e1994ddf8 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Wed, 13 Dec 2023 14:41:05 +0800
+Subject: [PATCH 104/224] [A13] ROB-8174: Adding prefix to the prop key (#71)
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index 404939c98f96..b4714d44ba76 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -1847,6 +1847,7 @@ static void BindMountStorageDirs(JNIEnv* env, jobjectArray pkg_data_info_list,
+ static int BstPatchForInstagram(const char* pkgname) {
+     if (pkgname != NULL) {
+         if (!strcmp(pkgname, "com.instagram.android")) {
++            property_set("bst.config.instagram_reel_media", "");
+             DIR* dir = opendir("/data/data/com.instagram.android/databases");
+             if (!dir) {
+                 return 0;
+@@ -1856,7 +1857,7 @@ static int BstPatchForInstagram(const char* pkgname) {
+             while ((entry = readdir(dir)) != nullptr) {
+                 const char* name = entry->d_name;
+                 if(strstr(name, "reel_media")) {
+-                    property_set("instagram_reel_media", "1");
++                    property_set("bst.config.instagram_reel_media", "1");
+                     break;
+                 }
+             }

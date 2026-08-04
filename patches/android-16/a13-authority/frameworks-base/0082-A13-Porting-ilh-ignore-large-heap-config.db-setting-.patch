@@ -1,0 +1,65 @@
+From c404395c52787f70a43762c59e158b29eb7f2a63 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Mon, 20 Nov 2023 17:43:51 +0800
+Subject: [PATCH 082/224] [A13] Porting ilh (ignore large heap) config.db
+ setting impl
+
+---
+ .../android/content/pm/PackageParser.java     | 23 ++++++++++++++++++-
+ 1 file changed, 22 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/content/pm/PackageParser.java b/core/java/android/content/pm/PackageParser.java
+index c15b3e0b80c3..fa71f5d24676 100644
+--- a/core/java/android/content/pm/PackageParser.java
++++ b/core/java/android/content/pm/PackageParser.java
+@@ -54,6 +54,7 @@ import android.app.ActivityThread;
+ import android.app.ResourcesManager;
+ import android.compat.annotation.UnsupportedAppUsage;
+ import android.content.ComponentName;
++import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
+ import android.content.pm.overlay.OverlayPaths;
+@@ -75,6 +76,7 @@ import android.os.Parcel;
+ import android.os.Parcelable;
+ import android.os.PatternMatcher;
+ import android.os.RemoteException;
++import android.os.ServiceManager;
+ import android.os.SystemProperties;
+ import android.os.Trace;
+ import android.os.UserHandle;
+@@ -103,6 +105,8 @@ import com.android.internal.os.ClassLoaderFactory;
+ import com.android.internal.util.ArrayUtils;
+ import com.android.internal.util.XmlUtils;
+ 
++import com.bluestacks.os.IBstFilterAppsService;
++
+ import libcore.io.IoUtils;
+ import libcore.util.EmptyArray;
+ import libcore.util.HexEncoding;
+@@ -3576,7 +3580,24 @@ public class PackageParser {
+         if (sa.getBoolean(
+                 com.android.internal.R.styleable.AndroidManifestApplication_largeHeap,
+                 false)) {
+-            ai.flags |= ApplicationInfo.FLAG_LARGE_HEAP;
++            // Not honoring largeHeap flag for lineage apps as otherwise they died with no VMA space available error.
++            if (DEBUG_PARSER) Slog.w (TAG, "largeHeap enabled for " + pkgName);
++            IBstFilterAppsService BstFilter = IBstFilterAppsService.Stub.asInterface(
++                    ServiceManager.getService(Context.BST_FILTER_APPS));
++            boolean ignoreLargeHeap = false;
++            try {
++                ignoreLargeHeap = BstFilter.isIgnoreLargeHeapApp(pkgName);
++            } catch (Exception ex) {
++                Slog.d(TAG, ex.getMessage());
++                ex.printStackTrace();
++            }
++
++            if (ignoreLargeHeap) {
++                if (DEBUG_PARSER) Slog.w (TAG, "NOT SETTING largeHeap flag for " + pkgName);
++            } else {
++                if (DEBUG_PARSER) Slog.w (TAG, "SETTING largeHeap flag for " + pkgName);
++                ai.flags |= ApplicationInfo.FLAG_LARGE_HEAP;
++            }
+         }
+ 
+         if (sa.getBoolean(

@@ -1,0 +1,126 @@
+From 965e3d72c1abae5944ffc2303ce4e813459d2103 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 25 Apr 2024 17:21:51 +0800
+Subject: [PATCH 135/224] [A13]ROB-12596: New config entry GLMBRH
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 16 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 50 +++++++++++++++++++
+ 3 files changed, 67 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 74aeeefc24f8..75382ac6beab 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1707,4 +1707,20 @@ public class BstFilterAppsManager {
+             return null;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isGlMapBufferRangeHost(String pkgName)
++    {
++        try {
++            return mService.isGlMapBufferRangeHost(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 307f25af668f..e91e1d560bb0 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -110,4 +110,5 @@ interface IBstFilterAppsService
+     boolean isTexTargetCheckDisabled(String pkgName);
+     int getFixedSurfaceRotationRequired(String pkgName);
+     String getIapSetting(String pkgName);
++    boolean isGlMapBufferRangeHost(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 4f8247ad1f89..7dd88712d51e 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -183,6 +183,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private List<String>          mIapSettingList = new ArrayList<String>();
+     private Map<String, Integer>  mIapSettingPkgIndexMap = new HashMap<String, Integer>();
+     private Object                mIapSettingLock = new Object();
++    private Set<String>           mGlMapBufferRangeHostAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2482,6 +2483,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mFixedSurfaceRotationAppList,pkgException,fixedSurfaceRotation);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("GLMBRH")) {
++                                    synchronized (mGlMapBufferRangeHostAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mGlMapBufferRangeHostAppList \n");
++                                        mGlMapBufferRangeHostAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mGlMapBufferRangeHostAppList \n");
++                                            mGlMapBufferRangeHostAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mGlMapBufferRangeHostAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3139,6 +3156,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mFixedSurfaceRotationAppList.clear();
+         }
+ 
++        synchronized (mGlMapBufferRangeHostAppList)
++        {
++            mGlMapBufferRangeHostAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7097,4 +7119,32 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         if (DEBUG) Slog.d(TAG, pkgName + " get iap setting failure\n");
+         return null;
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isGlMapBufferRangeHost(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GlMapBufferRangeHost app list\n");
++        initLists();
++
++        synchronized (mGlMapBufferRangeHostAppList)
++        {
++            if (mGlMapBufferRangeHostAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGlMapBufferRangeHostAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in GlMapBufferRangeHost App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
+ }

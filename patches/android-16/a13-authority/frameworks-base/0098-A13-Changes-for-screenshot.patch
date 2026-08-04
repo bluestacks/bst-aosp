@@ -1,0 +1,141 @@
+From 28534f689069e172ca0f13b96afee3996abc6af6 Mon Sep 17 00:00:00 2001
+From: muzhong-bst <muzhong@bluestacks.com>
+Date: Tue, 14 Nov 2023 17:26:25 +0800
+Subject: [PATCH 098/224] [A13] Changes for screenshot
+
+---
+ .../systemui/screenshot/ImageExporter.java    |  2 +-
+ .../screenshot/SaveImageInBackgroundTask.java | 37 +++++++++++++++++++
+ .../screenshot/ScreenshotController.java      |  7 +++-
+ 3 files changed, 44 insertions(+), 2 deletions(-)
+ mode change 100644 => 100755 packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
+ mode change 100644 => 100755 packages/SystemUI/src/com/android/systemui/screenshot/SaveImageInBackgroundTask.java
+ mode change 100644 => 100755 packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotController.java
+
+diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java b/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
+old mode 100644
+new mode 100755
+index c8c133774766..d9850ea217d0
+--- a/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
++++ b/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
+@@ -63,7 +63,7 @@ class ImageExporter {
+     static final Duration PENDING_ENTRY_TTL = Duration.ofHours(24);
+ 
+     // ex: 'Screenshot_20201215-090626.png'
+-    private static final String FILENAME_PATTERN = "Screenshot_%1$tY%<tm%<td-%<tH%<tM%<tS.%2$s";
++    private static final String FILENAME_PATTERN = "Screenshot_%1$tY.%<tm.%<td_%<tH.%<tM.%<tS.%2$s";
+     private static final String SCREENSHOTS_PATH = Environment.DIRECTORY_PICTURES
+             + File.separator + Environment.DIRECTORY_SCREENSHOTS;
+ 
+diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/SaveImageInBackgroundTask.java b/packages/SystemUI/src/com/android/systemui/screenshot/SaveImageInBackgroundTask.java
+old mode 100644
+new mode 100755
+index b4934cf7b804..eb6decf3d8b9
+--- a/packages/SystemUI/src/com/android/systemui/screenshot/SaveImageInBackgroundTask.java
++++ b/packages/SystemUI/src/com/android/systemui/screenshot/SaveImageInBackgroundTask.java
+@@ -29,6 +29,7 @@ import android.app.PendingIntent;
+ import android.content.ClipData;
+ import android.content.ClipDescription;
+ import android.content.ComponentName;
++import android.content.ContentResolver;
+ import android.content.Context;
+ import android.content.Intent;
+ import android.content.pm.UserInfo;
+@@ -38,6 +39,7 @@ import android.graphics.drawable.Icon;
+ import android.net.Uri;
+ import android.os.AsyncTask;
+ import android.os.Bundle;
++import android.os.ParcelFileDescriptor;
+ import android.os.Process;
+ import android.os.RemoteException;
+ import android.os.UserHandle;
+@@ -55,6 +57,13 @@ import com.android.systemui.screenshot.ScreenshotController.SavedImageData.Actio
+ 
+ import com.google.common.util.concurrent.ListenableFuture;
+ 
++import com.bluestacks.os.BstHostCallManager;
++
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.io.OutputStream;
+ import java.text.DateFormat;
+ import java.util.ArrayList;
+ import java.util.Date;
+@@ -112,6 +121,30 @@ class SaveImageInBackgroundTask extends AsyncTask<Void, Void, Void> {
+         mSmartActionsProvider = screenshotNotificationSmartActionsProvider;
+     }
+ 
++    private void bstSaveFileInSharedFolder(String fileName, Uri uri) {
++        ContentResolver resolver = (ContentResolver)mContext.getContentResolver();
++        try {
++            ParcelFileDescriptor parcelFile = resolver.openFileDescriptor(uri, "r");
++            FileInputStream fis = new FileInputStream(parcelFile.getFileDescriptor());
++            File dest = new File("/mnt/windows/BstSharedFolder/" + fileName);
++
++            try (FileOutputStream fos = new FileOutputStream(dest)) {
++                byte[] buffer = new byte[1024];
++                int length;
++
++                while ((length = fis.read(buffer)) > 0) {
++                    fos.write(buffer, 0, length);
++                }
++            } catch (Exception ex) {
++                ex.printStackTrace();
++            }
++
++        } catch (IOException e) {
++            e.printStackTrace();
++        }
++    }
++
++
+     @Override
+     protected Void doInBackground(Void... paramsUnused) {
+         if (isCancelled()) {
+@@ -149,6 +182,10 @@ class SaveImageInBackgroundTask extends AsyncTask<Void, Void, Void> {
+             ListenableFuture<ImageExporter.Result> future =
+                     mImageExporter.export(Runnable::run, requestId, image, mParams.owner);
+             ImageExporter.Result result = future.get();
++            // Save file in bluestacks shared folder
++            bstSaveFileInSharedFolder(result.fileName, result.uri);
++            BstHostCallManager hcallManager = (BstHostCallManager) mContext.getSystemService(Context.BST_HOST_CALL);
++            hcallManager.onScreenshotSaved(result.fileName);
+             Log.d(TAG, "Saved screenshot: " + result);
+             final Uri uri = result.uri;
+             mImageTime = result.timestamp;
+diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotController.java b/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotController.java
+old mode 100644
+new mode 100755
+index 5716a1d7260c..a77a192db51c
+--- a/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotController.java
++++ b/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotController.java
+@@ -62,6 +62,7 @@ import android.net.Uri;
+ import android.os.Bundle;
+ import android.os.Process;
+ import android.os.RemoteException;
++import android.os.SystemProperties;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+ import android.provider.Settings;
+@@ -127,6 +128,8 @@ public class ScreenshotController {
+     private ScrollCaptureResponse mLastScrollCaptureResponse;
+     private ListenableFuture<ScrollCaptureResponse> mLastScrollCaptureRequest;
+ 
++    boolean bstDisableAnimation = SystemProperties.getInt("bst.config.dis_anim", 0) > 0;
++
+     /**
+      * This is effectively a no-op, but we need something non-null to pass in, in order to
+      * successfully override the pending activity entrance animation.
+@@ -679,7 +682,9 @@ public class ScreenshotController {
+                             Log.d(TAG, "onPreDraw: startAnimation");
+                         }
+                         mScreenshotView.getViewTreeObserver().removeOnPreDrawListener(this);
+-                        startAnimation(screenRect, showFlash);
++                        if (!bstDisableAnimation) {
++                            startAnimation(screenRect, showFlash);
++                        }
+                         return true;
+                     }
+                 });

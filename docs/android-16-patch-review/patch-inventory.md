@@ -4,15 +4,16 @@
 
 ## Summary
 
-- Patch artifacts: **82**
-- Total size: **6.98 MiB**
-- Artifacts containing binary patch data: **1**
-- Unique changed paths: **397**
+- Patch artifacts: **571**
+- Total size: **21.54 MiB**
+- Artifacts containing binary patch data: **4**
+- Payload-free artifacts referencing binary differences: **2**
+- Unique changed paths: **772**
 
 | Category | Count |
 |---|---:|
 | AOSP16 project snapshots | 21 |
-| Host/build/graphics companion patches | 3 |
+| Host/build/graphics companion patches | 492 |
 | P2 aggregate/candidate snapshots | 5 |
 | P2 bionic/art source overlays | 2 |
 | P2 cross-project mechanical patches | 18 |
@@ -27,19 +28,508 @@
 
 | Artifact | Category | Files | Hunks | + | - | KiB | Binary | Registry |
 |---|---|---:|---:|---:|---:|---:|---|---:|
+| [`04790f5719f844d04d982382ea62bd27156dcc09.patch`](../../patches/android-16/a13-authority/art/04790f5719f844d04d982382ea62bd27156dcc09.patch) | Host/build/graphics companion patches | 1 | 3 | 44 | 1 | 3.2 | no | 0 |
+| [`224e3ead4eaf8f91c5230c803af1c55defeb0757.patch`](../../patches/android-16/a13-authority/art/224e3ead4eaf8f91c5230c803af1c55defeb0757.patch) | Host/build/graphics companion patches | 1 | 2 | 10 | 3 | 2.1 | no | 0 |
+| [`3f6c563145b805817fa2f01e9f31fe2af9c67f54.patch`](../../patches/android-16/a13-authority/art/3f6c563145b805817fa2f01e9f31fe2af9c67f54.patch) | Host/build/graphics companion patches | 1 | 2 | 74 | 1 | 3.7 | no | 0 |
+| [`4f8c891b39ce007b5455f1550290db1b305b3341.patch`](../../patches/android-16/a13-authority/art/4f8c891b39ce007b5455f1550290db1b305b3341.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 1 | 0.7 | no | 0 |
+| [`568cb64e32abd760f8af55938a28463289f82661.patch`](../../patches/android-16/a13-authority/art/568cb64e32abd760f8af55938a28463289f82661.patch) | Host/build/graphics companion patches | 1 | 1 | 54 | 1 | 2.5 | no | 0 |
+| [`57905d797d859345c79fb47d8ab220655dda8b2f.patch`](../../patches/android-16/a13-authority/art/57905d797d859345c79fb47d8ab220655dda8b2f.patch) | Host/build/graphics companion patches | 2 | 2 | 57 | 2 | 3.4 | no | 0 |
+| [`58dd9b4c83c6acf6f7f41d2ae9a6ecf5c835dcba.patch`](../../patches/android-16/a13-authority/art/58dd9b4c83c6acf6f7f41d2ae9a6ecf5c835dcba.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 2 | 1.2 | no | 0 |
+| [`7151a45339efcb58a1fda8dce0c5d87ec2feb284.patch`](../../patches/android-16/a13-authority/art/7151a45339efcb58a1fda8dce0c5d87ec2feb284.patch) | Host/build/graphics companion patches | 1 | 3 | 25 | 9 | 3.3 | no | 0 |
+| [`728412d8fafa0a65bd34e91e54570cbf43c4c635.patch`](../../patches/android-16/a13-authority/art/728412d8fafa0a65bd34e91e54570cbf43c4c635.patch) | Host/build/graphics companion patches | 1 | 3 | 86 | 1 | 4.7 | no | 0 |
+| [`8cd41668fa705dc91c04a382e13e9343ac14aee5.patch`](../../patches/android-16/a13-authority/art/8cd41668fa705dc91c04a382e13e9343ac14aee5.patch) | Host/build/graphics companion patches | 1 | 3 | 53 | 12 | 3.6 | no | 0 |
+| [`cfc8b82d8090786d4b5287eead1b186a54ece5ac.patch`](../../patches/android-16/a13-authority/art/cfc8b82d8090786d4b5287eead1b186a54ece5ac.patch) | Host/build/graphics companion patches | 1 | 3 | 122 | 1 | 4.8 | no | 0 |
+| [`d7fd0e75625d51eefb33dce73d2116953b75e76c.patch`](../../patches/android-16/a13-authority/art/d7fd0e75625d51eefb33dce73d2116953b75e76c.patch) | Host/build/graphics companion patches | 1 | 2 | 3 | 4 | 1.9 | no | 0 |
+| [`e29170951312050239b479b68ead5d81c7f6a784.patch`](../../patches/android-16/a13-authority/art/e29170951312050239b479b68ead5d81c7f6a784.patch) | Host/build/graphics companion patches | 1 | 2 | 10 | 3 | 2.1 | no | 0 |
+| [`e90a91250beb0b112801473fb836982a730c614b.patch`](../../patches/android-16/a13-authority/art/e90a91250beb0b112801473fb836982a730c614b.patch) | Host/build/graphics companion patches | 1 | 1 | 6 | 7 | 1.6 | no | 0 |
+| [`0001-A13-Add-syscalls-ioperm-and-iopl.patch`](../../patches/android-16/a13-authority/bionic/0001-A13-Add-syscalls-ioperm-and-iopl.patch) | Host/build/graphics companion patches | 6 | 6 | 102 | 0 | 4.4 | no | 0 |
+| [`0002-A13-linker-Allow-text-relocs-for-x86-only.patch`](../../patches/android-16/a13-authority/bionic/0002-A13-linker-Allow-text-relocs-for-x86-only.patch) | Host/build/graphics companion patches | 1 | 2 | 2 | 0 | 1.7 | no | 0 |
+| [`0003-A13-Prefer-ipv4-over-ipv6.patch`](../../patches/android-16/a13-authority/bionic/0003-A13-Prefer-ipv4-over-ipv6.patch) | Host/build/graphics companion patches | 1 | 4 | 7 | 4 | 1.7 | no | 0 |
+| [`0004-A13-Add-config.db-entry-xprop-3.patch`](../../patches/android-16/a13-authority/bionic/0004-A13-Add-config.db-entry-xprop-3.patch) | Host/build/graphics companion patches | 2 | 4 | 115 | 1 | 6.6 | no | 0 |
+| [`0005-A13-Fix-system-prop-serial-to-len-convertion.patch`](../../patches/android-16/a13-authority/bionic/0005-A13-Fix-system-prop-serial-to-len-convertion.patch) | Host/build/graphics companion patches | 1 | 5 | 33 | 19 | 3.7 | no | 0 |
+| [`0006-A13-Hiding-or-Faking-props-for-3rd-party-apps.patch`](../../patches/android-16/a13-authority/bionic/0006-A13-Hiding-or-Faking-props-for-3rd-party-apps.patch) | Host/build/graphics companion patches | 2 | 10 | 412 | 48 | 25.8 | no | 0 |
+| [`0007-A13-prop-sync-with-real-device-and-AOPS-emulator.patch`](../../patches/android-16/a13-authority/bionic/0007-A13-prop-sync-with-real-device-and-AOPS-emulator.patch) | Host/build/graphics companion patches | 1 | 4 | 17 | 1 | 3.3 | no | 0 |
+| [`0008-A13-Fix-the-crash-issue-when-value-is-NULL.patch`](../../patches/android-16/a13-authority/bionic/0008-A13-Fix-the-crash-issue-when-value-is-NULL.patch) | Host/build/graphics companion patches | 1 | 5 | 5 | 5 | 3.3 | no | 0 |
+| [`0009-A13-Return-error-when-path-is-null-in-open-function.patch`](../../patches/android-16/a13-authority/bionic/0009-A13-Return-error-when-path-is-null-in-open-function.patch) | Host/build/graphics companion patches | 1 | 2 | 8 | 0 | 1.0 | no | 0 |
+| [`0010-Fd-size-10.patch`](../../patches/android-16/a13-authority/bionic/0010-Fd-size-10.patch) | Host/build/graphics companion patches | 3 | 6 | 58 | 1 | 4.8 | no | 0 |
+| [`0011-A13-Add-property-for-arm-translator.patch`](../../patches/android-16/a13-authority/bionic/0011-A13-Add-property-for-arm-translator.patch) | Host/build/graphics companion patches | 2 | 3 | 167 | 0 | 7.2 | no | 0 |
+| [`0012-ROB-14898-Incorrect-TimeZone-of-Iran.patch`](../../patches/android-16/a13-authority/bionic/0012-ROB-14898-Incorrect-TimeZone-of-Iran.patch) | Host/build/graphics companion patches | 1 | 1 | 19 | 0 | 1.2 | no | 0 |
+| [`0013-ROB-14898-Incorrect-TimeZone-of-Iran.patch`](../../patches/android-16/a13-authority/bionic/0013-ROB-14898-Incorrect-TimeZone-of-Iran.patch) | Host/build/graphics companion patches | 1 | 1 | 19 | 0 | 1.2 | no | 0 |
+| [`0001-A13-Don-t-skip-omx-audio-video-codecs-for-app-player.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0001-A13-Don-t-skip-omx-audio-video-codecs-for-app-player.patch) | Host/build/graphics companion patches | 1 | 2 | 8 | 3 | 2.0 | no | 0 |
+| [`0002-A13-Using-bst.instance-property-to-check-app-player.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0002-A13-Using-bst.instance-property-to-check-app-player.patch) | Host/build/graphics companion patches | 1 | 1 | 9 | 3 | 1.2 | no | 0 |
+| [`0003-Add-bstsvcmsgrtest.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0003-Add-bstsvcmsgrtest.patch) | Host/build/graphics companion patches | 2 | 2 | 209 | 0 | 7.0 | no | 0 |
+| [`0004-Setup-FFMPEG-audio-mpeg-L2-codec-correctly.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0004-Setup-FFMPEG-audio-mpeg-L2-codec-correctly.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.2 | no | 0 |
+| [`0005-SW-encode-Fix-output-buffer-size.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0005-SW-encode-Fix-output-buffer-size.patch) | Host/build/graphics companion patches | 1 | 1 | 27 | 0 | 2.1 | no | 0 |
+| [`0006-Change-max-width-and-height-supported-by-H.263-decod.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0006-Change-max-width-and-height-supported-by-H.263-decod.patch) | Host/build/graphics companion patches | 1 | 1 | 6 | 0 | 1.4 | no | 0 |
+| [`0007-FLACExtractor-Add-more-sample-rates-support.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0007-FLACExtractor-Add-more-sample-rates-support.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.4 | no | 0 |
+| [`0008-CameraSource-set-up-right-frame-rate.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0008-CameraSource-set-up-right-frame-rate.patch) | Host/build/graphics companion patches | 3 | 5 | 14 | 1 | 3.6 | no | 0 |
+| [`0009-Don-t-use-YV12-color-format-for-video-decoding.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0009-Don-t-use-YV12-color-format-for-video-decoding.patch) | Host/build/graphics companion patches | 1 | 2 | 2 | 0 | 1.3 | no | 0 |
+| [`0010-media-enable-dithering-for-RGB565-conversion.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0010-media-enable-dithering-for-RGB565-conversion.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 3 | 1.3 | no | 0 |
+| [`0011-nuplayer-skip-bad-SAR-values.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0011-nuplayer-skip-bad-SAR-values.patch) | Host/build/graphics companion patches | 1 | 1 | 7 | 1 | 2.4 | no | 0 |
+| [`0012-Add-paths-and-system-libraries-for-swcodec-APEX.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0012-Add-paths-and-system-libraries-for-swcodec-APEX.patch) | Host/build/graphics companion patches | 1 | 3 | 4 | 6 | 4.0 | no | 0 |
+| [`0013-A13-stagefright-Add-support-for-loading-a-custom-OMX.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0013-A13-stagefright-Add-support-for-loading-a-custom-OMX.patch) | Host/build/graphics companion patches | 3 | 6 | 13 | 1 | 3.6 | no | 0 |
+| [`0014-A13-libstagefright-Extended-media-support-via-FFMPEG.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0014-A13-libstagefright-Extended-media-support-via-FFMPEG.patch) | Host/build/graphics companion patches | 16 | 54 | 1881 | 19 | 87.7 | no | 0 |
+| [`0015-A13-Disable-CFI.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0015-A13-Disable-CFI.patch) | Host/build/graphics companion patches | 5 | 7 | 0 | 7 | 2.9 | no | 0 |
+| [`0016-A13-Porting-cameraSensor-related-changes.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0016-A13-Porting-cameraSensor-related-changes.patch) | Host/build/graphics companion patches | 2 | 5 | 36 | 1 | 3.5 | no | 0 |
+| [`0017-Revert-SW-encode-Fix-output-buffer-size.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0017-Revert-SW-encode-Fix-output-buffer-size.patch) | Host/build/graphics companion patches | 1 | 1 | 0 | 27 | 1.9 | no | 0 |
+| [`0018-A13-always-enable-OMX-plugin-on-bs-18.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0018-A13-always-enable-OMX-plugin-on-bs-18.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 10 | 1.2 | no | 0 |
+| [`0019-A13-ROB-11904-Support-DRM-widevine.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0019-A13-ROB-11904-Support-DRM-widevine.patch) | Host/build/graphics companion patches | 20 | 19 | 2128 | 1 | 84.4 | reference-only | 0 |
+| [`0020-ROB-12562-Love-and-Deepspace-Chapter-7-episode-6-get.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0020-ROB-12562-Love-and-Deepspace-Chapter-7-episode-6-get.patch) | Host/build/graphics companion patches | 1 | 4 | 11 | 1 | 1.7 | no | 0 |
+| [`0021-ROB-14838-Reddit-Camera-issues-while-verifying-Tinde.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0021-ROB-14838-Reddit-Camera-issues-while-verifying-Tinde.patch) | Host/build/graphics companion patches | 1 | 2 | 4 | 4 | 1.8 | no | 0 |
+| [`0001-A13-Adding-libhostcall_jni.patch`](../../patches/android-16/a13-authority/frameworks-base/0001-A13-Adding-libhostcall_jni.patch) | Host/build/graphics companion patches | 2 | 2 | 920 | 0 | 37.3 | no | 0 |
+| [`0002-A13-Adding-BlueStacks-basic-services.patch`](../../patches/android-16/a13-authority/frameworks-base/0002-A13-Adding-BlueStacks-basic-services.patch) | Host/build/graphics companion patches | 24 | 35 | 9758 | 1 | 409.7 | no | 0 |
+| [`0003-A13-Sending-top-display-focus-change-to-host.patch`](../../patches/android-16/a13-authority/frameworks-base/0003-A13-Sending-top-display-focus-change-to-host.patch) | Host/build/graphics companion patches | 2 | 13 | 170 | 0 | 16.3 | no | 0 |
+| [`0004-A13-Disable-Bluetooth-service.patch`](../../patches/android-16/a13-authority/frameworks-base/0004-A13-Disable-Bluetooth-service.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.1 | no | 0 |
+| [`0005-A13-Temporarily-disable-KeyStore-function-to-avoid-s.patch`](../../patches/android-16/a13-authority/frameworks-base/0005-A13-Temporarily-disable-KeyStore-function-to-avoid-s.patch) | Host/build/graphics companion patches | 1 | 5 | 11 | 3 | 4.2 | no | 0 |
+| [`0006-A13-Hiding-navigation-bar.patch`](../../patches/android-16/a13-authority/frameworks-base/0006-A13-Hiding-navigation-bar.patch) | Host/build/graphics companion patches | 1 | 2 | 8 | 0 | 1.6 | no | 0 |
+| [`0007-A13-Changes-for-native-mouse-pointer.patch`](../../patches/android-16/a13-authority/frameworks-base/0007-A13-Changes-for-native-mouse-pointer.patch) | Host/build/graphics companion patches | 4 | 5 | 27 | 1 | 3.8 | no | 0 |
+| [`0008-A13-Added-chnages-to-support-StopApp-gcall.patch`](../../patches/android-16/a13-authority/frameworks-base/0008-A13-Added-chnages-to-support-StopApp-gcall.patch) | Host/build/graphics companion patches | 7 | 14 | 72 | 6 | 11.8 | no | 0 |
+| [`0009-A13-Support-orientation-change.patch`](../../patches/android-16/a13-authority/frameworks-base/0009-A13-Support-orientation-change.patch) | Host/build/graphics companion patches | 10 | 33 | 194 | 16 | 24.9 | no | 0 |
+| [`0010-A13-Disable-bootanimation-in-the-code.patch`](../../patches/android-16/a13-authority/frameworks-base/0010-A13-Disable-bootanimation-in-the-code.patch) | Host/build/graphics companion patches | 1 | 2 | 5 | 0 | 1.0 | no | 0 |
+| [`0011-A13-Add-hcall-support-onImeChange-onTextEditModeChan.patch`](../../patches/android-16/a13-authority/frameworks-base/0011-A13-Add-hcall-support-onImeChange-onTextEditModeChan.patch) | Host/build/graphics companion patches | 1 | 7 | 55 | 0 | 7.1 | no | 0 |
+| [`0012-A13-Inherit-parent-capabilities-into-the-children.patch`](../../patches/android-16/a13-authority/frameworks-base/0012-A13-Inherit-parent-capabilities-into-the-children.patch) | Host/build/graphics companion patches | 1 | 2 | 7 | 0 | 1.2 | no | 0 |
+| [`0013-A13-Updating-BlueStacks-wallpaper.patch`](../../patches/android-16/a13-authority/frameworks-base/0013-A13-Updating-BlueStacks-wallpaper.patch) | Host/build/graphics companion patches | 3 | 0 | 0 | 0 | 11670.0 | embedded | 0 |
+| [`0014-A13-Making-sure-that-apps-located-in-data-downloads-.patch`](../../patches/android-16/a13-authority/frameworks-base/0014-A13-Making-sure-that-apps-located-in-data-downloads-.patch) | Host/build/graphics companion patches | 2 | 3 | 24 | 0 | 3.3 | no | 0 |
+| [`0015-A13-Using-0x90-0xe0-0x10-scancode-for-HOME-and-0x99-.patch`](../../patches/android-16/a13-authority/frameworks-base/0015-A13-Using-0x90-0xe0-0x10-scancode-for-HOME-and-0x99-.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 0.9 | no | 0 |
+| [`0016-A13-Disable-Keyguard.patch`](../../patches/android-16/a13-authority/frameworks-base/0016-A13-Disable-Keyguard.patch) | Host/build/graphics companion patches | 1 | 1 | 6 | 1 | 1.7 | no | 0 |
+| [`0017-A13-Disable-Lockscreen.patch`](../../patches/android-16/a13-authority/frameworks-base/0017-A13-Disable-Lockscreen.patch) | Host/build/graphics companion patches | 1 | 3 | 6 | 0 | 1.5 | no | 0 |
+| [`0018-A13-Make-system-stay-awake.patch`](../../patches/android-16/a13-authority/frameworks-base/0018-A13-Make-system-stay-awake.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.2 | no | 0 |
+| [`0019-A13-Disable-the-systemui-clipboard-overlay.patch`](../../patches/android-16/a13-authority/frameworks-base/0019-A13-Disable-the-systemui-clipboard-overlay.patch) | Host/build/graphics companion patches | 1 | 3 | 5 | 1 | 1.8 | no | 0 |
+| [`0020-A13-Setting-screen-timeout-value-as-never.patch`](../../patches/android-16/a13-authority/frameworks-base/0020-A13-Setting-screen-timeout-value-as-never.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 1.2 | no | 0 |
+| [`0021-A13-Fix-crash-issue-when-opening-com.location.provid.patch`](../../patches/android-16/a13-authority/frameworks-base/0021-A13-Fix-crash-issue-when-opening-com.location.provid.patch) | Host/build/graphics companion patches | 2 | 4 | 5 | 3 | 2.1 | no | 0 |
+| [`0022-A13-Disable-quota-limit-irregard-of-fuse-and-sdcardf.patch`](../../patches/android-16/a13-authority/frameworks-base/0022-A13-Disable-quota-limit-irregard-of-fuse-and-sdcardf.patch) | Host/build/graphics companion patches | 1 | 1 | 0 | 37 | 2.3 | no | 0 |
+| [`0023-A13-Setting-boot_completed-and-screen_enabled-props.patch`](../../patches/android-16/a13-authority/frameworks-base/0023-A13-Setting-boot_completed-and-screen_enabled-props.patch) | Host/build/graphics companion patches | 2 | 2 | 4 | 0 | 1.9 | no | 0 |
+| [`0024-Changes-to-add-chrome-webviewprovider-as-default.patch`](../../patches/android-16/a13-authority/frameworks-base/0024-Changes-to-add-chrome-webviewprovider-as-default.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 1.0 | no | 0 |
+| [`0025-Forcing-supported-abi-values-to-play-store-based-on-.patch`](../../patches/android-16/a13-authority/frameworks-base/0025-Forcing-supported-abi-values-to-play-store-based-on-.patch) | Host/build/graphics companion patches | 1 | 3 | 87 | 0 | 4.6 | no | 0 |
+| [`0026-A13-Faking-Esc-key-to-work-as-back-button-in-app-pla.patch`](../../patches/android-16/a13-authority/frameworks-base/0026-A13-Faking-Esc-key-to-work-as-back-button-in-app-pla.patch) | Host/build/graphics companion patches | 2 | 2 | 2 | 2 | 1.3 | no | 0 |
+| [`0027-A13-Set-bst-props-to-default-value-as-starting-zygot.patch`](../../patches/android-16/a13-authority/frameworks-base/0027-A13-Set-bst-props-to-default-value-as-starting-zygot.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 0 | 1.0 | no | 0 |
+| [`0028-A13-Adding-path-to-be-read-for-default-permission-an.patch`](../../patches/android-16/a13-authority/frameworks-base/0028-A13-Adding-path-to-be-read-for-default-permission-an.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 0 | 1.0 | no | 0 |
+| [`0029-A13-Faking-glesversion-and-features-for-playstore.patch`](../../patches/android-16/a13-authority/frameworks-base/0029-A13-Faking-glesversion-and-features-for-playstore.patch) | Host/build/graphics companion patches | 2 | 11 | 141 | 2 | 10.5 | no | 0 |
+| [`0030-A13-Ported-IAP-related-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0030-A13-Ported-IAP-related-changes.patch) | Host/build/graphics companion patches | 2 | 9 | 279 | 7 | 20.8 | no | 0 |
+| [`0031-A13-Reading-locale-from-bst.locale-if-lang-and-count.patch`](../../patches/android-16/a13-authority/frameworks-base/0031-A13-Reading-locale-from-bst.locale-if-lang-and-count.patch) | Host/build/graphics companion patches | 1 | 2 | 19 | 1 | 2.0 | no | 0 |
+| [`0032-A13-Attaching-GrallocUploadThread-to-JVM-env.patch`](../../patches/android-16/a13-authority/frameworks-base/0032-A13-Attaching-GrallocUploadThread-to-JVM-env.patch) | Host/build/graphics companion patches | 5 | 10 | 52 | 3 | 6.9 | no | 0 |
+| [`0033-A13-Changes-for-audio-volume.patch`](../../patches/android-16/a13-authority/frameworks-base/0033-A13-Changes-for-audio-volume.patch) | Host/build/graphics companion patches | 2 | 4 | 26 | 6 | 3.9 | no | 0 |
+| [`0034-A13-Parsing-apps.xml-on-every-boot-so-permissions-ar.patch`](../../patches/android-16/a13-authority/frameworks-base/0034-A13-Parsing-apps.xml-on-every-boot-so-permissions-ar.patch) | Host/build/graphics companion patches | 1 | 2 | 9 | 0 | 2.1 | no | 0 |
+| [`0035-A13-Disabling-default-StrictMode-policy-for-Bluestac.patch`](../../patches/android-16/a13-authority/frameworks-base/0035-A13-Disabling-default-StrictMode-policy-for-Bluestac.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 1.2 | no | 0 |
+| [`0036-A13-Added-telephony-related-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0036-A13-Added-telephony-related-changes.patch) | Host/build/graphics companion patches | 3 | 26 | 180 | 19 | 16.7 | no | 0 |
+| [`0037-A13-Adding-NTP-time-sync-code-which-will-do-it-perio.patch`](../../patches/android-16/a13-authority/frameworks-base/0037-A13-Adding-NTP-time-sync-code-which-will-do-it-perio.patch) | Host/build/graphics companion patches | 1 | 4 | 9 | 3 | 2.9 | no | 0 |
+| [`0038-A13-code-sync-with-Rvc.patch`](../../patches/android-16/a13-authority/frameworks-base/0038-A13-code-sync-with-Rvc.patch) | Host/build/graphics companion patches | 1 | 5 | 11 | 3 | 3.6 | no | 0 |
+| [`0039-A13-Disabling-location-accuracy-popup.-Return-false.patch`](../../patches/android-16/a13-authority/frameworks-base/0039-A13-Disabling-location-accuracy-popup.-Return-false.patch) | Host/build/graphics companion patches | 1 | 5 | 38 | 1 | 4.3 | no | 0 |
+| [`0040-A13-code-sync-with-Android-11.patch`](../../patches/android-16/a13-authority/frameworks-base/0040-A13-code-sync-with-Android-11.patch) | Host/build/graphics companion patches | 7 | 28 | 768 | 18 | 47.2 | no | 0 |
+| [`0041-A13-There-was-a-case-in-which-fb-schedule-was-corrup.patch`](../../patches/android-16/a13-authority/frameworks-base/0041-A13-There-was-a-case-in-which-fb-schedule-was-corrup.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 1 | 1.5 | no | 0 |
+| [`0042-A13-Adding-unit-test-script.patch`](../../patches/android-16/a13-authority/frameworks-base/0042-A13-Adding-unit-test-script.patch) | Host/build/graphics companion patches | 1 | 1 | 68 | 0 | 3.6 | no | 0 |
+| [`0043-A13-sync-rvc-xml-file.patch`](../../patches/android-16/a13-authority/frameworks-base/0043-A13-sync-rvc-xml-file.patch) | Host/build/graphics companion patches | 2 | 2 | 7 | 1 | 2.0 | no | 0 |
+| [`0044-A13-BS4-3201-Ported-debuggable-property-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0044-A13-BS4-3201-Ported-debuggable-property-changes.patch) | Host/build/graphics companion patches | 1 | 2 | 21 | 0 | 2.3 | no | 0 |
+| [`0045-A13-Fix-for-Low-battery-warning-pop-up.patch`](../../patches/android-16/a13-authority/frameworks-base/0045-A13-Fix-for-Low-battery-warning-pop-up.patch) | Host/build/graphics companion patches | 1 | 1 | 12 | 0 | 1.7 | no | 0 |
+| [`0046-A13-Changes-to-Hide-the-Bluestacks-packages.patch`](../../patches/android-16/a13-authority/frameworks-base/0046-A13-Changes-to-Hide-the-Bluestacks-packages.patch) | Host/build/graphics companion patches | 1 | 14 | 88 | 0 | 10.9 | no | 0 |
+| [`0047-A13-Changes-to-return-correct-primary-storage-size.patch`](../../patches/android-16/a13-authority/frameworks-base/0047-A13-Changes-to-return-correct-primary-storage-size.patch) | Host/build/graphics companion patches | 3 | 4 | 37 | 4 | 4.3 | no | 0 |
+| [`0048-A13-Adding-support-to-change-device-profile.patch`](../../patches/android-16/a13-authority/frameworks-base/0048-A13-Adding-support-to-change-device-profile.patch) | Host/build/graphics companion patches | 1 | 2 | 39 | 0 | 2.8 | no | 0 |
+| [`0049-A13-Not-allowing-apps-to-change-screen_brightness-an.patch`](../../patches/android-16/a13-authority/frameworks-base/0049-A13-Not-allowing-apps-to-change-screen_brightness-an.patch) | Host/build/graphics companion patches | 1 | 3 | 68 | 21 | 7.2 | no | 0 |
+| [`0050-A13-Porting-changes-for-dxflag-config.db-entry.patch`](../../patches/android-16/a13-authority/frameworks-base/0050-A13-Porting-changes-for-dxflag-config.db-entry.patch) | Host/build/graphics companion patches | 1 | 4 | 20 | 0 | 3.3 | no | 0 |
+| [`0051-A13-Faking-as-System-has-vibrator-available.patch`](../../patches/android-16/a13-authority/frameworks-base/0051-A13-Faking-as-System-has-vibrator-available.patch) | Host/build/graphics companion patches | 1 | 4 | 11 | 1 | 2.4 | no | 0 |
+| [`0052-A13-ROB-6795-Fixing-Chat-is-not-working-properly-on-.patch`](../../patches/android-16/a13-authority/frameworks-base/0052-A13-ROB-6795-Fixing-Chat-is-not-working-properly-on-.patch) | Host/build/graphics companion patches | 1 | 1 | 10 | 1 | 1.9 | no | 0 |
+| [`0053-A13-A11-78-On-clone-instance-updating-android-id-for.patch`](../../patches/android-16/a13-authority/frameworks-base/0053-A13-A11-78-On-clone-instance-updating-android-id-for.patch) | Host/build/graphics companion patches | 1 | 2 | 52 | 15 | 4.9 | no | 0 |
+| [`0054-A13-ROB-4550-Code-change-sync-from-Pie.patch`](../../patches/android-16/a13-authority/frameworks-base/0054-A13-ROB-4550-Code-change-sync-from-Pie.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 0 | 1.3 | no | 0 |
+| [`0055-A13-When-Status-bar-is-hidden-then-if-someone-querie.patch`](../../patches/android-16/a13-authority/frameworks-base/0055-A13-When-Status-bar-is-hidden-then-if-someone-querie.patch) | Host/build/graphics companion patches | 1 | 4 | 39 | 0 | 3.9 | no | 0 |
+| [`0056-A13-making-sure-intent-is-not-null-before-accessing-.patch`](../../patches/android-16/a13-authority/frameworks-base/0056-A13-making-sure-intent-is-not-null-before-accessing-.patch) | Host/build/graphics companion patches | 1 | 1 | 4 | 2 | 1.2 | no | 0 |
+| [`0057-A13-Sending-fake-sensor-vendor-information-to-the-ap.patch`](../../patches/android-16/a13-authority/frameworks-base/0057-A13-Sending-fake-sensor-vendor-information-to-the-ap.patch) | Host/build/graphics companion patches | 1 | 2 | 11 | 0 | 1.5 | no | 0 |
+| [`0058-A13-Fix-a-NPE-when-putting-a-null-Bundle-in-an-Inten.patch`](../../patches/android-16/a13-authority/frameworks-base/0058-A13-Fix-a-NPE-when-putting-a-null-Bundle-in-an-Inten.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 0 | 1.0 | no | 0 |
+| [`0059-Revert-A13-ROB-6795-Fixing-Chat-is-not-working-prope.patch`](../../patches/android-16/a13-authority/frameworks-base/0059-Revert-A13-ROB-6795-Fixing-Chat-is-not-working-prope.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 10 | 1.9 | no | 0 |
+| [`0060-A13-Port-bst-wallpaper-codes-and-resource.patch`](../../patches/android-16/a13-authority/frameworks-base/0060-A13-Port-bst-wallpaper-codes-and-resource.patch) | Host/build/graphics companion patches | 7 | 9 | 42 | 2 | 27.1 | embedded | 0 |
+| [`0061-A13-Porting-modifyDispRotationVal-related-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0061-A13-Porting-modifyDispRotationVal-related-changes.patch) | Host/build/graphics companion patches | 1 | 5 | 34 | 0 | 3.8 | no | 0 |
+| [`0062-A13-Add-config.db-entry-xarch.patch`](../../patches/android-16/a13-authority/frameworks-base/0062-A13-Add-config.db-entry-xarch.patch) | Host/build/graphics companion patches | 2 | 7 | 50 | 0 | 7.1 | no | 0 |
+| [`0063-A13-Add-config.db-entry-xcpu.patch`](../../patches/android-16/a13-authority/frameworks-base/0063-A13-Add-config.db-entry-xcpu.patch) | Host/build/graphics companion patches | 1 | 4 | 121 | 0 | 5.4 | no | 0 |
+| [`0064-A13-Added-changes-related-to-bstOnDisplayedPackageCh.patch`](../../patches/android-16/a13-authority/frameworks-base/0064-A13-Added-changes-related-to-bstOnDisplayedPackageCh.patch) | Host/build/graphics companion patches | 3 | 7 | 152 | 0 | 12.6 | no | 0 |
+| [`0065-A13-ROB-9926-add-the-default-profile-file-for-the-sp.patch`](../../patches/android-16/a13-authority/frameworks-base/0065-A13-ROB-9926-add-the-default-profile-file-for-the-sp.patch) | Host/build/graphics companion patches | 1 | 2 | 33 | 0 | 2.9 | no | 0 |
+| [`0066-A13-Porting-mdsd-config-setting-imp.patch`](../../patches/android-16/a13-authority/frameworks-base/0066-A13-Porting-mdsd-config-setting-imp.patch) | Host/build/graphics companion patches | 1 | 9 | 85 | 3 | 8.6 | no | 0 |
+| [`0067-A13-Changes-for-host-clipboard.patch`](../../patches/android-16/a13-authority/frameworks-base/0067-A13-Changes-for-host-clipboard.patch) | Host/build/graphics companion patches | 1 | 5 | 19 | 0 | 3.4 | no | 0 |
+| [`0068-A13-Add-config.db-entry-blacklist-blacklistAction.patch`](../../patches/android-16/a13-authority/frameworks-base/0068-A13-Add-config.db-entry-blacklist-blacklistAction.patch) | Host/build/graphics companion patches | 2 | 13 | 112 | 0 | 10.7 | no | 0 |
+| [`0069-A13-Customize-the-footer-of-SystemUi-s-qs.patch`](../../patches/android-16/a13-authority/frameworks-base/0069-A13-Customize-the-footer-of-SystemUi-s-qs.patch) | Host/build/graphics companion patches | 2 | 5 | 18 | 2 | 3.4 | no | 0 |
+| [`0070-A13-Faking-the-uninitialised-properties.patch`](../../patches/android-16/a13-authority/frameworks-base/0070-A13-Faking-the-uninitialised-properties.patch) | Host/build/graphics companion patches | 1 | 1 | 12 | 0 | 1.4 | no | 0 |
+| [`0071-A13-Restricting-GMS-Vending-and-chrome-apk-update-wh.patch`](../../patches/android-16/a13-authority/frameworks-base/0071-A13-Restricting-GMS-Vending-and-chrome-apk-update-wh.patch) | Host/build/graphics companion patches | 1 | 4 | 44 | 0 | 3.8 | no | 0 |
+| [`0072-A13-Porting-changes-for-blacklist-config.db-entry.patch`](../../patches/android-16/a13-authority/frameworks-base/0072-A13-Porting-changes-for-blacklist-config.db-entry.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 1 | 1.4 | no | 0 |
+| [`0073-A13-Changes-to-support-arch-config-db-entry.patch`](../../patches/android-16/a13-authority/frameworks-base/0073-A13-Changes-to-support-arch-config-db-entry.patch) | Host/build/graphics companion patches | 3 | 18 | 656 | 11 | 38.7 | no | 0 |
+| [`0074-A13-Fix-crash-issue-when-abi-do-not-match.patch`](../../patches/android-16/a13-authority/frameworks-base/0074-A13-Fix-crash-issue-when-abi-do-not-match.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 1 | 1.5 | no | 0 |
+| [`0075-A13-Adding-AID_READPROC-group-to-bluestacks-specific.patch`](../../patches/android-16/a13-authority/frameworks-base/0075-A13-Adding-AID_READPROC-group-to-bluestacks-specific.patch) | Host/build/graphics companion patches | 1 | 2 | 67 | 1 | 3.7 | no | 0 |
+| [`0076-A13-Porting-vms-config.db-setting-impl.patch`](../../patches/android-16/a13-authority/frameworks-base/0076-A13-Porting-vms-config.db-setting-impl.patch) | Host/build/graphics companion patches | 2 | 6 | 92 | 0 | 6.5 | no | 0 |
+| [`0077-A13-ROB-8784-Disable-package-verifier.patch`](../../patches/android-16/a13-authority/frameworks-base/0077-A13-ROB-8784-Disable-package-verifier.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.0 | no | 0 |
+| [`0078-A13-ROB-8737-Added-hook-sharedpreference-setting-of-.patch`](../../patches/android-16/a13-authority/frameworks-base/0078-A13-ROB-8737-Added-hook-sharedpreference-setting-of-.patch) | Host/build/graphics companion patches | 1 | 6 | 151 | 0 | 9.7 | no | 0 |
+| [`0079-A13-BS4-4874-Skipping-data-downloads-.tmp-dir.patch`](../../patches/android-16/a13-authority/frameworks-base/0079-A13-BS4-4874-Skipping-data-downloads-.tmp-dir.patch) | Host/build/graphics companion patches | 1 | 1 | 8 | 0 | 1.3 | no | 0 |
+| [`0080-A13-case-3963-Not-showing-progress-bar-during-shutdo.patch`](../../patches/android-16/a13-authority/frameworks-base/0080-A13-case-3963-Not-showing-progress-bar-during-shutdo.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 1.1 | no | 0 |
+| [`0081-A13-Syncing-timeout-values-from-Rvc.patch`](../../patches/android-16/a13-authority/frameworks-base/0081-A13-Syncing-timeout-values-from-Rvc.patch) | Host/build/graphics companion patches | 2 | 2 | 2 | 2 | 2.0 | no | 0 |
+| [`0082-A13-Porting-ilh-ignore-large-heap-config.db-setting-.patch`](../../patches/android-16/a13-authority/frameworks-base/0082-A13-Porting-ilh-ignore-large-heap-config.db-setting-.patch) | Host/build/graphics companion patches | 1 | 4 | 22 | 1 | 2.7 | no | 0 |
+| [`0083-A13-Porting-googleSignInReqd-config-setting-imp.patch`](../../patches/android-16/a13-authority/frameworks-base/0083-A13-Porting-googleSignInReqd-config-setting-imp.patch) | Host/build/graphics companion patches | 1 | 2 | 13 | 0 | 2.1 | no | 0 |
+| [`0084-A13-Porting-clear-setting-impl.patch`](../../patches/android-16/a13-authority/frameworks-base/0084-A13-Porting-clear-setting-impl.patch) | Host/build/graphics companion patches | 1 | 4 | 39 | 2 | 4.0 | no | 0 |
+| [`0085-A13-Case-ROB-8853-updating-installation-true-for-non.patch`](../../patches/android-16/a13-authority/frameworks-base/0085-A13-Case-ROB-8853-updating-installation-true-for-non.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.0 | no | 0 |
+| [`0086-A13-By-default-in-bluestacks-do-not-go-into-the-safe.patch`](../../patches/android-16/a13-authority/frameworks-base/0086-A13-By-default-in-bluestacks-do-not-go-into-the-safe.patch) | Host/build/graphics companion patches | 1 | 2 | 7 | 1 | 1.7 | no | 0 |
+| [`0087-A13-SystemUI-customizations-changes-includes.patch`](../../patches/android-16/a13-authority/frameworks-base/0087-A13-SystemUI-customizations-changes-includes.patch) | Host/build/graphics companion patches | 6 | 12 | 26 | 5 | 8.2 | no | 0 |
+| [`0088-A13-Stop-updating-ext-battery-stats-in-BatteryStatsS.patch`](../../patches/android-16/a13-authority/frameworks-base/0088-A13-Stop-updating-ext-battery-stats-in-BatteryStatsS.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 1.3 | no | 0 |
+| [`0089-A13-Disabling-lockNow-function-chinese-app-365-locks.patch`](../../patches/android-16/a13-authority/frameworks-base/0089-A13-Disabling-lockNow-function-chinese-app-365-locks.patch) | Host/build/graphics companion patches | 1 | 2 | 2 | 0 | 1.4 | no | 0 |
+| [`0090-A13-Case-ROB-8853-allow-chrome-to-install-apk-83.patch`](../../patches/android-16/a13-authority/frameworks-base/0090-A13-Case-ROB-8853-allow-chrome-to-install-apk-83.patch) | Host/build/graphics companion patches | 1 | 3 | 11 | 1 | 2.7 | no | 0 |
+| [`0091-A13-Affiliate-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0091-A13-Affiliate-changes.patch) | Host/build/graphics companion patches | 5 | 17 | 383 | 8 | 31.2 | no | 0 |
+| [`0092-A13-Fixing-an-error-condition-in-which-runtime-permi.patch`](../../patches/android-16/a13-authority/frameworks-base/0092-A13-Fixing-an-error-condition-in-which-runtime-permi.patch) | Host/build/graphics companion patches | 1 | 1 | 12 | 3 | 2.2 | no | 0 |
+| [`0093-A13-Changes-to-restrict-user-from-revoking-the-permi.patch`](../../patches/android-16/a13-authority/frameworks-base/0093-A13-Changes-to-restrict-user-from-revoking-the-permi.patch) | Host/build/graphics companion patches | 1 | 2 | 10 | 0 | 2.2 | no | 0 |
+| [`0094-A13-Setting-wallpaperEnabled-to-false-not-waiting-fo.patch`](../../patches/android-16/a13-authority/frameworks-base/0094-A13-Setting-wallpaperEnabled-to-false-not-waiting-fo.patch) | Host/build/graphics companion patches | 1 | 1 | 4 | 0 | 1.3 | no | 0 |
+| [`0095-A13-Allowing-all-apps-to-query-com.android.vending-g.patch`](../../patches/android-16/a13-authority/frameworks-base/0095-A13-Allowing-all-apps-to-query-com.android.vending-g.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 0 | 0.9 | no | 0 |
+| [`0096-A13-6203-Not-populating-bluestacks-package-specific-.patch`](../../patches/android-16/a13-authority/frameworks-base/0096-A13-6203-Not-populating-bluestacks-package-specific-.patch) | Host/build/graphics companion patches | 2 | 8 | 66 | 0 | 6.2 | no | 0 |
+| [`0097-A13-ROB-8174-Instagram-Video-reels-flips-upside-down.patch`](../../patches/android-16/a13-authority/frameworks-base/0097-A13-ROB-8174-Instagram-Video-reels-flips-upside-down.patch) | Host/build/graphics companion patches | 1 | 2 | 31 | 0 | 2.1 | no | 0 |
+| [`0098-A13-Changes-for-screenshot.patch`](../../patches/android-16/a13-authority/frameworks-base/0098-A13-Changes-for-screenshot.patch) | Host/build/graphics companion patches | 3 | 9 | 44 | 2 | 6.6 | no | 0 |
+| [`0099-A13-add-preinstalled-for-SYSTEM_ALERT_WINDOW.patch`](../../patches/android-16/a13-authority/frameworks-base/0099-A13-add-preinstalled-for-SYSTEM_ALERT_WINDOW.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.2 | no | 0 |
+| [`0100-A13-Fix-compile-failures.patch`](../../patches/android-16/a13-authority/frameworks-base/0100-A13-Fix-compile-failures.patch) | Host/build/graphics companion patches | 1 | 4 | 9 | 1 | 2.9 | no | 0 |
+| [`0101-A13-Add-support-for-setBstIME.patch`](../../patches/android-16/a13-authority/frameworks-base/0101-A13-Add-support-for-setBstIME.patch) | Host/build/graphics companion patches | 3 | 7 | 35 | 0 | 4.5 | no | 0 |
+| [`0102-A13-Add-pagefusion-module.patch`](../../patches/android-16/a13-authority/frameworks-base/0102-A13-Add-pagefusion-module.patch) | Host/build/graphics companion patches | 7 | 7 | 2975 | 0 | 92.7 | no | 0 |
+| [`0103-A13-Making-sure-that-bluestacks-packages-cannot-be-d.patch`](../../patches/android-16/a13-authority/frameworks-base/0103-A13-Making-sure-that-bluestacks-packages-cannot-be-d.patch) | Host/build/graphics companion patches | 1 | 2 | 10 | 0 | 2.4 | no | 0 |
+| [`0104-A13-ROB-8174-Adding-prefix-to-the-prop-key-71.patch`](../../patches/android-16/a13-authority/frameworks-base/0104-A13-ROB-8174-Adding-prefix-to-the-prop-key-71.patch) | Host/build/graphics companion patches | 1 | 2 | 2 | 1 | 1.4 | no | 0 |
+| [`0105-A13-SystemUi-hide-qs_container-on-portrait-mode-113.patch`](../../patches/android-16/a13-authority/frameworks-base/0105-A13-SystemUi-hide-qs_container-on-portrait-mode-113.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 0 | 0.9 | no | 0 |
+| [`0106-A13-Hcall-related-code-porting.patch`](../../patches/android-16/a13-authority/frameworks-base/0106-A13-Hcall-related-code-porting.patch) | Host/build/graphics companion patches | 8 | 57 | 611 | 10 | 54.8 | no | 0 |
+| [`0107-A13-A11-54-Android-10-apps-must-have-the-READ_PRIVIL.patch`](../../patches/android-16/a13-authority/frameworks-base/0107-A13-A11-54-Android-10-apps-must-have-the-READ_PRIVIL.patch) | Host/build/graphics companion patches | 2 | 2 | 10 | 1 | 2.9 | no | 0 |
+| [`0108-ROB-11748-New-config-entry-to-disable-angle-translat.patch`](../../patches/android-16/a13-authority/frameworks-base/0108-ROB-11748-New-config-entry-to-disable-angle-translat.patch) | Host/build/graphics companion patches | 3 | 6 | 63 | 0 | 5.7 | no | 0 |
+| [`0109-A13-fix-recents-rotation-issue-122.patch`](../../patches/android-16/a13-authority/frameworks-base/0109-A13-fix-recents-rotation-issue-122.patch) | Host/build/graphics companion patches | 1 | 4 | 18 | 0 | 3.0 | no | 0 |
+| [`0110-A13-fix-com.sgra.dragon-crash-issue-123.patch`](../../patches/android-16/a13-authority/frameworks-base/0110-A13-fix-com.sgra.dragon-crash-issue-123.patch) | Host/build/graphics companion patches | 1 | 1 | 4 | 0 | 1.2 | no | 0 |
+| [`0111-A13-ROB-12002-Add-config-entry-fbscreenlock.patch`](../../patches/android-16/a13-authority/frameworks-base/0111-A13-ROB-12002-Add-config-entry-fbscreenlock.patch) | Host/build/graphics companion patches | 4 | 8 | 134 | 10 | 10.9 | no | 0 |
+| [`0112-A13-ROB-11963-ROB-12006-ROB-8775-compat-com.YoStarKR.patch`](../../patches/android-16/a13-authority/frameworks-base/0112-A13-ROB-11963-ROB-12006-ROB-8775-compat-com.YoStarKR.patch) | Host/build/graphics companion patches | 4 | 8 | 85 | 0 | 7.7 | no | 0 |
+| [`0113-A13-ROB-10507-new-entry-for-glProgramBinary.patch`](../../patches/android-16/a13-authority/frameworks-base/0113-A13-ROB-10507-new-entry-for-glProgramBinary.patch) | Host/build/graphics companion patches | 3 | 6 | 67 | 0 | 6.0 | no | 0 |
+| [`0114-A13-ROB-10787-new-entry-for-glUnmapBuffer-performanc.patch`](../../patches/android-16/a13-authority/frameworks-base/0114-A13-ROB-10787-new-entry-for-glUnmapBuffer-performanc.patch) | Host/build/graphics companion patches | 3 | 6 | 67 | 0 | 6.1 | no | 0 |
+| [`0115-A13-ROB-10789-new-entry-for-gl-shader-workaround.patch`](../../patches/android-16/a13-authority/frameworks-base/0115-A13-ROB-10789-new-entry-for-gl-shader-workaround.patch) | Host/build/graphics companion patches | 3 | 6 | 64 | 0 | 5.9 | no | 0 |
+| [`0116-A13-ROB-11186-Enable-hpp-mode-in-config.db-by-defaul.patch`](../../patches/android-16/a13-authority/frameworks-base/0116-A13-ROB-11186-Enable-hpp-mode-in-config.db-by-defaul.patch) | Host/build/graphics companion patches | 1 | 4 | 20 | 20 | 5.6 | no | 0 |
+| [`0117-A13-Pie-Android11-code-sync-change-includes-130.patch`](../../patches/android-16/a13-authority/frameworks-base/0117-A13-Pie-Android11-code-sync-change-includes-130.patch) | Host/build/graphics companion patches | 5 | 8 | 100 | 81 | 13.8 | no | 0 |
+| [`0118-A13-ROB-11904-Support-DRM-widevine.patch`](../../patches/android-16/a13-authority/frameworks-base/0118-A13-ROB-11904-Support-DRM-widevine.patch) | Host/build/graphics companion patches | 3 | 6 | 70 | 0 | 5.9 | no | 0 |
+| [`0119-A13-ROB-12525-fix-GL_TEXTURE_EXTERNAL_OES-bind-error.patch`](../../patches/android-16/a13-authority/frameworks-base/0119-A13-ROB-12525-fix-GL_TEXTURE_EXTERNAL_OES-bind-error.patch) | Host/build/graphics companion patches | 3 | 6 | 63 | 0 | 5.8 | no | 0 |
+| [`0120-A13-case-ROB-12546-Adding-a-new-entry-name-fixedSurf.patch`](../../patches/android-16/a13-authority/frameworks-base/0120-A13-case-ROB-12546-Adding-a-new-entry-name-fixedSurf.patch) | Host/build/graphics companion patches | 4 | 9 | 81 | 0 | 8.1 | no | 0 |
+| [`0121-A13-add-iap-interceptor.patch`](../../patches/android-16/a13-authority/frameworks-base/0121-A13-add-iap-interceptor.patch) | Host/build/graphics companion patches | 9 | 17 | 283 | 1 | 20.4 | no | 0 |
+| [`0122-A13-fix-ClipboardService-crash-issue-132.patch`](../../patches/android-16/a13-authority/frameworks-base/0122-A13-fix-ClipboardService-crash-issue-132.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 1.7 | no | 0 |
+| [`0123-A13-ROB-11421-support-Native-Mouse-for-Roblox.patch`](../../patches/android-16/a13-authority/frameworks-base/0123-A13-ROB-11421-support-Native-Mouse-for-Roblox.patch) | Host/build/graphics companion patches | 2 | 5 | 32 | 0 | 5.0 | no | 0 |
+| [`0124-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch`](../../patches/android-16/a13-authority/frameworks-base/0124-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch) | Host/build/graphics companion patches | 1 | 2 | 13 | 0 | 1.5 | no | 0 |
+| [`0125-Revert-A13-ROB-11560-set-Extreme-and-high-fps-by-def.patch`](../../patches/android-16/a13-authority/frameworks-base/0125-Revert-A13-ROB-11560-set-Extreme-and-high-fps-by-def.patch) | Host/build/graphics companion patches | 1 | 2 | 0 | 13 | 1.6 | no | 0 |
+| [`0126-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch`](../../patches/android-16/a13-authority/frameworks-base/0126-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch) | Host/build/graphics companion patches | 1 | 3 | 29 | 0 | 2.5 | no | 0 |
+| [`0127-A13-ROB-11613-set-60-fps-by-default-for-Dungeon-Hunt.patch`](../../patches/android-16/a13-authority/frameworks-base/0127-A13-ROB-11613-set-60-fps-by-default-for-Dungeon-Hunt.patch) | Host/build/graphics companion patches | 1 | 2 | 11 | 0 | 1.6 | no | 0 |
+| [`0128-A13-ROB-11067-ROB-11494-ROB-12069-block-EditText-set.patch`](../../patches/android-16/a13-authority/frameworks-base/0128-A13-ROB-11067-ROB-11494-ROB-12069-block-EditText-set.patch) | Host/build/graphics companion patches | 1 | 2 | 16 | 0 | 1.8 | no | 0 |
+| [`0129-A13-ROB-10676-ROB-11769-By-replacing-OMX.google.h264.patch`](../../patches/android-16/a13-authority/frameworks-base/0129-A13-ROB-10676-ROB-11769-By-replacing-OMX.google.h264.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 0 | 1.4 | no | 0 |
+| [`0130-A13-Add-protected-broadcast-BST.FILTER.SERVICE.LISTS.patch`](../../patches/android-16/a13-authority/frameworks-base/0130-A13-Add-protected-broadcast-BST.FILTER.SERVICE.LISTS.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 0 | 0.9 | no | 0 |
+| [`0131-A13-Removing-useless-log-of-bstSendTopDisplayedOnFoc.patch`](../../patches/android-16/a13-authority/frameworks-base/0131-A13-Removing-useless-log-of-bstSendTopDisplayedOnFoc.patch) | Host/build/graphics companion patches | 1 | 2 | 1 | 8 | 2.6 | no | 0 |
+| [`0132-A13-Making-sure-the-runtime-permissions-are-granted-.patch`](../../patches/android-16/a13-authority/frameworks-base/0132-A13-Making-sure-the-runtime-permissions-are-granted-.patch) | Host/build/graphics companion patches | 2 | 5 | 15 | 1 | 3.6 | no | 0 |
+| [`0133-A13-ROB-12790-Adding-protection-restrictions-for-hom.patch`](../../patches/android-16/a13-authority/frameworks-base/0133-A13-ROB-12790-Adding-protection-restrictions-for-hom.patch) | Host/build/graphics companion patches | 2 | 2 | 7 | 3 | 2.9 | no | 0 |
+| [`0134-Revert-A13-Disable-Bluetooth-service.patch`](../../patches/android-16/a13-authority/frameworks-base/0134-Revert-A13-Disable-Bluetooth-service.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 1.2 | no | 0 |
+| [`0135-A13-ROB-12596-New-config-entry-GLMBRH.patch`](../../patches/android-16/a13-authority/frameworks-base/0135-A13-ROB-12596-New-config-entry-GLMBRH.patch) | Host/build/graphics companion patches | 3 | 6 | 67 | 0 | 5.8 | no | 0 |
+| [`0136-A13-ROB-12223-add-new-entry-IgnoreSyncTimeout.patch`](../../patches/android-16/a13-authority/frameworks-base/0136-A13-ROB-12223-add-new-entry-IgnoreSyncTimeout.patch) | Host/build/graphics companion patches | 3 | 6 | 64 | 0 | 5.6 | no | 0 |
+| [`0137-Case-ROB-13172-allow-reading-of-nowgg-account-for-ev.patch`](../../patches/android-16/a13-authority/frameworks-base/0137-Case-ROB-13172-allow-reading-of-nowgg-account-for-ev.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.3 | no | 0 |
+| [`0138-A13-ROB-12555-Adding-onAdsInfoClick-hCall.patch`](../../patches/android-16/a13-authority/frameworks-base/0138-A13-ROB-12555-Adding-onAdsInfoClick-hCall.patch) | Host/build/graphics companion patches | 4 | 6 | 30 | 1 | 4.3 | no | 0 |
+| [`0139-Build-error-fix.patch`](../../patches/android-16/a13-authority/frameworks-base/0139-Build-error-fix.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.3 | no | 0 |
+| [`0140-A13-Adding-more-stats-for-affiliate-debugging.patch`](../../patches/android-16/a13-authority/frameworks-base/0140-A13-Adding-more-stats-for-affiliate-debugging.patch) | Host/build/graphics companion patches | 2 | 25 | 273 | 73 | 39.5 | no | 0 |
+| [`0141-Case-ROB-13181-making-source-as-play_store.patch`](../../patches/android-16/a13-authority/frameworks-base/0141-Case-ROB-13181-making-source-as-play_store.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.4 | no | 0 |
+| [`0142-A13-ROB-13196-Adding-an-excpetion-for-bstcommandproc.patch`](../../patches/android-16/a13-authority/frameworks-base/0142-A13-ROB-13196-Adding-an-excpetion-for-bstcommandproc.patch) | Host/build/graphics companion patches | 1 | 2 | 13 | 2 | 2.9 | no | 0 |
+| [`0143-A13-ROB-13015-adding-hcall-implementation.patch`](../../patches/android-16/a13-authority/frameworks-base/0143-A13-ROB-13015-adding-hcall-implementation.patch) | Host/build/graphics companion patches | 4 | 6 | 69 | 1 | 6.1 | no | 0 |
+| [`0144-A13-Not-populating-any-information-about-running-blu.patch`](../../patches/android-16/a13-authority/frameworks-base/0144-A13-Not-populating-any-information-about-running-blu.patch) | Host/build/graphics companion patches | 1 | 6 | 40 | 2 | 6.1 | no | 0 |
+| [`0145-A13-ROB-13471-remove-the-hardcore-fix-add-GLVBOCache.patch`](../../patches/android-16/a13-authority/frameworks-base/0145-A13-ROB-13471-remove-the-hardcore-fix-add-GLVBOCache.patch) | Host/build/graphics companion patches | 3 | 6 | 67 | 0 | 5.8 | no | 0 |
+| [`0146-A13-ROB-13319-add-new-config-entry-called-BEWC.patch`](../../patches/android-16/a13-authority/frameworks-base/0146-A13-ROB-13319-add-new-config-entry-called-BEWC.patch) | Host/build/graphics companion patches | 4 | 8 | 68 | 4 | 6.9 | no | 0 |
+| [`0147-A13-ROB-13428-Whitelisting-com.bluestacks.home-for-h.patch`](../../patches/android-16/a13-authority/frameworks-base/0147-A13-ROB-13428-Whitelisting-com.bluestacks.home-for-h.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 0 | 1.1 | no | 0 |
+| [`0148-fix-the-recent-rotation-issue-of-switching-between-t.patch`](../../patches/android-16/a13-authority/frameworks-base/0148-fix-the-recent-rotation-issue-of-switching-between-t.patch) | Host/build/graphics companion patches | 1 | 3 | 20 | 3 | 3.0 | no | 0 |
+| [`0149-A13-Adding-hcall-unzip-file.patch`](../../patches/android-16/a13-authority/frameworks-base/0149-A13-Adding-hcall-unzip-file.patch) | Host/build/graphics companion patches | 4 | 6 | 42 | 0 | 5.1 | no | 0 |
+| [`0150-A13-Adding-nowbux-updated-hcall.patch`](../../patches/android-16/a13-authority/frameworks-base/0150-A13-Adding-nowbux-updated-hcall.patch) | Host/build/graphics companion patches | 4 | 6 | 34 | 1 | 4.7 | no | 0 |
+| [`0151-A13-Adding-hcall-for-iap-completed.patch`](../../patches/android-16/a13-authority/frameworks-base/0151-A13-Adding-hcall-for-iap-completed.patch) | Host/build/graphics companion patches | 4 | 6 | 80 | 0 | 6.4 | no | 0 |
+| [`0152-A13-ROB-13707-add-new-config-entry-GLHostInfo.patch`](../../patches/android-16/a13-authority/frameworks-base/0152-A13-ROB-13707-add-new-config-entry-GLHostInfo.patch) | Host/build/graphics companion patches | 3 | 6 | 65 | 0 | 5.6 | no | 0 |
+| [`0153-A13-add-a-new-config-entry-gl_extensions_ignore.patch`](../../patches/android-16/a13-authority/frameworks-base/0153-A13-add-a-new-config-entry-gl_extensions_ignore.patch) | Host/build/graphics companion patches | 3 | 6 | 64 | 0 | 5.6 | no | 0 |
+| [`0154-A13-ROB-14086-add-a-new-config-entry-EGLSurfaceIgnor.patch`](../../patches/android-16/a13-authority/frameworks-base/0154-A13-ROB-14086-add-a-new-config-entry-EGLSurfaceIgnor.patch) | Host/build/graphics companion patches | 3 | 6 | 63 | 0 | 5.7 | no | 0 |
+| [`0155-A13-BK-4379-fix-controls-not-working-on-Roblox.patch`](../../patches/android-16/a13-authority/frameworks-base/0155-A13-BK-4379-fix-controls-not-working-on-Roblox.patch) | Host/build/graphics companion patches | 3 | 6 | 63 | 0 | 5.6 | no | 0 |
+| [`0156-A13-ROB-14815-Fixing-uncube-launcher-crashing-issue.patch`](../../patches/android-16/a13-authority/frameworks-base/0156-A13-ROB-14815-Fixing-uncube-launcher-crashing-issue.patch) | Host/build/graphics companion patches | 3 | 10 | 36 | 11 | 8.3 | no | 0 |
+| [`0157-A13-Prioritize-package-scanning-over-cached-data-in-.patch`](../../patches/android-16/a13-authority/frameworks-base/0157-A13-Prioritize-package-scanning-over-cached-data-in-.patch) | Host/build/graphics companion patches | 1 | 2 | 3 | 1 | 1.6 | no | 0 |
+| [`0158-ROB-14931-add-config-entry-iagf.patch`](../../patches/android-16/a13-authority/frameworks-base/0158-ROB-14931-add-config-entry-iagf.patch) | Host/build/graphics companion patches | 3 | 6 | 67 | 0 | 5.8 | no | 0 |
+| [`0159-A13-ROB-14596-com.qcwx.fyden-Game-stuck-while-loggin.patch`](../../patches/android-16/a13-authority/frameworks-base/0159-A13-ROB-14596-com.qcwx.fyden-Game-stuck-while-loggin.patch) | Host/build/graphics companion patches | 7 | 13 | 79 | 12 | 15.6 | no | 0 |
+| [`0160-A13-Case-ROB-14975-adding-hcallAllowInstallApkGameCe.patch`](../../patches/android-16/a13-authority/frameworks-base/0160-A13-Case-ROB-14975-adding-hcallAllowInstallApkGameCe.patch) | Host/build/graphics companion patches | 4 | 6 | 40 | 1 | 5.0 | no | 0 |
+| [`0161-A13-Pie-Android11-code-sync-change-includes-106.patch`](../../patches/android-16/a13-authority/frameworks-base/0161-A13-Pie-Android11-code-sync-change-includes-106.patch) | Host/build/graphics companion patches | 0 | 0 | 0 | 0 | 0.0 | no | 0 |
+| [`0162-A13-Adding-hcall-to-be-called-from-bstcommandprocess.patch`](../../patches/android-16/a13-authority/frameworks-base/0162-A13-Adding-hcall-to-be-called-from-bstcommandprocess.patch) | Host/build/graphics companion patches | 4 | 6 | 39 | 0 | 5.5 | no | 0 |
+| [`0163-ROB-14354-Enable-GL-Program-Binary-by-default-for-UE.patch`](../../patches/android-16/a13-authority/frameworks-base/0163-ROB-14354-Enable-GL-Program-Binary-by-default-for-UE.patch) | Host/build/graphics companion patches | 3 | 6 | 172 | 0 | 9.0 | no | 0 |
+| [`0164-Case-ROB-15194-bc3-bc7-support-on-GL-mode.patch`](../../patches/android-16/a13-authority/frameworks-base/0164-Case-ROB-15194-bc3-bc7-support-on-GL-mode.patch) | Host/build/graphics companion patches | 3 | 6 | 66 | 0 | 5.5 | no | 0 |
+| [`0165-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch`](../../patches/android-16/a13-authority/frameworks-base/0165-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch) | Host/build/graphics companion patches | 1 | 3 | 7 | 16 | 4.4 | no | 0 |
+| [`0166-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch`](../../patches/android-16/a13-authority/frameworks-base/0166-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch) | Host/build/graphics companion patches | 3 | 4 | 7 | 7 | 4.6 | no | 0 |
+| [`0167-ROB-15882-Fix-Pokemon-emulator-detection-on-A11-and-.patch`](../../patches/android-16/a13-authority/frameworks-base/0167-ROB-15882-Fix-Pokemon-emulator-detection-on-A11-and-.patch) | Host/build/graphics companion patches | 2 | 2 | 8 | 0 | 2.3 | no | 0 |
+| [`0168-Case-ROB-16065-not-sending-stat-for-gg.now.accounts-.patch`](../../patches/android-16/a13-authority/frameworks-base/0168-Case-ROB-16065-not-sending-stat-for-gg.now.accounts-.patch) | Host/build/graphics companion patches | 1 | 1 | 4 | 1 | 1.4 | no | 0 |
+| [`0169-uid-checks.patch`](../../patches/android-16/a13-authority/frameworks-base/0169-uid-checks.patch) | Host/build/graphics companion patches | 1 | 1 | 13 | 9 | 2.4 | no | 0 |
+| [`0170-ROB-16058-Fix-USB-debugging-detection.patch`](../../patches/android-16/a13-authority/frameworks-base/0170-ROB-16058-Fix-USB-debugging-detection.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 4 | 1.4 | no | 0 |
+| [`0171-Review-comments.patch`](../../patches/android-16/a13-authority/frameworks-base/0171-Review-comments.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.3 | no | 0 |
+| [`0172-Case-ROB-15589-adding-GP-app-download-stats-178.patch`](../../patches/android-16/a13-authority/frameworks-base/0172-Case-ROB-15589-adding-GP-app-download-stats-178.patch) | Host/build/graphics companion patches | 1 | 3 | 37 | 0 | 4.2 | no | 0 |
+| [`0173-fix-compile-error.-179.patch`](../../patches/android-16/a13-authority/frameworks-base/0173-fix-compile-error.-179.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.2 | no | 0 |
+| [`0174-case-ROB-15565-enable-vulkan-globally.patch`](../../patches/android-16/a13-authority/frameworks-base/0174-case-ROB-15565-enable-vulkan-globally.patch) | Host/build/graphics companion patches | 3 | 6 | 16 | 20 | 6.3 | no | 0 |
+| [`0175-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch`](../../patches/android-16/a13-authority/frameworks-base/0175-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch) | Host/build/graphics companion patches | 5 | 14 | 103 | 8 | 11.2 | no | 0 |
+| [`0176-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch`](../../patches/android-16/a13-authority/frameworks-base/0176-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch) | Host/build/graphics companion patches | 5 | 14 | 103 | 8 | 11.2 | no | 0 |
+| [`0177-ROB-15980-Fix-RuneScape-text-is-zoomed-out.patch`](../../patches/android-16/a13-authority/frameworks-base/0177-ROB-15980-Fix-RuneScape-text-is-zoomed-out.patch) | Host/build/graphics companion patches | 1 | 1 | 4 | 0 | 1.2 | no | 0 |
+| [`0178-ROB-14842-Fix-App-Center-not-getting-launched-throug.patch`](../../patches/android-16/a13-authority/frameworks-base/0178-ROB-14842-Fix-App-Center-not-getting-launched-throug.patch) | Host/build/graphics companion patches | 1 | 5 | 5 | 5 | 3.3 | no | 0 |
+| [`0179-ROB-16276-add-hcall-onNowggSigninClicked.-184.patch`](../../patches/android-16/a13-authority/frameworks-base/0179-ROB-16276-add-hcall-onNowggSigninClicked.-184.patch) | Host/build/graphics companion patches | 5 | 6 | 39 | 1 | 5.6 | no | 0 |
+| [`0180-ROB-16374-update-hcall-onNowggSigninClicked.-185.patch`](../../patches/android-16/a13-authority/frameworks-base/0180-ROB-16374-update-hcall-onNowggSigninClicked.-185.patch) | Host/build/graphics companion patches | 4 | 6 | 11 | 10 | 5.2 | no | 0 |
+| [`0181-Merge-pull-request-170-from-jason-bst-bst-v5.22.0-RO.patch`](../../patches/android-16/a13-authority/frameworks-base/0181-Merge-pull-request-170-from-jason-bst-bst-v5.22.0-RO.patch) | Host/build/graphics companion patches | 1 | 9 | 12 | 2 | 3.8 | no | 0 |
+| [`0182-ROB-16443-Fix-nexon-app-emulator-detection-issue-for.patch`](../../patches/android-16/a13-authority/frameworks-base/0182-ROB-16443-Fix-nexon-app-emulator-detection-issue-for.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.1 | no | 0 |
+| [`0183-Merge-pull-request-187-from-emin-bst-bst-v5.22.75.patch`](../../patches/android-16/a13-authority/frameworks-base/0183-Merge-pull-request-187-from-emin-bst-bst-v5.22.75.patch) | Host/build/graphics companion patches | 9 | 20 | 244 | 27 | 24.2 | no | 0 |
+| [`0184-ROB-16456-add-etherNetType-entry-for-freely-switchin.patch`](../../patches/android-16/a13-authority/frameworks-base/0184-ROB-16456-add-etherNetType-entry-for-freely-switchin.patch) | Host/build/graphics companion patches | 5 | 7 | 70 | 0 | 7.0 | no | 0 |
+| [`0185-ROB-16216-Fix-the-UI-is-very-small-issue.patch`](../../patches/android-16/a13-authority/frameworks-base/0185-ROB-16216-Fix-the-UI-is-very-small-issue.patch) | Host/build/graphics companion patches | 5 | 12 | 113 | 0 | 10.7 | no | 0 |
+| [`0186-ROB-16419-Fix-gamepad-L2-and-R2-do-not-respond.patch`](../../patches/android-16/a13-authority/frameworks-base/0186-ROB-16419-Fix-gamepad-L2-and-R2-do-not-respond.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 0.8 | no | 0 |
+| [`0187-ROB-16694-add-new-config-entries-VkHostInfo-and-vk_d.patch`](../../patches/android-16/a13-authority/frameworks-base/0187-ROB-16694-add-new-config-entries-VkHostInfo-and-vk_d.patch) | Host/build/graphics companion patches | 3 | 6 | 126 | 0 | 8.3 | no | 0 |
+| [`0188-ROB-16756-ROB-16757-modify-input-device-name-to-pass.patch`](../../patches/android-16/a13-authority/frameworks-base/0188-ROB-16756-ROB-16757-modify-input-device-name-to-pass.patch) | Host/build/graphics companion patches | 1 | 3 | 62 | 1 | 4.8 | no | 0 |
+| [`0189-ROB-16756-ROB-16757-fix-compilation-error.-194.patch`](../../patches/android-16/a13-authority/frameworks-base/0189-ROB-16756-ROB-16757-fix-compilation-error.-194.patch) | Host/build/graphics companion patches | 1 | 3 | 7 | 0 | 1.5 | no | 0 |
+| [`0190-ROB-16938-manually-release-the-key-to-fix-shooting-i.patch`](../../patches/android-16/a13-authority/frameworks-base/0190-ROB-16938-manually-release-the-key-to-fix-shooting-i.patch) | Host/build/graphics companion patches | 1 | 2 | 21 | 1 | 2.5 | no | 0 |
+| [`0191-ROB-16634-porting-IME-fix-to-A13-198.patch`](../../patches/android-16/a13-authority/frameworks-base/0191-ROB-16634-porting-IME-fix-to-A13-198.patch) | Host/build/graphics companion patches | 2 | 4 | 40 | 4 | 5.3 | no | 0 |
+| [`0192-ROB-16938-release-the-key-earlier-199.patch`](../../patches/android-16/a13-authority/frameworks-base/0192-ROB-16938-release-the-key-earlier-199.patch) | Host/build/graphics companion patches | 1 | 1 | 9 | 5 | 2.3 | no | 0 |
+| [`0193-ROB-16547-change-isXperfMode-to-getXperfMode-to-supp.patch`](../../patches/android-16/a13-authority/frameworks-base/0193-ROB-16547-change-isXperfMode-to-getXperfMode-to-supp.patch) | Host/build/graphics companion patches | 3 | 6 | 27 | 20 | 7.5 | no | 0 |
+| [`0194-ROB-16547-Improved-support-for-UE-game-settings-for-.patch`](../../patches/android-16/a13-authority/frameworks-base/0194-ROB-16547-Improved-support-for-UE-game-settings-for-.patch) | Host/build/graphics companion patches | 1 | 2 | 78 | 0 | 4.3 | no | 0 |
+| [`0195-ROB-16547-Improved-support-for-UE-game-settings-for-.patch`](../../patches/android-16/a13-authority/frameworks-base/0195-ROB-16547-Improved-support-for-UE-game-settings-for-.patch) | Host/build/graphics companion patches | 1 | 2 | 21 | 18 | 3.7 | no | 0 |
+| [`0196-ROB-15243-game-settings-based-on-bst.pscore.patch`](../../patches/android-16/a13-authority/frameworks-base/0196-ROB-15243-game-settings-based-on-bst.pscore.patch) | Host/build/graphics companion patches | 2 | 2 | 30 | 6 | 4.3 | no | 0 |
+| [`0197-ROB-16799-fix-A13-unable-take-ScreenShot-issue-204.patch`](../../patches/android-16/a13-authority/frameworks-base/0197-ROB-16799-fix-A13-unable-take-ScreenShot-issue-204.patch) | Host/build/graphics companion patches | 1 | 2 | 7 | 6 | 1.9 | no | 0 |
+| [`0198-Revert-Merge-pull-request-203-from-jason-bst-bst-v5..patch`](../../patches/android-16/a13-authority/frameworks-base/0198-Revert-Merge-pull-request-203-from-jason-bst-bst-v5..patch) | Host/build/graphics companion patches | 2 | 2 | 6 | 30 | 4.4 | no | 0 |
+| [`0199-ROB-15243-add-PScoreAbove-in-config.db.patch`](../../patches/android-16/a13-authority/frameworks-base/0199-ROB-15243-add-PScoreAbove-in-config.db.patch) | Host/build/graphics companion patches | 5 | 8 | 70 | 2 | 7.8 | no | 0 |
+| [`0200-Fixing-build-error.patch`](../../patches/android-16/a13-authority/frameworks-base/0200-Fixing-build-error.patch) | Host/build/graphics companion patches | 1 | 1 | 8 | 7 | 1.3 | no | 0 |
+| [`0201-Case-ROB-16097-Explore-if-any-config-entries-can-be-.patch`](../../patches/android-16/a13-authority/frameworks-base/0201-Case-ROB-16097-Explore-if-any-config-entries-can-be-.patch) | Host/build/graphics companion patches | 2 | 20 | 110 | 95 | 25.7 | no | 0 |
+| [`0202-ROB-16097-Set-vms-entry-as-global-by-default-for-A11.patch`](../../patches/android-16/a13-authority/frameworks-base/0202-ROB-16097-Set-vms-entry-as-global-by-default-for-A11.patch) | Host/build/graphics companion patches | 2 | 5 | 72 | 3 | 5.5 | no | 0 |
+| [`0203-ROB-17750-fix-ncsoft-emulator-detection-issue.-211.patch`](../../patches/android-16/a13-authority/frameworks-base/0203-ROB-17750-fix-ncsoft-emulator-detection-issue.-211.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 19 | 1.9 | no | 0 |
+| [`0204-Merge-pull-request-213-from-dailongzhong-bst-bst-v5..patch`](../../patches/android-16/a13-authority/frameworks-base/0204-Merge-pull-request-213-from-dailongzhong-bst-bst-v5..patch) | Host/build/graphics companion patches | 2 | 4 | 63 | 0 | 5.1 | no | 0 |
+| [`0205-ROB-16741-Auto-detect-gms-get-token-exception-to-pos.patch`](../../patches/android-16/a13-authority/frameworks-base/0205-ROB-16741-Auto-detect-gms-get-token-exception-to-pos.patch) | Host/build/graphics companion patches | 1 | 3 | 18 | 0 | 2.6 | no | 0 |
+| [`0206-ROB-16741-Add-ForceClearGms-entry-to-determine-wheth.patch`](../../patches/android-16/a13-authority/frameworks-base/0206-ROB-16741-Add-ForceClearGms-entry-to-determine-wheth.patch) | Host/build/graphics companion patches | 3 | 6 | 66 | 0 | 6.0 | no | 0 |
+| [`0207-Revert-ROB-16741-Add-ForceClearGms-entry-to-determin.patch`](../../patches/android-16/a13-authority/frameworks-base/0207-Revert-ROB-16741-Add-ForceClearGms-entry-to-determin.patch) | Host/build/graphics companion patches | 3 | 6 | 0 | 66 | 6.0 | no | 0 |
+| [`0208-Revert-ROB-16741-Auto-detect-gms-get-token-exception.patch`](../../patches/android-16/a13-authority/frameworks-base/0208-Revert-ROB-16741-Auto-detect-gms-get-token-exception.patch) | Host/build/graphics companion patches | 1 | 3 | 0 | 18 | 2.5 | no | 0 |
+| [`0209-Add-accessible-installation-services-and-support-Goo.patch`](../../patches/android-16/a13-authority/frameworks-base/0209-Add-accessible-installation-services-and-support-Goo.patch) | Host/build/graphics companion patches | 1 | 2 | 18 | 2 | 2.5 | no | 0 |
+| [`0210-Case-ROB-18242-adding-changes-for-hcall-398.patch`](../../patches/android-16/a13-authority/frameworks-base/0210-Case-ROB-18242-adding-changes-for-hcall-398.patch) | Host/build/graphics companion patches | 4 | 6 | 42 | 1 | 5.1 | no | 0 |
+| [`0211-ROB-18340-Add-a-item-called-GLMBRRO-in-config.db-217.patch`](../../patches/android-16/a13-authority/frameworks-base/0211-ROB-18340-Add-a-item-called-GLMBRRO-in-config.db-217.patch) | Host/build/graphics companion patches | 3 | 6 | 65 | 0 | 6.0 | no | 0 |
+| [`0212-ROB-18338-filter-out-nativeMouse-device-for-com.nete.patch`](../../patches/android-16/a13-authority/frameworks-base/0212-ROB-18338-filter-out-nativeMouse-device-for-com.nete.patch) | Host/build/graphics companion patches | 1 | 2 | 44 | 4 | 3.1 | no | 0 |
+| [`0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch`](../../patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch) | Host/build/graphics companion patches | 5 | 14 | 483 | 4 | 29.3 | no | 0 |
+| [`0214-udpate.patch`](../../patches/android-16/a13-authority/frameworks-base/0214-udpate.patch) | Host/build/graphics companion patches | 6 | 20 | 183 | 449 | 35.7 | no | 0 |
+| [`0215-Remove-the-accessibility-service-automatically-insta.patch`](../../patches/android-16/a13-authority/frameworks-base/0215-Remove-the-accessibility-service-automatically-insta.patch) | Host/build/graphics companion patches | 1 | 2 | 2 | 18 | 2.5 | no | 0 |
+| [`0216-ROB-18546-add-new-entry-FBCCDisabled.patch`](../../patches/android-16/a13-authority/frameworks-base/0216-ROB-18546-add-new-entry-FBCCDisabled.patch) | Host/build/graphics companion patches | 3 | 6 | 77 | 0 | 6.3 | no | 0 |
+| [`0217-ROB-18546-Correct-the-erroneous-function-224.patch`](../../patches/android-16/a13-authority/frameworks-base/0217-ROB-18546-Correct-the-erroneous-function-224.patch) | Host/build/graphics companion patches | 1 | 1 | 7 | 19 | 1.8 | no | 0 |
+| [`0218-ROB-18620-Surport-NDK-translation-212-226.patch`](../../patches/android-16/a13-authority/frameworks-base/0218-ROB-18620-Surport-NDK-translation-212-226.patch) | Host/build/graphics companion patches | 2 | 7 | 68 | 0 | 6.7 | no | 0 |
+| [`0219-ROB-18148-No-audio-when-playing-Instagram-DM-videos-.patch`](../../patches/android-16/a13-authority/frameworks-base/0219-ROB-18148-No-audio-when-playing-Instagram-DM-videos-.patch) | Host/build/graphics companion patches | 2 | 5 | 52 | 0 | 4.9 | no | 0 |
+| [`0220-ROB-18546-add-new-entry-FBCCDisabled.patch`](../../patches/android-16/a13-authority/frameworks-base/0220-ROB-18546-add-new-entry-FBCCDisabled.patch) | Host/build/graphics companion patches | 3 | 6 | 77 | 0 | 6.3 | no | 0 |
+| [`0221-ROB-18546-Correct-the-erroneous-function-224.patch`](../../patches/android-16/a13-authority/frameworks-base/0221-ROB-18546-Correct-the-erroneous-function-224.patch) | Host/build/graphics companion patches | 1 | 1 | 7 | 19 | 1.9 | no | 0 |
+| [`0222-ROB-18620-Surport-NDK-translation-212-226.patch`](../../patches/android-16/a13-authority/frameworks-base/0222-ROB-18620-Surport-NDK-translation-212-226.patch) | Host/build/graphics companion patches | 2 | 7 | 68 | 0 | 6.7 | no | 0 |
+| [`0223-ROB-14680-fix-cannot-paste-issue-caused-by-device-lo.patch`](../../patches/android-16/a13-authority/frameworks-base/0223-ROB-14680-fix-cannot-paste-issue-caused-by-device-lo.patch) | Host/build/graphics companion patches | 1 | 2 | 6 | 0 | 1.7 | no | 0 |
+| [`0224-ROB-18868-Change-Build.VERSION.SDK_INT-to-30-to-forc.patch`](../../patches/android-16/a13-authority/frameworks-base/0224-ROB-18868-Change-Build.VERSION.SDK_INT-to-30-to-forc.patch) | Host/build/graphics companion patches | 2 | 6 | 36 | 0 | 4.6 | no | 0 |
+| [`art-droidguard-jni.patch`](../../patches/android-16/a13-completion/art-droidguard-jni.patch) | Host/build/graphics companion patches | 1 | 3 | 70 | 0 | 3.5 | no | 0 |
+| [`art-houdini16-cpuinfo.patch`](../../patches/android-16/a13-completion/art-houdini16-cpuinfo.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 0 | 0.6 | no | 0 |
+| [`art-native-bridge-build-fix.patch`](../../patches/android-16/a13-completion/art-native-bridge-build-fix.patch) | Host/build/graphics companion patches | 1 | 4 | 4 | 5 | 1.3 | no | 0 |
+| [`art-native-bridge-compat.patch`](../../patches/android-16/a13-completion/art-native-bridge-compat.patch) | Host/build/graphics companion patches | 2 | 7 | 343 | 3 | 12.8 | no | 0 |
+| [`art-native-loader-hooks.patch`](../../patches/android-16/a13-completion/art-native-loader-hooks.patch) | Host/build/graphics companion patches | 1 | 3 | 162 | 0 | 6.0 | no | 0 |
+| [`art-nativebridge-lazy-package-name.patch`](../../patches/android-16/a13-completion/art-nativebridge-lazy-package-name.patch) | Host/build/graphics companion patches | 1 | 1 | 6 | 0 | 0.5 | no | 0 |
+| [`art-oat-dexpc-nonfatal.patch`](../../patches/android-16/a13-completion/art-oat-dexpc-nonfatal.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 1 | 0.9 | no | 0 |
+| [`bionic-null-property-read-contract.patch`](../../patches/android-16/a13-completion/bionic-null-property-read-contract.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 0.9 | no | 0 |
+| [`bionic-obs-str-cleanup.patch`](../../patches/android-16/a13-completion/bionic-obs-str-cleanup.patch) | Host/build/graphics companion patches | 1 | 1 | 0 | 1 | 0.3 | no | 0 |
+| [`bionic-property-hash-prefix.patch`](../../patches/android-16/a13-completion/bionic-property-hash-prefix.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 0.7 | no | 0 |
+| [`bionic-property-read-hooks.patch`](../../patches/android-16/a13-completion/bionic-property-read-hooks.patch) | Host/build/graphics companion patches | 1 | 7 | 50 | 2 | 4.1 | no | 0 |
+| [`bionic-x86-runtime-compat.patch`](../../patches/android-16/a13-completion/bionic-x86-runtime-compat.patch) | Host/build/graphics companion patches | 3 | 3 | 6 | 0 | 1.3 | no | 0 |
+| [`bluetooth-keystore-startup.patch`](../../patches/android-16/a13-completion/bluetooth-keystore-startup.patch) | Host/build/graphics companion patches | 1 | 1 | 4 | 1 | 1.2 | no | 0 |
+| [`bootable-newinstaller-efibootmgr.patch`](../../patches/android-16/a13-completion/bootable-newinstaller-efibootmgr.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 1 | 1.1 | no | 0 |
+| [`build-make-dexpreopt-policy.patch`](../../patches/android-16/a13-completion/build-make-dexpreopt-policy.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 0.9 | no | 0 |
+| [`build-make-product-package-policy.patch`](../../patches/android-16/a13-completion/build-make-product-package-policy.patch) | Host/build/graphics companion patches | 4 | 5 | 0 | 12 | 2.6 | no | 0 |
+| [`build-soong-bstsettings-allowlist.patch`](../../patches/android-16/a13-completion/build-soong-bstsettings-allowlist.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.9 | no | 0 |
+| [`build-soong-media-allowlist.patch`](../../patches/android-16/a13-completion/build-soong-media-allowlist.patch) | Host/build/graphics companion patches | 1 | 1 | 13 | 1 | 1.4 | no | 0 |
+| [`connectivity-captive-portal.patch`](../../patches/android-16/a13-completion/connectivity-captive-portal.patch) | Host/build/graphics companion patches | 1 | 1 | 8 | 3 | 2.7 | no | 0 |
+| [`connectivity-dscp-unroll.patch`](../../patches/android-16/a13-completion/connectivity-dscp-unroll.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.7 | no | 0 |
+| [`connectivity-network-presentation.patch`](../../patches/android-16/a13-completion/connectivity-network-presentation.patch) | Host/build/graphics companion patches | 4 | 13 | 67 | 13 | 11.7 | no | 0 |
+| [`device-common-bluetooth-aidl.patch`](../../patches/android-16/a13-completion/device-common-bluetooth-aidl.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.3 | no | 0 |
+| [`device-common-clearkey-aidl.patch`](../../patches/android-16/a13-completion/device-common-clearkey-aidl.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.4 | no | 0 |
+| [`device-common-dumpstate-aidl.patch`](../../patches/android-16/a13-completion/device-common-dumpstate-aidl.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.3 | no | 0 |
+| [`device-common-ffmpeg-runtime.patch`](../../patches/android-16/a13-completion/device-common-ffmpeg-runtime.patch) | Host/build/graphics companion patches | 2 | 2 | 2 | 3 | 1.2 | no | 0 |
+| [`device-common-houdini16-init-spacing.patch`](../../patches/android-16/a13-completion/device-common-houdini16-init-spacing.patch) | Host/build/graphics companion patches | 1 | 1 | 0 | 1 | 0.3 | no | 0 |
+| [`device-common-houdini16-whitespace-fix.patch`](../../patches/android-16/a13-completion/device-common-houdini16-whitespace-fix.patch) | Host/build/graphics companion patches | 2 | 2 | 0 | 2 | 0.8 | no | 0 |
+| [`device-common-houdini16.patch`](../../patches/android-16/a13-completion/device-common-houdini16.patch) | Host/build/graphics companion patches | 8 | 11 | 27 | 3 | 3.7 | no | 0 |
+| [`device-common-install-xmllint.patch`](../../patches/android-16/a13-completion/device-common-install-xmllint.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.5 | no | 0 |
+| [`device-common-media-badblocks.patch`](../../patches/android-16/a13-completion/device-common-media-badblocks.patch) | Host/build/graphics companion patches | 1 | 3 | 7 | 9 | 1.6 | no | 0 |
+| [`device-common-nativebridge-v8.patch`](../../patches/android-16/a13-completion/device-common-nativebridge-v8.patch) | Host/build/graphics companion patches | 1 | 4 | 46 | 3 | 3.4 | no | 0 |
+| [`device-common-ntp-interval.patch`](../../patches/android-16/a13-completion/device-common-ntp-interval.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 0 | 0.6 | no | 0 |
+| [`device-common-treble-a16-services.patch`](../../patches/android-16/a13-completion/device-common-treble-a16-services.patch) | Host/build/graphics companion patches | 1 | 4 | 4 | 8 | 1.0 | no | 0 |
+| [`device-generic-x86_64-hal-selectors.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-hal-selectors.patch) | Host/build/graphics companion patches | 1 | 1 | 6 | 1 | 0.6 | no | 0 |
+| [`device-x86_64-houdini16.patch`](../../patches/android-16/a13-completion/device-x86_64-houdini16.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 0 | 0.7 | no | 0 |
+| [`device-x86_64-release-art.patch`](../../patches/android-16/a13-completion/device-x86_64-release-art.patch) | Host/build/graphics companion patches | 1 | 2 | 4 | 9 | 1.2 | no | 0 |
+| [`download-provider-retry-api-fix.patch`](../../patches/android-16/a13-completion/download-provider-retry-api-fix.patch) | Host/build/graphics companion patches | 1 | 4 | 7 | 3 | 2.3 | no | 0 |
+| [`download-provider-retry.patch`](../../patches/android-16/a13-completion/download-provider-retry.patch) | Host/build/graphics companion patches | 4 | 4 | 124 | 0 | 6.8 | no | 0 |
+| [`external-e2fsprogs-target-badblocks.patch`](../../patches/android-16/a13-completion/external-e2fsprogs-target-badblocks.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 0.7 | no | 0 |
+| [`external-efibootmgr-installer.patch`](../../patches/android-16/a13-completion/external-efibootmgr-installer.patch) | Host/build/graphics companion patches | 1 | 1 | 23 | 1 | 0.9 | no | 0 |
+| [`external-efivar-installer.patch`](../../patches/android-16/a13-completion/external-efivar-installer.patch) | Host/build/graphics companion patches | 2 | 5 | 135 | 3 | 5.0 | no | 0 |
+| [`external-ffmpeg-a16-media.patch`](../../patches/android-16/a13-completion/external-ffmpeg-a16-media.patch) | Host/build/graphics companion patches | 7 | 11 | 17 | 4 | 4.0 | no | 0 |
+| [`external-libva-core-vendor.patch`](../../patches/android-16/a13-completion/external-libva-core-vendor.patch) | Host/build/graphics companion patches | 1 | 3 | 3 | 4 | 0.9 | no | 0 |
+| [`external-libxml2-device-xmllint.patch`](../../patches/android-16/a13-completion/external-libxml2-device-xmllint.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 0.6 | no | 0 |
+| [`external-selinux-userspace-disabled.patch`](../../patches/android-16/a13-completion/external-selinux-userspace-disabled.patch) | Host/build/graphics companion patches | 1 | 2 | 9 | 6 | 2.2 | no | 0 |
+| [`external-skia-atlas-padding.patch`](../../patches/android-16/a13-completion/external-skia-atlas-padding.patch) | Host/build/graphics companion patches | 1 | 2 | 7 | 4 | 1.1 | no | 0 |
+| [`external-stagefright-plugins-a16.patch`](../../patches/android-16/a13-completion/external-stagefright-plugins-a16.patch) | Host/build/graphics companion patches | 4 | 4 | 3 | 4 | 1.7 | no | 0 |
+| [`external-v86d-soong.patch`](../../patches/android-16/a13-completion/external-v86d-soong.patch) | Host/build/graphics companion patches | 2 | 1 | 43 | 1 | 1.7 | no | 0 |
+| [`frameworks-av-camera-compat.patch`](../../patches/android-16/a13-completion/frameworks-av-camera-compat.patch) | Host/build/graphics companion patches | 4 | 9 | 33 | 3 | 5.7 | no | 0 |
+| [`frameworks-av-camera-hal-framerate.patch`](../../patches/android-16/a13-completion/frameworks-av-camera-hal-framerate.patch) | Host/build/graphics companion patches | 1 | 1 | 10 | 1 | 1.2 | no | 0 |
+| [`frameworks-av-camera-locks.patch`](../../patches/android-16/a13-completion/frameworks-av-camera-locks.patch) | Host/build/graphics companion patches | 1 | 2 | 2 | 4 | 1.1 | no | 0 |
+| [`frameworks-av-ffmpeg-contracts.patch`](../../patches/android-16/a13-completion/frameworks-av-ffmpeg-contracts.patch) | Host/build/graphics companion patches | 3 | 3 | 84 | 1 | 5.3 | no | 0 |
+| [`frameworks-av-ffmpeg-runtime.patch`](../../patches/android-16/a13-completion/frameworks-av-ffmpeg-runtime.patch) | Host/build/graphics companion patches | 18 | 59 | 1770 | 25 | 85.9 | no | 0 |
+| [`frameworks-av-h263-16cif.patch`](../../patches/android-16/a13-completion/frameworks-av-h263-16cif.patch) | Host/build/graphics companion patches | 1 | 4 | 10 | 9 | 2.8 | no | 0 |
+| [`frameworks-av-media-compat.patch`](../../patches/android-16/a13-completion/frameworks-av-media-compat.patch) | Host/build/graphics companion patches | 4 | 4 | 36 | 18 | 4.8 | no | 0 |
+| [`frameworks-av-readiness-runtime.patch`](../../patches/android-16/a13-completion/frameworks-av-readiness-runtime.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.6 | no | 0 |
+| [`frameworks-av-servicemanager-readiness.patch`](../../patches/android-16/a13-completion/frameworks-av-servicemanager-readiness.patch) | Host/build/graphics companion patches | 2 | 2 | 185 | 1 | 6.3 | no | 0 |
+| [`frameworks-av-swcodec-sphal.patch`](../../patches/android-16/a13-completion/frameworks-av-swcodec-sphal.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 0.9 | no | 0 |
+| [`frameworks-av-widevine-boringssl-compat.patch`](../../patches/android-16/a13-completion/frameworks-av-widevine-boringssl-compat.patch) | Host/build/graphics companion patches | 2 | 2 | 35 | 0 | 2.2 | no | 0 |
+| [`frameworks-av-widevine-string8-a16.patch`](../../patches/android-16/a13-completion/frameworks-av-widevine-string8-a16.patch) | Host/build/graphics companion patches | 1 | 4 | 4 | 4 | 1.6 | no | 0 |
+| [`frameworks-av-widevine-vendor-prebuilt.patch`](../../patches/android-16/a13-completion/frameworks-av-widevine-vendor-prebuilt.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 0 | 0.4 | no | 0 |
+| [`frameworks-base-accessibility-query.patch`](../../patches/android-16/a13-completion/frameworks-base-accessibility-query.patch) | Host/build/graphics companion patches | 1 | 2 | 3 | 1 | 0.9 | no | 0 |
+| [`frameworks-base-affiliate-install.patch`](../../patches/android-16/a13-completion/frameworks-base-affiliate-install.patch) | Host/build/graphics companion patches | 4 | 9 | 90 | 1 | 8.2 | no | 0 |
+| [`frameworks-base-android-id-sync.patch`](../../patches/android-16/a13-completion/frameworks-base-android-id-sync.patch) | Host/build/graphics companion patches | 1 | 2 | 30 | 6 | 3.3 | no | 0 |
+| [`frameworks-base-audio-defaults.patch`](../../patches/android-16/a13-completion/frameworks-base-audio-defaults.patch) | Host/build/graphics companion patches | 2 | 2 | 4 | 4 | 1.7 | no | 0 |
+| [`frameworks-base-blacklist-actions.patch`](../../patches/android-16/a13-completion/frameworks-base-blacklist-actions.patch) | Host/build/graphics companion patches | 2 | 6 | 76 | 0 | 6.8 | no | 0 |
+| [`frameworks-base-blacklist-install-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-blacklist-install-policy.patch) | Host/build/graphics companion patches | 1 | 2 | 10 | 0 | 1.6 | no | 0 |
+| [`frameworks-base-bookmarks-binder-check.patch`](../../patches/android-16/a13-completion/frameworks-base-bookmarks-binder-check.patch) | Host/build/graphics companion patches | 4 | 4 | 59 | 6 | 4.2 | no | 0 |
+| [`frameworks-base-boot-state-properties.patch`](../../patches/android-16/a13-completion/frameworks-base-boot-state-properties.patch) | Host/build/graphics companion patches | 2 | 2 | 2 | 0 | 1.5 | no | 0 |
+| [`frameworks-base-boot-wallpaper-gate.patch`](../../patches/android-16/a13-completion/frameworks-base-boot-wallpaper-gate.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 0 | 0.9 | no | 0 |
+| [`frameworks-base-bst-keylayout.patch`](../../patches/android-16/a13-completion/frameworks-base-bst-keylayout.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 0.5 | no | 0 |
+| [`frameworks-base-bst-locale.patch`](../../patches/android-16/a13-completion/frameworks-base-bst-locale.patch) | Host/build/graphics companion patches | 1 | 2 | 12 | 2 | 1.5 | no | 0 |
+| [`frameworks-base-capabilities.patch`](../../patches/android-16/a13-completion/frameworks-base-capabilities.patch) | Host/build/graphics companion patches | 1 | 2 | 7 | 0 | 1.1 | no | 0 |
+| [`frameworks-base-chrome-install-appop.patch`](../../patches/android-16/a13-completion/frameworks-base-chrome-install-appop.patch) | Host/build/graphics companion patches | 1 | 2 | 10 | 1 | 1.9 | no | 0 |
+| [`frameworks-base-clear-abi-data.patch`](../../patches/android-16/a13-completion/frameworks-base-clear-abi-data.patch) | Host/build/graphics companion patches | 1 | 4 | 43 | 0 | 3.2 | no | 0 |
+| [`frameworks-base-clipboard-unlocked.patch`](../../patches/android-16/a13-completion/frameworks-base-clipboard-unlocked.patch) | Host/build/graphics companion patches | 1 | 2 | 7 | 0 | 1.4 | no | 0 |
+| [`frameworks-base-custom-dpi-lifecycle.patch`](../../patches/android-16/a13-completion/frameworks-base-custom-dpi-lifecycle.patch) | Host/build/graphics companion patches | 3 | 3 | 48 | 0 | 4.1 | no | 0 |
+| [`frameworks-base-data-system-app-scan.patch`](../../patches/android-16/a13-completion/frameworks-base-data-system-app-scan.patch) | Host/build/graphics companion patches | 2 | 2 | 22 | 0 | 2.5 | no | 0 |
+| [`frameworks-base-debuggable.patch`](../../patches/android-16/a13-completion/frameworks-base-debuggable.patch) | Host/build/graphics companion patches | 1 | 1 | 13 | 0 | 1.1 | no | 0 |
+| [`frameworks-base-device-profile.patch`](../../patches/android-16/a13-completion/frameworks-base-device-profile.patch) | Host/build/graphics companion patches | 1 | 2 | 24 | 0 | 1.7 | no | 0 |
+| [`frameworks-base-disable-clipboard-overlay.patch`](../../patches/android-16/a13-completion/frameworks-base-disable-clipboard-overlay.patch) | Host/build/graphics companion patches | 1 | 2 | 2 | 12 | 1.9 | no | 0 |
+| [`frameworks-base-disable-lock-now.patch`](../../patches/android-16/a13-completion/frameworks-base-disable-lock-now.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 0 | 0.9 | no | 0 |
+| [`frameworks-base-disable-project-quota.patch`](../../patches/android-16/a13-completion/frameworks-base-disable-project-quota.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 39 | 2.1 | no | 0 |
+| [`frameworks-base-displayed-package-handling.patch`](../../patches/android-16/a13-completion/frameworks-base-displayed-package-handling.patch) | Host/build/graphics companion patches | 2 | 6 | 127 | 12 | 9.5 | no | 0 |
+| [`frameworks-base-downloads-system-scan.patch`](../../patches/android-16/a13-completion/frameworks-base-downloads-system-scan.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.2 | no | 0 |
+| [`frameworks-base-dxflag-artservice.patch`](../../patches/android-16/a13-completion/frameworks-base-dxflag-artservice.patch) | Host/build/graphics companion patches | 1 | 3 | 13 | 0 | 1.9 | no | 0 |
+| [`frameworks-base-fbscreenlock.patch`](../../patches/android-16/a13-completion/frameworks-base-fbscreenlock.patch) | Host/build/graphics companion patches | 1 | 2 | 33 | 3 | 3.3 | no | 0 |
+| [`frameworks-base-feature-reporting.patch`](../../patches/android-16/a13-completion/frameworks-base-feature-reporting.patch) | Host/build/graphics companion patches | 1 | 7 | 99 | 3 | 7.8 | no | 0 |
+| [`frameworks-base-filterapps-protected-broadcast.patch`](../../patches/android-16/a13-completion/frameworks-base-filterapps-protected-broadcast.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.9 | no | 0 |
+| [`frameworks-base-force-queryable.patch`](../../patches/android-16/a13-completion/frameworks-base-force-queryable.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 0.9 | no | 0 |
+| [`frameworks-base-google-update-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-google-update-policy.patch) | Host/build/graphics companion patches | 1 | 4 | 13 | 0 | 2.3 | no | 0 |
+| [`frameworks-base-gp-download-stats.patch`](../../patches/android-16/a13-completion/frameworks-base-gp-download-stats.patch) | Host/build/graphics companion patches | 1 | 5 | 57 | 1 | 4.7 | no | 0 |
+| [`frameworks-base-hcall-remaining.patch`](../../patches/android-16/a13-completion/frameworks-base-hcall-remaining.patch) | Host/build/graphics companion patches | 3 | 7 | 32 | 4 | 6.5 | no | 0 |
+| [`frameworks-base-hide-bst-packages.patch`](../../patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch) | Host/build/graphics companion patches | 1 | 12 | 54 | 0 | 7.3 | no | 0 |
+| [`frameworks-base-hide-shutdown-dialog.patch`](../../patches/android-16/a13-completion/frameworks-base-hide-shutdown-dialog.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.6 | no | 0 |
+| [`frameworks-base-host-intent-forwarding.patch`](../../patches/android-16/a13-completion/frameworks-base-host-intent-forwarding.patch) | Host/build/graphics companion patches | 1 | 13 | 206 | 25 | 15.8 | no | 0 |
+| [`frameworks-base-hwui-jvm-attach.patch`](../../patches/android-16/a13-completion/frameworks-base-hwui-jvm-attach.patch) | Host/build/graphics companion patches | 6 | 10 | 52 | 4 | 6.1 | no | 0 |
+| [`frameworks-base-ime-device-visibility.patch`](../../patches/android-16/a13-completion/frameworks-base-ime-device-visibility.patch) | Host/build/graphics companion patches | 1 | 2 | 22 | 2 | 2.3 | no | 0 |
+| [`frameworks-base-ime-listener-reset.patch`](../../patches/android-16/a13-completion/frameworks-base-ime-listener-reset.patch) | Host/build/graphics companion patches | 1 | 2 | 6 | 1 | 1.8 | no | 0 |
+| [`frameworks-base-ime-password.patch`](../../patches/android-16/a13-completion/frameworks-base-ime-password.patch) | Host/build/graphics companion patches | 1 | 5 | 31 | 9 | 4.8 | no | 0 |
+| [`frameworks-base-instagram-dm-audio.patch`](../../patches/android-16/a13-completion/frameworks-base-instagram-dm-audio.patch) | Host/build/graphics companion patches | 2 | 4 | 41 | 0 | 3.3 | no | 0 |
+| [`frameworks-base-instagram-reel-prefix.patch`](../../patches/android-16/a13-completion/frameworks-base-instagram-reel-prefix.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 0.9 | no | 0 |
+| [`frameworks-base-instagram-reel.patch`](../../patches/android-16/a13-completion/frameworks-base-instagram-reel.patch) | Host/build/graphics companion patches | 1 | 2 | 21 | 0 | 1.5 | no | 0 |
+| [`frameworks-base-keyguard-delay.patch`](../../patches/android-16/a13-completion/frameworks-base-keyguard-delay.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.2 | no | 0 |
+| [`frameworks-base-location-compat.patch`](../../patches/android-16/a13-completion/frameworks-base-location-compat.patch) | Host/build/graphics companion patches | 2 | 3 | 3 | 14 | 1.8 | no | 0 |
+| [`frameworks-base-locksettings-gatekeeper.patch`](../../patches/android-16/a13-completion/frameworks-base-locksettings-gatekeeper.patch) | Host/build/graphics companion patches | 1 | 3 | 6 | 13 | 2.6 | no | 0 |
+| [`frameworks-base-monster-strike-compat.patch`](../../patches/android-16/a13-completion/frameworks-base-monster-strike-compat.patch) | Host/build/graphics companion patches | 2 | 6 | 33 | 0 | 4.1 | no | 0 |
+| [`frameworks-base-monster-strike-zg-location-fix.patch`](../../patches/android-16/a13-completion/frameworks-base-monster-strike-zg-location-fix.patch) | Host/build/graphics companion patches | 1 | 2 | 5 | 6 | 1.4 | no | 0 |
+| [`frameworks-base-msi-wallpaper.patch`](../../patches/android-16/a13-completion/frameworks-base-msi-wallpaper.patch) | Host/build/graphics companion patches | 6 | 8 | 25 | 2 | 24.3 | embedded | 0 |
+| [`frameworks-base-native-mouse-pointer.patch`](../../patches/android-16/a13-completion/frameworks-base-native-mouse-pointer.patch) | Host/build/graphics companion patches | 4 | 5 | 25 | 1 | 4.1 | no | 0 |
+| [`frameworks-base-navigation-bar-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-navigation-bar-policy.patch) | Host/build/graphics companion patches | 1 | 2 | 4 | 1 | 1.5 | no | 0 |
+| [`frameworks-base-ndk-translation-mount.patch`](../../patches/android-16/a13-completion/frameworks-base-ndk-translation-mount.patch) | Host/build/graphics companion patches | 1 | 1 | 9 | 1 | 1.7 | no | 0 |
+| [`frameworks-base-network-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-network-policy.patch) | Host/build/graphics companion patches | 3 | 4 | 8 | 2 | 2.8 | no | 0 |
+| [`frameworks-base-non-market-default.patch`](../../patches/android-16/a13-completion/frameworks-base-non-market-default.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.6 | no | 0 |
+| [`frameworks-base-nowgg-account-visibility.patch`](../../patches/android-16/a13-completion/frameworks-base-nowgg-account-visibility.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 1.3 | no | 0 |
+| [`frameworks-base-nowgg-stat-exclusions.patch`](../../patches/android-16/a13-completion/frameworks-base-nowgg-stat-exclusions.patch) | Host/build/graphics companion patches | 1 | 1 | 4 | 1 | 1.2 | no | 0 |
+| [`frameworks-base-onestore-iap.patch`](../../patches/android-16/a13-completion/frameworks-base-onestore-iap.patch) | Host/build/graphics companion patches | 1 | 1 | 11 | 1 | 1.3 | no | 0 |
+| [`frameworks-base-orientation-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-orientation-policy.patch) | Host/build/graphics companion patches | 4 | 7 | 70 | 3 | 8.3 | no | 0 |
+| [`frameworks-base-package-abi-overrides.patch`](../../patches/android-16/a13-completion/frameworks-base-package-abi-overrides.patch) | Host/build/graphics companion patches | 1 | 4 | 16 | 3 | 3.5 | no | 0 |
+| [`frameworks-base-package-cache-upgrade.patch`](../../patches/android-16/a13-completion/frameworks-base-package-cache-upgrade.patch) | Host/build/graphics companion patches | 1 | 2 | 3 | 1 | 1.0 | no | 0 |
+| [`frameworks-base-package-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-package-policy.patch) | Host/build/graphics companion patches | 4 | 6 | 29 | 1 | 4.8 | no | 0 |
+| [`frameworks-base-per-focus-mouse-actions.patch`](../../patches/android-16/a13-completion/frameworks-base-per-focus-mouse-actions.patch) | Host/build/graphics companion patches | 1 | 6 | 50 | 25 | 6.3 | no | 0 |
+| [`frameworks-base-periodic-ntp-refresh.patch`](../../patches/android-16/a13-completion/frameworks-base-periodic-ntp-refresh.patch) | Host/build/graphics companion patches | 2 | 12 | 109 | 21 | 11.5 | no | 0 |
+| [`frameworks-base-permission-upgrade-marker.patch`](../../patches/android-16/a13-completion/frameworks-base-permission-upgrade-marker.patch) | Host/build/graphics companion patches | 2 | 5 | 18 | 2 | 3.6 | no | 0 |
+| [`frameworks-base-permissions-refresh.patch`](../../patches/android-16/a13-completion/frameworks-base-permissions-refresh.patch) | Host/build/graphics companion patches | 1 | 2 | 4 | 0 | 1.4 | no | 0 |
+| [`frameworks-base-platform-config.patch`](../../patches/android-16/a13-completion/frameworks-base-platform-config.patch) | Host/build/graphics companion patches | 2 | 2 | 7 | 2 | 1.9 | no | 0 |
+| [`frameworks-base-play-store-affiliate-source.patch`](../../patches/android-16/a13-completion/frameworks-base-play-store-affiliate-source.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.3 | no | 0 |
+| [`frameworks-base-preinstalled-overlay.patch`](../../patches/android-16/a13-completion/frameworks-base-preinstalled-overlay.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.2 | no | 0 |
+| [`frameworks-base-primary-storage-size.patch`](../../patches/android-16/a13-completion/frameworks-base-primary-storage-size.patch) | Host/build/graphics companion patches | 2 | 3 | 24 | 3 | 2.7 | no | 0 |
+| [`frameworks-base-readproc.patch`](../../patches/android-16/a13-completion/frameworks-base-readproc.patch) | Host/build/graphics companion patches | 1 | 2 | 32 | 1 | 1.9 | no | 0 |
+| [`frameworks-base-recents-orientation.patch`](../../patches/android-16/a13-completion/frameworks-base-recents-orientation.patch) | Host/build/graphics companion patches | 1 | 7 | 67 | 0 | 5.8 | no | 0 |
+| [`frameworks-base-running-services.patch`](../../patches/android-16/a13-completion/frameworks-base-running-services.patch) | Host/build/graphics companion patches | 2 | 7 | 29 | 2 | 5.2 | no | 0 |
+| [`frameworks-base-runtime-permissions-recovery.patch`](../../patches/android-16/a13-completion/frameworks-base-runtime-permissions-recovery.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 1 | 1.1 | no | 0 |
+| [`frameworks-base-safe-mode-default.patch`](../../patches/android-16/a13-completion/frameworks-base-safe-mode-default.patch) | Host/build/graphics companion patches | 1 | 1 | 4 | 0 | 0.9 | no | 0 |
+| [`frameworks-base-screen-timeout.patch`](../../patches/android-16/a13-completion/frameworks-base-screen-timeout.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.3 | no | 0 |
+| [`frameworks-base-screenshot-integration.patch`](../../patches/android-16/a13-completion/frameworks-base-screenshot-integration.patch) | Host/build/graphics companion patches | 2 | 8 | 50 | 13 | 6.0 | no | 0 |
+| [`frameworks-base-setbstime.patch`](../../patches/android-16/a13-completion/frameworks-base-setbstime.patch) | Host/build/graphics companion patches | 6 | 8 | 63 | 2 | 7.3 | no | 0 |
+| [`frameworks-base-signin-popup-stop.patch`](../../patches/android-16/a13-completion/frameworks-base-signin-popup-stop.patch) | Host/build/graphics companion patches | 1 | 1 | 16 | 0 | 1.3 | no | 0 |
+| [`frameworks-base-skip-temp-downloads.patch`](../../patches/android-16/a13-completion/frameworks-base-skip-temp-downloads.patch) | Host/build/graphics companion patches | 1 | 3 | 18 | 0 | 2.0 | no | 0 |
+| [`frameworks-base-stopapp-gcall.patch`](../../patches/android-16/a13-completion/frameworks-base-stopapp-gcall.patch) | Host/build/graphics companion patches | 7 | 17 | 77 | 11 | 12.9 | no | 0 |
+| [`frameworks-base-system-feature-query-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-system-feature-query-policy.patch) | Host/build/graphics companion patches | 1 | 2 | 9 | 6 | 2.1 | no | 0 |
+| [`frameworks-base-systemui-battery-fix.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-battery-fix.patch) | Host/build/graphics companion patches | 1 | 3 | 2 | 3 | 1.4 | no | 0 |
+| [`frameworks-base-systemui-footer.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-footer.patch) | Host/build/graphics companion patches | 2 | 6 | 9 | 27 | 4.9 | no | 0 |
+| [`frameworks-base-systemui-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-policy.patch) | Host/build/graphics companion patches | 5 | 10 | 27 | 3 | 5.6 | no | 0 |
+| [`frameworks-base-systemui-portrait.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-portrait.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 1.1 | no | 0 |
+| [`frameworks-base-systemui-view-import.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-view-import.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 0 | 0.6 | no | 0 |
+| [`frameworks-base-telephony-completion.patch`](../../patches/android-16/a13-completion/frameworks-base-telephony-completion.patch) | Host/build/graphics companion patches | 2 | 20 | 97 | 0 | 9.6 | no | 0 |
+| [`frameworks-base-uncube-native-libs.patch`](../../patches/android-16/a13-completion/frameworks-base-uncube-native-libs.patch) | Host/build/graphics companion patches | 3 | 10 | 37 | 12 | 7.8 | no | 0 |
+| [`frameworks-base-unset-property-values.patch`](../../patches/android-16/a13-completion/frameworks-base-unset-property-values.patch) | Host/build/graphics companion patches | 1 | 2 | 10 | 0 | 0.9 | no | 0 |
+| [`frameworks-base-vending-abi.patch`](../../patches/android-16/a13-completion/frameworks-base-vending-abi.patch) | Host/build/graphics companion patches | 1 | 2 | 80 | 0 | 3.7 | no | 0 |
+| [`frameworks-base-virtual-battery-profile.patch`](../../patches/android-16/a13-completion/frameworks-base-virtual-battery-profile.patch) | Host/build/graphics companion patches | 1 | 1 | 11 | 0 | 1.2 | no | 0 |
+| [`frameworks-base-vms-wildcard.patch`](../../patches/android-16/a13-completion/frameworks-base-vms-wildcard.patch) | Host/build/graphics companion patches | 1 | 2 | 3 | 1 | 0.9 | no | 0 |
+| [`frameworks-base-vms.patch`](../../patches/android-16/a13-completion/frameworks-base-vms.patch) | Host/build/graphics companion patches | 1 | 2 | 35 | 0 | 2.2 | no | 0 |
+| [`frameworks-base-wifi-battery-sync.patch`](../../patches/android-16/a13-completion/frameworks-base-wifi-battery-sync.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 8 | 1.3 | no | 0 |
+| [`frameworks-base-wm-timeouts.patch`](../../patches/android-16/a13-completion/frameworks-base-wm-timeouts.patch) | Host/build/graphics companion patches | 2 | 2 | 2 | 2 | 1.6 | no | 0 |
+| [`frameworks-base-xarch-abi-tracking.patch`](../../patches/android-16/a13-completion/frameworks-base-xarch-abi-tracking.patch) | Host/build/graphics companion patches | 2 | 7 | 36 | 1 | 5.0 | no | 0 |
+| [`frameworks-base-xcpu.patch`](../../patches/android-16/a13-completion/frameworks-base-xcpu.patch) | Host/build/graphics companion patches | 1 | 3 | 48 | 0 | 3.0 | no | 0 |
+| [`frameworks-base-zygote-prop-reset.patch`](../../patches/android-16/a13-completion/frameworks-base-zygote-prop-reset.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 0 | 0.7 | no | 0 |
+| [`frameworks-native-absolute-mouse.patch`](../../patches/android-16/a13-completion/frameworks-native-absolute-mouse.patch) | Host/build/graphics companion patches | 3 | 17 | 129 | 17 | 12.5 | no | 0 |
+| [`frameworks-native-atrace-permissions.patch`](../../patches/android-16/a13-completion/frameworks-native-atrace-permissions.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 1 | 0.8 | no | 0 |
+| [`frameworks-native-dumpstate-diagnostics.patch`](../../patches/android-16/a13-completion/frameworks-native-dumpstate-diagnostics.patch) | Host/build/graphics companion patches | 2 | 4 | 40 | 15 | 5.0 | no | 0 |
+| [`frameworks-native-fps-refresh.patch`](../../patches/android-16/a13-completion/frameworks-native-fps-refresh.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 2 | 1.2 | no | 0 |
+| [`frameworks-native-managed-su-dumpstate.patch`](../../patches/android-16/a13-completion/frameworks-native-managed-su-dumpstate.patch) | Host/build/graphics companion patches | 1 | 3 | 8 | 4 | 1.9 | no | 0 |
+| [`frameworks-native-readiness-service.patch`](../../patches/android-16/a13-completion/frameworks-native-readiness-service.patch) | Host/build/graphics companion patches | 1 | 2 | 6 | 1 | 1.2 | no | 0 |
+| [`frameworks-native-vulkan-default-fallback.patch`](../../patches/android-16/a13-completion/frameworks-native-vulkan-default-fallback.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 1 | 0.7 | no | 0 |
+| [`frameworks-opt-telephony-virtual-subscription.patch`](../../patches/android-16/a13-completion/frameworks-opt-telephony-virtual-subscription.patch) | Host/build/graphics companion patches | 1 | 17 | 110 | 11 | 11.4 | no | 0 |
+| [`goldfish-opengl-guest-vulkan.patch`](../../patches/android-16/a13-completion/goldfish-opengl-guest-vulkan.patch) | Host/build/graphics companion patches | 3 | 4 | 13 | 5 | 2.3 | no | 0 |
+| [`hardware-interfaces-fps-sync.patch`](../../patches/android-16/a13-completion/hardware-interfaces-fps-sync.patch) | Host/build/graphics companion patches | 3 | 16 | 79 | 3 | 8.0 | no | 0 |
+| [`hardware-libhardware-bst-hal.patch`](../../patches/android-16/a13-completion/hardware-libhardware-bst-hal.patch) | Host/build/graphics companion patches | 1 | 2 | 6 | 1 | 0.9 | no | 0 |
+| [`latinime-integration.patch`](../../patches/android-16/a13-completion/latinime-integration.patch) | Host/build/graphics companion patches | 5 | 10 | 16 | 18 | 6.4 | no | 0 |
+| [`launcher3-product-integration.patch`](../../patches/android-16/a13-completion/launcher3-product-integration.patch) | Host/build/graphics companion patches | 3 | 11 | 56 | 1 | 7.4 | no | 0 |
+| [`libcore-app-compat.patch`](../../patches/android-16/a13-completion/libcore-app-compat.patch) | Host/build/graphics companion patches | 2 | 3 | 28 | 2 | 2.4 | no | 0 |
+| [`libcore-network-interface.patch`](../../patches/android-16/a13-completion/libcore-network-interface.patch) | Host/build/graphics companion patches | 1 | 7 | 47 | 4 | 4.3 | no | 0 |
+| [`libcore-safetynet-policy.patch`](../../patches/android-16/a13-completion/libcore-safetynet-policy.patch) | Host/build/graphics companion patches | 1 | 2 | 8 | 0 | 1.0 | no | 0 |
+| [`networkstack-cn-policy.patch`](../../patches/android-16/a13-completion/networkstack-cn-policy.patch) | Host/build/graphics companion patches | 1 | 2 | 6 | 0 | 0.9 | no | 0 |
+| [`packages-modules-adb-policy.patch`](../../patches/android-16/a13-completion/packages-modules-adb-policy.patch) | Host/build/graphics companion patches | 4 | 6 | 71 | 21 | 5.5 | no | 0 |
+| [`packages-services-telephony-virtual-sim-state.patch`](../../patches/android-16/a13-completion/packages-services-telephony-virtual-sim-state.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 1 | 1.1 | no | 0 |
+| [`root-adb-policy-pointer.patch`](../../patches/android-16/a13-completion/root-adb-policy-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.6 | no | 0 |
+| [`root-atrace-permissions-pointer.patch`](../../patches/android-16/a13-completion/root-atrace-permissions-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-badblocks-gitlinks.patch`](../../patches/android-16/a13-completion/root-badblocks-gitlinks.patch) | Host/build/graphics companion patches | 2 | 2 | 2 | 3 | 0.9 | no | 0 |
+| [`root-bst-hal-pointer.patch`](../../patches/android-16/a13-completion/root-bst-hal-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.6 | no | 0 |
+| [`root-bstsettings-app.patch`](../../patches/android-16/a13-completion/root-bstsettings-app.patch) | Host/build/graphics companion patches | 85 | 77 | 4412 | 1 | 358.6 | embedded | 0 |
+| [`root-camera-hal-framerate-pointer.patch`](../../patches/android-16/a13-completion/root-camera-hal-framerate-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-connectivity-captive-portal-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-captive-portal-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.0 | no | 0 |
+| [`root-connectivity-dscp-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-dscp-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.9 | no | 0 |
+| [`root-connectivity-network-presentation-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-network-presentation-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.0 | no | 0 |
+| [`root-dumpstate-diagnostics-pointer.patch`](../../patches/android-16/a13-completion/root-dumpstate-diagnostics-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-external-selinux-pointer.patch`](../../patches/android-16/a13-completion/root-external-selinux-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.9 | no | 0 |
+| [`root-ffmpeg-runtime-pointers.patch`](../../patches/android-16/a13-completion/root-ffmpeg-runtime-pointers.patch) | Host/build/graphics companion patches | 2 | 2 | 2 | 3 | 0.8 | no | 0 |
+| [`root-fps-refresh-pointer.patch`](../../patches/android-16/a13-completion/root-fps-refresh-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-frameworks-native-absolute-mouse-pointer.patch`](../../patches/android-16/a13-completion/root-frameworks-native-absolute-mouse-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-frameworks-native-managed-su-pointer.patch`](../../patches/android-16/a13-completion/root-frameworks-native-managed-su-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-frameworks-native-vulkan-pointer.patch`](../../patches/android-16/a13-completion/root-frameworks-native-vulkan-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.6 | no | 0 |
+| [`root-h263-16cif-pointer.patch`](../../patches/android-16/a13-completion/root-h263-16cif-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-hardware-interfaces-fps-pointer.patch`](../../patches/android-16/a13-completion/root-hardware-interfaces-fps-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.6 | no | 0 |
+| [`root-ignore-houdini-payload.patch`](../../patches/android-16/a13-completion/root-ignore-houdini-payload.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 0 | 0.2 | no | 0 |
+| [`root-managed-su-pointer.patch`](../../patches/android-16/a13-completion/root-managed-su-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-media-compat-pointer.patch`](../../patches/android-16/a13-completion/root-media-compat-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-readiness-runtime-pointer.patch`](../../patches/android-16/a13-completion/root-readiness-runtime-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-readiness-service-pointer.patch`](../../patches/android-16/a13-completion/root-readiness-service-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-servicemanager-readiness-pointer.patch`](../../patches/android-16/a13-completion/root-servicemanager-readiness-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-swcodec-sphal-pointer.patch`](../../patches/android-16/a13-completion/root-swcodec-sphal-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-system-core-completion-pointer.patch`](../../patches/android-16/a13-completion/root-system-core-completion-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.2 | no | 0 |
+| [`root-system-security-prng-pointer.patch`](../../patches/android-16/a13-completion/root-system-security-prng-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.9 | no | 0 |
+| [`root-vold-quota-pointer.patch`](../../patches/android-16/a13-completion/root-vold-quota-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`settings-accessibility-hearing-aid.patch`](../../patches/android-16/a13-completion/settings-accessibility-hearing-aid.patch) | Host/build/graphics companion patches | 1 | 2 | 6 | 2 | 1.7 | no | 0 |
+| [`settings-bst-activity-aliases.patch`](../../patches/android-16/a13-completion/settings-bst-activity-aliases.patch) | Host/build/graphics companion patches | 1 | 1 | 60 | 0 | 3.3 | no | 0 |
+| [`settings-fallback-home.patch`](../../patches/android-16/a13-completion/settings-fallback-home.patch) | Host/build/graphics companion patches | 1 | 6 | 56 | 16 | 5.4 | no | 0 |
+| [`settings-product-policy.patch`](../../patches/android-16/a13-completion/settings-product-policy.patch) | Host/build/graphics companion patches | 11 | 30 | 141 | 6 | 16.6 | no | 0 |
+| [`settings-storage-iec.patch`](../../patches/android-16/a13-completion/settings-storage-iec.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.7 | no | 0 |
+| [`system-core-a13-completion.patch`](../../patches/android-16/a13-completion/system-core-a13-completion.patch) | Host/build/graphics companion patches | 11 | 42 | 377 | 58 | 32.4 | no | 0 |
+| [`system-extras-managed-su.patch`](../../patches/android-16/a13-completion/system-extras-managed-su.patch) | Host/build/graphics companion patches | 15 | 15 | 1399 | 6 | 50.1 | no | 0 |
+| [`system-security-prng-seeder.patch`](../../patches/android-16/a13-completion/system-security-prng-seeder.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 1.6 | no | 0 |
+| [`system-vold-mountsf-trigger.patch`](../../patches/android-16/a13-completion/system-vold-mountsf-trigger.patch) | Host/build/graphics companion patches | 1 | 2 | 3 | 0 | 0.6 | no | 0 |
+| [`system-vold-quota-ioctls.patch`](../../patches/android-16/a13-completion/system-vold-quota-ioctls.patch) | Host/build/graphics companion patches | 1 | 1 | 4 | 43 | 2.1 | no | 0 |
+| [`telephony-sim-locale.patch`](../../patches/android-16/a13-completion/telephony-sim-locale.patch) | Host/build/graphics companion patches | 1 | 1 | 9 | 0 | 0.8 | no | 0 |
+| [`wifi-integration.patch`](../../patches/android-16/a13-completion/wifi-integration.patch) | Host/build/graphics companion patches | 1 | 3 | 20 | 12 | 3.0 | no | 0 |
 | [`aosp16__art.patch`](../../patches/android-16/patches/aosp16__art.patch) | AOSP16 project snapshots | 1 | 1 | 5 | 0 | 0.8 | no | 1 |
 | [`aosp16__build_make.patch`](../../patches/android-16/patches/aosp16__build_make.patch) | AOSP16 project snapshots | 7 | 10 | 32 | 12 | 6.5 | no | 1 |
 | [`aosp16__build_soong.patch`](../../patches/android-16/patches/aosp16__build_soong.patch) | AOSP16 project snapshots | 6 | 6 | 40 | 2 | 4.4 | no | 1 |
-| [`aosp16__device_generic_common.patch`](../../patches/android-16/patches/aosp16__device_generic_common.patch) | AOSP16 project snapshots | 170 | 76 | 15568 | 1 | 383.1 | yes | 1 |
+| [`aosp16__device_generic_common.patch`](../../patches/android-16/patches/aosp16__device_generic_common.patch) | AOSP16 project snapshots | 170 | 76 | 15568 | 1 | 383.1 | reference-only | 1 |
 | [`aosp16__device_generic_goldfish.patch`](../../patches/android-16/patches/aosp16__device_generic_goldfish.patch) | AOSP16 project snapshots | 1 | 2 | 3 | 5 | 1.1 | no | 1 |
 | [`aosp16__device_generic_x86_64.patch`](../../patches/android-16/patches/aosp16__device_generic_x86_64.patch) | AOSP16 project snapshots | 3 | 4 | 36 | 17 | 3.1 | no | 1 |
 | [`aosp16__external_boringssl.patch`](../../patches/android-16/patches/aosp16__external_boringssl.patch) | AOSP16 project snapshots | 1 | 1 | 4 | 5 | 0.7 | no | 1 |
 | [`aosp16__frameworks_base.patch`](../../patches/android-16/patches/aosp16__frameworks_base.patch) | AOSP16 project snapshots | 97 | 253 | 20668 | 88 | 936.5 | no | 1 |
-| [`aosp16__frameworks_base__d8-subscription.patch`](../../patches/android-16/patches/aosp16__frameworks_base__d8-subscription.patch) | AOSP16 project snapshots | 1 | 2 | 5 | 0 | 2.0 | no | 1 |
-| [`aosp16__frameworks_base__pagefusion.patch`](../../patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch) | AOSP16 project snapshots | 7 | 7 | 2983 | 0 | 92.9 | no | 1 |
+| [`aosp16__frameworks_base__d8-subscription.patch`](../../patches/android-16/patches/aosp16__frameworks_base__d8-subscription.patch) | AOSP16 project snapshots | 1 | 2 | 5 | 0 | 2.0 | no | 0 |
+| [`aosp16__frameworks_base__pagefusion.patch`](../../patches/android-16/patches/aosp16__frameworks_base__pagefusion.patch) | AOSP16 project snapshots | 7 | 7 | 2983 | 0 | 92.9 | no | 0 |
 | [`aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch`](../../patches/android-16/patches/aosp16__frameworks_base__r262-temp-disable-shell-transitions.patch) | AOSP16 project snapshots | 1 | 2 | 12 | 8 | 1.9 | no | 1 |
 | [`aosp16__frameworks_native.patch`](../../patches/android-16/patches/aosp16__frameworks_native.patch) | AOSP16 project snapshots | 3 | 3 | 50 | 53 | 5.3 | no | 1 |
-| [`aosp16__frameworks_native_libs_binder.patch`](../../patches/android-16/patches/aosp16__frameworks_native_libs_binder.patch) | AOSP16 project snapshots | 10 | 11 | 3821 | 0 | 159.8 | no | 1 |
+| [`aosp16__frameworks_native_libs_binder.patch`](../../patches/android-16/patches/aosp16__frameworks_native_libs_binder.patch) | AOSP16 project snapshots | 10 | 11 | 3821 | 0 | 159.8 | no | 0 |
 | [`aosp16__hardware_google_aemu.patch`](../../patches/android-16/patches/aosp16__hardware_google_aemu.patch) | AOSP16 project snapshots | 2 | 3 | 3 | 3 | 1.0 | no | 1 |
 | [`aosp16__hardware_interfaces.patch`](../../patches/android-16/patches/aosp16__hardware_interfaces.patch) | AOSP16 project snapshots | 2 | 2 | 2 | 0 | 0.8 | no | 1 |
 | [`aosp16__hardware_libhardware.patch`](../../patches/android-16/patches/aosp16__hardware_libhardware.patch) | AOSP16 project snapshots | 2 | 2 | 0 | 86 | 3.2 | no | 1 |
@@ -82,7 +572,7 @@
 | [`P2-FW-PERIPH-6.diff`](../../patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-6.diff) | P2 framework peripheral surgical patches | 1 | 2 | 21 | 1 | 2.2 | no | 0 |
 | [`P2-FW-PERIPH-7.diff`](../../patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-7.diff) | P2 framework peripheral surgical patches | 1 | 2 | 6 | 0 | 1.3 | no | 0 |
 | [`P2-FW-PERIPH-8.diff`](../../patches/android-16/patches/p2-framework-rest/P2-FW-PERIPH-8.diff) | P2 framework peripheral surgical patches | 1 | 3 | 26 | 0 | 2.6 | no | 0 |
-| [`P2-FW-SERVICES-4a.diff`](../../patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-4a.diff) | P2 framework services surgical patches | 2 | 3 | 29 | 1 | 3.1 | no | 1 |
+| [`P2-FW-SERVICES-4a.diff`](../../patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-4a.diff) | P2 framework services surgical patches | 2 | 3 | 29 | 1 | 3.1 | no | 0 |
 | [`P2-FW-SERVICES-5.diff`](../../patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-5.diff) | P2 framework services surgical patches | 1 | 4 | 9 | 3 | 2.5 | no | 0 |
 | [`P2-FW-SERVICES-6.diff`](../../patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6.diff) | P2 framework services surgical patches | 1 | 3 | 12 | 0 | 2.2 | no | 0 |
 | [`P2-FW-SERVICES-6b.diff`](../../patches/android-16/patches/p2-framework-rest/P2-FW-SERVICES-6b.diff) | P2 framework services surgical patches | 1 | 4 | 40 | 0 | 4.1 | no | 0 |
@@ -112,13 +602,6473 @@
 
 ## Per-Artifact Detail
 
+### `04790f5719f844d04d982382ea62bd27156dcc09.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/04790f5719f844d04d982382ea62bd27156dcc09.patch`](../../patches/android-16/a13-authority/art/04790f5719f844d04d982382ea62bd27156dcc09.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `20a1b3b1ece6fd75f4704d2c1e977bbcdcc88d060b7bd9b0fd3673bbe3e924b9`
+- Size/stat: 3274 bytes, 1 files, 3 hunks, +44/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `runtime/jni/jni_internal.cc`
+
+### `224e3ead4eaf8f91c5230c803af1c55defeb0757.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/224e3ead4eaf8f91c5230c803af1c55defeb0757.patch`](../../patches/android-16/a13-authority/art/224e3ead4eaf8f91c5230c803af1c55defeb0757.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9e6a5d37bf9f08341d7952b5ae42b9a39795585bf92b9306aeaddae6454229cd`
+- Size/stat: 2197 bytes, 1 files, 2 hunks, +10/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `runtime/jni/jni_internal.cc`
+
+### `3f6c563145b805817fa2f01e9f31fe2af9c67f54.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/3f6c563145b805817fa2f01e9f31fe2af9c67f54.patch`](../../patches/android-16/a13-authority/art/3f6c563145b805817fa2f01e9f31fe2af9c67f54.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5ee10c721215ed330f6fc45fcef5b39b75cfd69c33c58ceb86a618bbbf621e45`
+- Size/stat: 3831 bytes, 1 files, 2 hunks, +74/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativebridge/native_bridge.cc`
+
+### `4f8c891b39ce007b5455f1550290db1b305b3341.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/4f8c891b39ce007b5455f1550290db1b305b3341.patch`](../../patches/android-16/a13-authority/art/4f8c891b39ce007b5455f1550290db1b305b3341.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `82d2b157ef300100a595031a60519b9ce327a3d7d6e0e3d401f9ad4a9e56f48e`
+- Size/stat: 762 bytes, 1 files, 1 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativebridge/native_bridge.cc`
+
+### `568cb64e32abd760f8af55938a28463289f82661.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/568cb64e32abd760f8af55938a28463289f82661.patch`](../../patches/android-16/a13-authority/art/568cb64e32abd760f8af55938a28463289f82661.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c6df7d666395fa4ca5b80562875d3e1bf1c11a45053a6fbf398bdb16a75e3d14`
+- Size/stat: 2602 bytes, 1 files, 1 hunks, +54/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativeloader/native_loader_namespace.cpp`
+
+### `57905d797d859345c79fb47d8ab220655dda8b2f.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/57905d797d859345c79fb47d8ab220655dda8b2f.patch`](../../patches/android-16/a13-authority/art/57905d797d859345c79fb47d8ab220655dda8b2f.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6341e08837a891b94da59d8147ba5ad37c1374a17d79b25c3f0ea27151168516`
+- Size/stat: 3477 bytes, 2 files, 2 hunks, +57/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativebridge/libnativebridge.map.txt`
+  - `libnativebridge/native_bridge.cc`
+
+### `58dd9b4c83c6acf6f7f41d2ae9a6ecf5c835dcba.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/58dd9b4c83c6acf6f7f41d2ae9a6ecf5c835dcba.patch`](../../patches/android-16/a13-authority/art/58dd9b4c83c6acf6f7f41d2ae9a6ecf5c835dcba.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `db8a8d2f488f57f7666130ec4bc3e0e5e0212171a3938f5b2fecec88208315da`
+- Size/stat: 1191 bytes, 1 files, 1 hunks, +3/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `runtime/oat_quick_method_header.cc`
+
+### `7151a45339efcb58a1fda8dce0c5d87ec2feb284.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/7151a45339efcb58a1fda8dce0c5d87ec2feb284.patch`](../../patches/android-16/a13-authority/art/7151a45339efcb58a1fda8dce0c5d87ec2feb284.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fcacb85a2ed1931e6f71e1e44b60cb37ba4a9711fe3167a8e35f90c44fa12963`
+- Size/stat: 3329 bytes, 1 files, 3 hunks, +25/-9
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativebridge/native_bridge.cc`
+
+### `728412d8fafa0a65bd34e91e54570cbf43c4c635.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/728412d8fafa0a65bd34e91e54570cbf43c4c635.patch`](../../patches/android-16/a13-authority/art/728412d8fafa0a65bd34e91e54570cbf43c4c635.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `643bd2610b7bf6ee874be410428f1c866c7d1a66f2cf173581bed92727e0e53a`
+- Size/stat: 4813 bytes, 1 files, 3 hunks, +86/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativeloader/native_loader_namespace.cpp`
+
+### `8cd41668fa705dc91c04a382e13e9343ac14aee5.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/8cd41668fa705dc91c04a382e13e9343ac14aee5.patch`](../../patches/android-16/a13-authority/art/8cd41668fa705dc91c04a382e13e9343ac14aee5.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4274b925a8b056f03530f6ba1c7f98a6cdf22d022cdb6969504707db1c8a9e37`
+- Size/stat: 3651 bytes, 1 files, 3 hunks, +53/-12
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativebridge/native_bridge.cc`
+
+### `cfc8b82d8090786d4b5287eead1b186a54ece5ac.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/cfc8b82d8090786d4b5287eead1b186a54ece5ac.patch`](../../patches/android-16/a13-authority/art/cfc8b82d8090786d4b5287eead1b186a54ece5ac.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `83f9059b88c3aa1dd1aff58610f654e024a9a09fdfeb319408e8680b6aae6877`
+- Size/stat: 4933 bytes, 1 files, 3 hunks, +122/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativebridge/native_bridge.cc`
+
+### `d7fd0e75625d51eefb33dce73d2116953b75e76c.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/d7fd0e75625d51eefb33dce73d2116953b75e76c.patch`](../../patches/android-16/a13-authority/art/d7fd0e75625d51eefb33dce73d2116953b75e76c.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `16f750af49b0466e615fbb753af5df32eaf994b52a8d3014fcb6a859b92838a8`
+- Size/stat: 1952 bytes, 1 files, 2 hunks, +3/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativeloader/native_loader_namespace.cpp`
+
+### `e29170951312050239b479b68ead5d81c7f6a784.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/e29170951312050239b479b68ead5d81c7f6a784.patch`](../../patches/android-16/a13-authority/art/e29170951312050239b479b68ead5d81c7f6a784.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `83c5f0782ab6ad4246cc0987cdf100ff64a414a734ff7105c4aac8bcb7c272e9`
+- Size/stat: 2197 bytes, 1 files, 2 hunks, +10/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `runtime/jni/jni_internal.cc`
+
+### `e90a91250beb0b112801473fb836982a730c614b.patch`
+
+- Artifact: [`patches/android-16/a13-authority/art/e90a91250beb0b112801473fb836982a730c614b.patch`](../../patches/android-16/a13-authority/art/e90a91250beb0b112801473fb836982a730c614b.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `eede8c69f834f574d053565e34674ea92fae2685b72776a5922f663a8877f136`
+- Size/stat: 1603 bytes, 1 files, 1 hunks, +6/-7
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativeloader/native_loader_namespace.cpp`
+
+### `0001-A13-Add-syscalls-ioperm-and-iopl.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0001-A13-Add-syscalls-ioperm-and-iopl.patch`](../../patches/android-16/a13-authority/bionic/0001-A13-Add-syscalls-ioperm-and-iopl.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5796d2fc29916635a17a8bbd3002d19cd9486aa41d5626ce0f0b0005906f6fc3`
+- Size/stat: 4467 bytes, 6 files, 6 hunks, +102/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 6 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/SYSCALLS.TXT`
+  - `libc/arch-x86/syscalls/ioperm.S`
+  - `libc/arch-x86/syscalls/iopl.S`
+  - `libc/arch-x86_64/syscalls/ioperm.S`
+  - `libc/arch-x86_64/syscalls/iopl.S`
+  - `libc/libc.map.txt`
+
+### `0002-A13-linker-Allow-text-relocs-for-x86-only.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0002-A13-linker-Allow-text-relocs-for-x86-only.patch`](../../patches/android-16/a13-authority/bionic/0002-A13-linker-Allow-text-relocs-for-x86-only.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `005438fc819a4aede4d71bf155dee7bdc344f6e98ee32ada8cb33b3be30daa71`
+- Size/stat: 1758 bytes, 1 files, 2 hunks, +2/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `linker/linker.cpp`
+
+### `0003-A13-Prefer-ipv4-over-ipv6.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0003-A13-Prefer-ipv4-over-ipv6.patch`](../../patches/android-16/a13-authority/bionic/0003-A13-Prefer-ipv4-over-ipv6.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `37d952f5d06459250f443f483aacc6708b213ddfbebf1c90b477bf648090f559`
+- Size/stat: 1750 bytes, 1 files, 4 hunks, +7/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/dns/net/getaddrinfo.c`
+
+### `0004-A13-Add-config.db-entry-xprop-3.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0004-A13-Add-config.db-entry-xprop-3.patch`](../../patches/android-16/a13-authority/bionic/0004-A13-Add-config.db-entry-xprop-3.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `bc6c779d40507f5b521fadb6a471efda436f9df01580b880834ec7a53e00c0d0`
+- Size/stat: 6746 bytes, 2 files, 4 hunks, +115/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/bionic/system_property_set.cpp`
+  - `libc/system_properties/system_properties.cpp`
+
+### `0005-A13-Fix-system-prop-serial-to-len-convertion.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0005-A13-Fix-system-prop-serial-to-len-convertion.patch`](../../patches/android-16/a13-authority/bionic/0005-A13-Fix-system-prop-serial-to-len-convertion.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `45299b0cde0dfbac3a65c40cedc9c2f1fd74d0caf449b4669eb681639defeedb`
+- Size/stat: 3827 bytes, 1 files, 5 hunks, +33/-19
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/system_properties/system_properties.cpp`
+
+### `0006-A13-Hiding-or-Faking-props-for-3rd-party-apps.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0006-A13-Hiding-or-Faking-props-for-3rd-party-apps.patch`](../../patches/android-16/a13-authority/bionic/0006-A13-Hiding-or-Faking-props-for-3rd-party-apps.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `78885000800fd5b195765867a309e26b7f39d3c990401b165218d4ca3c4d0cad`
+- Size/stat: 26387 bytes, 2 files, 10 hunks, +412/-48
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/bionic/system_property_set.cpp`
+  - `libc/system_properties/system_properties.cpp`
+
+### `0007-A13-prop-sync-with-real-device-and-AOPS-emulator.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0007-A13-prop-sync-with-real-device-and-AOPS-emulator.patch`](../../patches/android-16/a13-authority/bionic/0007-A13-prop-sync-with-real-device-and-AOPS-emulator.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `21a1b296c9176f09024f8e3041625f168ceab4308d4f335d366ec2bf93b67d39`
+- Size/stat: 3414 bytes, 1 files, 4 hunks, +17/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/bionic/system_property_set.cpp`
+
+### `0008-A13-Fix-the-crash-issue-when-value-is-NULL.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0008-A13-Fix-the-crash-issue-when-value-is-NULL.patch`](../../patches/android-16/a13-authority/bionic/0008-A13-Fix-the-crash-issue-when-value-is-NULL.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `188f2fdb38c24e0086dad9881ffe5f99deeb4862e674b7e8e0787435e8e3e518`
+- Size/stat: 3385 bytes, 1 files, 5 hunks, +5/-5
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/bionic/system_property_set.cpp`
+
+### `0009-A13-Return-error-when-path-is-null-in-open-function.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0009-A13-Return-error-when-path-is-null-in-open-function.patch`](../../patches/android-16/a13-authority/bionic/0009-A13-Return-error-when-path-is-null-in-open-function.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `777376d41074d85e743beaaa47e942676b62e63fa994fa1eba15b515b6cd32b7`
+- Size/stat: 1041 bytes, 1 files, 2 hunks, +8/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/bionic/open.cpp`
+
+### `0010-Fd-size-10.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0010-Fd-size-10.patch`](../../patches/android-16/a13-authority/bionic/0010-Fd-size-10.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `26fbb34785014b5ea4f4f71e1ff3200bce817e5701cd7fbac6f631462890142b`
+- Size/stat: 4945 bytes, 3 files, 6 hunks, +58/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/bionic/fortify.cpp`
+  - `libc/bionic/poll.cpp`
+  - `libc/private/bionic_fortify.h`
+
+### `0011-A13-Add-property-for-arm-translator.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0011-A13-Add-property-for-arm-translator.patch`](../../patches/android-16/a13-authority/bionic/0011-A13-Add-property-for-arm-translator.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5c139eef9766c3e720e6b340de75b2a1062ed3aa2c62b6972dada9f1df3a868e`
+- Size/stat: 7371 bytes, 2 files, 3 hunks, +167/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/system_properties/obs_str.hpp`
+  - `libc/system_properties/system_properties.cpp`
+
+### `0012-ROB-14898-Incorrect-TimeZone-of-Iran.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0012-ROB-14898-Incorrect-TimeZone-of-Iran.patch`](../../patches/android-16/a13-authority/bionic/0012-ROB-14898-Incorrect-TimeZone-of-Iran.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `331ce9aeff05e6847afb863100da9755f33367dbb97590655de970972c0218fd`
+- Size/stat: 1266 bytes, 1 files, 1 hunks, +19/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/tzcode/localtime.c`
+
+### `0013-ROB-14898-Incorrect-TimeZone-of-Iran.patch`
+
+- Artifact: [`patches/android-16/a13-authority/bionic/0013-ROB-14898-Incorrect-TimeZone-of-Iran.patch`](../../patches/android-16/a13-authority/bionic/0013-ROB-14898-Incorrect-TimeZone-of-Iran.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `424599f06ebce146156867ead35c72b6613841c3224f3d744e5f5376dfa30c57`
+- Size/stat: 1266 bytes, 1 files, 1 hunks, +19/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/tzcode/localtime.c`
+
+### `0001-A13-Don-t-skip-omx-audio-video-codecs-for-app-player.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0001-A13-Don-t-skip-omx-audio-video-codecs-for-app-player.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0001-A13-Don-t-skip-omx-audio-video-codecs-for-app-player.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `971b4933c0ddb1010865cc903cf0024c27b54315ec8d8e6869a8d77cf0c84c3d`
+- Size/stat: 2052 bytes, 1 files, 2 hunks, +8/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/omx/OMXStore.cpp`
+
+### `0002-A13-Using-bst.instance-property-to-check-app-player.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0002-A13-Using-bst.instance-property-to-check-app-player.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0002-A13-Using-bst.instance-property-to-check-app-player.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6e94d61ce316271f7096b4906f280992e782bddfd257fa7a8665c3b72fc4e821`
+- Size/stat: 1238 bytes, 1 files, 1 hunks, +9/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/omx/OMXStore.cpp`
+
+### `0003-Add-bstsvcmsgrtest.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0003-Add-bstsvcmsgrtest.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0003-Add-bstsvcmsgrtest.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ca534a7d1e6347bba8911c6cc0ac9695bccdcd8a557850294b5e7a56fcee6235`
+- Size/stat: 7201 bytes, 2 files, 2 hunks, +209/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `bstsvcmsgrtest/Android.mk`
+  - `bstsvcmsgrtest/bstsvcmgrtest.cpp`
+
+### `0004-Setup-FFMPEG-audio-mpeg-L2-codec-correctly.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0004-Setup-FFMPEG-audio-mpeg-L2-codec-correctly.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0004-Setup-FFMPEG-audio-mpeg-L2-codec-correctly.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `20b01fd4af5a67e52c21a7f4e342550123c14160b0a7534ae6ab81000d73d613`
+- Size/stat: 1179 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/ACodec.cpp`
+
+### `0005-SW-encode-Fix-output-buffer-size.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0005-SW-encode-Fix-output-buffer-size.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0005-SW-encode-Fix-output-buffer-size.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3ae0af1efa24cdf2e67c2c777838031f63c04ca4e3a134e6ddfeda3d468df57f`
+- Size/stat: 2175 bytes, 1 files, 1 hunks, +27/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp`
+
+### `0006-Change-max-width-and-height-supported-by-H.263-decod.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0006-Change-max-width-and-height-supported-by-H.263-decod.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0006-Change-max-width-and-height-supported-by-H.263-decod.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c0db9b4fe85a8bafaa2962c7d64110c55a78d89bcdf3a68bea66756aa980b2e7`
+- Size/stat: 1481 bytes, 1 files, 1 hunks, +6/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp`
+
+### `0007-FLACExtractor-Add-more-sample-rates-support.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0007-FLACExtractor-Add-more-sample-rates-support.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0007-FLACExtractor-Add-more-sample-rates-support.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0ca2d102ba63107f745a04e8d200625999aa127d1dba55a9cd8ff574fe985cc4`
+- Size/stat: 1443 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `media/extractors/flac/FLACExtractor.cpp`
+
+### `0008-CameraSource-set-up-right-frame-rate.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0008-CameraSource-set-up-right-frame-rate.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0008-CameraSource-set-up-right-frame-rate.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `26b4f809231f39c6514d4a98fa0a76fe3ebfd5761419f7871be9c2fb4bc5a6f7`
+- Size/stat: 3655 bytes, 3 files, 5 hunks, +14/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libmediaplayerservice/StagefrightRecorder.cpp`
+  - `media/libmediaplayerservice/StagefrightRecorder.h`
+  - `media/libstagefright/CameraSource.cpp`
+
+### `0009-Don-t-use-YV12-color-format-for-video-decoding.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0009-Don-t-use-YV12-color-format-for-video-decoding.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0009-Don-t-use-YV12-color-format-for-video-decoding.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `68399944d2c6be1e0380ecdbe161413b643c7726d331a2a3c0272230ca6f4168`
+- Size/stat: 1343 bytes, 1 files, 2 hunks, +2/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/colorconversion/SoftwareRenderer.cpp`
+
+### `0010-media-enable-dithering-for-RGB565-conversion.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0010-media-enable-dithering-for-RGB565-conversion.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0010-media-enable-dithering-for-RGB565-conversion.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `94e40066f9cfe8f35a5ab2fcc741e6f43cccf25da0a14fa520484bac31362745`
+- Size/stat: 1294 bytes, 1 files, 1 hunks, +2/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/colorconversion/ColorConverter.cpp`
+
+### `0011-nuplayer-skip-bad-SAR-values.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0011-nuplayer-skip-bad-SAR-values.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0011-nuplayer-skip-bad-SAR-values.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `39953f0e9c1cd939e9d89214c70e2106babfe596f22f43580fc72ee9870434b8`
+- Size/stat: 2409 bytes, 1 files, 1 hunks, +7/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libmediaplayerservice/nuplayer/NuPlayer.cpp`
+
+### `0012-Add-paths-and-system-libraries-for-swcodec-APEX.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0012-Add-paths-and-system-libraries-for-swcodec-APEX.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0012-Add-paths-and-system-libraries-for-swcodec-APEX.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `dfa529a1e1053db7ec33e611a0cd0047f5c624496911ca47392d316a689d3595`
+- Size/stat: 4055 bytes, 1 files, 3 hunks, +4/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `apex/ld.config.txt`
+
+### `0013-A13-stagefright-Add-support-for-loading-a-custom-OMX.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0013-A13-stagefright-Add-support-for-loading-a-custom-OMX.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0013-A13-stagefright-Add-support-for-loading-a-custom-OMX.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `715216a9037ceb27c73e511ff2ceae97ec0f08ca505447fe096f3a11094be62e`
+- Size/stat: 3658 bytes, 3 files, 6 hunks, +13/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/omx/OMXStore.cpp`
+  - `media/libstagefright/omx/SoftOMXPlugin.cpp`
+  - `media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h`
+
+### `0014-A13-libstagefright-Extended-media-support-via-FFMPEG.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0014-A13-libstagefright-Extended-media-support-via-FFMPEG.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0014-A13-libstagefright-Extended-media-support-via-FFMPEG.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8a3c466377c6b54c1c1ac0c8441bd028e675eef975102f769af4d7339f737665`
+- Size/stat: 89824 bytes, 16 files, 54 hunks, +1881/-19
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 13 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libdatasource/FileSource.cpp`
+  - `media/libdatasource/include/datasource/FileSource.h`
+  - `media/libmediaplayerservice/StagefrightMetadataRetriever.cpp`
+  - `media/libmediaplayerservice/nuplayer/NuPlayerDecoder.cpp`
+  - `media/libstagefright/ACodec.cpp`
+  - `media/libstagefright/Android.bp`
+  - `media/libstagefright/FFMPEGSoftCodec.cpp`
+  - `media/libstagefright/MediaCodec.cpp`
+  - `media/libstagefright/MediaExtractorFactory.cpp`
+  - `media/libstagefright/Utils.cpp`
+  - `media/libstagefright/foundation/MediaDefs.cpp`
+  - `media/libstagefright/foundation/include/media/stagefright/foundation/MediaDefs.h`
+  - `media/libstagefright/include/media/stagefright/ACodec.h`
+  - `media/libstagefright/include/media/stagefright/FFMPEGSoftCodec.h`
+  - `media/libstagefright/include/media/stagefright/MetaDataBase.h`
+  - `media/libstagefright/omx/OMXUtils.cpp`
+
+### `0015-A13-Disable-CFI.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0015-A13-Disable-CFI.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0015-A13-Disable-CFI.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `13e163e97a00a502136d3fbe783893a34bca2944d48707f58224c497762d5f02`
+- Size/stat: 2975 bytes, 5 files, 7 hunks, +0/-7
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `media/codec2/components/base/Android.bp`
+  - `media/codec2/sfplugin/utils/Android.bp`
+  - `media/libstagefright/bqhelper/Android.bp`
+  - `media/libstagefright/flac/dec/Android.bp`
+  - `media/libstagefright/foundation/Android.bp`
+
+### `0016-A13-Porting-cameraSensor-related-changes.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0016-A13-Porting-cameraSensor-related-changes.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0016-A13-Porting-cameraSensor-related-changes.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `13a17d0d88cbd0198ddfa998d90c9d1fcedd0e3ed767076177e4071978b5cdbc`
+- Size/stat: 3553 bytes, 2 files, 5 hunks, +36/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/camera/libcameraservice/CameraService.cpp`
+  - `services/camera/libcameraservice/common/CameraProviderManager.cpp`
+
+### `0017-Revert-SW-encode-Fix-output-buffer-size.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0017-Revert-SW-encode-Fix-output-buffer-size.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0017-Revert-SW-encode-Fix-output-buffer-size.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4a604e8662144733b498ba9d9295be8cd473e228117e0a36ff66f840a54040f2`
+- Size/stat: 1982 bytes, 1 files, 1 hunks, +0/-27
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp`
+
+### `0018-A13-always-enable-OMX-plugin-on-bs-18.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0018-A13-always-enable-OMX-plugin-on-bs-18.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0018-A13-always-enable-OMX-plugin-on-bs-18.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d04854b50a3b8d576b0d849f0e8a28d82a9562f4c11adb354f97774889e9a00e`
+- Size/stat: 1191 bytes, 1 files, 1 hunks, +2/-10
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/omx/OMXStore.cpp`
+
+### `0019-A13-ROB-11904-Support-DRM-widevine.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0019-A13-ROB-11904-Support-DRM-widevine.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0019-A13-ROB-11904-Support-DRM-widevine.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a1303aa16ff16e23e050c8353299d0aac1043e2e7106acd73ce07cc55f8534e9`
+- Size/stat: 86429 bytes, 20 files, 19 hunks, +2128/-1
+- Binary evidence: reference only; no payload bytes
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `drm/mediadrm/plugins/widevine/default/Android.bp`
+  - `drm/mediadrm/plugins/widevine/default/libwvdrmengine.so`
+  - `drm/mediadrm/plugins/widevine/default/readme.txt`
+  - `drm/mediadrm/plugins/widevine/hidl/Android.bp`
+  - `drm/mediadrm/plugins/widevine/hidl/CryptoFactory.cpp`
+  - `drm/mediadrm/plugins/widevine/hidl/CryptoFactory.h`
+  - `drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.cpp`
+  - `drm/mediadrm/plugins/widevine/hidl/CryptoPlugin.h`
+  - `drm/mediadrm/plugins/widevine/hidl/DrmFactory.cpp`
+  - `drm/mediadrm/plugins/widevine/hidl/DrmFactory.h`
+  - `drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp`
+  - `drm/mediadrm/plugins/widevine/hidl/DrmPlugin.h`
+  - `drm/mediadrm/plugins/widevine/hidl/TypeConvert.cpp`
+  - `drm/mediadrm/plugins/widevine/hidl/TypeConvert.h`
+  - `drm/mediadrm/plugins/widevine/hidl/WVUUID.cpp`
+  - `drm/mediadrm/plugins/widevine/hidl/WVUUID.h`
+  - `drm/mediadrm/plugins/widevine/hidl/android.hardware.drm@1.3-service.widevine.rc`
+  - `drm/mediadrm/plugins/widevine/hidl/include/WVCreatePluginFactories.h`
+  - `drm/mediadrm/plugins/widevine/hidl/manifest_android.hardware.drm@1.3-service.widevine.xml`
+  - `drm/mediadrm/plugins/widevine/hidl/service.cpp`
+
+### `0020-ROB-12562-Love-and-Deepspace-Chapter-7-episode-6-get.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0020-ROB-12562-Love-and-Deepspace-Chapter-7-episode-6-get.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0020-ROB-12562-Love-and-Deepspace-Chapter-7-episode-6-get.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c6ab216d73ea3df84c87989a4f023b10a30e9d62477bbb76d43860a6dcfe19ad`
+- Size/stat: 1751 bytes, 1 files, 4 hunks, +11/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libmedia/IMediaSource.cpp`
+
+### `0021-ROB-14838-Reddit-Camera-issues-while-verifying-Tinde.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-av-all/0021-ROB-14838-Reddit-Camera-issues-while-verifying-Tinde.patch`](../../patches/android-16/a13-authority/frameworks-av-all/0021-ROB-14838-Reddit-Camera-issues-while-verifying-Tinde.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b710b29e3a731e8b6a948bd69d34061d116e26f26309ab11220a89f57a26a94a`
+- Size/stat: 1887 bytes, 1 files, 2 hunks, +4/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/camera/libcameraservice/api1/client2/Parameters.cpp`
+
+### `0001-A13-Adding-libhostcall_jni.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0001-A13-Adding-libhostcall_jni.patch`](../../patches/android-16/a13-authority/frameworks-base/0001-A13-Adding-libhostcall_jni.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4e36c373144293c257a733f3d7a58e3dd7286642139c4d817d4d59e076b7c0c1`
+- Size/stat: 38153 bytes, 2 files, 2 hunks, +920/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/java/com/bluestacks/server/native/Android.mk`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0002-A13-Adding-BlueStacks-basic-services.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0002-A13-Adding-BlueStacks-basic-services.patch`](../../patches/android-16/a13-authority/frameworks-base/0002-A13-Adding-BlueStacks-basic-services.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e93bdf40ac493446cdf5f5ee22f0eef0924ef2f3cee0a79c2744e684810eb623`
+- Size/stat: 419532 bytes, 24 files, 35 hunks, +9758/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 23 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `Android.bp`
+  - `core/java/android/app/ActivityManagerInternal.java`
+  - `core/java/android/app/SystemServiceRegistry.java`
+  - `core/java/android/content/Context.java`
+  - `core/java/android/permission/ILegacyPermissionManager.aidl`
+  - `core/java/android/permission/LegacyPermissionManager.java`
+  - `core/java/android/util/BstUtils.java`
+  - `core/java/android/util/Features.java`
+  - `core/java/com/android/internal/os/BatteryStatsImpl.java`
+  - `core/java/com/bluestacks/internal/Sdk23.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/BstUtilsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `core/java/com/bluestacks/os/IBstUtilsService.aidl`
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+  - `services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java`
+  - `services/core/java/com/android/server/pm/permission/LegacyPermissionManagerInternal.java`
+  - `services/core/java/com/android/server/pm/permission/LegacyPermissionManagerService.java`
+  - `services/java/com/android/server/SystemServer.java`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/BstUtilsService.java`
+
+### `0003-A13-Sending-top-display-focus-change-to-host.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0003-A13-Sending-top-display-focus-change-to-host.patch`](../../patches/android-16/a13-authority/frameworks-base/0003-A13-Sending-top-display-focus-change-to-host.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `293889eec266578ddc587f0b7499b96229c467e96405094940a0e53912fcfce1`
+- Size/stat: 16685 bytes, 2 files, 13 hunks, +170/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+
+### `0004-A13-Disable-Bluetooth-service.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0004-A13-Disable-Bluetooth-service.patch`](../../patches/android-16/a13-authority/frameworks-base/0004-A13-Disable-Bluetooth-service.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c9a577b3b81eab5d39245c3ad23dec1cf572c1782ada14d43b03893cbc8efec2`
+- Size/stat: 1138 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/java/com/android/server/SystemServer.java`
+
+### `0005-A13-Temporarily-disable-KeyStore-function-to-avoid-s.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0005-A13-Temporarily-disable-KeyStore-function-to-avoid-s.patch`](../../patches/android-16/a13-authority/frameworks-base/0005-A13-Temporarily-disable-KeyStore-function-to-avoid-s.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `37faa1b5fb20ce97aab4630f12dd6004f4456b05b978ea60c56a1cbe3d17888a`
+- Size/stat: 4273 bytes, 1 files, 5 hunks, +11/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/locksettings/LockSettingsService.java`
+
+### `0006-A13-Hiding-navigation-bar.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0006-A13-Hiding-navigation-bar.patch`](../../patches/android-16/a13-authority/frameworks-base/0006-A13-Hiding-navigation-bar.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `128729614b7a85d2df1fb1267c1a90893dbb6cab3b8edf97cb43ed38d55be518`
+- Size/stat: 1633 bytes, 1 files, 2 hunks, +8/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayPolicy.java`
+
+### `0007-A13-Changes-for-native-mouse-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0007-A13-Changes-for-native-mouse-pointer.patch`](../../patches/android-16/a13-authority/frameworks-base/0007-A13-Changes-for-native-mouse-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ce26b467d8130077fb50c156124b4ede2478fe90e059f84d96ee1641297cca30`
+- Size/stat: 3939 bytes, 4 files, 5 hunks, +27/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/hardware/input/IInputManager.aidl`
+  - `core/java/android/hardware/input/InputManager.java`
+  - `core/java/android/view/PointerIcon.java`
+  - `services/core/java/com/android/server/input/InputManagerService.java`
+
+### `0008-A13-Added-chnages-to-support-StopApp-gcall.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0008-A13-Added-chnages-to-support-StopApp-gcall.patch`](../../patches/android-16/a13-authority/frameworks-base/0008-A13-Added-chnages-to-support-StopApp-gcall.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a75ef32695b6eac06eff795ea33e365fe3246bc03da0c62e79bf847b16312681`
+- Size/stat: 12048 bytes, 7 files, 14 hunks, +72/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 7 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityManager.java`
+  - `core/java/android/app/ActivityManagerInternal.java`
+  - `core/java/android/app/IActivityManager.aidl`
+  - `core/java/android/app/IActivityTaskManager.aidl`
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskSupervisor.java`
+
+### `0009-A13-Support-orientation-change.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0009-A13-Support-orientation-change.patch`](../../patches/android-16/a13-authority/frameworks-base/0009-A13-Support-orientation-change.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5fbe753c3a24abee7b7cf13c92f5470a0d00b88bbf62b6ed274107799f904175`
+- Size/stat: 25531 bytes, 10 files, 33 hunks, +194/-16
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 9 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/policy/PhoneWindowManager.java`
+  - `services/core/java/com/android/server/policy/WindowManagerPolicy.java`
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+  - `services/core/java/com/android/server/wm/DisplayRotation.java`
+  - `services/core/java/com/android/server/wm/DisplayWindowSettings.java`
+  - `services/core/java/com/android/server/wm/TaskDisplayArea.java`
+  - `services/core/java/com/android/server/wm/WindowAnimator.java`
+  - `services/core/java/com/android/server/wm/WindowManagerDebugConfig.java`
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+  - `services/core/java/com/android/server/wm/WindowOrientationListener.java`
+
+### `0010-A13-Disable-bootanimation-in-the-code.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0010-A13-Disable-bootanimation-in-the-code.patch`](../../patches/android-16/a13-authority/frameworks-base/0010-A13-Disable-bootanimation-in-the-code.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3d61d23a01bccbf4c764d36b960e355723bc4cda6d92c3ba3a0cbfcd7076bd85`
+- Size/stat: 982 bytes, 1 files, 2 hunks, +5/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `cmds/bootanimation/BootAnimationUtil.cpp`
+
+### `0011-A13-Add-hcall-support-onImeChange-onTextEditModeChan.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0011-A13-Add-hcall-support-onImeChange-onTextEditModeChan.patch`](../../patches/android-16/a13-authority/frameworks-base/0011-A13-Add-hcall-support-onImeChange-onTextEditModeChan.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `63542fb00c1c85f6d44597de7d17fd8bb6cc098e5bfad40b6ea3d55fd44d1b4b`
+- Size/stat: 7248 bytes, 1 files, 7 hunks, +55/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/inputmethod/InputMethodManagerService.java`
+
+### `0012-A13-Inherit-parent-capabilities-into-the-children.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0012-A13-Inherit-parent-capabilities-into-the-children.patch`](../../patches/android-16/a13-authority/frameworks-base/0012-A13-Inherit-parent-capabilities-into-the-children.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3097d0212425387c89e6154b0392e805924abdb5a3ffffe04369eac15471b4ca`
+- Size/stat: 1275 bytes, 1 files, 2 hunks, +7/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `0013-A13-Updating-BlueStacks-wallpaper.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0013-A13-Updating-BlueStacks-wallpaper.patch`](../../patches/android-16/a13-authority/frameworks-base/0013-A13-Updating-BlueStacks-wallpaper.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ae030d732428662807495e5aff326f7801655c125d859bd06d7bb9d70f366697`
+- Size/stat: 11950114 bytes, 3 files, 0 hunks, +0/-0
+- Binary evidence: embedded payload
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `core/res/res/drawable-nodpi/default_wallpaper.png`
+  - `core/res/res/drawable-sw600dp-nodpi/default_wallpaper.png`
+  - `core/res/res/drawable-sw720dp-nodpi/default_wallpaper.png`
+
+### `0014-A13-Making-sure-that-apps-located-in-data-downloads-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0014-A13-Making-sure-that-apps-located-in-data-downloads-.patch`](../../patches/android-16/a13-authority/frameworks-base/0014-A13-Making-sure-that-apps-located-in-data-downloads-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `efc102bda4dc340259e04c6569606094155033681d586a7b8e85eaa1ecc3124a`
+- Size/stat: 3359 bytes, 2 files, 3 hunks, +24/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InitAppsHelper.java`
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `0015-A13-Using-0x90-0xe0-0x10-scancode-for-HOME-and-0x99-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0015-A13-Using-0x90-0xe0-0x10-scancode-for-HOME-and-0x99-.patch`](../../patches/android-16/a13-authority/frameworks-base/0015-A13-Using-0x90-0xe0-0x10-scancode-for-HOME-and-0x99-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7dd182a8199e27c30691fd33759f6d7eee1db021c1c4ddc67dce2b95c59629f3`
+- Size/stat: 944 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `data/keyboards/Generic.kl`
+
+### `0016-A13-Disable-Keyguard.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0016-A13-Disable-Keyguard.patch`](../../patches/android-16/a13-authority/frameworks-base/0016-A13-Disable-Keyguard.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4c9d97136d517678f02598eee6ef4eeee52cad566d5d1b71761b1cecb5fbe237`
+- Size/stat: 1703 bytes, 1 files, 1 hunks, +6/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java`
+
+### `0017-A13-Disable-Lockscreen.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0017-A13-Disable-Lockscreen.patch`](../../patches/android-16/a13-authority/frameworks-base/0017-A13-Disable-Lockscreen.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c392396cc60081015301753ebdf0d84edd5d36558b7240cc8a053888a97133e7`
+- Size/stat: 1567 bytes, 1 files, 3 hunks, +6/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/android/internal/widget/LockPatternUtils.java`
+
+### `0018-A13-Make-system-stay-awake.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0018-A13-Make-system-stay-awake.patch`](../../patches/android-16/a13-authority/frameworks-base/0018-A13-Make-system-stay-awake.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `91149a6eb2c68ad8b8e7a51564543dc98468e0bce4f4f925d4380c2f0a7f85e9`
+- Size/stat: 1195 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java`
+
+### `0019-A13-Disable-the-systemui-clipboard-overlay.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0019-A13-Disable-the-systemui-clipboard-overlay.patch`](../../patches/android-16/a13-authority/frameworks-base/0019-A13-Disable-the-systemui-clipboard-overlay.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `679ac977a10226ab84b04eae398d1a348d06d886a439aa928bd84b7fddc4f57e`
+- Size/stat: 1813 bytes, 1 files, 3 hunks, +5/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java`
+
+### `0020-A13-Setting-screen-timeout-value-as-never.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0020-A13-Setting-screen-timeout-value-as-never.patch`](../../patches/android-16/a13-authority/frameworks-base/0020-A13-Setting-screen-timeout-value-as-never.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `bbed82b7f5c4189d1afb61ec66aebd706aeb21d431b93edc51d4a51d12cf8aa6`
+- Size/stat: 1258 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `services/core/java/com/android/server/power/PowerManagerService.java`
+
+### `0021-A13-Fix-crash-issue-when-opening-com.location.provid.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0021-A13-Fix-crash-issue-when-opening-com.location.provid.patch`](../../patches/android-16/a13-authority/frameworks-base/0021-A13-Fix-crash-issue-when-opening-com.location.provid.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `077d2142ec10d311ca3ef9ebe31ff1ccf8d59adf16e7e0b74dca47fea84b8914`
+- Size/stat: 2101 bytes, 2 files, 4 hunks, +5/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `location/java/android/location/Location.java`
+  - `services/core/java/com/android/server/location/injector/SystemAppOpsHelper.java`
+
+### `0022-A13-Disable-quota-limit-irregard-of-fuse-and-sdcardf.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0022-A13-Disable-quota-limit-irregard-of-fuse-and-sdcardf.patch`](../../patches/android-16/a13-authority/frameworks-base/0022-A13-Disable-quota-limit-irregard-of-fuse-and-sdcardf.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `dc641ba19aab6f4176897ca02dca027770ba24da771a6cd79c083362a4c22cae`
+- Size/stat: 2351 bytes, 1 files, 1 hunks, +0/-37
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/android_os_storage_StorageManager.cpp`
+
+### `0023-A13-Setting-boot_completed-and-screen_enabled-props.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0023-A13-Setting-boot_completed-and-screen_enabled-props.patch`](../../patches/android-16/a13-authority/frameworks-base/0023-A13-Setting-boot_completed-and-screen_enabled-props.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ddfaf79bb1f38343ddacc8ba70e77ff617ac6639f5932af6374873a6dd5318e9`
+- Size/stat: 1966 bytes, 2 files, 2 hunks, +4/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskManagerService.java`
+
+### `0024-Changes-to-add-chrome-webviewprovider-as-default.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0024-Changes-to-add-chrome-webviewprovider-as-default.patch`](../../patches/android-16/a13-authority/frameworks-base/0024-Changes-to-add-chrome-webviewprovider-as-default.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `43842e47aa18289a56f46598e3e106ffbdf19ae975d530280e79bde7128630ed`
+- Size/stat: 1069 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/res/res/xml/config_webview_packages.xml`
+
+### `0025-Forcing-supported-abi-values-to-play-store-based-on-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0025-Forcing-supported-abi-values-to-play-store-based-on-.patch`](../../patches/android-16/a13-authority/frameworks-base/0025-Forcing-supported-abi-values-to-play-store-based-on-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `48a76bffdb40885b1afec3944c645694717d41c45c22c96612f3e982a9814361`
+- Size/stat: 4710 bytes, 1 files, 3 hunks, +87/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `0026-A13-Faking-Esc-key-to-work-as-back-button-in-app-pla.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0026-A13-Faking-Esc-key-to-work-as-back-button-in-app-pla.patch`](../../patches/android-16/a13-authority/frameworks-base/0026-A13-Faking-Esc-key-to-work-as-back-button-in-app-pla.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `dacdc0b9589cb87d2242c7de3ba4b0c6911a2ea4fa7155aab059be93062b24d1`
+- Size/stat: 1285 bytes, 2 files, 2 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `data/keyboards/Generic.kcm`
+  - `data/keyboards/Virtual.kcm`
+
+### `0027-A13-Set-bst-props-to-default-value-as-starting-zygot.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0027-A13-Set-bst-props-to-default-value-as-starting-zygot.patch`](../../patches/android-16/a13-authority/frameworks-base/0027-A13-Set-bst-props-to-default-value-as-starting-zygot.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `03eb6c27791450301bdd4bbe2e924bcba2a79efeb129a92c0c8ce006ac314570`
+- Size/stat: 1046 bytes, 1 files, 1 hunks, +5/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `cmds/app_process/app_main.cpp`
+
+### `0028-A13-Adding-path-to-be-read-for-default-permission-an.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0028-A13-Adding-path-to-be-read-for-default-permission-an.patch`](../../patches/android-16/a13-authority/frameworks-base/0028-A13-Adding-path-to-be-read-for-default-permission-an.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3ee15b5220aaa4d059da0e0ab05c795a5c8ac76cf1fe7456bc33a087b82071f8`
+- Size/stat: 1073 bytes, 1 files, 1 hunks, +2/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `core/java/com/android/server/SystemConfig.java`
+
+### `0029-A13-Faking-glesversion-and-features-for-playstore.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0029-A13-Faking-glesversion-and-features-for-playstore.patch`](../../patches/android-16/a13-authority/frameworks-base/0029-A13-Faking-glesversion-and-features-for-playstore.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3def24c2e59316ae225e653fce2af9ce6770ed6be941b02faa3f96ed586da6a7`
+- Size/stat: 10715 bytes, 2 files, 11 hunks, +141/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskManagerService.java`
+
+### `0030-A13-Ported-IAP-related-changes.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0030-A13-Ported-IAP-related-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0030-A13-Ported-IAP-related-changes.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `54a432c62c858d54e9f12616a766d296869480bf7229b386e562c71bb8f4a6ca`
+- Size/stat: 21336 bytes, 2 files, 9 hunks, +279/-7
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/Activity.java`
+  - `core/java/android/widget/TextView.java`
+
+### `0031-A13-Reading-locale-from-bst.locale-if-lang-and-count.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0031-A13-Reading-locale-from-bst.locale-if-lang-and-count.patch`](../../patches/android-16/a13-authority/frameworks-base/0031-A13-Reading-locale-from-bst.locale-if-lang-and-count.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c1a270deedf94f17397925e64e225144e1a013d86e94093b5786d44e7e71f3a5`
+- Size/stat: 2097 bytes, 1 files, 2 hunks, +19/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/AndroidRuntime.cpp`
+
+### `0032-A13-Attaching-GrallocUploadThread-to-JVM-env.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0032-A13-Attaching-GrallocUploadThread-to-JVM-env.patch`](../../patches/android-16/a13-authority/frameworks-base/0032-A13-Attaching-GrallocUploadThread-to-JVM-env.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f876ec961b6cc9ec5bc6895cfa6d53ddd30982833d14616400562b12491c06ae`
+- Size/stat: 7028 bytes, 5 files, 10 hunks, +52/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libs/hwui/HardwareBitmapUploader.cpp`
+  - `libs/hwui/HardwareBitmapUploader.h`
+  - `libs/hwui/jni/android_graphics_HardwareRenderer.cpp`
+  - `libs/hwui/renderthread/RenderThread.cpp`
+  - `libs/hwui/renderthread/RenderThread.h`
+
+### `0033-A13-Changes-for-audio-volume.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0033-A13-Changes-for-audio-volume.patch`](../../patches/android-16/a13-authority/frameworks-base/0033-A13-Changes-for-audio-volume.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fbc312a0654e86f7a04ba09b4396414cb07db17fdb8d4496560f758c3af50bf8`
+- Size/stat: 3982 bytes, 2 files, 4 hunks, +26/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/java/android/media/AudioSystem.java`
+  - `services/core/java/com/android/server/audio/AudioService.java`
+
+### `0034-A13-Parsing-apps.xml-on-every-boot-so-permissions-ar.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0034-A13-Parsing-apps.xml-on-every-boot-so-permissions-ar.patch`](../../patches/android-16/a13-authority/frameworks-base/0034-A13-Parsing-apps.xml-on-every-boot-so-permissions-ar.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `dea7fb39583fe8202fb8730157639820c13b1ca589f230b623396575acf77f4a`
+- Size/stat: 2139 bytes, 1 files, 2 hunks, +9/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `0035-A13-Disabling-default-StrictMode-policy-for-Bluestac.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0035-A13-Disabling-default-StrictMode-policy-for-Bluestac.patch`](../../patches/android-16/a13-authority/frameworks-base/0035-A13-Disabling-default-StrictMode-policy-for-Bluestac.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b6861344f7554203ee36dd4e9bdf509153bd23e6e6de5393254d1389c692de7c`
+- Size/stat: 1275 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityThread.java`
+
+### `0036-A13-Added-telephony-related-changes.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0036-A13-Added-telephony-related-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0036-A13-Added-telephony-related-changes.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f741f5f51af40b6d0ace33631482235562a43a7ca1e4f0c3baa4b06f47fc59dc`
+- Size/stat: 17125 bytes, 3 files, 26 hunks, +180/-19
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `telephony/java/android/telephony/ServiceState.java`
+  - `telephony/java/android/telephony/SubscriptionManager.java`
+  - `telephony/java/android/telephony/TelephonyManager.java`
+
+### `0037-A13-Adding-NTP-time-sync-code-which-will-do-it-perio.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0037-A13-Adding-NTP-time-sync-code-which-will-do-it-perio.patch`](../../patches/android-16/a13-authority/frameworks-base/0037-A13-Adding-NTP-time-sync-code-which-will-do-it-perio.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `af65253280d1bd0a6e5ce845bdcc09620342c5d00bd0942c2acae43ab736f8bb`
+- Size/stat: 2981 bytes, 1 files, 4 hunks, +9/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `services/core/java/com/android/server/NetworkTimeUpdateService.java`
+
+### `0038-A13-code-sync-with-Rvc.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0038-A13-code-sync-with-Rvc.patch`](../../patches/android-16/a13-authority/frameworks-base/0038-A13-code-sync-with-Rvc.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9b0fb9eb87a88dc5c0e2ee3b3612110419dde2ff01ed4e2158d9d3cf86b40c40`
+- Size/stat: 3694 bytes, 1 files, 5 hunks, +11/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/inputmethod/InputMethodManagerService.java`
+
+### `0039-A13-Disabling-location-accuracy-popup.-Return-false.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0039-A13-Disabling-location-accuracy-popup.-Return-false.patch`](../../patches/android-16/a13-authority/frameworks-base/0039-A13-Disabling-location-accuracy-popup.-Return-false.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b41dfda940c73c699c4d0f5533e223711607f53eab090973b155bf8aaf51b6da`
+- Size/stat: 4357 bytes, 1 files, 5 hunks, +38/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/location/LocationManagerService.java`
+
+### `0040-A13-code-sync-with-Android-11.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0040-A13-code-sync-with-Android-11.patch`](../../patches/android-16/a13-authority/frameworks-base/0040-A13-code-sync-with-Android-11.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `762e1380ff6277edcbaee6c4b3eb19aa809e0ab5272c85186cc6b42d8cee33a9`
+- Size/stat: 48296 bytes, 7 files, 28 hunks, +768/-18
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 7 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0041-A13-There-was-a-case-in-which-fb-schedule-was-corrup.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0041-A13-There-was-a-case-in-which-fb-schedule-was-corrup.patch`](../../patches/android-16/a13-authority/frameworks-base/0041-A13-There-was-a-case-in-which-fb-schedule-was-corrup.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `abaa9d18c3956236cb88dedc67393fb1f3223ae55e973a329ca15f775f035bfa`
+- Size/stat: 1570 bytes, 1 files, 1 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `services/backup/java/com/android/server/backup/UserBackupManagerService.java`
+
+### `0042-A13-Adding-unit-test-script.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0042-A13-Adding-unit-test-script.patch`](../../patches/android-16/a13-authority/frameworks-base/0042-A13-Adding-unit-test-script.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4ee94288f0cf668b0d65e9944c1e0e2825b6b04c3fbbc8dd19780ef95e8eb441`
+- Size/stat: 3696 bytes, 1 files, 1 hunks, +68/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `unit-test.sh`
+
+### `0043-A13-sync-rvc-xml-file.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0043-A13-sync-rvc-xml-file.patch`](../../patches/android-16/a13-authority/frameworks-base/0043-A13-sync-rvc-xml-file.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a64828ae6f3b36c2713606bf826422dd8b4b8db2cb96df15595996e5a155bd13`
+- Size/stat: 2015 bytes, 2 files, 2 hunks, +7/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/res/res/values/config.xml`
+  - `data/etc/privapp-permissions-platform.xml`
+
+### `0044-A13-BS4-3201-Ported-debuggable-property-changes.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0044-A13-BS4-3201-Ported-debuggable-property-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0044-A13-BS4-3201-Ported-debuggable-property-changes.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f20c73afc376a7cbf5d6706ffef4fd86cf0effc82996cf6e5334f745b82cb390`
+- Size/stat: 2333 bytes, 1 files, 2 hunks, +21/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `0045-A13-Fix-for-Low-battery-warning-pop-up.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0045-A13-Fix-for-Low-battery-warning-pop-up.patch`](../../patches/android-16/a13-authority/frameworks-base/0045-A13-Fix-for-Low-battery-warning-pop-up.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d3024fac42cc57411674948c1f563a64e66bd82e13375c7cdef36f904da08ffb`
+- Size/stat: 1717 bytes, 1 files, 1 hunks, +12/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/BatteryService.java`
+
+### `0046-A13-Changes-to-Hide-the-Bluestacks-packages.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0046-A13-Changes-to-Hide-the-Bluestacks-packages.patch`](../../patches/android-16/a13-authority/frameworks-base/0046-A13-Changes-to-Hide-the-Bluestacks-packages.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `08c8cf6ca6234b70948fbe001465bab681a619e61ae2625576fe5798a9c0f7b9`
+- Size/stat: 11141 bytes, 1 files, 14 hunks, +88/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/ComputerEngine.java`
+
+### `0047-A13-Changes-to-return-correct-primary-storage-size.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0047-A13-Changes-to-return-correct-primary-storage-size.patch`](../../patches/android-16/a13-authority/frameworks-base/0047-A13-Changes-to-return-correct-primary-storage-size.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2013f485ea30b1c96e2cdf06c68f6ae9c09b3ff2e501fa9d197d2a3951c996c8`
+- Size/stat: 4378 bytes, 3 files, 4 hunks, +37/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/os/storage/StorageManager.java`
+  - `core/java/android/text/format/Formatter.java`
+  - `services/usage/java/com/android/server/usage/StorageStatsService.java`
+
+### `0048-A13-Adding-support-to-change-device-profile.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0048-A13-Adding-support-to-change-device-profile.patch`](../../patches/android-16/a13-authority/frameworks-base/0048-A13-Adding-support-to-change-device-profile.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a023e2dc7bc3df7850d87c2cb7c2ef53e1d233a89005e8ea4d4145a2b53dc973`
+- Size/stat: 2873 bytes, 1 files, 2 hunks, +39/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `0049-A13-Not-allowing-apps-to-change-screen_brightness-an.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0049-A13-Not-allowing-apps-to-change-screen_brightness-an.patch`](../../patches/android-16/a13-authority/frameworks-base/0049-A13-Not-allowing-apps-to-change-screen_brightness-an.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c07ad0a4135f0a374c1289be096174c22d8a10f231b2ce0cbcd417c696bd04a6`
+- Size/stat: 7409 bytes, 1 files, 3 hunks, +68/-21
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/provider/Settings.java`
+
+### `0050-A13-Porting-changes-for-dxflag-config.db-entry.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0050-A13-Porting-changes-for-dxflag-config.db-entry.patch`](../../patches/android-16/a13-authority/frameworks-base/0050-A13-Porting-changes-for-dxflag-config.db-entry.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `19850f95e0bf1fc7b2a72e194d6ada109840612e89c271a6768b899f22ced22a`
+- Size/stat: 3375 bytes, 1 files, 4 hunks, +20/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/DexOptHelper.java`
+
+### `0051-A13-Faking-as-System-has-vibrator-available.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0051-A13-Faking-as-System-has-vibrator-available.patch`](../../patches/android-16/a13-authority/frameworks-base/0051-A13-Faking-as-System-has-vibrator-available.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `54ac150c188abef097d46dc5167ae1b6b122cb6d3f47524797fba01ac2ffe2b9`
+- Size/stat: 2424 bytes, 1 files, 4 hunks, +11/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/os/SystemVibrator.java`
+
+### `0052-A13-ROB-6795-Fixing-Chat-is-not-working-properly-on-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0052-A13-ROB-6795-Fixing-Chat-is-not-working-properly-on-.patch`](../../patches/android-16/a13-authority/frameworks-base/0052-A13-ROB-6795-Fixing-Chat-is-not-working-properly-on-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `aeb444f5ce2894455e504102a79b5b768eec19691c9307f45410162b6d04a424`
+- Size/stat: 1899 bytes, 1 files, 1 hunks, +10/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+
+### `0053-A13-A11-78-On-clone-instance-updating-android-id-for.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0053-A13-A11-78-On-clone-instance-updating-android-id-for.patch`](../../patches/android-16/a13-authority/frameworks-base/0053-A13-A11-78-On-clone-instance-updating-android-id-for.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fec7cf783cad5c1bcadfa4ee8080580dbbc24b7d974565d465e8baacf695c139`
+- Size/stat: 5005 bytes, 1 files, 2 hunks, +52/-15
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java`
+
+### `0054-A13-ROB-4550-Code-change-sync-from-Pie.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0054-A13-ROB-4550-Code-change-sync-from-Pie.patch`](../../patches/android-16/a13-authority/frameworks-base/0054-A13-ROB-4550-Code-change-sync-from-Pie.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2f72314a2e4152dc5f7f9e82d57ae6e0937d29ecfd2a9464018f3897fd13fe5d`
+- Size/stat: 1352 bytes, 1 files, 1 hunks, +2/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/net/NetworkPolicyManagerService.java`
+
+### `0055-A13-When-Status-bar-is-hidden-then-if-someone-querie.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0055-A13-When-Status-bar-is-hidden-then-if-someone-querie.patch`](../../patches/android-16/a13-authority/frameworks-base/0055-A13-When-Status-bar-is-hidden-then-if-someone-querie.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `94779012beda11ec0261a790cd6102d6337e809f78f8648ee9907552bb444735`
+- Size/stat: 3966 bytes, 1 files, 4 hunks, +39/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/content/res/ResourcesImpl.java`
+
+### `0056-A13-making-sure-intent-is-not-null-before-accessing-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0056-A13-making-sure-intent-is-not-null-before-accessing-.patch`](../../patches/android-16/a13-authority/frameworks-base/0056-A13-making-sure-intent-is-not-null-before-accessing-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f6f4a3d64807d1b7cef864e686a3a667b7bdb5718f0c2a9457c37affe79034bd`
+- Size/stat: 1251 bytes, 1 files, 1 hunks, +4/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/PendingIntent.java`
+
+### `0057-A13-Sending-fake-sensor-vendor-information-to-the-ap.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0057-A13-Sending-fake-sensor-vendor-information-to-the-ap.patch`](../../patches/android-16/a13-authority/frameworks-base/0057-A13-Sending-fake-sensor-vendor-information-to-the-ap.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e06eaeedfaf04e7c7690da98377b60ba1ef380383d55f1fd7722cd32cebbc0d8`
+- Size/stat: 1496 bytes, 1 files, 2 hunks, +11/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/hardware/Sensor.java`
+
+### `0058-A13-Fix-a-NPE-when-putting-a-null-Bundle-in-an-Inten.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0058-A13-Fix-a-NPE-when-putting-a-null-Bundle-in-an-Inten.patch`](../../patches/android-16/a13-authority/frameworks-base/0058-A13-Fix-a-NPE-when-putting-a-null-Bundle-in-an-Inten.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0bcef029d463dc27b6ccee3e0253453be31a1fd2a881768cadb49955de75ed06`
+- Size/stat: 976 bytes, 1 files, 1 hunks, +3/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/content/Intent.java`
+
+### `0059-Revert-A13-ROB-6795-Fixing-Chat-is-not-working-prope.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0059-Revert-A13-ROB-6795-Fixing-Chat-is-not-working-prope.patch`](../../patches/android-16/a13-authority/frameworks-base/0059-Revert-A13-ROB-6795-Fixing-Chat-is-not-working-prope.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3fdf0cc37628679bd590195f898bbd1d170122f987bec399a686e3dba38986a0`
+- Size/stat: 1969 bytes, 1 files, 1 hunks, +1/-10
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+
+### `0060-A13-Port-bst-wallpaper-codes-and-resource.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0060-A13-Port-bst-wallpaper-codes-and-resource.patch`](../../patches/android-16/a13-authority/frameworks-base/0060-A13-Port-bst-wallpaper-codes-and-resource.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `01e721af2ba3a6fe637e8c04539b563dd8ed79e5414b3ef3efffe4e98852b651`
+- Size/stat: 27791 bytes, 7 files, 9 hunks, +42/-2
+- Binary evidence: embedded payload
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 7 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/WallpaperManager.java`
+  - `core/java/android/content/res/AssetManager.java`
+  - `core/res/res/drawable-nodpi/default_wallpaper_msi.png`
+  - `core/res/res/drawable-sw600dp-nodpi/default_wallpaper_msi.png`
+  - `core/res/res/drawable-sw720dp-nodpi/default_wallpaper_msi.png`
+  - `core/res/res/values/dimens.xml`
+  - `core/res/res/values/symbols.xml`
+
+### `0061-A13-Porting-modifyDispRotationVal-related-changes.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0061-A13-Porting-modifyDispRotationVal-related-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0061-A13-Porting-modifyDispRotationVal-related-changes.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fd2da6b21ed069fe6a41ca188b02daac1abb35daae8779aff5366b1008b68b3f`
+- Size/stat: 3910 bytes, 1 files, 5 hunks, +34/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/Display.java`
+
+### `0062-A13-Add-config.db-entry-xarch.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0062-A13-Add-config.db-entry-xarch.patch`](../../patches/android-16/a13-authority/frameworks-base/0062-A13-Add-config.db-entry-xarch.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b34ca530d1f41493152b8d644a80a9436b2cda092a38215a1b94971c230db88f`
+- Size/stat: 7258 bytes, 2 files, 7 hunks, +50/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+  - `services/core/java/com/android/server/pm/RemovePackageHelper.java`
+
+### `0063-A13-Add-config.db-entry-xcpu.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0063-A13-Add-config.db-entry-xcpu.patch`](../../patches/android-16/a13-authority/frameworks-base/0063-A13-Add-config.db-entry-xcpu.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `897d5195242ef430758e212cee589841d68202b39a3944e051515f15c936db73`
+- Size/stat: 5551 bytes, 1 files, 4 hunks, +121/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `0064-A13-Added-changes-related-to-bstOnDisplayedPackageCh.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0064-A13-Added-changes-related-to-bstOnDisplayedPackageCh.patch`](../../patches/android-16/a13-authority/frameworks-base/0064-A13-Added-changes-related-to-bstOnDisplayedPackageCh.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `38d03ee47df5a260b0f5a431c384cabcf0226c796f941c274d5903468051ac8e`
+- Size/stat: 12859 bytes, 3 files, 7 hunks, +152/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/ActivityStarter.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskSupervisor.java`
+  - `services/core/java/com/android/server/wm/Task.java`
+
+### `0065-A13-ROB-9926-add-the-default-profile-file-for-the-sp.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0065-A13-ROB-9926-add-the-default-profile-file-for-the-sp.patch`](../../patches/android-16/a13-authority/frameworks-base/0065-A13-ROB-9926-add-the-default-profile-file-for-the-sp.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1127c0d82d6d342d3f99cefd06d743a91e23e55d8ab403fc1936a961de3b6276`
+- Size/stat: 2969 bytes, 1 files, 2 hunks, +33/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityThread.java`
+
+### `0066-A13-Porting-mdsd-config-setting-imp.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0066-A13-Porting-mdsd-config-setting-imp.patch`](../../patches/android-16/a13-authority/frameworks-base/0066-A13-Porting-mdsd-config-setting-imp.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3eda65830939d020cdb2d3822212cc9b7d584e936e7cb2d2faa9c941558a957b`
+- Size/stat: 8856 bytes, 1 files, 9 hunks, +85/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/os/Environment.java`
+
+### `0067-A13-Changes-for-host-clipboard.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0067-A13-Changes-for-host-clipboard.patch`](../../patches/android-16/a13-authority/frameworks-base/0067-A13-Changes-for-host-clipboard.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9e11408d174a9fd3d43a34db485f0faeaa545943d2de3ca225d9a8ed8b20b0a1`
+- Size/stat: 3527 bytes, 1 files, 5 hunks, +19/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/clipboard/ClipboardService.java`
+
+### `0068-A13-Add-config.db-entry-blacklist-blacklistAction.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0068-A13-Add-config.db-entry-blacklist-blacklistAction.patch`](../../patches/android-16/a13-authority/frameworks-base/0068-A13-Add-config.db-entry-blacklist-blacklistAction.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `14512c37b7fd789c4ccf9fb468bf3189de585d402d86f7fe5a2d2079ff7ec52c`
+- Size/stat: 10913 bytes, 2 files, 13 hunks, +112/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `0069-A13-Customize-the-footer-of-SystemUi-s-qs.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0069-A13-Customize-the-footer-of-SystemUi-s-qs.patch`](../../patches/android-16/a13-authority/frameworks-base/0069-A13-Customize-the-footer-of-SystemUi-s-qs.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `74fab4f7093dbe17a5c2fd763424e99a5ab796c221ccb030ab127729cb2e8f94`
+- Size/stat: 3500 bytes, 2 files, 5 hunks, +18/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt`
+  - `packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt`
+
+### `0070-A13-Faking-the-uninitialised-properties.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0070-A13-Faking-the-uninitialised-properties.patch`](../../patches/android-16/a13-authority/frameworks-base/0070-A13-Faking-the-uninitialised-properties.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `09af2ed4e345d9df6e17a3d27340ea37a0f929945d1597e5a4d027f78b9be7c9`
+- Size/stat: 1406 bytes, 1 files, 1 hunks, +12/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/android_os_SystemProperties.cpp`
+
+### `0071-A13-Restricting-GMS-Vending-and-chrome-apk-update-wh.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0071-A13-Restricting-GMS-Vending-and-chrome-apk-update-wh.patch`](../../patches/android-16/a13-authority/frameworks-base/0071-A13-Restricting-GMS-Vending-and-chrome-apk-update-wh.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a8584a7e37f4776dc69be8a55fad42395121bada38fcae6a87ae930f98f57369`
+- Size/stat: 3883 bytes, 1 files, 4 hunks, +44/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `0072-A13-Porting-changes-for-blacklist-config.db-entry.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0072-A13-Porting-changes-for-blacklist-config.db-entry.patch`](../../patches/android-16/a13-authority/frameworks-base/0072-A13-Porting-changes-for-blacklist-config.db-entry.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e06a3c27fd7ab567520cc96a0ed1ef1237f2323483f8f1ac1a44ac7b01420df5`
+- Size/stat: 1451 bytes, 1 files, 1 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `0073-A13-Changes-to-support-arch-config-db-entry.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0073-A13-Changes-to-support-arch-config-db-entry.patch`](../../patches/android-16/a13-authority/frameworks-base/0073-A13-Changes-to-support-arch-config-db-entry.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4c2994f409d628aeb8f2f23ec6ab4e704408ef7d3b4304de346b9636ad117d4b`
+- Size/stat: 39605 bytes, 3 files, 18 hunks, +656/-11
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/android/internal/content/NativeLibraryHelper.java`
+  - `services/core/java/com/android/server/pm/PackageAbiHelperImpl.java`
+  - `services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java`
+
+### `0074-A13-Fix-crash-issue-when-abi-do-not-match.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0074-A13-Fix-crash-issue-when-abi-do-not-match.patch`](../../patches/android-16/a13-authority/frameworks-base/0074-A13-Fix-crash-issue-when-abi-do-not-match.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a18d980d9160b585ef78d7783a0c6055c90320baed610d1aa20ab2df4681e59f`
+- Size/stat: 1519 bytes, 1 files, 1 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/android/internal/content/NativeLibraryHelper.java`
+
+### `0075-A13-Adding-AID_READPROC-group-to-bluestacks-specific.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0075-A13-Adding-AID_READPROC-group-to-bluestacks-specific.patch`](../../patches/android-16/a13-authority/frameworks-base/0075-A13-Adding-AID_READPROC-group-to-bluestacks-specific.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9cc953087d26870e48565143571973ea2ee703c21872ccabc96be3135c4fc7ab`
+- Size/stat: 3781 bytes, 1 files, 2 hunks, +67/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `0076-A13-Porting-vms-config.db-setting-impl.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0076-A13-Porting-vms-config.db-setting-impl.patch`](../../patches/android-16/a13-authority/frameworks-base/0076-A13-Porting-vms-config.db-setting-impl.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `39834a868917e0f23f067ca797f83f35df4fe055f7d225c133436c5f4fd0c16b`
+- Size/stat: 6674 bytes, 2 files, 6 hunks, +92/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+
+### `0077-A13-ROB-8784-Disable-package-verifier.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0077-A13-ROB-8784-Disable-package-verifier.patch`](../../patches/android-16/a13-authority/frameworks-base/0077-A13-ROB-8784-Disable-package-verifier.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4a81dff992d8afcb716e1f3eb28c330c7f3672d338fe23232005998a7f3c649f`
+- Size/stat: 1073 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `services/core/java/com/android/server/pm/VerificationParams.java`
+
+### `0078-A13-ROB-8737-Added-hook-sharedpreference-setting-of-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0078-A13-ROB-8737-Added-hook-sharedpreference-setting-of-.patch`](../../patches/android-16/a13-authority/frameworks-base/0078-A13-ROB-8737-Added-hook-sharedpreference-setting-of-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e0cf9f2eb7692fcd7d8dd58516ee0e3002cbfabf26b3dd9eebd0e5aedd6b560d`
+- Size/stat: 9976 bytes, 1 files, 6 hunks, +151/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/SharedPreferencesImpl.java`
+
+### `0079-A13-BS4-4874-Skipping-data-downloads-.tmp-dir.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0079-A13-BS4-4874-Skipping-data-downloads-.tmp-dir.patch`](../../patches/android-16/a13-authority/frameworks-base/0079-A13-BS4-4874-Skipping-data-downloads-.tmp-dir.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8ea7f65cb747c5833b84e57db142fcc05d0d3fcf53a4648379f69b52fb2b9128`
+- Size/stat: 1370 bytes, 1 files, 1 hunks, +8/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `0080-A13-case-3963-Not-showing-progress-bar-during-shutdo.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0080-A13-case-3963-Not-showing-progress-bar-during-shutdo.patch`](../../patches/android-16/a13-authority/frameworks-base/0080-A13-case-3963-Not-showing-progress-bar-during-shutdo.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c8abe56b6ade7b918a36f211c81cf8ee450078de3d30867928bde16b30120eac`
+- Size/stat: 1097 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/power/ShutdownThread.java`
+
+### `0081-A13-Syncing-timeout-values-from-Rvc.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0081-A13-Syncing-timeout-values-from-Rvc.patch`](../../patches/android-16/a13-authority/frameworks-base/0081-A13-Syncing-timeout-values-from-Rvc.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `73a37fc0743a1b949187273c46a7fc6a1755d9fdffeb403215fc78753d8ff73d`
+- Size/stat: 2055 bytes, 2 files, 2 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/ActivityRecord.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskSupervisor.java`
+
+### `0082-A13-Porting-ilh-ignore-large-heap-config.db-setting-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0082-A13-Porting-ilh-ignore-large-heap-config.db-setting-.patch`](../../patches/android-16/a13-authority/frameworks-base/0082-A13-Porting-ilh-ignore-large-heap-config.db-setting-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e8980dddde07413052cd4440cde9e90e2c0fb91f39af93dd8aa0399b3300de13`
+- Size/stat: 2811 bytes, 1 files, 4 hunks, +22/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/content/pm/PackageParser.java`
+
+### `0083-A13-Porting-googleSignInReqd-config-setting-imp.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0083-A13-Porting-googleSignInReqd-config-setting-imp.patch`](../../patches/android-16/a13-authority/frameworks-base/0083-A13-Porting-googleSignInReqd-config-setting-imp.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8f2a2ccd7a666fc975d1cad067776bed50b214b0ed5f909c9e466470138602e3`
+- Size/stat: 2104 bytes, 1 files, 2 hunks, +13/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/ActivityTaskSupervisor.java`
+
+### `0084-A13-Porting-clear-setting-impl.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0084-A13-Porting-clear-setting-impl.patch`](../../patches/android-16/a13-authority/frameworks-base/0084-A13-Porting-clear-setting-impl.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e98f50aa05a29ce4446946771c25b7f29a4c451d3de024ec5dcb923ea3480703`
+- Size/stat: 4117 bytes, 1 files, 4 hunks, +39/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `0085-A13-Case-ROB-8853-updating-installation-true-for-non.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0085-A13-Case-ROB-8853-updating-installation-true-for-non.patch`](../../patches/android-16/a13-authority/frameworks-base/0085-A13-Case-ROB-8853-updating-installation-true-for-non.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8b8a4b3f92cec0a585f46bf909cdc5a141192b0eaf14f7339550a3a401c4b5b1`
+- Size/stat: 990 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SettingsProvider/res/values/defaults.xml`
+
+### `0086-A13-By-default-in-bluestacks-do-not-go-into-the-safe.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0086-A13-By-default-in-bluestacks-do-not-go-into-the-safe.patch`](../../patches/android-16/a13-authority/frameworks-base/0086-A13-By-default-in-bluestacks-do-not-go-into-the-safe.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2a074f7bed8d88bd59a7f4642e6b9265b8327922a107caa83cece94c0a8b9ebe`
+- Size/stat: 1766 bytes, 1 files, 2 hunks, +7/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+
+### `0087-A13-SystemUI-customizations-changes-includes.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0087-A13-SystemUI-customizations-changes-includes.patch`](../../patches/android-16/a13-authority/frameworks-base/0087-A13-SystemUI-customizations-changes-includes.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `11dacccddde371919a37cf18fb7ddb181b74fce078ed818e10a1d27d349227db`
+- Size/stat: 8374 bytes, 6 files, 12 hunks, +26/-5
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/res/layout/qs_panel.xml`
+  - `packages/SystemUI/res/layout/status_bar_notification_section_header.xml`
+  - `packages/SystemUI/res/values/config.xml`
+  - `packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java`
+  - `packages/SystemUI/src/com/android/systemui/statusbar/StatusBarMobileView.java`
+  - `packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java`
+
+### `0088-A13-Stop-updating-ext-battery-stats-in-BatteryStatsS.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0088-A13-Stop-updating-ext-battery-stats-in-BatteryStatsS.patch`](../../patches/android-16/a13-authority/frameworks-base/0088-A13-Stop-updating-ext-battery-stats-in-BatteryStatsS.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b64d26428d1c34b7f9c08bf08fd855fc5baa0637ba3a06b5bb840112f46ef04f`
+- Size/stat: 1334 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/BatteryStatsService.java`
+
+### `0089-A13-Disabling-lockNow-function-chinese-app-365-locks.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0089-A13-Disabling-lockNow-function-chinese-app-365-locks.patch`](../../patches/android-16/a13-authority/frameworks-base/0089-A13-Disabling-lockNow-function-chinese-app-365-locks.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `42facd7d97803ee7c2fbf7865e7f0f5a1606a22a2bd7f6abd5bbf10222203edb`
+- Size/stat: 1435 bytes, 1 files, 2 hunks, +2/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java`
+
+### `0090-A13-Case-ROB-8853-allow-chrome-to-install-apk-83.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0090-A13-Case-ROB-8853-allow-chrome-to-install-apk-83.patch`](../../patches/android-16/a13-authority/frameworks-base/0090-A13-Case-ROB-8853-allow-chrome-to-install-apk-83.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `84119afce847bc1d624fd7ec3f78dcf08774624c23dd30bcd8ddf37c7a5f7c29`
+- Size/stat: 2815 bytes, 1 files, 3 hunks, +11/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/appop/AppOpsService.java`
+
+### `0091-A13-Affiliate-changes.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0091-A13-Affiliate-changes.patch`](../../patches/android-16/a13-authority/frameworks-base/0091-A13-Affiliate-changes.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `eca1b14fabc65c4a0c4631e702b1cf229f82c8c08edb38b018e145ad3e8633c5`
+- Size/stat: 31968 bytes, 5 files, 17 hunks, +383/-8
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/os/BaseBundle.java`
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+  - `services/core/java/com/android/server/pm/InstallSource.java`
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `0092-A13-Fixing-an-error-condition-in-which-runtime-permi.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0092-A13-Fixing-an-error-condition-in-which-runtime-permi.patch`](../../patches/android-16/a13-authority/frameworks-base/0092-A13-Fixing-an-error-condition-in-which-runtime-permi.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `96b0db5283c93b3ca920a9d5b6c8896c02a122fce4609af04a453bdc1dd494f4`
+- Size/stat: 2259 bytes, 1 files, 1 hunks, +12/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/Settings.java`
+
+### `0093-A13-Changes-to-restrict-user-from-revoking-the-permi.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0093-A13-Changes-to-restrict-user-from-revoking-the-permi.patch`](../../patches/android-16/a13-authority/frameworks-base/0093-A13-Changes-to-restrict-user-from-revoking-the-permi.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ab97e49eba5ff5d8765e4d356291ff80880270a9aae7256b8d9e6c2384055e15`
+- Size/stat: 2228 bytes, 1 files, 2 hunks, +10/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/permission/PermissionManagerServiceImpl.java`
+
+### `0094-A13-Setting-wallpaperEnabled-to-false-not-waiting-fo.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0094-A13-Setting-wallpaperEnabled-to-false-not-waiting-fo.patch`](../../patches/android-16/a13-authority/frameworks-base/0094-A13-Setting-wallpaperEnabled-to-false-not-waiting-fo.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0068c712e935b2579493936ab789ee5aa98298586f1468a9bec50891bb851fa1`
+- Size/stat: 1362 bytes, 1 files, 1 hunks, +4/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+
+### `0095-A13-Allowing-all-apps-to-query-com.android.vending-g.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0095-A13-Allowing-all-apps-to-query-com.android.vending-g.patch`](../../patches/android-16/a13-authority/frameworks-base/0095-A13-Allowing-all-apps-to-query-com.android.vending-g.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0f8f3ca5a94627f8803a1fb89c328df1f49bcbfd593b841840f957274a664b1f`
+- Size/stat: 879 bytes, 1 files, 1 hunks, +2/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/res/res/values/config.xml`
+
+### `0096-A13-6203-Not-populating-bluestacks-package-specific-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0096-A13-6203-Not-populating-bluestacks-package-specific-.patch`](../../patches/android-16/a13-authority/frameworks-base/0096-A13-6203-Not-populating-bluestacks-package-specific-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `eca6057192698756faa54238196fe4adc3d3131703767b9f2b9c219737cbcd63`
+- Size/stat: 6360 bytes, 2 files, 8 hunks, +66/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/IntentResolver.java`
+  - `services/core/java/com/android/server/pm/resolution/ComponentResolver.java`
+
+### `0097-A13-ROB-8174-Instagram-Video-reels-flips-upside-down.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0097-A13-ROB-8174-Instagram-Video-reels-flips-upside-down.patch`](../../patches/android-16/a13-authority/frameworks-base/0097-A13-ROB-8174-Instagram-Video-reels-flips-upside-down.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d2b5185cc8fe926c2b9f6078b737dea58d695541df68b505c020cd28f0ddc7b1`
+- Size/stat: 2178 bytes, 1 files, 2 hunks, +31/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `0098-A13-Changes-for-screenshot.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0098-A13-Changes-for-screenshot.patch`](../../patches/android-16/a13-authority/frameworks-base/0098-A13-Changes-for-screenshot.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `30cd179362bdd395ef708cbc4d3593e743a8ba431b75d6ea979574f6da4a8182`
+- Size/stat: 6729 bytes, 3 files, 9 hunks, +44/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java`
+  - `packages/SystemUI/src/com/android/systemui/screenshot/SaveImageInBackgroundTask.java`
+  - `packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotController.java`
+
+### `0099-A13-add-preinstalled-for-SYSTEM_ALERT_WINDOW.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0099-A13-add-preinstalled-for-SYSTEM_ALERT_WINDOW.patch`](../../patches/android-16/a13-authority/frameworks-base/0099-A13-add-preinstalled-for-SYSTEM_ALERT_WINDOW.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `11ff4f87055bb18fb30cd5105fb094a80f8242901e95052eb0012fb15e66371c`
+- Size/stat: 1188 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/res/AndroidManifest.xml`
+
+### `0100-A13-Fix-compile-failures.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0100-A13-Fix-compile-failures.patch`](../../patches/android-16/a13-authority/frameworks-base/0100-A13-Fix-compile-failures.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2e5e3d212ffd665df0663508ce42a3ddb0a43747be902b723dc7ce1d0a220d3b`
+- Size/stat: 3015 bytes, 1 files, 4 hunks, +9/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `0101-A13-Add-support-for-setBstIME.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0101-A13-Add-support-for-setBstIME.patch`](../../patches/android-16/a13-authority/frameworks-base/0101-A13-Add-support-for-setBstIME.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3f59f238d64290b485f55b7d65ab4fe6ddd73edc385a4665ad357ab99aa5a927`
+- Size/stat: 4570 bytes, 3 files, 7 hunks, +35/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/inputmethod/InputMethodManager.java`
+  - `core/java/com/android/internal/view/IInputMethodManager.aidl`
+  - `services/core/java/com/android/server/inputmethod/InputMethodManagerService.java`
+
+### `0102-A13-Add-pagefusion-module.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0102-A13-Add-pagefusion-module.patch`](../../patches/android-16/a13-authority/frameworks-base/0102-A13-Add-pagefusion-module.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `13e8b434ce598d8e8c5004fbe6a3b4bfb5508ff8ce7ee621712b21ab23a5a482`
+- Size/stat: 94876 bytes, 7 files, 7 hunks, +2975/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 7 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `cmds/pagefusion/Android.bp`
+  - `cmds/pagefusion/PageFusion.cpp`
+  - `cmds/pagefusion/RTVboxGuest.cpp`
+  - `cmds/pagefusion/RTVboxGuest.h`
+  - `cmds/pagefusion/list.h`
+  - `cmds/pagefusion/util.cpp`
+  - `cmds/pagefusion/util.h`
+
+### `0103-A13-Making-sure-that-bluestacks-packages-cannot-be-d.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0103-A13-Making-sure-that-bluestacks-packages-cannot-be-d.patch`](../../patches/android-16/a13-authority/frameworks-base/0103-A13-Making-sure-that-bluestacks-packages-cannot-be-d.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `27521fbe1e3c1200639f1c2f8f8d5b7da8b89e4d07f8f125a18a967eacb4cada`
+- Size/stat: 2438 bytes, 1 files, 2 hunks, +10/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `0104-A13-ROB-8174-Adding-prefix-to-the-prop-key-71.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0104-A13-ROB-8174-Adding-prefix-to-the-prop-key-71.patch`](../../patches/android-16/a13-authority/frameworks-base/0104-A13-ROB-8174-Adding-prefix-to-the-prop-key-71.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `dbba55f6aef25e346d5337549762c2f773acb1c394174de787023a8489f6f2cb`
+- Size/stat: 1464 bytes, 1 files, 2 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `0105-A13-SystemUi-hide-qs_container-on-portrait-mode-113.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0105-A13-SystemUi-hide-qs_container-on-portrait-mode-113.patch`](../../patches/android-16/a13-authority/frameworks-base/0105-A13-SystemUi-hide-qs_container-on-portrait-mode-113.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b913b2cf7f66c8e64091efbffac09f05397260e7b7b5d594465085f1de24b196`
+- Size/stat: 940 bytes, 1 files, 1 hunks, +1/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/res/layout/quick_status_bar_expanded_header.xml`
+
+### `0106-A13-Hcall-related-code-porting.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0106-A13-Hcall-related-code-porting.patch`](../../patches/android-16/a13-authority/frameworks-base/0106-A13-Hcall-related-code-porting.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `dd33bf11c432002c5e229ac5b3e444b8490260201f5ab4a25b4cb36f89066c4c`
+- Size/stat: 56118 bytes, 8 files, 57 hunks, +611/-10
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 8 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/Instrumentation.java`
+  - `core/java/android/widget/Editor.java`
+  - `services/core/java/com/android/server/accounts/AccountManagerService.java`
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+  - `services/core/java/com/android/server/input/InputManagerService.java`
+  - `services/core/java/com/android/server/notification/NotificationManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityStarter.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskManagerDebugConfig.java`
+
+### `0107-A13-A11-54-Android-10-apps-must-have-the-READ_PRIVIL.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0107-A13-A11-54-Android-10-apps-must-have-the-READ_PRIVIL.patch`](../../patches/android-16/a13-authority/frameworks-base/0107-A13-A11-54-Android-10-apps-must-have-the-READ_PRIVIL.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e724bb18d5200fe5c59e7dead9ffe1b1a14b8c46dd8193eaf8f1577e8f44adea`
+- Size/stat: 2955 bytes, 2 files, 2 hunks, +10/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/appop/AppOpsService.java`
+  - `telephony/common/com/android/internal/telephony/TelephonyPermissions.java`
+
+### `0108-ROB-11748-New-config-entry-to-disable-angle-translat.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0108-ROB-11748-New-config-entry-to-disable-angle-translat.patch`](../../patches/android-16/a13-authority/frameworks-base/0108-ROB-11748-New-config-entry-to-disable-angle-translat.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f0da196798c16a60d70e2f97f22e8440c6a16a73728f742e665c138e9c351fc9`
+- Size/stat: 5800 bytes, 3 files, 6 hunks, +63/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0109-A13-fix-recents-rotation-issue-122.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0109-A13-fix-recents-rotation-issue-122.patch`](../../patches/android-16/a13-authority/frameworks-base/0109-A13-fix-recents-rotation-issue-122.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4df576b8528920f57b492dbbcf68091ea33d92d024e9f08778f46edba8a60d03`
+- Size/stat: 3061 bytes, 1 files, 4 hunks, +18/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/RecentsAnimationController.java`
+
+### `0110-A13-fix-com.sgra.dragon-crash-issue-123.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0110-A13-fix-com.sgra.dragon-crash-issue-123.patch`](../../patches/android-16/a13-authority/frameworks-base/0110-A13-fix-com.sgra.dragon-crash-issue-123.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `efabd8173bb1e66ee09040ad445b96921fb78a2a3958eda5798370fc45bb9572`
+- Size/stat: 1269 bytes, 1 files, 1 hunks, +4/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `telephony/common/com/android/internal/telephony/TelephonyPermissions.java`
+
+### `0111-A13-ROB-12002-Add-config-entry-fbscreenlock.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0111-A13-ROB-12002-Add-config-entry-fbscreenlock.patch`](../../patches/android-16/a13-authority/frameworks-base/0111-A13-ROB-12002-Add-config-entry-fbscreenlock.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b9ec4d587ad76c089a9c0ddfc64675eddf98961f0305719e7d4ac435db7f8dc5`
+- Size/stat: 11127 bytes, 4 files, 8 hunks, +134/-10
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0112-A13-ROB-11963-ROB-12006-ROB-8775-compat-com.YoStarKR.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0112-A13-ROB-11963-ROB-12006-ROB-8775-compat-com.YoStarKR.patch`](../../patches/android-16/a13-authority/frameworks-base/0112-A13-ROB-11963-ROB-12006-ROB-8775-compat-com.YoStarKR.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2b76dcc9ea149935f9147b1272198d2a436dd688c9692740a7fc7f4a07756d9c`
+- Size/stat: 7884 bytes, 4 files, 8 hunks, +85/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/Instrumentation.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0113-A13-ROB-10507-new-entry-for-glProgramBinary.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0113-A13-ROB-10507-new-entry-for-glProgramBinary.patch`](../../patches/android-16/a13-authority/frameworks-base/0113-A13-ROB-10507-new-entry-for-glProgramBinary.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3d6c013ef46adc475fb1e42115af7e92d0b19fd5d865e641143a0fa5bbcbf31a`
+- Size/stat: 6145 bytes, 3 files, 6 hunks, +67/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0114-A13-ROB-10787-new-entry-for-glUnmapBuffer-performanc.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0114-A13-ROB-10787-new-entry-for-glUnmapBuffer-performanc.patch`](../../patches/android-16/a13-authority/frameworks-base/0114-A13-ROB-10787-new-entry-for-glUnmapBuffer-performanc.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ab993c21abe16824da36a630c142159e0442cb23ad4670a0ede8846d2231b83a`
+- Size/stat: 6206 bytes, 3 files, 6 hunks, +67/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0115-A13-ROB-10789-new-entry-for-gl-shader-workaround.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0115-A13-ROB-10789-new-entry-for-gl-shader-workaround.patch`](../../patches/android-16/a13-authority/frameworks-base/0115-A13-ROB-10789-new-entry-for-gl-shader-workaround.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `05380922ae70a3ec1664641b397786a1e7b3ffbfbdb3909b44e2567fca11874a`
+- Size/stat: 6084 bytes, 3 files, 6 hunks, +64/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0116-A13-ROB-11186-Enable-hpp-mode-in-config.db-by-defaul.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0116-A13-ROB-11186-Enable-hpp-mode-in-config.db-by-defaul.patch`](../../patches/android-16/a13-authority/frameworks-base/0116-A13-ROB-11186-Enable-hpp-mode-in-config.db-by-defaul.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9a28e79537d9a884e4a7cb517ef984c53868af5b08d034bbe97e0de99ec56b7b`
+- Size/stat: 5721 bytes, 1 files, 4 hunks, +20/-20
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0117-A13-Pie-Android11-code-sync-change-includes-130.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0117-A13-Pie-Android11-code-sync-change-includes-130.patch`](../../patches/android-16/a13-authority/frameworks-base/0117-A13-Pie-Android11-code-sync-change-includes-130.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1f38b1663a4daf19131490a6a785be9c015aabf2ec503b4c6cfc9ac851ee0cb3`
+- Size/stat: 14106 bytes, 5 files, 8 hunks, +100/-81
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SettingsProvider/res/values/defaults.xml`
+  - `packages/SettingsProvider/res/xml/bookmarks.xml`
+  - `services/core/java/com/android/server/NetworkManagementService.java`
+  - `services/core/java/com/android/server/net/NetworkPolicyManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityStarter.java`
+
+### `0118-A13-ROB-11904-Support-DRM-widevine.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0118-A13-ROB-11904-Support-DRM-widevine.patch`](../../patches/android-16/a13-authority/frameworks-base/0118-A13-ROB-11904-Support-DRM-widevine.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5b8f6c0832ea060286579f4c4ac65f3f64fac26538ea35dc7a9a6a6baa89c8b1`
+- Size/stat: 6011 bytes, 3 files, 6 hunks, +70/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0119-A13-ROB-12525-fix-GL_TEXTURE_EXTERNAL_OES-bind-error.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0119-A13-ROB-12525-fix-GL_TEXTURE_EXTERNAL_OES-bind-error.patch`](../../patches/android-16/a13-authority/frameworks-base/0119-A13-ROB-12525-fix-GL_TEXTURE_EXTERNAL_OES-bind-error.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7f57002bd0a4a580ff029a37db894288fed902872be97b3929f48749c707ec8b`
+- Size/stat: 5934 bytes, 3 files, 6 hunks, +63/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0120-A13-case-ROB-12546-Adding-a-new-entry-name-fixedSurf.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0120-A13-case-ROB-12546-Adding-a-new-entry-name-fixedSurf.patch`](../../patches/android-16/a13-authority/frameworks-base/0120-A13-case-ROB-12546-Adding-a-new-entry-name-fixedSurf.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d886a32d8363a060625cf2df00d45e27b16e7c1d32cccc6758fe79945143b766`
+- Size/stat: 8328 bytes, 4 files, 9 hunks, +81/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/Display.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0121-A13-add-iap-interceptor.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0121-A13-add-iap-interceptor.patch`](../../patches/android-16/a13-authority/frameworks-base/0121-A13-add-iap-interceptor.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `795ee3459a5c2bfa0a26cd1dfb9d85ec024ee9f29899c1112cfa178160b89a94`
+- Size/stat: 20924 bytes, 9 files, 17 hunks, +283/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 9 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityThread.java`
+  - `core/java/com/android/internal/app/PaymentRedirectProxyActivity.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0122-A13-fix-ClipboardService-crash-issue-132.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0122-A13-fix-ClipboardService-crash-issue-132.patch`](../../patches/android-16/a13-authority/frameworks-base/0122-A13-fix-ClipboardService-crash-issue-132.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4e2fe50a42a89a12d14e847ec30b66fb647dc40323472eb68792d274bf35f3ab`
+- Size/stat: 1734 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/clipboard/ClipboardService.java`
+
+### `0123-A13-ROB-11421-support-Native-Mouse-for-Roblox.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0123-A13-ROB-11421-support-Native-Mouse-for-Roblox.patch`](../../patches/android-16/a13-authority/frameworks-base/0123-A13-ROB-11421-support-Native-Mouse-for-Roblox.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e8a82e5a1c51472356722e6c2dae2b6979c20ee8155ffd754d6335e26d9a993d`
+- Size/stat: 5123 bytes, 2 files, 5 hunks, +32/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/View.java`
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+
+### `0124-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0124-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch`](../../patches/android-16/a13-authority/frameworks-base/0124-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b7f104b84a3d0696b78d01ea75f068f51b280baac4440959f2ea14f49a2d514e`
+- Size/stat: 1585 bytes, 1 files, 2 hunks, +13/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/SharedPreferencesImpl.java`
+
+### `0125-Revert-A13-ROB-11560-set-Extreme-and-high-fps-by-def.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0125-Revert-A13-ROB-11560-set-Extreme-and-high-fps-by-def.patch`](../../patches/android-16/a13-authority/frameworks-base/0125-Revert-A13-ROB-11560-set-Extreme-and-high-fps-by-def.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c91fb405122788afcb4043536dffc391176c61d455c9bd738621d73d4d1d6e65`
+- Size/stat: 1603 bytes, 1 files, 2 hunks, +0/-13
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/SharedPreferencesImpl.java`
+
+### `0126-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0126-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch`](../../patches/android-16/a13-authority/frameworks-base/0126-A13-ROB-11560-set-Extreme-and-high-fps-by-default-fo.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `142b5fa2107fd7d516a75226a57223710c9684be0d4d25cf6e3cdf231b7e12fb`
+- Size/stat: 2529 bytes, 1 files, 3 hunks, +29/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/SharedPreferencesImpl.java`
+
+### `0127-A13-ROB-11613-set-60-fps-by-default-for-Dungeon-Hunt.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0127-A13-ROB-11613-set-60-fps-by-default-for-Dungeon-Hunt.patch`](../../patches/android-16/a13-authority/frameworks-base/0127-A13-ROB-11613-set-60-fps-by-default-for-Dungeon-Hunt.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0cc375a8982708e6fd6252ed8f6c10132d97eb474770ffece115acc0b580924c`
+- Size/stat: 1627 bytes, 1 files, 2 hunks, +11/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/SharedPreferencesImpl.java`
+
+### `0128-A13-ROB-11067-ROB-11494-ROB-12069-block-EditText-set.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0128-A13-ROB-11067-ROB-11494-ROB-12069-block-EditText-set.patch`](../../patches/android-16/a13-authority/frameworks-base/0128-A13-ROB-11067-ROB-11494-ROB-12069-block-EditText-set.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `18b4301f41d694b9f6db19d230586f335db3bbf1c6b8dfe1cb69dce2ee4814bc`
+- Size/stat: 1826 bytes, 1 files, 2 hunks, +16/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/widget/EditText.java`
+
+### `0129-A13-ROB-10676-ROB-11769-By-replacing-OMX.google.h264.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0129-A13-ROB-10676-ROB-11769-By-replacing-OMX.google.h264.patch`](../../patches/android-16/a13-authority/frameworks-base/0129-A13-ROB-10676-ROB-11769-By-replacing-OMX.google.h264.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `da00e0b895d450242a6fa707431f1ce7dc230713110ecbdab9033ceb64b4548d`
+- Size/stat: 1396 bytes, 1 files, 1 hunks, +5/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/java/android/media/MediaCodecInfo.java`
+
+### `0130-A13-Add-protected-broadcast-BST.FILTER.SERVICE.LISTS.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0130-A13-Add-protected-broadcast-BST.FILTER.SERVICE.LISTS.patch`](../../patches/android-16/a13-authority/frameworks-base/0130-A13-Add-protected-broadcast-BST.FILTER.SERVICE.LISTS.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `85825ba2bb6879c1c5e9d38ba6b1f2ac092d6db8556c3b4451935a3f12d7f311`
+- Size/stat: 969 bytes, 1 files, 1 hunks, +1/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/res/AndroidManifest.xml`
+
+### `0131-A13-Removing-useless-log-of-bstSendTopDisplayedOnFoc.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0131-A13-Removing-useless-log-of-bstSendTopDisplayedOnFoc.patch`](../../patches/android-16/a13-authority/frameworks-base/0131-A13-Removing-useless-log-of-bstSendTopDisplayedOnFoc.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e8a015553e888ced209f81134d62374a868f26a926fa56c36591c46271b99c71`
+- Size/stat: 2660 bytes, 1 files, 2 hunks, +1/-8
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+
+### `0132-A13-Making-sure-the-runtime-permissions-are-granted-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0132-A13-Making-sure-the-runtime-permissions-are-granted-.patch`](../../patches/android-16/a13-authority/frameworks-base/0132-A13-Making-sure-the-runtime-permissions-are-granted-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8f44f130bd348ae781dd33436a82dc6b49aaddbb4ed9701ff979aa09ed4307b5`
+- Size/stat: 3648 bytes, 2 files, 5 hunks, +15/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+  - `services/core/java/com/android/server/pm/Settings.java`
+
+### `0133-A13-ROB-12790-Adding-protection-restrictions-for-hom.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0133-A13-ROB-12790-Adding-protection-restrictions-for-hom.patch`](../../patches/android-16/a13-authority/frameworks-base/0133-A13-ROB-12790-Adding-protection-restrictions-for-hom.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ee71b50e2e1607523b80f779911712384b4e175bc88f6909fc0c34b515654580`
+- Size/stat: 2979 bytes, 2 files, 2 hunks, +7/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+  - `services/core/java/com/android/server/pm/permission/PermissionManagerServiceImpl.java`
+
+### `0134-Revert-A13-Disable-Bluetooth-service.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0134-Revert-A13-Disable-Bluetooth-service.patch`](../../patches/android-16/a13-authority/frameworks-base/0134-Revert-A13-Disable-Bluetooth-service.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4326594146ddc4514d026c3eb73b84f88f6c335914e4d9e69528823bebc96129`
+- Size/stat: 1222 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/java/com/android/server/SystemServer.java`
+
+### `0135-A13-ROB-12596-New-config-entry-GLMBRH.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0135-A13-ROB-12596-New-config-entry-GLMBRH.patch`](../../patches/android-16/a13-authority/frameworks-base/0135-A13-ROB-12596-New-config-entry-GLMBRH.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0cf01ddf94b8c774a0a8b063a3e14f320ab814d2ec630c9a8adbaf67a564fee6`
+- Size/stat: 5970 bytes, 3 files, 6 hunks, +67/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0136-A13-ROB-12223-add-new-entry-IgnoreSyncTimeout.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0136-A13-ROB-12223-add-new-entry-IgnoreSyncTimeout.patch`](../../patches/android-16/a13-authority/frameworks-base/0136-A13-ROB-12223-add-new-entry-IgnoreSyncTimeout.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `61eab4beddc35c9432e0c4069abab36c302283f91fe680fefadab62156ae373f`
+- Size/stat: 5784 bytes, 3 files, 6 hunks, +64/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0137-Case-ROB-13172-allow-reading-of-nowgg-account-for-ev.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0137-Case-ROB-13172-allow-reading-of-nowgg-account-for-ev.patch`](../../patches/android-16/a13-authority/frameworks-base/0137-Case-ROB-13172-allow-reading-of-nowgg-account-for-ev.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9ddcfb9bf0ec5249654aefdff1ea4e90a003c13ea83b312f58797b4e1d43871e`
+- Size/stat: 1334 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/accounts/AccountManagerService.java`
+
+### `0138-A13-ROB-12555-Adding-onAdsInfoClick-hCall.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0138-A13-ROB-12555-Adding-onAdsInfoClick-hCall.patch`](../../patches/android-16/a13-authority/frameworks-base/0138-A13-ROB-12555-Adding-onAdsInfoClick-hCall.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `72307fb9d9ceb079dd332e6bbf95c59028362860363b99907146e2dcc22d0c82`
+- Size/stat: 4392 bytes, 4 files, 6 hunks, +30/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0139-Build-error-fix.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0139-Build-error-fix.patch`](../../patches/android-16/a13-authority/frameworks-base/0139-Build-error-fix.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4dbaa8c8a85e67d78ac720f23af7d062960f3af43b283f97d644d0098b356d3f`
+- Size/stat: 1321 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/accounts/AccountManagerService.java`
+
+### `0140-A13-Adding-more-stats-for-affiliate-debugging.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0140-A13-Adding-more-stats-for-affiliate-debugging.patch`](../../patches/android-16/a13-authority/frameworks-base/0140-A13-Adding-more-stats-for-affiliate-debugging.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3032ac177b3c0c2568dabc33c54927cbc4d458d140b031308cf43ecdeadb170e`
+- Size/stat: 40476 bytes, 2 files, 25 hunks, +273/-73
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/os/BaseBundle.java`
+  - `core/java/android/util/BstUtils.java`
+
+### `0141-Case-ROB-13181-making-source-as-play_store.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0141-Case-ROB-13181-making-source-as-play_store.patch`](../../patches/android-16/a13-authority/frameworks-base/0141-Case-ROB-13181-making-source-as-play_store.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6255915ce2ea29e90b4d85b19013c4c52902cdd4ab2d3e09375374c4a60a93a5`
+- Size/stat: 1387 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+
+### `0142-A13-ROB-13196-Adding-an-excpetion-for-bstcommandproc.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0142-A13-ROB-13196-Adding-an-excpetion-for-bstcommandproc.patch`](../../patches/android-16/a13-authority/frameworks-base/0142-A13-ROB-13196-Adding-an-excpetion-for-bstcommandproc.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0155f8a5225f9d366642cfc6a2cb5ccbba43014f0fbd60949c15017f0c70df38`
+- Size/stat: 2964 bytes, 1 files, 2 hunks, +13/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ContextImpl.java`
+
+### `0143-A13-ROB-13015-adding-hcall-implementation.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0143-A13-ROB-13015-adding-hcall-implementation.patch`](../../patches/android-16/a13-authority/frameworks-base/0143-A13-ROB-13015-adding-hcall-implementation.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `32a5bc69384b371cf2cf011b7c0ec74a6d04bf020ec0042167e2f8b463487192`
+- Size/stat: 6205 bytes, 4 files, 6 hunks, +69/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0144-A13-Not-populating-any-information-about-running-blu.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0144-A13-Not-populating-any-information-about-running-blu.patch`](../../patches/android-16/a13-authority/frameworks-base/0144-A13-Not-populating-any-information-about-running-blu.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `001ab790932b67fe0816ced576f78de0a3e40d8e8bc2b70a6abaf4662d59478e`
+- Size/stat: 6203 bytes, 1 files, 6 hunks, +40/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/ActiveServices.java`
+
+### `0145-A13-ROB-13471-remove-the-hardcore-fix-add-GLVBOCache.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0145-A13-ROB-13471-remove-the-hardcore-fix-add-GLVBOCache.patch`](../../patches/android-16/a13-authority/frameworks-base/0145-A13-ROB-13471-remove-the-hardcore-fix-add-GLVBOCache.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d3f2e7e3c9a243d09e7ef0fe01494d1e07c89c5a29fb76fd926e56d47eb50f91`
+- Size/stat: 5977 bytes, 3 files, 6 hunks, +67/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0146-A13-ROB-13319-add-new-config-entry-called-BEWC.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0146-A13-ROB-13319-add-new-config-entry-called-BEWC.patch`](../../patches/android-16/a13-authority/frameworks-base/0146-A13-ROB-13319-add-new-config-entry-called-BEWC.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `52f6091bc00b8efbb7ae20f3827b4f66cccbb712f7db3a40c64f67b6b6eab7f2`
+- Size/stat: 7100 bytes, 4 files, 8 hunks, +68/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/widget/EditText.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0147-A13-ROB-13428-Whitelisting-com.bluestacks.home-for-h.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0147-A13-ROB-13428-Whitelisting-com.bluestacks.home-for-h.patch`](../../patches/android-16/a13-authority/frameworks-base/0147-A13-ROB-13428-Whitelisting-com.bluestacks.home-for-h.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `05280a87771b6bd2c393baefba4b9a51a5314117178531cffcbe79dcbea668cc`
+- Size/stat: 1092 bytes, 1 files, 1 hunks, +1/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `data/etc/hiddenapi-package-whitelist.xml`
+
+### `0148-fix-the-recent-rotation-issue-of-switching-between-t.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0148-fix-the-recent-rotation-issue-of-switching-between-t.patch`](../../patches/android-16/a13-authority/frameworks-base/0148-fix-the-recent-rotation-issue-of-switching-between-t.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e0eed334f550af2fabf8f32d1338a700c62ba99c5bbdd9b35b86e5cd47e05538`
+- Size/stat: 3106 bytes, 1 files, 3 hunks, +20/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/RecentsAnimationController.java`
+
+### `0149-A13-Adding-hcall-unzip-file.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0149-A13-Adding-hcall-unzip-file.patch`](../../patches/android-16/a13-authority/frameworks-base/0149-A13-Adding-hcall-unzip-file.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e311ee6d7cb3535738b1d6ab29e4088cb5edf29461497b7e35bd7f86bf548388`
+- Size/stat: 5247 bytes, 4 files, 6 hunks, +42/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0150-A13-Adding-nowbux-updated-hcall.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0150-A13-Adding-nowbux-updated-hcall.patch`](../../patches/android-16/a13-authority/frameworks-base/0150-A13-Adding-nowbux-updated-hcall.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5da9d2e971bd905e40b4358616ba14325337bd025ee5f7bfa563705833359453`
+- Size/stat: 4831 bytes, 4 files, 6 hunks, +34/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0151-A13-Adding-hcall-for-iap-completed.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0151-A13-Adding-hcall-for-iap-completed.patch`](../../patches/android-16/a13-authority/frameworks-base/0151-A13-Adding-hcall-for-iap-completed.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8215aee63a35cb49f4000ee4878bdc92da3951112a05d0d1590dd91050e061bf`
+- Size/stat: 6506 bytes, 4 files, 6 hunks, +80/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0152-A13-ROB-13707-add-new-config-entry-GLHostInfo.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0152-A13-ROB-13707-add-new-config-entry-GLHostInfo.patch`](../../patches/android-16/a13-authority/frameworks-base/0152-A13-ROB-13707-add-new-config-entry-GLHostInfo.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b92a301f726c368750f78bfdcd955f4eb7e9655416a3493482d425a8deb3aa53`
+- Size/stat: 5771 bytes, 3 files, 6 hunks, +65/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0153-A13-add-a-new-config-entry-gl_extensions_ignore.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0153-A13-add-a-new-config-entry-gl_extensions_ignore.patch`](../../patches/android-16/a13-authority/frameworks-base/0153-A13-add-a-new-config-entry-gl_extensions_ignore.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `df8d6c7370f3c539f8491ee1009672c5429a69e06b288b463fe52177733e538f`
+- Size/stat: 5771 bytes, 3 files, 6 hunks, +64/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0154-A13-ROB-14086-add-a-new-config-entry-EGLSurfaceIgnor.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0154-A13-ROB-14086-add-a-new-config-entry-EGLSurfaceIgnor.patch`](../../patches/android-16/a13-authority/frameworks-base/0154-A13-ROB-14086-add-a-new-config-entry-EGLSurfaceIgnor.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fe4a800edb01b64ec7c2838e81fce2cac1e9ca521531395bbfc70f793655b2d1`
+- Size/stat: 5848 bytes, 3 files, 6 hunks, +63/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0155-A13-BK-4379-fix-controls-not-working-on-Roblox.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0155-A13-BK-4379-fix-controls-not-working-on-Roblox.patch`](../../patches/android-16/a13-authority/frameworks-base/0155-A13-BK-4379-fix-controls-not-working-on-Roblox.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `db01a17b5b21f8be80ef0919e48ed320b8b7052437879ad4bb0ab59db67de7e0`
+- Size/stat: 5713 bytes, 3 files, 6 hunks, +63/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0156-A13-ROB-14815-Fixing-uncube-launcher-crashing-issue.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0156-A13-ROB-14815-Fixing-uncube-launcher-crashing-issue.patch`](../../patches/android-16/a13-authority/frameworks-base/0156-A13-ROB-14815-Fixing-uncube-launcher-crashing-issue.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d40e3cbd188383ac880ededaa7b504f35147e6813488024f53e83ec21ae5210d`
+- Size/stat: 8509 bytes, 3 files, 10 hunks, +36/-11
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageAbiHelperImpl.java`
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+  - `services/core/java/com/android/server/pm/ScanPackageUtils.java`
+
+### `0157-A13-Prioritize-package-scanning-over-cached-data-in-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0157-A13-Prioritize-package-scanning-over-cached-data-in-.patch`](../../patches/android-16/a13-authority/frameworks-base/0157-A13-Prioritize-package-scanning-over-cached-data-in-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c16a1b6e7e12bc636b4c5160b8cdb41fddb48da7142f105ca1af20189f998992`
+- Size/stat: 1657 bytes, 1 files, 2 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/parsing/PackageCacher.java`
+
+### `0158-ROB-14931-add-config-entry-iagf.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0158-ROB-14931-add-config-entry-iagf.patch`](../../patches/android-16/a13-authority/frameworks-base/0158-ROB-14931-add-config-entry-iagf.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7790e0bbc0993847ad71ceda1c069b5ff99e9d65e35a2cb27ac56cfd9da38465`
+- Size/stat: 5925 bytes, 3 files, 6 hunks, +67/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0159-A13-ROB-14596-com.qcwx.fyden-Game-stuck-while-loggin.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0159-A13-ROB-14596-com.qcwx.fyden-Game-stuck-while-loggin.patch`](../../patches/android-16/a13-authority/frameworks-base/0159-A13-ROB-14596-com.qcwx.fyden-Game-stuck-while-loggin.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c42785b07c13cd7f0eec402431b825819e431cfbe96479d1c805b95ce711d634`
+- Size/stat: 15925 bytes, 7 files, 13 hunks, +79/-12
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 7 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0160-A13-Case-ROB-14975-adding-hcallAllowInstallApkGameCe.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0160-A13-Case-ROB-14975-adding-hcallAllowInstallApkGameCe.patch`](../../patches/android-16/a13-authority/frameworks-base/0160-A13-Case-ROB-14975-adding-hcallAllowInstallApkGameCe.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `932a641ce43e6a40aebbb87aa76624e79bde8ca4ee5623de62d709c597039580`
+- Size/stat: 5106 bytes, 4 files, 6 hunks, +40/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0161-A13-Pie-Android11-code-sync-change-includes-106.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0161-A13-Pie-Android11-code-sync-change-includes-106.patch`](../../patches/android-16/a13-authority/frameworks-base/0161-A13-Pie-Android11-code-sync-change-includes-106.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Size/stat: 0 bytes, 0 files, 0 hunks, +0/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - Parser found no canonical `diff --git` path; inspect raw artifact
+
+### `0162-A13-Adding-hcall-to-be-called-from-bstcommandprocess.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0162-A13-Adding-hcall-to-be-called-from-bstcommandprocess.patch`](../../patches/android-16/a13-authority/frameworks-base/0162-A13-Adding-hcall-to-be-called-from-bstcommandprocess.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `029ec307137dd7ca08c2ede2b5661a4bbfa055279c01676b974be6d942cebe4e`
+- Size/stat: 5633 bytes, 4 files, 6 hunks, +39/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0163-ROB-14354-Enable-GL-Program-Binary-by-default-for-UE.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0163-ROB-14354-Enable-GL-Program-Binary-by-default-for-UE.patch`](../../patches/android-16/a13-authority/frameworks-base/0163-ROB-14354-Enable-GL-Program-Binary-by-default-for-UE.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `86b41b7e9aad9c22419a5fdbda0b57c99e72677cfd266bd341eb550e07ce9258`
+- Size/stat: 9180 bytes, 3 files, 6 hunks, +172/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0164-Case-ROB-15194-bc3-bc7-support-on-GL-mode.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0164-Case-ROB-15194-bc3-bc7-support-on-GL-mode.patch`](../../patches/android-16/a13-authority/frameworks-base/0164-Case-ROB-15194-bc3-bc7-support-on-GL-mode.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `03582e580ab07ec28d4c8f1a7e963fa68ddf7de3d4fe0bddf1ecde29fd4c03e8`
+- Size/stat: 5609 bytes, 3 files, 6 hunks, +66/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0165-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0165-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch`](../../patches/android-16/a13-authority/frameworks-base/0165-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fc78c81a3a795c8b3a9fab12807744beca019991b33c9b7a8f9410de9a907135`
+- Size/stat: 4484 bytes, 1 files, 3 hunks, +7/-16
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0166-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0166-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch`](../../patches/android-16/a13-authority/frameworks-base/0166-Case-ROB-15810-sending-JSONObject-instead-of-many-pa.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c3511d56e962f301381ebbf469d8edfce465389f8f656bf5d45ff039594427d4`
+- Size/stat: 4736 bytes, 3 files, 4 hunks, +7/-7
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+
+### `0167-ROB-15882-Fix-Pokemon-emulator-detection-on-A11-and-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0167-ROB-15882-Fix-Pokemon-emulator-detection-on-A11-and-.patch`](../../patches/android-16/a13-authority/frameworks-base/0167-ROB-15882-Fix-Pokemon-emulator-detection-on-A11-and-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a30d8dc871b5679d955ad3b62c664e1e18a17a0501a302295e5e7cd47aa97cc8`
+- Size/stat: 2406 bytes, 2 files, 2 hunks, +8/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/content/pm/PackageParser.java`
+  - `core/java/android/content/pm/parsing/ApkLiteParseUtils.java`
+
+### `0168-Case-ROB-16065-not-sending-stat-for-gg.now.accounts-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0168-Case-ROB-16065-not-sending-stat-for-gg.now.accounts-.patch`](../../patches/android-16/a13-authority/frameworks-base/0168-Case-ROB-16065-not-sending-stat-for-gg.now.accounts-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `49c8d72316ee0c226fd9dccf0ee28ce141befcf740ac68ff640bcdb078a7952d`
+- Size/stat: 1441 bytes, 1 files, 1 hunks, +4/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `0169-uid-checks.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0169-uid-checks.patch`](../../patches/android-16/a13-authority/frameworks-base/0169-uid-checks.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `042ac253229e3633254170aac2676db8cedefbd7e0a27ccc8b24257e1905e155`
+- Size/stat: 2410 bytes, 1 files, 1 hunks, +13/-9
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `0170-ROB-16058-Fix-USB-debugging-detection.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0170-ROB-16058-Fix-USB-debugging-detection.patch`](../../patches/android-16/a13-authority/frameworks-base/0170-ROB-16058-Fix-USB-debugging-detection.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3c02292331550dfd77b112a4f56642052e800cae28a28a85e5526486306bd19f`
+- Size/stat: 1481 bytes, 1 files, 1 hunks, +2/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/provider/Settings.java`
+
+### `0171-Review-comments.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0171-Review-comments.patch`](../../patches/android-16/a13-authority/frameworks-base/0171-Review-comments.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3673fc89d34e68823f5332175dffbc73ddba8c62f9a6869fcb7e3b9f0b6937fe`
+- Size/stat: 1292 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `0172-Case-ROB-15589-adding-GP-app-download-stats-178.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0172-Case-ROB-15589-adding-GP-app-download-stats-178.patch`](../../patches/android-16/a13-authority/frameworks-base/0172-Case-ROB-15589-adding-GP-app-download-stats-178.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8eb2110d40ac4827c12e8679fdd2482557a59fb71a8658d1ad449e9e165e44aa`
+- Size/stat: 4302 bytes, 1 files, 3 hunks, +37/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+
+### `0173-fix-compile-error.-179.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0173-fix-compile-error.-179.patch`](../../patches/android-16/a13-authority/frameworks-base/0173-fix-compile-error.-179.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2eb0e77177f45138c9c36e97153b03c1cf0128f89cc98d1fa7ad361827660545`
+- Size/stat: 1263 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+
+### `0174-case-ROB-15565-enable-vulkan-globally.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0174-case-ROB-15565-enable-vulkan-globally.patch`](../../patches/android-16/a13-authority/frameworks-base/0174-case-ROB-15565-enable-vulkan-globally.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `34b9cdeba6389adf5b120390bf6e73d99a4e74322d36b76bc86a0182685e8cba`
+- Size/stat: 6412 bytes, 3 files, 6 hunks, +16/-20
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0175-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0175-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch`](../../patches/android-16/a13-authority/frameworks-base/0175-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c8321e13c6318444dde41c25b28c39b02fba4bb19a50abfa568ba18d29e9a674`
+- Size/stat: 11434 bytes, 5 files, 14 hunks, +103/-8
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/content/pm/PackageParser.java`
+  - `core/java/android/content/pm/parsing/ApkLiteParseUtils.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0176-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0176-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch`](../../patches/android-16/a13-authority/frameworks-base/0176-ROB-15990-Support-extractNativeLibs-entry-to-decide-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5b92d9a7fffb0222756e8b46af1fe8dd192471ffe0bcb1ce720422fbc4fcbdc9`
+- Size/stat: 11503 bytes, 5 files, 14 hunks, +103/-8
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/content/pm/PackageParser.java`
+  - `core/java/android/content/pm/parsing/ApkLiteParseUtils.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0177-ROB-15980-Fix-RuneScape-text-is-zoomed-out.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0177-ROB-15980-Fix-RuneScape-text-is-zoomed-out.patch`](../../patches/android-16/a13-authority/frameworks-base/0177-ROB-15980-Fix-RuneScape-text-is-zoomed-out.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1a537e6bb4d4514a3a7e304ce0c5c26fa8fe003ed5d0a08cdacd5faa232ab1a3`
+- Size/stat: 1258 bytes, 1 files, 1 hunks, +4/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/content/res/ResourcesImpl.java`
+
+### `0178-ROB-14842-Fix-App-Center-not-getting-launched-throug.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0178-ROB-14842-Fix-App-Center-not-getting-launched-throug.patch`](../../patches/android-16/a13-authority/frameworks-base/0178-ROB-14842-Fix-App-Center-not-getting-launched-throug.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `261d6909c4174dfeb63be7aa46acb96129a7f4a2800448baa1c757f0e3e42289`
+- Size/stat: 3423 bytes, 1 files, 5 hunks, +5/-5
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/ComputerEngine.java`
+
+### `0179-ROB-16276-add-hcall-onNowggSigninClicked.-184.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0179-ROB-16276-add-hcall-onNowggSigninClicked.-184.patch`](../../patches/android-16/a13-authority/frameworks-base/0179-ROB-16276-add-hcall-onNowggSigninClicked.-184.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `90b6104d61af65dc0640c35690c72e0c90c8e7307cb96adb00e5dfcb86896a99`
+- Size/stat: 5751 bytes, 5 files, 6 hunks, +39/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `core/java/com/bluestacks/os/IBstUtilsService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0180-ROB-16374-update-hcall-onNowggSigninClicked.-185.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0180-ROB-16374-update-hcall-onNowggSigninClicked.-185.patch`](../../patches/android-16/a13-authority/frameworks-base/0180-ROB-16374-update-hcall-onNowggSigninClicked.-185.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `338a8658943cfb47ccafa42b0f4582c2a186144bc37286f5a3b45db8972f90e5`
+- Size/stat: 5292 bytes, 4 files, 6 hunks, +11/-10
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0181-Merge-pull-request-170-from-jason-bst-bst-v5.22.0-RO.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0181-Merge-pull-request-170-from-jason-bst-bst-v5.22.0-RO.patch`](../../patches/android-16/a13-authority/frameworks-base/0181-Merge-pull-request-170-from-jason-bst-bst-v5.22.0-RO.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `526e0e62d024a3b4a73f9a56f03ccdd31eebe6ad54b7b1be76c96e5e57c202a1`
+- Size/stat: 3907 bytes, 1 files, 9 hunks, +12/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/SharedPreferencesImpl.java`
+
+### `0182-ROB-16443-Fix-nexon-app-emulator-detection-issue-for.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0182-ROB-16443-Fix-nexon-app-emulator-detection-issue-for.patch`](../../patches/android-16/a13-authority/frameworks-base/0182-ROB-16443-Fix-nexon-app-emulator-detection-issue-for.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `98bdee908d9a0cdcc8ab146b6dcf0ed512a17dcb7d5e577f10d0c4e7fab1bef5`
+- Size/stat: 1114 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/hardware/Sensor.java`
+
+### `0183-Merge-pull-request-187-from-emin-bst-bst-v5.22.75.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0183-Merge-pull-request-187-from-emin-bst-bst-v5.22.75.patch`](../../patches/android-16/a13-authority/frameworks-base/0183-Merge-pull-request-187-from-emin-bst-bst-v5.22.75.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d363088f78da6d551768a4480779306d051ba26f4daa47d9b24226b9c2e67dd8`
+- Size/stat: 24806 bytes, 9 files, 20 hunks, +244/-27
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 9 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/content/res/ResourcesImpl.java`
+  - `core/java/android/util/BstUtils.java`
+  - `core/java/android/view/Display.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/core/java/com/android/server/wm/ActivityClientController.java`
+  - `services/core/java/com/android/server/wm/ActivityStartController.java`
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0184-ROB-16456-add-etherNetType-entry-for-freely-switchin.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0184-ROB-16456-add-etherNetType-entry-for-freely-switchin.patch`](../../patches/android-16/a13-authority/frameworks-base/0184-ROB-16456-add-etherNetType-entry-for-freely-switchin.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c17d8dd38d58d4b7ac29e0356a65afdfc6edc6dcd672ae91d21c649d7b782b8b`
+- Size/stat: 7140 bytes, 5 files, 7 hunks, +70/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/Android.bp`
+  - `core/java/android/content/Context.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0185-ROB-16216-Fix-the-UI-is-very-small-issue.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0185-ROB-16216-Fix-the-UI-is-very-small-issue.patch`](../../patches/android-16/a13-authority/frameworks-base/0185-ROB-16216-Fix-the-UI-is-very-small-issue.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3af7022670134a2a43fcbceb69bf9682094c8e0f714c9f6f802d405c76f4db59`
+- Size/stat: 10918 bytes, 5 files, 12 hunks, +113/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/content/res/ResourcesImpl.java`
+  - `core/java/android/view/Display.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0186-ROB-16419-Fix-gamepad-L2-and-R2-do-not-respond.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0186-ROB-16419-Fix-gamepad-L2-and-R2-do-not-respond.patch`](../../patches/android-16/a13-authority/frameworks-base/0186-ROB-16419-Fix-gamepad-L2-and-R2-do-not-respond.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `180925300eeb897b2b107e820e547152b3cc490b4e7ff41a273d8b47914de7eb`
+- Size/stat: 769 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `data/keyboards/Generic.kl`
+
+### `0187-ROB-16694-add-new-config-entries-VkHostInfo-and-vk_d.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0187-ROB-16694-add-new-config-entries-VkHostInfo-and-vk_d.patch`](../../patches/android-16/a13-authority/frameworks-base/0187-ROB-16694-add-new-config-entries-VkHostInfo-and-vk_d.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7e9ff238a3e8649f7f84db4bf088e5bade13a935b60de7df719c5fadae601477`
+- Size/stat: 8530 bytes, 3 files, 6 hunks, +126/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0188-ROB-16756-ROB-16757-modify-input-device-name-to-pass.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0188-ROB-16756-ROB-16757-modify-input-device-name-to-pass.patch`](../../patches/android-16/a13-authority/frameworks-base/0188-ROB-16756-ROB-16757-modify-input-device-name-to-pass.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1e130dc1283be63f80b8d4042aa1036ce507cd4ec7b7a79a558ab8ea86aef857`
+- Size/stat: 4887 bytes, 1 files, 3 hunks, +62/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/InputDevice.java`
+
+### `0189-ROB-16756-ROB-16757-fix-compilation-error.-194.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0189-ROB-16756-ROB-16757-fix-compilation-error.-194.patch`](../../patches/android-16/a13-authority/frameworks-base/0189-ROB-16756-ROB-16757-fix-compilation-error.-194.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2afa1ce5197b9dcd4b88aafd262876e1e117954b36e231ec8c5ce38a028ff9e0`
+- Size/stat: 1523 bytes, 1 files, 3 hunks, +7/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/InputDevice.java`
+
+### `0190-ROB-16938-manually-release-the-key-to-fix-shooting-i.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0190-ROB-16938-manually-release-the-key-to-fix-shooting-i.patch`](../../patches/android-16/a13-authority/frameworks-base/0190-ROB-16938-manually-release-the-key-to-fix-shooting-i.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `814afb29f2f3a78ddba60070047b7e79ad96858b924b4b8c4d8d021337c8af57`
+- Size/stat: 2610 bytes, 1 files, 2 hunks, +21/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/ViewRootImpl.java`
+
+### `0191-ROB-16634-porting-IME-fix-to-A13-198.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0191-ROB-16634-porting-IME-fix-to-A13-198.patch`](../../patches/android-16/a13-authority/frameworks-base/0191-ROB-16634-porting-IME-fix-to-A13-198.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f6f1ac90f7bba6d45fee0e32221951e8776638f31c122420161372d7a257054a`
+- Size/stat: 5432 bytes, 2 files, 4 hunks, +40/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/inputmethodservice/InputMethodService.java`
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+
+### `0192-ROB-16938-release-the-key-earlier-199.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0192-ROB-16938-release-the-key-earlier-199.patch`](../../patches/android-16/a13-authority/frameworks-base/0192-ROB-16938-release-the-key-earlier-199.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a068907f1c8790c1aa32435269e978da7e3742f94d9b0740016d578e514044ad`
+- Size/stat: 2376 bytes, 1 files, 1 hunks, +9/-5
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/ViewRootImpl.java`
+
+### `0193-ROB-16547-change-isXperfMode-to-getXperfMode-to-supp.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0193-ROB-16547-change-isXperfMode-to-getXperfMode-to-supp.patch`](../../patches/android-16/a13-authority/frameworks-base/0193-ROB-16547-change-isXperfMode-to-getXperfMode-to-supp.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9e03f32de8019d81916ceac8535b997326d15af73ff82d4b55e17c5864d3613d`
+- Size/stat: 7636 bytes, 3 files, 6 hunks, +27/-20
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0194-ROB-16547-Improved-support-for-UE-game-settings-for-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0194-ROB-16547-Improved-support-for-UE-game-settings-for-.patch`](../../patches/android-16/a13-authority/frameworks-base/0194-ROB-16547-Improved-support-for-UE-game-settings-for-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9084adf064bc5f5f643c0fca2cd440c032790872f23f6821697c4dad9d647efa`
+- Size/stat: 4451 bytes, 1 files, 2 hunks, +78/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityThread.java`
+
+### `0195-ROB-16547-Improved-support-for-UE-game-settings-for-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0195-ROB-16547-Improved-support-for-UE-game-settings-for-.patch`](../../patches/android-16/a13-authority/frameworks-base/0195-ROB-16547-Improved-support-for-UE-game-settings-for-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c0dc5347ffdd6ef6f642edce5f8753d8468d6b6c83239af934a7efa242cb3a00`
+- Size/stat: 3834 bytes, 1 files, 2 hunks, +21/-18
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityThread.java`
+
+### `0196-ROB-15243-game-settings-based-on-bst.pscore.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0196-ROB-15243-game-settings-based-on-bst.pscore.patch`](../../patches/android-16/a13-authority/frameworks-base/0196-ROB-15243-game-settings-based-on-bst.pscore.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c55cd37e59e8c34673a62da814f9ee2ee636c8a3c9d2283ae7db2f120c924a64`
+- Size/stat: 4369 bytes, 2 files, 2 hunks, +30/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityThread.java`
+  - `core/java/android/app/SharedPreferencesImpl.java`
+
+### `0197-ROB-16799-fix-A13-unable-take-ScreenShot-issue-204.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0197-ROB-16799-fix-A13-unable-take-ScreenShot-issue-204.patch`](../../patches/android-16/a13-authority/frameworks-base/0197-ROB-16799-fix-A13-unable-take-ScreenShot-issue-204.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4658cfa59e6698f076cbeeee37cb4a33e4a47368f1e7f0f86ed61df4e5842007`
+- Size/stat: 1930 bytes, 1 files, 2 hunks, +7/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/policy/PhoneWindowManager.java`
+
+### `0198-Revert-Merge-pull-request-203-from-jason-bst-bst-v5..patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0198-Revert-Merge-pull-request-203-from-jason-bst-bst-v5..patch`](../../patches/android-16/a13-authority/frameworks-base/0198-Revert-Merge-pull-request-203-from-jason-bst-bst-v5..patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ec4839cbca60cca87181cd9aefadda7b3cc9fb5e81604f6a84f2a480ea45271d`
+- Size/stat: 4527 bytes, 2 files, 2 hunks, +6/-30
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityThread.java`
+  - `core/java/android/app/SharedPreferencesImpl.java`
+
+### `0199-ROB-15243-add-PScoreAbove-in-config.db.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0199-ROB-15243-add-PScoreAbove-in-config.db.patch`](../../patches/android-16/a13-authority/frameworks-base/0199-ROB-15243-add-PScoreAbove-in-config.db.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `21fb5a631ec3d0ac82305d777796fba867359b83daa084de5824e32e5caa319e`
+- Size/stat: 8025 bytes, 5 files, 8 hunks, +70/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityThread.java`
+  - `core/java/android/app/SharedPreferencesImpl.java`
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0200-Fixing-build-error.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0200-Fixing-build-error.patch`](../../patches/android-16/a13-authority/frameworks-base/0200-Fixing-build-error.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `93f6c0c474c03c94c83bc2d0217aaf14aedc4ab711b5eca1610ef4af406ad263`
+- Size/stat: 1346 bytes, 1 files, 1 hunks, +8/-7
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+
+### `0201-Case-ROB-16097-Explore-if-any-config-entries-can-be-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0201-Case-ROB-16097-Explore-if-any-config-entries-can-be-.patch`](../../patches/android-16/a13-authority/frameworks-base/0201-Case-ROB-16097-Explore-if-any-config-entries-can-be-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7dac766375a10ad3c4f3d11650d42bc22b5364f0d7f04648f7fffd6729b448d6`
+- Size/stat: 26314 bytes, 2 files, 20 hunks, +110/-95
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0202-ROB-16097-Set-vms-entry-as-global-by-default-for-A11.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0202-ROB-16097-Set-vms-entry-as-global-by-default-for-A11.patch`](../../patches/android-16/a13-authority/frameworks-base/0202-ROB-16097-Set-vms-entry-as-global-by-default-for-A11.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `eba3b87e4b6a974c43550186d83dc86491cd751b286ae08e84a1a15e875472ee`
+- Size/stat: 5661 bytes, 2 files, 5 hunks, +72/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0203-ROB-17750-fix-ncsoft-emulator-detection-issue.-211.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0203-ROB-17750-fix-ncsoft-emulator-detection-issue.-211.patch`](../../patches/android-16/a13-authority/frameworks-base/0203-ROB-17750-fix-ncsoft-emulator-detection-issue.-211.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b9628283e9e450e049f1664982566a954bf712967dcaf5a6ab9446f966195c85`
+- Size/stat: 1977 bytes, 1 files, 1 hunks, +1/-19
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/InputDevice.java`
+
+### `0204-Merge-pull-request-213-from-dailongzhong-bst-bst-v5..patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0204-Merge-pull-request-213-from-dailongzhong-bst-bst-v5..patch`](../../patches/android-16/a13-authority/frameworks-base/0204-Merge-pull-request-213-from-dailongzhong-bst-bst-v5..patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fd2bcf9897bc556cfacc0872e3f78ebcd87e2a1c9b12aa39c2a797f9dda31ce4`
+- Size/stat: 5261 bytes, 2 files, 4 hunks, +63/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallCcCodes.java`
+  - `services/core/java/com/android/server/inputmethod/InputMethodManagerService.java`
+
+### `0205-ROB-16741-Auto-detect-gms-get-token-exception-to-pos.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0205-ROB-16741-Auto-detect-gms-get-token-exception-to-pos.patch`](../../patches/android-16/a13-authority/frameworks-base/0205-ROB-16741-Auto-detect-gms-get-token-exception-to-pos.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7b10a4165253dafe74f5cb04ec2b8c6845606d42c7057e491076db6bdbebaed8`
+- Size/stat: 2639 bytes, 1 files, 3 hunks, +18/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/accounts/AccountManagerService.java`
+
+### `0206-ROB-16741-Add-ForceClearGms-entry-to-determine-wheth.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0206-ROB-16741-Add-ForceClearGms-entry-to-determine-wheth.patch`](../../patches/android-16/a13-authority/frameworks-base/0206-ROB-16741-Add-ForceClearGms-entry-to-determine-wheth.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `02604342e39e6e4d06bd1d98012ea6aae758de483d8bfa2fb81e27a85dff96ed`
+- Size/stat: 6116 bytes, 3 files, 6 hunks, +66/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0207-Revert-ROB-16741-Add-ForceClearGms-entry-to-determin.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0207-Revert-ROB-16741-Add-ForceClearGms-entry-to-determin.patch`](../../patches/android-16/a13-authority/frameworks-base/0207-Revert-ROB-16741-Add-ForceClearGms-entry-to-determin.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fe895e7dea84e6e40ab6e20e0594307d3ffa69ec2e4111a8fb1cf15b667f8ec3`
+- Size/stat: 6168 bytes, 3 files, 6 hunks, +0/-66
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0208-Revert-ROB-16741-Auto-detect-gms-get-token-exception.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0208-Revert-ROB-16741-Auto-detect-gms-get-token-exception.patch`](../../patches/android-16/a13-authority/frameworks-base/0208-Revert-ROB-16741-Auto-detect-gms-get-token-exception.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `27d53208050b7d34d9595dc0335137e199325d81b68901902c63fda7a2377029`
+- Size/stat: 2572 bytes, 1 files, 3 hunks, +0/-18
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/accounts/AccountManagerService.java`
+
+### `0209-Add-accessible-installation-services-and-support-Goo.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0209-Add-accessible-installation-services-and-support-Goo.patch`](../../patches/android-16/a13-authority/frameworks-base/0209-Add-accessible-installation-services-and-support-Goo.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4098e70d07e8aba6cbbf4d34f08ed794a7ec701ea07f0235fb51317dbe89ef22`
+- Size/stat: 2564 bytes, 1 files, 2 hunks, +18/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java`
+
+### `0210-Case-ROB-18242-adding-changes-for-hcall-398.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0210-Case-ROB-18242-adding-changes-for-hcall-398.patch`](../../patches/android-16/a13-authority/frameworks-base/0210-Case-ROB-18242-adding-changes-for-hcall-398.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `cb0ad603b7cd6bb8bcd7ca564bb7daa66396f1161e2d0c09f8f5ec8a5f59ca1a`
+- Size/stat: 5261 bytes, 4 files, 6 hunks, +42/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstHostCallManager.java`
+  - `core/java/com/bluestacks/os/IBstHostCallService.aidl`
+  - `services/java/com/bluestacks/server/BstHostCallService.java`
+  - `services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp`
+
+### `0211-ROB-18340-Add-a-item-called-GLMBRRO-in-config.db-217.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0211-ROB-18340-Add-a-item-called-GLMBRRO-in-config.db-217.patch`](../../patches/android-16/a13-authority/frameworks-base/0211-ROB-18340-Add-a-item-called-GLMBRRO-in-config.db-217.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `cccebde1d2000669c13c7b8999157170cbdf1d72169eddc99a5bb6c299250906`
+- Size/stat: 6101 bytes, 3 files, 6 hunks, +65/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0212-ROB-18338-filter-out-nativeMouse-device-for-com.nete.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0212-ROB-18338-filter-out-nativeMouse-device-for-com.nete.patch`](../../patches/android-16/a13-authority/frameworks-base/0212-ROB-18338-filter-out-nativeMouse-device-for-com.nete.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `35345abc662c35148a1f6b69a015e63364ff6f6c0caf1d8db92b8a73e9391068`
+- Size/stat: 3192 bytes, 1 files, 2 hunks, +44/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/hardware/input/InputManager.java`
+
+### `0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch`](../../patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `382368d4bdf41b1512b48ac024a6dbb3a5d544694c12d34383cbf0e04c4a975b`
+- Size/stat: 30023 bytes, 5 files, 14 hunks, +483/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/accessibility/AccessibilityManager.java`
+  - `packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java`
+  - `packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java`
+  - `services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java`
+  - `services/core/java/com/android/server/pm/ComputerEngine.java`
+
+### `0214-udpate.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0214-udpate.patch`](../../patches/android-16/a13-authority/frameworks-base/0214-udpate.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a3e2fbe077d0032f86c9494a7e2c17b082e8ce8ad334d417b37f61c74a575ba0`
+- Size/stat: 36576 bytes, 6 files, 20 hunks, +183/-449
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 6 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/util/BstUtils.java`
+  - `core/java/android/view/accessibility/AccessibilityManager.java`
+  - `packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java`
+  - `packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java`
+  - `services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java`
+  - `services/core/java/com/android/server/pm/ComputerEngine.java`
+
+### `0215-Remove-the-accessibility-service-automatically-insta.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0215-Remove-the-accessibility-service-automatically-insta.patch`](../../patches/android-16/a13-authority/frameworks-base/0215-Remove-the-accessibility-service-automatically-insta.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c125a05b29d912840f7657cb5468708f5f68ab524fdc07d8499c63140c3fa497`
+- Size/stat: 2568 bytes, 1 files, 2 hunks, +2/-18
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java`
+
+### `0216-ROB-18546-add-new-entry-FBCCDisabled.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0216-ROB-18546-add-new-entry-FBCCDisabled.patch`](../../patches/android-16/a13-authority/frameworks-base/0216-ROB-18546-add-new-entry-FBCCDisabled.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `caf2da38563c4f67200fb4ecab5dbbb01137cb7f35d55b27765cf8940d36d5dd`
+- Size/stat: 6413 bytes, 3 files, 6 hunks, +77/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0217-ROB-18546-Correct-the-erroneous-function-224.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0217-ROB-18546-Correct-the-erroneous-function-224.patch`](../../patches/android-16/a13-authority/frameworks-base/0217-ROB-18546-Correct-the-erroneous-function-224.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fce7adc7062d32f01af58fe01db8cac2da6ea2009b50e81c20710b3374d0cd2b`
+- Size/stat: 1878 bytes, 1 files, 1 hunks, +7/-19
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+
+### `0218-ROB-18620-Surport-NDK-translation-212-226.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0218-ROB-18620-Surport-NDK-translation-212-226.patch`](../../patches/android-16/a13-authority/frameworks-base/0218-ROB-18620-Surport-NDK-translation-212-226.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `54104430998f08b85dfe9c4ec37c3ec6a591f5ee98fdeee98b0941b2e6a350cc`
+- Size/stat: 6910 bytes, 2 files, 7 hunks, +68/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0219-ROB-18148-No-audio-when-playing-Instagram-DM-videos-.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0219-ROB-18148-No-audio-when-playing-Instagram-DM-videos-.patch`](../../patches/android-16/a13-authority/frameworks-base/0219-ROB-18148-No-audio-when-playing-Instagram-DM-videos-.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9e13bc876c8bb5d8d13301b0928a967a0d8e316433f3603659073c991ac8af55`
+- Size/stat: 5022 bytes, 2 files, 5 hunks, +52/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/Activity.java`
+  - `services/core/java/com/android/server/input/InputManagerService.java`
+
+### `0220-ROB-18546-add-new-entry-FBCCDisabled.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0220-ROB-18546-add-new-entry-FBCCDisabled.patch`](../../patches/android-16/a13-authority/frameworks-base/0220-ROB-18546-add-new-entry-FBCCDisabled.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0f15ba04c608ad8d5d190f1c473298d19b99f78e1f67c061cec92db7e1f91be7`
+- Size/stat: 6482 bytes, 3 files, 6 hunks, +77/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0221-ROB-18546-Correct-the-erroneous-function-224.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0221-ROB-18546-Correct-the-erroneous-function-224.patch`](../../patches/android-16/a13-authority/frameworks-base/0221-ROB-18546-Correct-the-erroneous-function-224.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f47b07c4f2a0d09408bd4fe991dcb8178512d999704ef2b0aef99ddd162e33ce`
+- Size/stat: 1947 bytes, 1 files, 1 hunks, +7/-19
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/BstFilterAppsManager.java`
+
+### `0222-ROB-18620-Surport-NDK-translation-212-226.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0222-ROB-18620-Surport-NDK-translation-212-226.patch`](../../patches/android-16/a13-authority/frameworks-base/0222-ROB-18620-Surport-NDK-translation-212-226.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c606e02e6e2ba279affc95d5887460e57f42acb6fa4a01ab7e8cc986c4fbe51e`
+- Size/stat: 6836 bytes, 2 files, 7 hunks, +68/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+  - `services/java/com/bluestacks/server/BstFilterAppsService.java`
+
+### `0223-ROB-14680-fix-cannot-paste-issue-caused-by-device-lo.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0223-ROB-14680-fix-cannot-paste-issue-caused-by-device-lo.patch`](../../patches/android-16/a13-authority/frameworks-base/0223-ROB-14680-fix-cannot-paste-issue-caused-by-device-lo.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `62307363abdedffed0305ec3d11a4d0aac64bc01aa59115bc0eb218680357aa3`
+- Size/stat: 1777 bytes, 1 files, 2 hunks, +6/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/clipboard/ClipboardService.java`
+
+### `0224-ROB-18868-Change-Build.VERSION.SDK_INT-to-30-to-forc.patch`
+
+- Artifact: [`patches/android-16/a13-authority/frameworks-base/0224-ROB-18868-Change-Build.VERSION.SDK_INT-to-30-to-forc.patch`](../../patches/android-16/a13-authority/frameworks-base/0224-ROB-18868-Change-Build.VERSION.SDK_INT-to-30-to-forc.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b399cea2a2009f343661b92781b7cdbda3e3f142f14937af199d2c470f6e2fb6`
+- Size/stat: 4736 bytes, 2 files, 6 hunks, +36/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/PendingIntent.java`
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `art-droidguard-jni.patch`
+
+- Artifact: [`patches/android-16/a13-completion/art-droidguard-jni.patch`](../../patches/android-16/a13-completion/art-droidguard-jni.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2b27c270a986ec5ccb4311b86cb3d5cb75e30f46662994dd303cda40d7f95814`
+- Size/stat: 3580 bytes, 1 files, 3 hunks, +70/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `runtime/jni/jni_internal.cc`
+
+### `art-houdini16-cpuinfo.patch`
+
+- Artifact: [`patches/android-16/a13-completion/art-houdini16-cpuinfo.patch`](../../patches/android-16/a13-completion/art-houdini16-cpuinfo.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `046a74fb2fa14cd8e597183c28f434e46cf094f6e7907c23681e1d3b8e26e342`
+- Size/stat: 570 bytes, 1 files, 1 hunks, +5/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativebridge/native_bridge.cc`
+
+### `art-native-bridge-build-fix.patch`
+
+- Artifact: [`patches/android-16/a13-completion/art-native-bridge-build-fix.patch`](../../patches/android-16/a13-completion/art-native-bridge-build-fix.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4bcfd4c77f46fd1305de9b0d2dbb5fb29e2c788e4ab29a12250f71d3aa013d84`
+- Size/stat: 1289 bytes, 1 files, 4 hunks, +4/-5
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativebridge/native_bridge.cc`
+
+### `art-native-bridge-compat.patch`
+
+- Artifact: [`patches/android-16/a13-completion/art-native-bridge-compat.patch`](../../patches/android-16/a13-completion/art-native-bridge-compat.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `35574ac42cb297db0cd157b73c0692da6b5d3f652b049cf1980f75a804870e34`
+- Size/stat: 13068 bytes, 2 files, 7 hunks, +343/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativebridge/libnativebridge.map.txt`
+  - `libnativebridge/native_bridge.cc`
+
+### `art-native-loader-hooks.patch`
+
+- Artifact: [`patches/android-16/a13-completion/art-native-loader-hooks.patch`](../../patches/android-16/a13-completion/art-native-loader-hooks.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `318a1debced1fa92e90068cdf61dafc677c5118acadd93595cb882cddab9d6ff`
+- Size/stat: 6166 bytes, 1 files, 3 hunks, +162/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libnativeloader/native_loader_namespace.cpp`
+
+### `art-nativebridge-lazy-package-name.patch`
+
+- Artifact: [`patches/android-16/a13-completion/art-nativebridge-lazy-package-name.patch`](../../patches/android-16/a13-completion/art-nativebridge-lazy-package-name.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `eb202d1b67c1f32ff9b3e96c797853af2833377b6bf7769e48ea4bdd09226284`
+- Size/stat: 480 bytes, 1 files, 1 hunks, +6/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `libnativebridge/native_bridge_lazy.cc`
+
+### `art-oat-dexpc-nonfatal.patch`
+
+- Artifact: [`patches/android-16/a13-completion/art-oat-dexpc-nonfatal.patch`](../../patches/android-16/a13-completion/art-oat-dexpc-nonfatal.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f0e6d35434344c5941679be2a62b8671df214220b9699b4b2960d78bec7b3ba8`
+- Size/stat: 873 bytes, 1 files, 1 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `runtime/oat/oat_quick_method_header.cc`
+
+### `bionic-null-property-read-contract.patch`
+
+- Artifact: [`patches/android-16/a13-completion/bionic-null-property-read-contract.patch`](../../patches/android-16/a13-completion/bionic-null-property-read-contract.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f4bee259f49aea78c0b3149cb1e0a1f08f472d0541bc02ec5df267b1a1bd252b`
+- Size/stat: 961 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `libc/include/sys/system_properties.h`
+
+### `bionic-obs-str-cleanup.patch`
+
+- Artifact: [`patches/android-16/a13-completion/bionic-obs-str-cleanup.patch`](../../patches/android-16/a13-completion/bionic-obs-str-cleanup.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b5e73b5bdd86a1e853e13a520765bec6c84ed76e965925678c054932cc26f2b5`
+- Size/stat: 300 bytes, 1 files, 1 hunks, +0/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/system_properties/obs_str.hpp`
+
+### `bionic-property-hash-prefix.patch`
+
+- Artifact: [`patches/android-16/a13-completion/bionic-property-hash-prefix.patch`](../../patches/android-16/a13-completion/bionic-property-hash-prefix.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a5d7bde2eee290e60e148c14c75a9dbe9ed24dee00e302747a2c021bf3d3dab9`
+- Size/stat: 674 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/system_properties/system_properties.cpp`
+
+### `bionic-property-read-hooks.patch`
+
+- Artifact: [`patches/android-16/a13-completion/bionic-property-read-hooks.patch`](../../patches/android-16/a13-completion/bionic-property-read-hooks.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `701cf4836bcc2644da45383a56672aec94c9fd240e1ab32c9caf937b71a62c31`
+- Size/stat: 4235 bytes, 1 files, 7 hunks, +50/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/system_properties/system_properties.cpp`
+
+### `bionic-x86-runtime-compat.patch`
+
+- Artifact: [`patches/android-16/a13-completion/bionic-x86-runtime-compat.patch`](../../patches/android-16/a13-completion/bionic-x86-runtime-compat.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2136aa366325c5b550c585ec680e6e9972f6100b508aa10e0e770c04b2831970`
+- Size/stat: 1363 bytes, 3 files, 3 hunks, +6/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libc/SYSCALLS.TXT`
+  - `libc/libc.map.txt`
+  - `linker/linker.cpp`
+
+### `bluetooth-keystore-startup.patch`
+
+- Artifact: [`patches/android-16/a13-completion/bluetooth-keystore-startup.patch`](../../patches/android-16/a13-completion/bluetooth-keystore-startup.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e2f5e03935c6c5c01a9a53bfcf643c0a05589d280c526e4b7d2740284b12feb0`
+- Size/stat: 1228 bytes, 1 files, 1 hunks, +4/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `android/app/src/com/android/bluetooth/btservice/bluetoothKeystore/BluetoothKeystoreService.java`
+
+### `bootable-newinstaller-efibootmgr.patch`
+
+- Artifact: [`patches/android-16/a13-completion/bootable-newinstaller-efibootmgr.patch`](../../patches/android-16/a13-completion/bootable-newinstaller-efibootmgr.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e631ea58b98cc2dff052efe5e84001cb5596fe134c26868faafd0678d837d785`
+- Size/stat: 1149 bytes, 1 files, 1 hunks, +5/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `Android.mk`
+
+### `build-make-dexpreopt-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/build-make-dexpreopt-policy.patch`](../../patches/android-16/a13-completion/build-make-dexpreopt-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d5f0679fbd7d206ac431b6ba484d74701a23baad2e7e39465f67579d8d42df4c`
+- Size/stat: 936 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `target/product/runtime_libart.mk`
+
+### `build-make-product-package-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/build-make-product-package-policy.patch`](../../patches/android-16/a13-completion/build-make-product-package-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b9b2bc37987f5bf4d3863758a09fc9980c959658d1292db82c5db7d974c87294`
+- Size/stat: 2637 bytes, 4 files, 5 hunks, +0/-12
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `target/product/handheld_product.mk`
+  - `target/product/handheld_system.mk`
+  - `target/product/media_system.mk`
+  - `target/product/telephony_system_ext.mk`
+
+### `build-soong-bstsettings-allowlist.patch`
+
+- Artifact: [`patches/android-16/a13-completion/build-soong-bstsettings-allowlist.patch`](../../patches/android-16/a13-completion/build-soong-bstsettings-allowlist.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `63b5d2c1464c48e5d8964f75b94725565b082822b72ffe32dbc2c1b2f9c7998a`
+- Size/stat: 903 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `ui/build/androidmk_denylist.go`
+
+### `build-soong-media-allowlist.patch`
+
+- Artifact: [`patches/android-16/a13-completion/build-soong-media-allowlist.patch`](../../patches/android-16/a13-completion/build-soong-media-allowlist.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `cc25188373e141334d25345627b447a969e9ad653c006949081754b216d499f3`
+- Size/stat: 1470 bytes, 1 files, 1 hunks, +13/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `ui/build/androidmk_denylist.go`
+
+### `connectivity-captive-portal.patch`
+
+- Artifact: [`patches/android-16/a13-completion/connectivity-captive-portal.patch`](../../patches/android-16/a13-completion/connectivity-captive-portal.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `928f58ab9d2d10c1574f8b977d5415a583b63afb740ba794caaaeea5f847b962`
+- Size/stat: 2805 bytes, 1 files, 1 hunks, +8/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `service/src/com/android/server/ConnectivityService.java`
+
+### `connectivity-dscp-unroll.patch`
+
+- Artifact: [`patches/android-16/a13-completion/connectivity-dscp-unroll.patch`](../../patches/android-16/a13-completion/connectivity-dscp-unroll.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `96e56a0b7011cc5cd1fff37ea54b75e5448db7ee35c80c7d9435db2ca53cbf68`
+- Size/stat: 1729 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `bpf/progs/dscpPolicy.c`
+
+### `connectivity-network-presentation.patch`
+
+- Artifact: [`patches/android-16/a13-completion/connectivity-network-presentation.patch`](../../patches/android-16/a13-completion/connectivity-network-presentation.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7b970263ee5c7376b37523d792c94fd7d7f2bc62c7de3c4af5b888df3fd44d5d`
+- Size/stat: 11975 bytes, 4 files, 13 hunks, +67/-13
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `service-t/src/com/android/server/ethernet/EthernetNetworkFactory.java`
+  - `service-t/src/com/android/server/ethernet/EthernetTracker.java`
+  - `tests/unit/java/com/android/server/ethernet/EthernetNetworkFactoryTest.java`
+  - `tests/unit/java/com/android/server/ethernet/EthernetTrackerTest.java`
+
+### `device-common-bluetooth-aidl.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-bluetooth-aidl.patch`](../../patches/android-16/a13-completion/device-common-bluetooth-aidl.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5496b49ea4e38dc4bbe7e2650ecb719ab998604027acec59e66fcdda606196b3`
+- Size/stat: 288 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `treble.mk`
+
+### `device-common-clearkey-aidl.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-clearkey-aidl.patch`](../../patches/android-16/a13-completion/device-common-clearkey-aidl.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2b724bab0ea3160bdb9c23cf4798beef7333deeaa6adfcead5a1ced080847e71`
+- Size/stat: 361 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `treble.mk`
+
+### `device-common-dumpstate-aidl.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-dumpstate-aidl.patch`](../../patches/android-16/a13-completion/device-common-dumpstate-aidl.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `669adf72c17b3754014f0588537101ec4bcde17c7b751927ebd67438a337549a`
+- Size/stat: 336 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `treble.mk`
+
+### `device-common-ffmpeg-runtime.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-ffmpeg-runtime.patch`](../../patches/android-16/a13-completion/device-common-ffmpeg-runtime.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `879dbde3867eab89ab6359decd34b34a64c6c942a8f482a09e1b5ccd0bf5ff36`
+- Size/stat: 1247 bytes, 2 files, 2 hunks, +2/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `device.mk`
+  - `media_codecs.xml`
+
+### `device-common-houdini16-init-spacing.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-houdini16-init-spacing.patch`](../../patches/android-16/a13-completion/device-common-houdini16-init-spacing.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6533abbc7e5ce721c153bb1e8f6de57db63f78f38c140fe1a4439c3525540025`
+- Size/stat: 335 bytes, 1 files, 1 hunks, +0/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `init.x86.rc`
+
+### `device-common-houdini16-whitespace-fix.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-houdini16-whitespace-fix.patch`](../../patches/android-16/a13-completion/device-common-houdini16-whitespace-fix.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fb323fbbedeef38edf5abfea18c967ff76fc81755f3d8020d832a34a5d5f966f`
+- Size/stat: 793 bytes, 2 files, 2 hunks, +0/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `sepolicy/houdini/shell.te`
+  - `sepolicy/houdini/vendor_init.te`
+
+### `device-common-houdini16.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-houdini16.patch`](../../patches/android-16/a13-completion/device-common-houdini16.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0ac242ca9e2661899b86394d48cf18127ec7ac325eb71850c3af970c9b8ec37a`
+- Size/stat: 3824 bytes, 8 files, 11 hunks, +27/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `init.x86.rc`
+  - `nativebridge/nativebridge.mk`
+  - `sepolicy/houdini/app_zygote.te`
+  - `sepolicy/houdini/init.te`
+  - `sepolicy/houdini/property.te`
+  - `sepolicy/houdini/property_contexts`
+  - `sepolicy/houdini/shell.te`
+  - `sepolicy/houdini/vendor_init.te`
+
+### `device-common-install-xmllint.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-install-xmllint.patch`](../../patches/android-16/a13-completion/device-common-install-xmllint.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `cb4c209b70e99deadbde82452d07dcc615be17962e18f53ba455b2403b8f3c23`
+- Size/stat: 517 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages.mk`
+
+### `device-common-media-badblocks.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-media-badblocks.patch`](../../patches/android-16/a13-completion/device-common-media-badblocks.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ea2df87e19231b766ba85f3f4c7390186db62a1feacaf7d7ddbddac18c6cfd15`
+- Size/stat: 1686 bytes, 1 files, 3 hunks, +7/-9
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages.mk`
+
+### `device-common-nativebridge-v8.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-nativebridge-v8.patch`](../../patches/android-16/a13-completion/device-common-nativebridge-v8.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6006b731fe6679548b76a4773db2835c4837b76fec769f8af8d5b2945a17cb15`
+- Size/stat: 3479 bytes, 1 files, 4 hunks, +46/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `nativebridge/libnb.cpp`
+
+### `device-common-ntp-interval.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-ntp-interval.patch`](../../patches/android-16/a13-completion/device-common-ntp-interval.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `29cbcba438d97dc8be06b33ffb02b547f49d9164f58ad89d0662da03abbc4daf`
+- Size/stat: 600 bytes, 1 files, 1 hunks, +3/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `overlay/frameworks/base/core/res/res/values/config.xml`
+
+### `device-common-treble-a16-services.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-common-treble-a16-services.patch`](../../patches/android-16/a13-completion/device-common-treble-a16-services.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `45c8bd5b243878983a8df10d4c058474db7d4f8bb949b426948f4a899b9694f0`
+- Size/stat: 1062 bytes, 1 files, 4 hunks, +4/-8
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `treble.mk`
+
+### `device-generic-x86_64-hal-selectors.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-generic-x86_64-hal-selectors.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-hal-selectors.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d9801c5b279ce1b2cb0425926792ea0d3e0f0aba1e0ecae0d83a3152f8aa35fd`
+- Size/stat: 616 bytes, 1 files, 1 hunks, +6/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `android_x86_64.mk`
+
+### `device-x86_64-houdini16.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-x86_64-houdini16.patch`](../../patches/android-16/a13-completion/device-x86_64-houdini16.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c1ae1c6132de3ec81599f13f6bc2b984980f9d9ffe40587218ba6c70f76c5e68`
+- Size/stat: 683 bytes, 1 files, 1 hunks, +5/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `BoardConfig.mk`
+
+### `device-x86_64-release-art.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-x86_64-release-art.patch`](../../patches/android-16/a13-completion/device-x86_64-release-art.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f8d05be918945f84a1c49fdf9b1b745185f0e3ddbf1c70ad37b34e3a24d6f1d2`
+- Size/stat: 1264 bytes, 1 files, 2 hunks, +4/-9
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `android_x86_64.mk`
+
+### `download-provider-retry-api-fix.patch`
+
+- Artifact: [`patches/android-16/a13-completion/download-provider-retry-api-fix.patch`](../../patches/android-16/a13-completion/download-provider-retry-api-fix.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1e35a3124f969ca50bf809e63617fe91fd75c85a2d448faab63e4d154d971b38`
+- Size/stat: 2352 bytes, 1 files, 4 hunks, +7/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `src/com/android/providers/downloads/RetryDownloadReceiver.java`
+
+### `download-provider-retry.patch`
+
+- Artifact: [`patches/android-16/a13-completion/download-provider-retry.patch`](../../patches/android-16/a13-completion/download-provider-retry.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ea922cca120cac99ee7855a3d3405b22325ed30248e0fc3afe04f27779f160bf`
+- Size/stat: 6991 bytes, 4 files, 4 hunks, +124/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `AndroidManifest.xml`
+  - `src/com/android/providers/downloads/Constants.java`
+  - `src/com/android/providers/downloads/Helpers.java`
+  - `src/com/android/providers/downloads/RetryDownloadReceiver.java`
+
+### `external-e2fsprogs-target-badblocks.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-e2fsprogs-target-badblocks.patch`](../../patches/android-16/a13-completion/external-e2fsprogs-target-badblocks.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `931c123a17fc33cd9e81537e05e74e429077b9b7011ad88928e7d14424f2c94e`
+- Size/stat: 710 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `misc/Android.bp`
+
+### `external-efibootmgr-installer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-efibootmgr-installer.patch`](../../patches/android-16/a13-completion/external-efibootmgr-installer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `54c26714cebdd187a8ef29081beab00f249f1b05e45dbd28d989a13ce2430462`
+- Size/stat: 972 bytes, 1 files, 1 hunks, +23/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `src/Android.bp`
+
+### `external-efivar-installer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-efivar-installer.patch`](../../patches/android-16/a13-completion/external-efivar-installer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3d78dafc9d0bfcf068d545be60cb4fe96698ebdb0292371daa51857604f5061f`
+- Size/stat: 5132 bytes, 2 files, 5 hunks, +135/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `src/Android.bp`
+  - `src/makeguids.c`
+
+### `external-ffmpeg-a16-media.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-ffmpeg-a16-media.patch`](../../patches/android-16/a13-completion/external-ffmpeg-a16-media.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5a5d7e185907a3d6d8316767c2a4c2934ad47e5d452c42ecf224772c3b15bec3`
+- Size/stat: 4058 bytes, 7 files, 11 hunks, +17/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `android/build.mk`
+  - `libavcodec/Android.mk`
+  - `libavcodec/options.c`
+  - `libavformat/Android.mk`
+  - `libavutil/Android.mk`
+  - `libswresample/Android.mk`
+  - `libswscale/Android.mk`
+
+### `external-libva-core-vendor.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-libva-core-vendor.patch`](../../patches/android-16/a13-completion/external-libva-core-vendor.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `3c9436bf285d09134a2ef3416ee6ba49087c85b1f8977414f0a9a2d52a22b8e6`
+- Size/stat: 900 bytes, 1 files, 3 hunks, +3/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `Android.bp`
+
+### `external-libxml2-device-xmllint.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-libxml2-device-xmllint.patch`](../../patches/android-16/a13-completion/external-libxml2-device-xmllint.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `19dcce0022ebea7c926b1726c8277dd11b132d00f5b5e5813cbace17e865eb47`
+- Size/stat: 610 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `Android.bp`
+
+### `external-selinux-userspace-disabled.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-selinux-userspace-disabled.patch`](../../patches/android-16/a13-completion/external-selinux-userspace-disabled.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `699cb6e04f9208bec00c7b07caa12080153a9f3fac258afb9bd12a069472a2da`
+- Size/stat: 2241 bytes, 1 files, 2 hunks, +9/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `libselinux/src/enabled.c`
+
+### `external-skia-atlas-padding.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-skia-atlas-padding.patch`](../../patches/android-16/a13-completion/external-skia-atlas-padding.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7b8ba65e7dbc04c9d87c1b29f473ab0c260cd00898dcf703d96f673315983033`
+- Size/stat: 1076 bytes, 1 files, 2 hunks, +7/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `src/gpu/AtlasTypes.cpp`
+
+### `external-stagefright-plugins-a16.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-stagefright-plugins-a16.patch`](../../patches/android-16/a13-completion/external-stagefright-plugins-a16.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6fdccb44ec6adde019ed47f08f31a2e06f01833628fc99e6cb7c5a94932ddd9d`
+- Size/stat: 1743 bytes, 4 files, 4 hunks, +3/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `common.mk`
+  - `extractor/Android.mk`
+  - `omx/Android.mk`
+  - `utils/Android.mk`
+
+### `external-v86d-soong.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-v86d-soong.patch`](../../patches/android-16/a13-completion/external-v86d-soong.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `138a83dd9329cda0af2b5e5c84b9afaaf634df26a3bc24b8234dad9b34e06182`
+- Size/stat: 1718 bytes, 2 files, 1 hunks, +43/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `Android.bp`
+  - `Android.mk.disabled`
+
+### `frameworks-av-camera-compat.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-camera-compat.patch`](../../patches/android-16/a13-completion/frameworks-av-camera-compat.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e2d160c0b29056e1970223b1805bd66695d40ae1f43857ccfb03837cd076c19f`
+- Size/stat: 5846 bytes, 4 files, 9 hunks, +33/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libmediaplayerservice/StagefrightRecorder.cpp`
+  - `media/libmediaplayerservice/StagefrightRecorder.h`
+  - `services/camera/libcameraservice/CameraService.cpp`
+  - `services/camera/libcameraservice/common/CameraProviderManager.cpp`
+
+### `frameworks-av-camera-hal-framerate.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-camera-hal-framerate.patch`](../../patches/android-16/a13-completion/frameworks-av-camera-hal-framerate.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `cd33e21c2d5f279fa7be61b9487bb91a52c3f82ddb145a9a33192161a2e69ecf`
+- Size/stat: 1198 bytes, 1 files, 1 hunks, +10/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/CameraSource.cpp`
+
+### `frameworks-av-camera-locks.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-camera-locks.patch`](../../patches/android-16/a13-completion/frameworks-av-camera-locks.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c388e41291c3275f0fda6e222068cf7345bc536fc83263c78c6f4fc28d8a502a`
+- Size/stat: 1089 bytes, 1 files, 2 hunks, +2/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/camera/libcameraservice/api1/client2/Parameters.cpp`
+
+### `frameworks-av-ffmpeg-contracts.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-ffmpeg-contracts.patch`](../../patches/android-16/a13-completion/frameworks-av-ffmpeg-contracts.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `261a1d776eebdd373fbde057b8adb04721b5cf6de27cf7839cbccedea64446d4`
+- Size/stat: 5439 bytes, 3 files, 3 hunks, +84/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libstagefright/include/media/stagefright/MetaDataBase.h`
+  - `media/module/foundation/MediaDefs.cpp`
+  - `media/module/foundation/include/media/stagefright/foundation/MediaDefs.h`
+
+### `frameworks-av-ffmpeg-runtime.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-ffmpeg-runtime.patch`](../../patches/android-16/a13-completion/frameworks-av-ffmpeg-runtime.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1c2c111ba3adb9f622586196f7f7fe8abb69b89d1503ea2873029a479aa9cfa1`
+- Size/stat: 88012 bytes, 18 files, 59 hunks, +1770/-25
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 18 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libdatasource/FileSource.cpp`
+  - `media/libdatasource/include/datasource/FileSource.h`
+  - `media/libmediaplayerservice/StagefrightMetadataRetriever.cpp`
+  - `media/libmediaplayerservice/nuplayer/NuPlayerDecoder.cpp`
+  - `media/libstagefright/ACodec.cpp`
+  - `media/libstagefright/Android.bp`
+  - `media/libstagefright/FFMPEGSoftCodec.cpp`
+  - `media/libstagefright/MediaCodec.cpp`
+  - `media/libstagefright/Utils.cpp`
+  - `media/libstagefright/include/media/stagefright/ACodec.h`
+  - `media/libstagefright/include/media/stagefright/FFMPEGSoftCodec.h`
+  - `media/libstagefright/include/media/stagefright/MetaDataBase.h`
+  - `media/libstagefright/omx/OMXStore.cpp`
+  - `media/libstagefright/omx/OMXUtils.cpp`
+  - `media/libstagefright/omx/SoftOMXPlugin.cpp`
+  - `media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h`
+  - `media/module/foundation/MediaDefs.cpp`
+  - `media/module/foundation/include/media/stagefright/foundation/MediaDefs.h`
+
+### `frameworks-av-h263-16cif.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-h263-16cif.patch`](../../patches/android-16/a13-completion/frameworks-av-h263-16cif.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `979db6b8db975a000c3770559af7f3d26850cc1fdc229fb46358513604615145`
+- Size/stat: 2842 bytes, 1 files, 4 hunks, +10/-9
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `media/codec2/components/mpeg4_h263/C2SoftMpeg4Dec.cpp`
+
+### `frameworks-av-media-compat.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-media-compat.patch`](../../patches/android-16/a13-completion/frameworks-av-media-compat.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9fd3208e5bcdbf71787a146aa2c93ed757f814c46f85a72a5a14d637d52d537e`
+- Size/stat: 4877 bytes, 4 files, 4 hunks, +36/-18
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/libmediaplayerservice/nuplayer/NuPlayer.cpp`
+  - `media/libstagefright/colorconversion/ColorConverter.cpp`
+  - `media/libstagefright/colorconversion/SoftwareRenderer.cpp`
+  - `media/module/extractors/flac/FLACExtractor.cpp`
+
+### `frameworks-av-readiness-runtime.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-readiness-runtime.patch`](../../patches/android-16/a13-completion/frameworks-av-readiness-runtime.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e879645f117de577f92ae4e7fce46a71b716c6a151fa1a8d5c496c7c3171bfed`
+- Size/stat: 565 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `bstsvcmsgrtest/Android.bp`
+
+### `frameworks-av-servicemanager-readiness.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-servicemanager-readiness.patch`](../../patches/android-16/a13-completion/frameworks-av-servicemanager-readiness.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5fb470c64c62619f8e17a71eec92c25f5ae4d00f4da159f68ecb7bd60e55ece1`
+- Size/stat: 6425 bytes, 2 files, 2 hunks, +185/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `bstsvcmsgrtest/Android.bp`
+  - `bstsvcmsgrtest/bstsvcmgrtest.cpp`
+
+### `frameworks-av-swcodec-sphal.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-swcodec-sphal.patch`](../../patches/android-16/a13-completion/frameworks-av-swcodec-sphal.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `520f6f9b94226787a158b0fe15942df515298ed0fe3f46db38cd19f882f9f093`
+- Size/stat: 956 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `apex/ld.config.txt`
+
+### `frameworks-av-widevine-boringssl-compat.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-widevine-boringssl-compat.patch`](../../patches/android-16/a13-completion/frameworks-av-widevine-boringssl-compat.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fa5ca46b7ea4b5dac626bd7e22ab371f6cb38578276fd46e668129179e4a8de2`
+- Size/stat: 2224 bytes, 2 files, 2 hunks, +35/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `drm/mediadrm/plugins/widevine/hidl/Android.bp`
+  - `drm/mediadrm/plugins/widevine/hidl/BoringSslCompat.cpp`
+
+### `frameworks-av-widevine-string8-a16.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-widevine-string8-a16.patch`](../../patches/android-16/a13-completion/frameworks-av-widevine-string8-a16.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d5262c92bcaaa2fa9e55257f9f2d8337fead992d80ba4a074ba08ee7670eebae`
+- Size/stat: 1686 bytes, 1 files, 4 hunks, +4/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `drm/mediadrm/plugins/widevine/hidl/DrmPlugin.cpp`
+
+### `frameworks-av-widevine-vendor-prebuilt.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-av-widevine-vendor-prebuilt.patch`](../../patches/android-16/a13-completion/frameworks-av-widevine-vendor-prebuilt.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0fbfe573df180628e0cb141e7e78e21c0c22531429e3d621ba8c5b21babb1d70`
+- Size/stat: 458 bytes, 1 files, 1 hunks, +1/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `drm/mediadrm/plugins/widevine/default/Android.bp`
+
+### `frameworks-base-accessibility-query.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-accessibility-query.patch`](../../patches/android-16/a13-completion/frameworks-base-accessibility-query.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6ad6d47b7a38c77fb508b711e33dcf2f6073509749e1cfbd94c64d35da75ae03`
+- Size/stat: 957 bytes, 1 files, 2 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/ComputerEngine.java`
+
+### `frameworks-base-affiliate-install.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-affiliate-install.patch`](../../patches/android-16/a13-completion/frameworks-base-affiliate-install.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0200c22e7ca02d8d9b0b6c856b15edfc22ddcbfbe453d8ce0006a09abfafa74e`
+- Size/stat: 8437 bytes, 4 files, 9 hunks, +90/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/BroadcastController.java`
+  - `services/core/java/com/android/server/pm/InstallArgs.java`
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+  - `services/core/java/com/android/server/pm/InstallRequest.java`
+
+### `frameworks-base-android-id-sync.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-android-id-sync.patch`](../../patches/android-16/a13-completion/frameworks-base-android-id-sync.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5dbd55dd722fd6757bea2103ad844fc3e851b855a5776eadb46adf07ae055b7f`
+- Size/stat: 3373 bytes, 1 files, 2 hunks, +30/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java`
+
+### `frameworks-base-audio-defaults.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-audio-defaults.patch`](../../patches/android-16/a13-completion/frameworks-base-audio-defaults.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0f58b6b06ad3fb4ec537e9d985cb3cab3643e43bb0f7ac7db3e8bd7c6aa8c202`
+- Size/stat: 1741 bytes, 2 files, 2 hunks, +4/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `media/java/android/media/AudioSystem.java`
+  - `services/core/java/com/android/server/audio/AudioService.java`
+
+### `frameworks-base-blacklist-actions.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-blacklist-actions.patch`](../../patches/android-16/a13-completion/frameworks-base-blacklist-actions.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4ad79498ff3354251908039bc2ffe916bed0b10184a5b65d9f655b8af9c1ba9a`
+- Size/stat: 6987 bytes, 2 files, 6 hunks, +76/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `frameworks-base-blacklist-install-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-blacklist-install-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-blacklist-install-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f02ae7782d8bc801bc78feb8af516b083a5648ae821cfe3f305a7f7947434ab5`
+- Size/stat: 1624 bytes, 1 files, 2 hunks, +10/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `frameworks-base-bookmarks-binder-check.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-bookmarks-binder-check.patch`](../../patches/android-16/a13-completion/frameworks-base-bookmarks-binder-check.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7e75e68941a2e1cba920562e5b7ab1aa04f4638a77b8639c1488554a49c13235`
+- Size/stat: 4258 bytes, 4 files, 4 hunks, +59/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/com/bluestacks/os/IBstFilterAppsService.aidl`
+  - `core/java/com/bluestacks/os/IBstUtilsService.aidl`
+  - `core/res/res/xml/bookmarks.xml`
+  - `unit-test.sh`
+
+### `frameworks-base-boot-state-properties.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-boot-state-properties.patch`](../../patches/android-16/a13-completion/frameworks-base-boot-state-properties.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5822564841ff3eb2f89e29d5b00f120b23efd05332084a36efe42db9d0543c3c`
+- Size/stat: 1512 bytes, 2 files, 2 hunks, +2/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskManagerService.java`
+
+### `frameworks-base-boot-wallpaper-gate.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-boot-wallpaper-gate.patch`](../../patches/android-16/a13-completion/frameworks-base-boot-wallpaper-gate.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `25a1c758bbaa9bd17961d5f7f1530a6f49b4f73b42302cf61a9daff020c4c1e5`
+- Size/stat: 905 bytes, 1 files, 1 hunks, +3/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+
+### `frameworks-base-bst-keylayout.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-bst-keylayout.patch`](../../patches/android-16/a13-completion/frameworks-base-bst-keylayout.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c4dd86f8f76f057289cbff9916454e9c141855327f8d7fbd3cd52004d3e17d2a`
+- Size/stat: 506 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `data/keyboards/Generic.kl`
+
+### `frameworks-base-bst-locale.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-bst-locale.patch`](../../patches/android-16/a13-completion/frameworks-base-bst-locale.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d8812f4e8e46d4d5470c6b42b9c45d30f084d6541d5572d7b98369c758ebee79`
+- Size/stat: 1568 bytes, 1 files, 2 hunks, +12/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/AndroidRuntime.cpp`
+
+### `frameworks-base-capabilities.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-capabilities.patch`](../../patches/android-16/a13-completion/frameworks-base-capabilities.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `eef5b449b0db5054bdac9155be7719ca7b283458999134fd1af9c3d04eb0a8e0`
+- Size/stat: 1089 bytes, 1 files, 2 hunks, +7/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-chrome-install-appop.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-chrome-install-appop.patch`](../../patches/android-16/a13-completion/frameworks-base-chrome-install-appop.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `25b4541ad84ba97ed8a3584cacb7bd807d72a3cd4ba4175fb723751b10634056`
+- Size/stat: 1919 bytes, 1 files, 2 hunks, +10/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/appop/AppOpsService.java`
+
+### `frameworks-base-clear-abi-data.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-clear-abi-data.patch`](../../patches/android-16/a13-completion/frameworks-base-clear-abi-data.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8f42b6b525d1f5fdaea0f51b28421a07f00dd6ce2a4f0a336e567920d25fcf40`
+- Size/stat: 3292 bytes, 1 files, 4 hunks, +43/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `frameworks-base-clipboard-unlocked.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-clipboard-unlocked.patch`](../../patches/android-16/a13-completion/frameworks-base-clipboard-unlocked.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ee7195ab5acfb56da303bf1e1f3c29618ecd496ac0aef8acf15ce757e9bcb24f`
+- Size/stat: 1463 bytes, 1 files, 2 hunks, +7/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/clipboard/ClipboardService.java`
+
+### `frameworks-base-custom-dpi-lifecycle.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-custom-dpi-lifecycle.patch`](../../patches/android-16/a13-completion/frameworks-base-custom-dpi-lifecycle.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `19f2d761f35526435ee14b7c547dd227207c16a831030d286586d1161bc7fd01`
+- Size/stat: 4236 bytes, 3 files, 3 hunks, +48/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/ActivityClientController.java`
+  - `services/core/java/com/android/server/wm/ActivityStartController.java`
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+
+### `frameworks-base-data-system-app-scan.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-data-system-app-scan.patch`](../../patches/android-16/a13-completion/frameworks-base-data-system-app-scan.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1ef1a3a3a2a5ebeda0670ae8f14e7110aad4b2ff89140993b5416ca73d733287`
+- Size/stat: 2535 bytes, 2 files, 2 hunks, +22/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InitAppsHelper.java`
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `frameworks-base-debuggable.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-debuggable.patch`](../../patches/android-16/a13-completion/frameworks-base-debuggable.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e97756b8da60d9c074d0b2fef55588af5bf65bc958a138c8b8ad31a4644eb500`
+- Size/stat: 1159 bytes, 1 files, 1 hunks, +13/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-device-profile.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-device-profile.patch`](../../patches/android-16/a13-completion/frameworks-base-device-profile.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `46913d129c4df2b8777de902216df1a09d42058d6c3a4ab70320b463080a3545`
+- Size/stat: 1713 bytes, 1 files, 2 hunks, +24/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-disable-clipboard-overlay.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-disable-clipboard-overlay.patch`](../../patches/android-16/a13-completion/frameworks-base-disable-clipboard-overlay.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8a71234513ba53adecb847de353e404065ce9f70eace1c27fa890d3d63fcff59`
+- Size/stat: 1993 bytes, 1 files, 2 hunks, +2/-12
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java`
+
+### `frameworks-base-disable-lock-now.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-disable-lock-now.patch`](../../patches/android-16/a13-completion/frameworks-base-disable-lock-now.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2c6befc8256aebf7049498a4189541eee4d6b11ba400d563e95e74c5218c0cd3`
+- Size/stat: 955 bytes, 1 files, 1 hunks, +5/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java`
+
+### `frameworks-base-disable-project-quota.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-disable-project-quota.patch`](../../patches/android-16/a13-completion/frameworks-base-disable-project-quota.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `321319345d23a3899df895eaaa90fb022820138a38981f0d4b2385c8fe583741`
+- Size/stat: 2201 bytes, 1 files, 1 hunks, +5/-39
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/android_os_storage_StorageManager.cpp`
+
+### `frameworks-base-displayed-package-handling.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-displayed-package-handling.patch`](../../patches/android-16/a13-completion/frameworks-base-displayed-package-handling.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5ff844a8c8f91655dd742c63e5f12c7bf9b36b6d949922bdbea4a10345cc31a1`
+- Size/stat: 9771 bytes, 2 files, 6 hunks, +127/-12
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/ActivityStarter.java`
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+
+### `frameworks-base-downloads-system-scan.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-downloads-system-scan.patch`](../../patches/android-16/a13-completion/frameworks-base-downloads-system-scan.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `35741d09b60c8f80767d124e08df3624db2cc1dcc2f9052b4ed193187a3c380d`
+- Size/stat: 1230 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InitAppsHelper.java`
+
+### `frameworks-base-dxflag-artservice.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-dxflag-artservice.patch`](../../patches/android-16/a13-completion/frameworks-base-dxflag-artservice.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9b2e2a88203708d98966ab5cad8d1d07d74210f4d69c82f6034e60edd4652eaa`
+- Size/stat: 1925 bytes, 1 files, 3 hunks, +13/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/DexOptHelper.java`
+
+### `frameworks-base-fbscreenlock.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-fbscreenlock.patch`](../../patches/android-16/a13-completion/frameworks-base-fbscreenlock.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `336a5d0114eba219e8292f909b204efdbc01dff918ec73ee95a908454c275866`
+- Size/stat: 3416 bytes, 1 files, 2 hunks, +33/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+
+### `frameworks-base-feature-reporting.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-feature-reporting.patch`](../../patches/android-16/a13-completion/frameworks-base-feature-reporting.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `81d6ca65ec4cb4557fc475a394cbae94f4e2acf580aa40a47dc944924a5a8d8c`
+- Size/stat: 8000 bytes, 1 files, 7 hunks, +99/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `frameworks-base-filterapps-protected-broadcast.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-filterapps-protected-broadcast.patch`](../../patches/android-16/a13-completion/frameworks-base-filterapps-protected-broadcast.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `eba070ecbd4672343bae18bcc7e1395550c8041c73213d7ae70c5f2aeef0e45d`
+- Size/stat: 969 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/res/AndroidManifest.xml`
+
+### `frameworks-base-force-queryable.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-force-queryable.patch`](../../patches/android-16/a13-completion/frameworks-base-force-queryable.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `716e6c5fc6eab4638731773a78cf795076781abdf07fbe0f0c59cdd45a5ff0f1`
+- Size/stat: 970 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/res/res/values/config.xml`
+
+### `frameworks-base-google-update-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-google-update-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-google-update-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0b8f4a5afd5f64ee3751ef996df7a0b5c692322b7abd8147da087803e52344cf`
+- Size/stat: 2348 bytes, 1 files, 4 hunks, +13/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `frameworks-base-gp-download-stats.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-gp-download-stats.patch`](../../patches/android-16/a13-completion/frameworks-base-gp-download-stats.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2be01f6ca8209a07f2f50de85c95d684de72a09da0b077f6f83301990cb7065f`
+- Size/stat: 4778 bytes, 1 files, 5 hunks, +57/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/BroadcastController.java`
+
+### `frameworks-base-hcall-remaining.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-hcall-remaining.patch`](../../patches/android-16/a13-completion/frameworks-base-hcall-remaining.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6d6d8510232dbd960dd0bb9df7215e7f91b10d040e5cce2dcf6847012be78dac`
+- Size/stat: 6669 bytes, 3 files, 7 hunks, +32/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+  - `services/core/java/com/android/server/input/InputManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityStarter.java`
+
+### `frameworks-base-hide-bst-packages.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch`](../../patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `dc04dbe445cfac055f4455db8db08daa4262fe632ef1c08c7097614330bd7df7`
+- Size/stat: 7448 bytes, 1 files, 12 hunks, +54/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/ComputerEngine.java`
+
+### `frameworks-base-hide-shutdown-dialog.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-hide-shutdown-dialog.patch`](../../patches/android-16/a13-completion/frameworks-base-hide-shutdown-dialog.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `26d73e8b9f1a31aad8b75287afd85ae70b890cc61c8ae74c3eac8ebee1e80313`
+- Size/stat: 655 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/power/ShutdownThread.java`
+
+### `frameworks-base-host-intent-forwarding.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-host-intent-forwarding.patch`](../../patches/android-16/a13-completion/frameworks-base-host-intent-forwarding.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4d1f35bf702fb751b2af740e45190bba8a8fc5949f71ae40a664ff12809a0bf6`
+- Size/stat: 16148 bytes, 1 files, 13 hunks, +206/-25
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/Instrumentation.java`
+
+### `frameworks-base-hwui-jvm-attach.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-hwui-jvm-attach.patch`](../../patches/android-16/a13-completion/frameworks-base-hwui-jvm-attach.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `940791413d805329984877e76385a542631c25313fd5ff1d0b329dd63916fce6`
+- Size/stat: 6231 bytes, 6 files, 10 hunks, +52/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libs/hwui/HardwareBitmapUploader.cpp`
+  - `libs/hwui/HardwareBitmapUploader.h`
+  - `libs/hwui/jni/android_graphics_HardwareRenderer.cpp`
+  - `libs/hwui/platform/host/renderthread/RenderThread.cpp`
+  - `libs/hwui/renderthread/RenderThread.cpp`
+  - `libs/hwui/renderthread/RenderThread.h`
+
+### `frameworks-base-ime-device-visibility.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-ime-device-visibility.patch`](../../patches/android-16/a13-completion/frameworks-base-ime-device-visibility.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b3fc0db3852f57a5826623511979db538edab6ee8297db2507a27b22666379ee`
+- Size/stat: 2390 bytes, 1 files, 2 hunks, +22/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+
+### `frameworks-base-ime-listener-reset.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-ime-listener-reset.patch`](../../patches/android-16/a13-completion/frameworks-base-ime-listener-reset.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6531fea54045ad27cd0fe9b431679a47e12897a64946e53efa8578d66c9ff078`
+- Size/stat: 1846 bytes, 1 files, 2 hunks, +6/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/inputmethod/InputMethodManagerService.java`
+
+### `frameworks-base-ime-password.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-ime-password.patch`](../../patches/android-16/a13-completion/frameworks-base-ime-password.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `14f8dfaa740326c7bd0329db13b09277f23ef46ff37406c6901f08dfbd438825`
+- Size/stat: 4946 bytes, 1 files, 5 hunks, +31/-9
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/inputmethod/InputMethodManagerService.java`
+
+### `frameworks-base-instagram-dm-audio.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-instagram-dm-audio.patch`](../../patches/android-16/a13-completion/frameworks-base-instagram-dm-audio.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1a0a8820b224581eec3e18c9fcc0b5d1c97a5c1142b9420428488a1c643d12d3`
+- Size/stat: 3373 bytes, 2 files, 4 hunks, +41/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/Activity.java`
+  - `services/core/java/com/android/server/input/InputManagerService.java`
+
+### `frameworks-base-instagram-reel-prefix.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-instagram-reel-prefix.patch`](../../patches/android-16/a13-completion/frameworks-base-instagram-reel-prefix.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6630afb2cbdbad64384000f7e5ce52b387711b9abfdcac38d4d1d937b4dacd9c`
+- Size/stat: 881 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-instagram-reel.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-instagram-reel.patch`](../../patches/android-16/a13-completion/frameworks-base-instagram-reel.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1c3dd3da48dfea43498e8e0d2bfdfd2450f4bfa4d92a3053a2f5f95af811ec4a`
+- Size/stat: 1549 bytes, 1 files, 2 hunks, +21/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-keyguard-delay.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-keyguard-delay.patch`](../../patches/android-16/a13-completion/frameworks-base-keyguard-delay.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `851ac776885cbedde5351fe5a0b75348af7d2bae51e370d2567105cc1638e6c7`
+- Size/stat: 1229 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java`
+
+### `frameworks-base-location-compat.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-location-compat.patch`](../../patches/android-16/a13-completion/frameworks-base-location-compat.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c7af8c1099031d69a4ec5f02402c102907af98a28783c721f9817174ae60ebe2`
+- Size/stat: 1857 bytes, 2 files, 3 hunks, +3/-14
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/location/Location.java`
+  - `services/core/java/com/android/server/location/injector/SystemAppOpsHelper.java`
+
+### `frameworks-base-locksettings-gatekeeper.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-locksettings-gatekeeper.patch`](../../patches/android-16/a13-completion/frameworks-base-locksettings-gatekeeper.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c84feeea8fc5ecc9c62d532c00754fc5f6b73f3687467713b6713ad771f9019f`
+- Size/stat: 2626 bytes, 1 files, 3 hunks, +6/-13
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/locksettings/LockSettingsService.java`
+
+### `frameworks-base-monster-strike-compat.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-monster-strike-compat.patch`](../../patches/android-16/a13-completion/frameworks-base-monster-strike-compat.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `fee9b423ed041ea339814c2ab5e1a85d58cae7f310342a5f1d3afa38d74f8485`
+- Size/stat: 4183 bytes, 2 files, 6 hunks, +33/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/PendingIntent.java`
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-monster-strike-zg-location-fix.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-monster-strike-zg-location-fix.patch`](../../patches/android-16/a13-completion/frameworks-base-monster-strike-zg-location-fix.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `82f03578f8f5d58dbc2db618bdc0fda71fa61970024a79544fe63621fe9e567a`
+- Size/stat: 1481 bytes, 1 files, 2 hunks, +5/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-msi-wallpaper.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-msi-wallpaper.patch`](../../patches/android-16/a13-completion/frameworks-base-msi-wallpaper.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1db8ab5374787206d99e89f1d88c3d3bd7ca3016350223d646ddb77833e4b0fb`
+- Size/stat: 24865 bytes, 6 files, 8 hunks, +25/-2
+- Binary evidence: embedded payload
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 6 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/WallpaperManager.java`
+  - `core/java/android/content/res/AssetManager.java`
+  - `core/res/res/drawable-nodpi/default_wallpaper_msi.png`
+  - `core/res/res/drawable-sw600dp-nodpi/default_wallpaper_msi.png`
+  - `core/res/res/drawable-sw720dp-nodpi/default_wallpaper_msi.png`
+  - `core/res/res/values/symbols.xml`
+
+### `frameworks-base-native-mouse-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-native-mouse-pointer.patch`](../../patches/android-16/a13-completion/frameworks-base-native-mouse-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4f02f00f15ecef7b5737ab68c37dc22806afc8753e3a9503d43400d0a9921fb0`
+- Size/stat: 4192 bytes, 4 files, 5 hunks, +25/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/hardware/input/IInputManager.aidl`
+  - `core/java/android/hardware/input/InputManager.java`
+  - `core/java/android/view/PointerIcon.java`
+  - `services/core/java/com/android/server/input/InputManagerService.java`
+
+### `frameworks-base-navigation-bar-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-navigation-bar-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-navigation-bar-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `badb3fbc35826c975df364fc34816d28fe46eda9616016eb9b4032bf7688ab68`
+- Size/stat: 1519 bytes, 1 files, 2 hunks, +4/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayPolicy.java`
+
+### `frameworks-base-ndk-translation-mount.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-ndk-translation-mount.patch`](../../patches/android-16/a13-completion/frameworks-base-ndk-translation-mount.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `7862187ed1f02747f826076d690dd885b02a04a092e31bbf1db6078b8fba9522`
+- Size/stat: 1728 bytes, 1 files, 1 hunks, +9/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-network-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-network-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-network-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a734d670c482afd364b82ef81a61cd7c7a6cf0a5476bafc4522cae621cbfd03e`
+- Size/stat: 2909 bytes, 3 files, 4 hunks, +8/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SettingsProvider/res/values/defaults.xml`
+  - `services/core/java/com/android/server/net/NetworkManagementService.java`
+  - `services/core/java/com/android/server/net/NetworkPolicyManagerService.java`
+
+### `frameworks-base-non-market-default.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-non-market-default.patch`](../../patches/android-16/a13-completion/frameworks-base-non-market-default.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `cdcd9bbbdd3ac4c5d7bd0d564e628593f3d53a132fdaf91611a4d75664f0edf1`
+- Size/stat: 616 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SettingsProvider/res/values/defaults.xml`
+
+### `frameworks-base-nowgg-account-visibility.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-nowgg-account-visibility.patch`](../../patches/android-16/a13-completion/frameworks-base-nowgg-account-visibility.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8bd7363726d815f81c9604e3122b3a54efff402e9c84b0d0492aee3781bef664`
+- Size/stat: 1373 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/accounts/AccountManagerService.java`
+
+### `frameworks-base-nowgg-stat-exclusions.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-nowgg-stat-exclusions.patch`](../../patches/android-16/a13-completion/frameworks-base-nowgg-stat-exclusions.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4530cdd7e9ece3ff453a31b38ab5cb9b5ed350e9ca53d91c43934622f7544a58`
+- Size/stat: 1222 bytes, 1 files, 1 hunks, +4/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `frameworks-base-onestore-iap.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-onestore-iap.patch`](../../patches/android-16/a13-completion/frameworks-base-onestore-iap.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `652e2b2e9de97cd4c953768ac4835ad53726cb46e0f8d8260a2547e26d482475`
+- Size/stat: 1377 bytes, 1 files, 1 hunks, +11/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/Instrumentation.java`
+
+### `frameworks-base-orientation-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-orientation-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-orientation-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ae8cb39f2f0f734c72729463136844a6c8726d9d8af92de5d369d387ff72458d`
+- Size/stat: 8530 bytes, 4 files, 7 hunks, +70/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 4 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/DisplayContent.java`
+  - `services/core/java/com/android/server/wm/DisplayWindowSettings.java`
+  - `services/core/java/com/android/server/wm/TaskDisplayArea.java`
+  - `services/core/java/com/android/server/wm/WindowAnimator.java`
+
+### `frameworks-base-package-abi-overrides.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-package-abi-overrides.patch`](../../patches/android-16/a13-completion/frameworks-base-package-abi-overrides.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `01fc56c9f8d1834c79f0bb4cbd6d8bdab0cd606976cca5ab1bece209d2a86fe1`
+- Size/stat: 3622 bytes, 1 files, 4 hunks, +16/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageAbiHelperImpl.java`
+
+### `frameworks-base-package-cache-upgrade.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-package-cache-upgrade.patch`](../../patches/android-16/a13-completion/frameworks-base-package-cache-upgrade.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `dc8510e8f7d923b85c70d8aed871fc7219b3809197e4851cb6be3767d127c1f1`
+- Size/stat: 1073 bytes, 1 files, 2 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/parsing/PackageCacher.java`
+
+### `frameworks-base-package-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-package-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-package-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b93f4505dfb3fb9f822a2444551296d2f50b88edc0b6ac4ae4de7bb60c6edf1b`
+- Size/stat: 4927 bytes, 4 files, 6 hunks, +29/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/SystemConfig.java`
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+  - `services/core/java/com/android/server/pm/VerifyingSession.java`
+  - `services/permission/java/com/android/server/permission/access/permission/PermissionService.kt`
+
+### `frameworks-base-per-focus-mouse-actions.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-per-focus-mouse-actions.patch`](../../patches/android-16/a13-completion/frameworks-base-per-focus-mouse-actions.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `debb3103f1c0fe251496537cab8387ebce11c7c825a63568cfeba90db283eaba`
+- Size/stat: 6448 bytes, 1 files, 6 hunks, +50/-25
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+
+### `frameworks-base-periodic-ntp-refresh.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-periodic-ntp-refresh.patch`](../../patches/android-16/a13-completion/frameworks-base-periodic-ntp-refresh.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a05ca2a2e4b0a0bc2070674fd0a32d4e0231bad9a997628b65168bad2e171635`
+- Size/stat: 11818 bytes, 2 files, 12 hunks, +109/-21
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `services/core/java/com/android/server/timedetector/NetworkTimeUpdateService.java`
+  - `services/tests/timetests/src/com/android/server/timedetector/NetworkTimeUpdateServiceTest.java`
+
+### `frameworks-base-permission-upgrade-marker.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-permission-upgrade-marker.patch`](../../patches/android-16/a13-completion/frameworks-base-permission-upgrade-marker.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `cb3f45b41b2ed4cafd4152e43a3854df3c4a994c56b36c9b274a154522e1afe4`
+- Size/stat: 3724 bytes, 2 files, 5 hunks, +18/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+  - `services/core/java/com/android/server/pm/Settings.java`
+
+### `frameworks-base-permissions-refresh.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-permissions-refresh.patch`](../../patches/android-16/a13-completion/frameworks-base-permissions-refresh.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `43cebbf41e465f64fdc130c054e3c85dc46affac037542fed70471fe09c9524c`
+- Size/stat: 1405 bytes, 1 files, 2 hunks, +4/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `frameworks-base-platform-config.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-platform-config.patch`](../../patches/android-16/a13-completion/frameworks-base-platform-config.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f42a7a6f6deedc0d6586f1d333d03ad20f5ad3143ecf6b5c404a3d9d2532cbcc`
+- Size/stat: 1965 bytes, 2 files, 2 hunks, +7/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/res/res/values/config.xml`
+  - `data/etc/privapp-permissions-platform.xml`
+
+### `frameworks-base-play-store-affiliate-source.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-play-store-affiliate-source.patch`](../../patches/android-16/a13-completion/frameworks-base-play-store-affiliate-source.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4262fc4cb4ed804144ddcb1164d363c4461d018e57fce7c42d37b59a1d0d6c08`
+- Size/stat: 1377 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/BroadcastController.java`
+
+### `frameworks-base-preinstalled-overlay.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-preinstalled-overlay.patch`](../../patches/android-16/a13-completion/frameworks-base-preinstalled-overlay.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `74a34f4b7f09b63aec614dde6551323051616c38da5367cd682fc04d8dce73ca`
+- Size/stat: 1199 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/res/AndroidManifest.xml`
+
+### `frameworks-base-primary-storage-size.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-primary-storage-size.patch`](../../patches/android-16/a13-completion/frameworks-base-primary-storage-size.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ec6dbbfc1910b973aa561596e3fab42e4fa12c54fc838cf711137f4aaefdbb40`
+- Size/stat: 2807 bytes, 2 files, 3 hunks, +24/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/os/storage/StorageManager.java`
+  - `core/java/android/text/format/Formatter.java`
+
+### `frameworks-base-readproc.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-readproc.patch`](../../patches/android-16/a13-completion/frameworks-base-readproc.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2e9b921b0d43f96efbd4a537a1f5a8e5ea087c8231e0dcef107c6c073f1b5e6d`
+- Size/stat: 1968 bytes, 1 files, 2 hunks, +32/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-recents-orientation.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-recents-orientation.patch`](../../patches/android-16/a13-completion/frameworks-base-recents-orientation.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `819025c06b12e6da967f4c29db4a34b9f8e379dd4d284322637a66285a168b5b`
+- Size/stat: 5969 bytes, 1 files, 7 hunks, +67/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `libs/WindowManager/Shell/src/com/android/wm/shell/recents/RecentsTransitionHandler.java`
+
+### `frameworks-base-running-services.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-running-services.patch`](../../patches/android-16/a13-completion/frameworks-base-running-services.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f852e6154ade8f1e31d1cb6876c472ce424057b3e63082bf22fd630c2bac5ca4`
+- Size/stat: 5375 bytes, 2 files, 7 hunks, +29/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/ActiveServices.java`
+  - `services/core/java/com/android/server/am/ActivityManagerConstants.java`
+
+### `frameworks-base-runtime-permissions-recovery.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-runtime-permissions-recovery.patch`](../../patches/android-16/a13-completion/frameworks-base-runtime-permissions-recovery.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ba76b086f8785aa485046d5be3ebb3b63da22c23061927229467efe96fb23aed`
+- Size/stat: 1116 bytes, 1 files, 1 hunks, +5/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/Settings.java`
+
+### `frameworks-base-safe-mode-default.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-safe-mode-default.patch`](../../patches/android-16/a13-completion/frameworks-base-safe-mode-default.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6fa689ca56a63a8c60925732c3e14748c58ec708b33b2347e7b8a907bca16e9d`
+- Size/stat: 894 bytes, 1 files, 1 hunks, +4/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+
+### `frameworks-base-screen-timeout.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-screen-timeout.patch`](../../patches/android-16/a13-completion/frameworks-base-screen-timeout.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1697932247f5c1553a1500ed64ac110535577d09c2a486a15bfe5b4dc571a161`
+- Size/stat: 1353 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `services/core/java/com/android/server/power/ScreenTimeoutConstants.java`
+
+### `frameworks-base-screenshot-integration.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-screenshot-integration.patch`](../../patches/android-16/a13-completion/frameworks-base-screenshot-integration.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `72814dca64a899511d57b75a81161475c3ecfb8d2d0fd068e871c5bdea3377d6`
+- Size/stat: 6153 bytes, 2 files, 8 hunks, +50/-13
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java`
+  - `packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotController.kt`
+
+### `frameworks-base-setbstime.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-setbstime.patch`](../../patches/android-16/a13-completion/frameworks-base-setbstime.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f293a3a873acc4da4c732238add605747e054dd7f37a2cfa9ff3220f95e8f439`
+- Size/stat: 7486 bytes, 6 files, 8 hunks, +63/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/view/inputmethod/IInputMethodManagerGlobalInvoker.java`
+  - `core/java/android/view/inputmethod/InputMethodManager.java`
+  - `core/java/com/android/internal/view/IInputMethodManager.aidl`
+  - `services/core/java/com/android/server/inputmethod/IInputMethodManagerImpl.java`
+  - `services/core/java/com/android/server/inputmethod/InputMethodManagerService.java`
+  - `services/core/java/com/android/server/inputmethod/ZeroJankProxy.java`
+
+### `frameworks-base-signin-popup-stop.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-signin-popup-stop.patch`](../../patches/android-16/a13-completion/frameworks-base-signin-popup-stop.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `60489cf623843ab0a8c4eb17b06ca058afec125872401e16671672730cc44e4c`
+- Size/stat: 1360 bytes, 1 files, 1 hunks, +16/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/WindowManagerService.java`
+
+### `frameworks-base-skip-temp-downloads.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-skip-temp-downloads.patch`](../../patches/android-16/a13-completion/frameworks-base-skip-temp-downloads.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e9d3d626c278b7b3fdadd06d3dfb6a4404897fcb92953fe496e06d2eae59b383`
+- Size/stat: 2049 bytes, 1 files, 3 hunks, +18/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+
+### `frameworks-base-stopapp-gcall.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-stopapp-gcall.patch`](../../patches/android-16/a13-completion/frameworks-base-stopapp-gcall.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a7ac5add4cd3a25bacaf3a059e4ef2d33321f410e7a3c08d3c464e0d37101645`
+- Size/stat: 13190 bytes, 7 files, 17 hunks, +77/-11
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 7 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/java/android/app/ActivityManager.java`
+  - `core/java/android/app/ActivityManagerInternal.java`
+  - `core/java/android/app/IActivityManager.aidl`
+  - `core/java/android/app/IActivityTaskManager.aidl`
+  - `services/core/java/com/android/server/am/ActivityManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskManagerService.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskSupervisor.java`
+
+### `frameworks-base-system-feature-query-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-system-feature-query-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-system-feature-query-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0d23920991b107ef0a836837559969bac82f39b50cec35014ec4c9db1dc57505`
+- Size/stat: 2198 bytes, 1 files, 2 hunks, +9/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+
+### `frameworks-base-systemui-battery-fix.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-systemui-battery-fix.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-battery-fix.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8ee39ff4b3275968cf05999c5bddcb5658c31d1e2ed1fc7aef875b5b3a188911`
+- Size/stat: 1415 bytes, 1 files, 3 hunks, +2/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java`
+
+### `frameworks-base-systemui-footer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-systemui-footer.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-footer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d9c3b1be829764741cd4a70bca00cb930d4c6a6ec0cea6aeffad8964672487ac`
+- Size/stat: 5002 bytes, 2 files, 6 hunks, +9/-27
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt`
+  - `packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt`
+
+### `frameworks-base-systemui-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-systemui-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e9c8aeba33702eafdd5a5f9da55926a61721daca9218063ec9e4db1f5831cf8b`
+- Size/stat: 5728 bytes, 5 files, 10 hunks, +27/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/res/layout/qs_panel.xml`
+  - `packages/SystemUI/res/layout/status_bar_notification_section_header.xml`
+  - `packages/SystemUI/res/values/config.xml`
+  - `packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java`
+  - `packages/SystemUI/src/com/android/systemui/tuner/TunerServiceImpl.java`
+
+### `frameworks-base-systemui-portrait.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-systemui-portrait.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-portrait.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9d32e155f8563c591b16f4453ccfcb003b98713fbaa2e9c5838d1631c2b387f9`
+- Size/stat: 1128 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/res/layout/quick_status_bar_expanded_header.xml`
+
+### `frameworks-base-systemui-view-import.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-systemui-view-import.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-view-import.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2b6f2ecb753832c644a156e594a8bd4ae1d38523bf7651f0011dcdc4f2bad899`
+- Size/stat: 575 bytes, 1 files, 1 hunks, +1/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/SystemUI/src/com/android/systemui/battery/BatteryMeterView.java`
+
+### `frameworks-base-telephony-completion.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-telephony-completion.patch`](../../patches/android-16/a13-completion/frameworks-base-telephony-completion.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ce3fac980ee064c53a6f593cb6e7d51953bfd1e495da02b936bffa5f419d49ef`
+- Size/stat: 9877 bytes, 2 files, 20 hunks, +97/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `telephony/java/android/telephony/SubscriptionManager.java`
+  - `telephony/java/android/telephony/TelephonyManager.java`
+
+### `frameworks-base-uncube-native-libs.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-uncube-native-libs.patch`](../../patches/android-16/a13-completion/frameworks-base-uncube-native-libs.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `dfd2214e88acb726219ea4d5f08bb7a43da7e2ab7d7b8f9ccf94f6dc6167979b`
+- Size/stat: 8009 bytes, 3 files, 10 hunks, +37/-12
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/PackageAbiHelperImpl.java`
+  - `services/core/java/com/android/server/pm/PackageManagerService.java`
+  - `services/core/java/com/android/server/pm/ScanPackageUtils.java`
+
+### `frameworks-base-unset-property-values.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-unset-property-values.patch`](../../patches/android-16/a13-completion/frameworks-base-unset-property-values.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4542d83cef7fdf77725b987a7456ec059ff0558a08a495c380e785415fb60a4f`
+- Size/stat: 942 bytes, 1 files, 2 hunks, +10/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/android_os_SystemProperties.cpp`
+
+### `frameworks-base-vending-abi.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-vending-abi.patch`](../../patches/android-16/a13-completion/frameworks-base-vending-abi.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5061a7e133ad22e19921fcfdca1f282c7e075fbf74d48798e5f30a9ac38b5591`
+- Size/stat: 3793 bytes, 1 files, 2 hunks, +80/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-virtual-battery-profile.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-virtual-battery-profile.patch`](../../patches/android-16/a13-completion/frameworks-base-virtual-battery-profile.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `a3696bc7a4864e22ce6b477964f9f66b4e27499382ec1a047a700f74bfa49c10`
+- Size/stat: 1270 bytes, 1 files, 1 hunks, +11/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/BatteryService.java`
+
+### `frameworks-base-vms-wildcard.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-vms-wildcard.patch`](../../patches/android-16/a13-completion/frameworks-base-vms-wildcard.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `890772db5f65af3959bc1908537b259f9cc13823c23580c4918fb343283d6018`
+- Size/stat: 874 bytes, 1 files, 2 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-vms.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-vms.patch`](../../patches/android-16/a13-completion/frameworks-base-vms.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `230ce8a65659e756daab58f9888bbb96f1d5fa9b36f86cdc68e50444e53cc23b`
+- Size/stat: 2203 bytes, 1 files, 2 hunks, +35/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-wifi-battery-sync.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-wifi-battery-sync.patch`](../../patches/android-16/a13-completion/frameworks-base-wifi-battery-sync.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `72c3915e86dc9d0aa61ea3c6dc291603823495b9a1892b9edbf2c3468bb3aa3c`
+- Size/stat: 1313 bytes, 1 files, 1 hunks, +1/-8
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/am/BatteryStatsService.java`
+
+### `frameworks-base-wm-timeouts.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-wm-timeouts.patch`](../../patches/android-16/a13-completion/frameworks-base-wm-timeouts.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ce2077f3dfa7bc98df66e28e9039b3fd9bdc18c475b2a28c0ca3bc394969916c`
+- Size/stat: 1643 bytes, 2 files, 2 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/wm/ActivityRecord.java`
+  - `services/core/java/com/android/server/wm/ActivityTaskSupervisor.java`
+
+### `frameworks-base-xarch-abi-tracking.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-xarch-abi-tracking.patch`](../../patches/android-16/a13-completion/frameworks-base-xarch-abi-tracking.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8513248fb0d500a389989af392cc408fd22e42fdb3671c1f7780c24e20509546`
+- Size/stat: 5162 bytes, 2 files, 7 hunks, +36/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
+  - `services/core/java/com/android/server/pm/RemovePackageHelper.java`
+
+### `frameworks-base-xcpu.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-xcpu.patch`](../../patches/android-16/a13-completion/frameworks-base-xcpu.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f8502b69f06182c53a3552107adeb3dd4ad44afb5c4d1a361ab6ab5bf8d50b6c`
+- Size/stat: 3121 bytes, 1 files, 3 hunks, +48/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `core/jni/com_android_internal_os_Zygote.cpp`
+
+### `frameworks-base-zygote-prop-reset.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-zygote-prop-reset.patch`](../../patches/android-16/a13-completion/frameworks-base-zygote-prop-reset.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `e475f4efbb5ef7767fdbc1789be5fdaf0f12d5d4147f6b7bc8a5aa6eaa1edcb3`
+- Size/stat: 748 bytes, 1 files, 1 hunks, +5/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `cmds/app_process/app_main.cpp`
+
+### `frameworks-native-absolute-mouse.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-native-absolute-mouse.patch`](../../patches/android-16/a13-completion/frameworks-native-absolute-mouse.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `eecb82bf4486c8331a6c416fae25fd11c3d9cdb48abb6fc8d4c221dbccc4d8fe`
+- Size/stat: 12811 bytes, 3 files, 17 hunks, +129/-17
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `services/inputflinger/reader/mapper/CursorInputMapper.cpp`
+  - `services/inputflinger/reader/mapper/CursorInputMapper.h`
+  - `services/inputflinger/tests/CursorInputMapper_test.cpp`
+
+### `frameworks-native-atrace-permissions.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-native-atrace-permissions.patch`](../../patches/android-16/a13-completion/frameworks-native-atrace-permissions.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6413739f8b3f4f5086979c6a5ba71ce768d0e7aef053853b17faa83a0357225d`
+- Size/stat: 817 bytes, 1 files, 1 hunks, +2/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `cmds/atrace/atrace.rc`
+
+### `frameworks-native-dumpstate-diagnostics.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-native-dumpstate-diagnostics.patch`](../../patches/android-16/a13-completion/frameworks-native-dumpstate-diagnostics.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `85b63a8a726aa6cfb2543a9b6922bc7700f42430e495cfdaaa24c2d6693a257b`
+- Size/stat: 5149 bytes, 2 files, 4 hunks, +40/-15
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `cmds/dumpstate/DumpstateUtil.cpp`
+  - `cmds/dumpstate/dumpstate.cpp`
+
+### `frameworks-native-fps-refresh.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-native-fps-refresh.patch`](../../patches/android-16/a13-completion/frameworks-native-fps-refresh.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6c720c512b17728f5e3ece9f7471db6c2c94e31abddfb665efd1ad6c1609e65c`
+- Size/stat: 1179 bytes, 1 files, 1 hunks, +5/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `services/surfaceflinger/SurfaceFlinger.cpp`
+
+### `frameworks-native-managed-su-dumpstate.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-native-managed-su-dumpstate.patch`](../../patches/android-16/a13-completion/frameworks-native-managed-su-dumpstate.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ca4c8deb3da0fae4896c0f2f2b57420617afcd26acf7bb27f6c90f5ffc5669e0`
+- Size/stat: 1923 bytes, 1 files, 3 hunks, +8/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `cmds/dumpstate/DumpstateUtil.cpp`
+
+### `frameworks-native-readiness-service.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-native-readiness-service.patch`](../../patches/android-16/a13-completion/frameworks-native-readiness-service.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f55e4cb6fefbbe20ea94af54fe052141a598fe4a26068eea53b69dc58d930258`
+- Size/stat: 1193 bytes, 1 files, 2 hunks, +6/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `cmds/servicemanager/servicemanager.rc`
+
+### `frameworks-native-vulkan-default-fallback.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-native-vulkan-default-fallback.patch`](../../patches/android-16/a13-completion/frameworks-native-vulkan-default-fallback.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `af31386e7f98bf330e2d4b0a534abbb0704cb113fbf6644768e5daf6627f2408`
+- Size/stat: 757 bytes, 1 files, 1 hunks, +3/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `vulkan/libvulkan/driver.cpp`
+
+### `frameworks-opt-telephony-virtual-subscription.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-opt-telephony-virtual-subscription.patch`](../../patches/android-16/a13-completion/frameworks-opt-telephony-virtual-subscription.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `da9b5c98c1c32a56fdd423458d4fe72e019354db294c84434d7d8eeae20709a8`
+- Size/stat: 11677 bytes, 1 files, 17 hunks, +110/-11
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `src/java/com/android/internal/telephony/subscription/SubscriptionManagerService.java`
+
+### `goldfish-opengl-guest-vulkan.patch`
+
+- Artifact: [`patches/android-16/a13-completion/goldfish-opengl-guest-vulkan.patch`](../../patches/android-16/a13-completion/goldfish-opengl-guest-vulkan.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9f1f94f1b28a1ff13efac0a5d01e932156d81d4b2aae3a83ed8ff83e46aa3549`
+- Size/stat: 2363 bytes, 3 files, 4 hunks, +13/-5
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `Android.mk`
+  - `shared/RTVboxGuest/Android.mk`
+  - `system/vulkan_enc/Android.mk`
+
+### `hardware-interfaces-fps-sync.patch`
+
+- Artifact: [`patches/android-16/a13-completion/hardware-interfaces-fps-sync.patch`](../../patches/android-16/a13-completion/hardware-interfaces-fps-sync.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `5a801990f93d54caeb986e5f9d22182e6d032cd8c0ad6ba958470d3e2334da53`
+- Size/stat: 8190 bytes, 3 files, 16 hunks, +79/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `graphics/composer/2.1/utils/hwc2onfbadapter/Android.bp`
+  - `graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp`
+  - `graphics/composer/2.1/utils/hwc2onfbadapter/include/hwc2onfbadapter/HWC2OnFbAdapter.h`
+
+### `hardware-libhardware-bst-hal.patch`
+
+- Artifact: [`patches/android-16/a13-completion/hardware-libhardware-bst-hal.patch`](../../patches/android-16/a13-completion/hardware-libhardware-bst-hal.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d1432f25c210762eef0d19d34dcde8054000f52f63484c892d3a2f2dd70c16f9`
+- Size/stat: 916 bytes, 1 files, 2 hunks, +6/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `hardware.c`
+
+### `latinime-integration.patch`
+
+- Artifact: [`patches/android-16/a13-completion/latinime-integration.patch`](../../patches/android-16/a13-completion/latinime-integration.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `074a2bf33a3f6365fe5a5220227b570fdee25f5ff3b585446e464ce1c1fa8b8d`
+- Size/stat: 6593 bytes, 5 files, 10 hunks, +16/-18
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `java/AndroidManifest.xml`
+  - `java/res/values/config-common.xml`
+  - `java/res/values/config.xml`
+  - `java/src/com/android/inputmethod/latin/LatinIME.java`
+  - `java/src/com/android/inputmethod/latin/settings/SettingsValues.java`
+
+### `launcher3-product-integration.patch`
+
+- Artifact: [`patches/android-16/a13-completion/launcher3-product-integration.patch`](../../patches/android-16/a13-completion/launcher3-product-integration.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1c3b1646dd603a557a748d0d9ca798e6ad13d3f7c5933d965602dd113be3319b`
+- Size/stat: 7624 bytes, 3 files, 11 hunks, +56/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `quickstep/src/com/android/launcher3/taskbar/TaskbarManagerImpl.java`
+  - `quickstep/src/com/android/quickstep/RecentsActivity.java`
+  - `quickstep/src/com/android/quickstep/views/TaskView.kt`
+
+### `libcore-app-compat.patch`
+
+- Artifact: [`patches/android-16/a13-completion/libcore-app-compat.patch`](../../patches/android-16/a13-completion/libcore-app-compat.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `19be2189e2abed04e455c06cc2656563aa2f750d51fc3b3417e35a5968d05710`
+- Size/stat: 2471 bytes, 2 files, 3 hunks, +28/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `ojluni/src/main/java/java/io/File.java`
+  - `ojluni/src/main/java/java/lang/Runtime.java`
+
+### `libcore-network-interface.patch`
+
+- Artifact: [`patches/android-16/a13-completion/libcore-network-interface.patch`](../../patches/android-16/a13-completion/libcore-network-interface.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `cc7f796b7daa7c704b7f7c0e4d62c542ed4a1c9bcba063df7f95189d68855659`
+- Size/stat: 4445 bytes, 1 files, 7 hunks, +47/-4
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `ojluni/src/main/java/java/net/NetworkInterface.java`
+
+### `libcore-safetynet-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/libcore-safetynet-policy.patch`](../../patches/android-16/a13-completion/libcore-safetynet-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d929e5d5789ee09d3afd3f867bbd8b8c13ab107351475fe66c6a143b8ead4b3b`
+- Size/stat: 1032 bytes, 1 files, 2 hunks, +8/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `ojluni/src/main/java/java/net/URL.java`
+
+### `networkstack-cn-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/networkstack-cn-policy.patch`](../../patches/android-16/a13-completion/networkstack-cn-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b40c25a3d35333acf6017a6bfb74d76b54cb918f727461ba5174bba147ffe082`
+- Size/stat: 887 bytes, 1 files, 2 hunks, +6/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `src/com/android/server/connectivity/NetworkMonitor.java`
+
+### `packages-modules-adb-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/packages-modules-adb-policy.patch`](../../patches/android-16/a13-completion/packages-modules-adb-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ddd22b53d17aef9bcd5f64efa02abd0d39bb265e64b533bf74336d7db7463c70`
+- Size/stat: 5658 bytes, 4 files, 6 hunks, +71/-21
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `adb.cpp`
+  - `adb.h`
+  - `daemon/file_sync_service.cpp`
+  - `daemon/main.cpp`
+
+### `packages-services-telephony-virtual-sim-state.patch`
+
+- Artifact: [`patches/android-16/a13-completion/packages-services-telephony-virtual-sim-state.patch`](../../patches/android-16/a13-completion/packages-services-telephony-virtual-sim-state.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c73712376f519e7c8ed8ba8e4926019d9a82ccdc20af5d45b4855824ef7165bc`
+- Size/stat: 1085 bytes, 1 files, 1 hunks, +5/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `src/com/android/phone/PhoneInterfaceManager.java`
+
+### `root-adb-policy-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-adb-policy-pointer.patch`](../../patches/android-16/a13-completion/root-adb-policy-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `bcde95ee47c9cd2bd1d556db001672df9e895377c58c7343068202c651b2b268`
+- Size/stat: 568 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `packages/modules/adb`
+
+### `root-atrace-permissions-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-atrace-permissions-pointer.patch`](../../patches/android-16/a13-completion/root-atrace-permissions-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9fa6f94c70801702d44702cf157d32929f8e661307a1150c46f617e709cb520c`
+- Size/stat: 558 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/native`
+
+### `root-badblocks-gitlinks.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-badblocks-gitlinks.patch`](../../patches/android-16/a13-completion/root-badblocks-gitlinks.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `68362dcc7a39fc0ad6a2a677b4d09d4ab85e72789ac4e330663f3b7c97f08f3d`
+- Size/stat: 876 bytes, 2 files, 2 hunks, +2/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `device/generic/common`
+  - `external/e2fsprogs`
+
+### `root-bst-hal-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-bst-hal-pointer.patch`](../../patches/android-16/a13-completion/root-bst-hal-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `13ec480bbde7d5583a231536f572e699b380dfe454ad9f03cef33ad8c92af114`
+- Size/stat: 572 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `hardware/libhardware`
+
+### `root-bstsettings-app.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-bstsettings-app.patch`](../../patches/android-16/a13-completion/root-bstsettings-app.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `240a883458a3b4a46f7a44e1297171ab2976140d12475483b3c4a984b931ed11`
+- Size/stat: 367252 bytes, 85 files, 77 hunks, +4412/-1
+- Binary evidence: embedded payload
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `packages/apps/BstSettings/Android.mk`
+  - `packages/apps/BstSettings/AndroidManifest.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_check_circle.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_google_logo.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_input_method.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_one_circle.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_about.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_accessibility.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_accounts.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_applications.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_date_time.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_import_windows_files.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_language_input.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_location.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_manage_contacts.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_security.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_select_ime.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_sound_notifications.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_settings_storage.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_three_circle.xml`
+  - `packages/apps/BstSettings/res/drawable/ic_two_circle.xml`
+  - `packages/apps/BstSettings/res/layout/activity_main.xml`
+  - `packages/apps/BstSettings/res/layout/bluestacks_settings.xml`
+  - `packages/apps/BstSettings/res/layout/device.xml`
+  - `packages/apps/BstSettings/res/layout/enable_ime_layout.xml`
+  - `packages/apps/BstSettings/res/layout/enable_ime_steps_layout.xml`
+  - `packages/apps/BstSettings/res/layout/item.xml`
+  - `packages/apps/BstSettings/res/layout/main.xml`
+  - `packages/apps/BstSettings/res/layout/personal.xml`
+  - `packages/apps/BstSettings/res/layout/system.xml`
+  - `packages/apps/BstSettings/res/values-ar/strings.xml`
+  - `packages/apps/BstSettings/res/values-bg/strings.xml`
+  - `packages/apps/BstSettings/res/values-cs/strings.xml`
+  - `packages/apps/BstSettings/res/values-da/strings.xml`
+  - `packages/apps/BstSettings/res/values-de/strings.xml`
+  - `packages/apps/BstSettings/res/values-el/strings.xml`
+  - `packages/apps/BstSettings/res/values-es/strings.xml`
+  - `packages/apps/BstSettings/res/values-fi/strings.xml`
+  - `packages/apps/BstSettings/res/values-fr/strings.xml`
+  - `packages/apps/BstSettings/res/values-hr/strings.xml`
+  - `packages/apps/BstSettings/res/values-hu/strings.xml`
+  - `packages/apps/BstSettings/res/values-id/strings.xml`
+  - `packages/apps/BstSettings/res/values-it/strings.xml`
+  - `packages/apps/BstSettings/res/values-ja/strings.xml`
+  - `packages/apps/BstSettings/res/values-ko/strings.xml`
+  - `packages/apps/BstSettings/res/values-nb/strings.xml`
+  - `packages/apps/BstSettings/res/values-nl/strings.xml`
+  - `packages/apps/BstSettings/res/values-pl/strings.xml`
+  - `packages/apps/BstSettings/res/values-pt/strings.xml`
+  - `packages/apps/BstSettings/res/values-ro/strings.xml`
+  - `packages/apps/BstSettings/res/values-ru/strings.xml`
+  - `packages/apps/BstSettings/res/values-sl/strings.xml`
+  - `packages/apps/BstSettings/res/values-sv/strings.xml`
+  - `packages/apps/BstSettings/res/values-th/strings.xml`
+  - `packages/apps/BstSettings/res/values-tr/strings.xml`
+  - `packages/apps/BstSettings/res/values-vi/strings.xml`
+  - `packages/apps/BstSettings/res/values-w820dp/dimens.xml`
+  - `packages/apps/BstSettings/res/values-zh-rCN/strings.xml`
+  - `packages/apps/BstSettings/res/values-zh-rTW/strings.xml`
+  - `packages/apps/BstSettings/res/values-zh/strings.xml`
+  - `packages/apps/BstSettings/res/values/attrs.xml`
+  - `packages/apps/BstSettings/res/values/colors.xml`
+  - `packages/apps/BstSettings/res/values/dimens.xml`
+  - `packages/apps/BstSettings/res/values/strings.xml`
+  - `packages/apps/BstSettings/res/values/styles.xml`
+  - `packages/apps/BstSettings/res/values/theme.xml`
+  - `packages/apps/BstSettings/res_icon_default/mipmap-hdpi/ic_launcher_settings.png`
+  - `packages/apps/BstSettings/res_icon_default/mipmap-mdpi/ic_launcher_settings.png`
+  - `packages/apps/BstSettings/res_icon_default/mipmap-xhdpi/ic_launcher_settings.png`
+  - `packages/apps/BstSettings/res_icon_default/mipmap-xxxhdpi/ic_launcher_settings.png`
+  - `packages/apps/BstSettings/res_icon_msi5/mipmap-hdpi/ic_launcher_settings.png`
+  - `packages/apps/BstSettings/res_icon_msi5/mipmap-mdpi/ic_launcher_settings.png`
+  - `packages/apps/BstSettings/res_icon_msi5/mipmap-xhdpi/ic_launcher_settings.png`
+  - `packages/apps/BstSettings/res_icon_msi5/mipmap-xxxhdpi/ic_launcher_settings.png`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/Constants.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/DownloadURL.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/EnableIME.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/G.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/InputMethodSettings.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/ItemData.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/L.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/Misc.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/Rooted.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/SettingsActivity.java`
+  - `packages/apps/BstSettings/src/com/bluestacks/settings/Utils.java`
+
+### `root-camera-hal-framerate-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-camera-hal-framerate-pointer.patch`](../../patches/android-16/a13-completion/root-camera-hal-framerate-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `55674142f20ffeebf33654ee169ab5542036cfb0d2fdd02761d41fc8574fd422`
+- Size/stat: 539 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/av`
+
+### `root-connectivity-captive-portal-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-connectivity-captive-portal-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-captive-portal-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1511daff129bc5ee6553a2d04deebc2e9898235b3c05d907280f75fefcccca4b`
+- Size/stat: 999 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/modules/Connectivity`
+
+### `root-connectivity-dscp-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-connectivity-dscp-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-dscp-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `28247be9cebae477ca374750c78a575fbf059290d5a7163bebbe0ca86f9392ef`
+- Size/stat: 936 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/modules/Connectivity`
+
+### `root-connectivity-network-presentation-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-connectivity-network-presentation-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-network-presentation-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ab566a6e807fed201fa170571b5ad28705f4f6635034d4d299f4f6524f93dd8b`
+- Size/stat: 1024 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `packages/modules/Connectivity`
+
+### `root-dumpstate-diagnostics-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-dumpstate-diagnostics-pointer.patch`](../../patches/android-16/a13-completion/root-dumpstate-diagnostics-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `12c38006cfa06ede20ae1d9429fd08c76a59c713357b8998c3d63050001f000d`
+- Size/stat: 554 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/native`
+
+### `root-external-selinux-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-external-selinux-pointer.patch`](../../patches/android-16/a13-completion/root-external-selinux-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `6b77abc980e04a971f00a3a08f42036b371aa4d54965916ae8cfaca6db2a748a`
+- Size/stat: 944 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `external/selinux`
+
+### `root-ffmpeg-runtime-pointers.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-ffmpeg-runtime-pointers.patch`](../../patches/android-16/a13-completion/root-ffmpeg-runtime-pointers.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `15688952cce99b57ec367eb03171c14cb6855f2a2e37057c88075a06b698e096`
+- Size/stat: 856 bytes, 2 files, 2 hunks, +2/-3
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `device/generic/common`
+  - `frameworks/av`
+
+### `root-fps-refresh-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-fps-refresh-pointer.patch`](../../patches/android-16/a13-completion/root-fps-refresh-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `69f8abcb0cbc829f66e526059e9799e0903a5eb818f53a0c4853ba55c84b87bf`
+- Size/stat: 557 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/native`
+
+### `root-frameworks-native-absolute-mouse-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-frameworks-native-absolute-mouse-pointer.patch`](../../patches/android-16/a13-completion/root-frameworks-native-absolute-mouse-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d372a5c3e255322e26e9f95e283a39121d71e4122cf498e4c5d709ddddb4bee8`
+- Size/stat: 560 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/native`
+
+### `root-frameworks-native-managed-su-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-frameworks-native-managed-su-pointer.patch`](../../patches/android-16/a13-completion/root-frameworks-native-managed-su-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `27ff136a0e8aae8e8c9dc790e0de0efc5686a08baf40775af80015e4f075efbf`
+- Size/stat: 554 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/native`
+
+### `root-frameworks-native-vulkan-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-frameworks-native-vulkan-pointer.patch`](../../patches/android-16/a13-completion/root-frameworks-native-vulkan-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `baafd975c32a363c1f05e9fb7842ec2c0b04cde1a72840a757adc06eb2e1b898`
+- Size/stat: 564 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/native`
+
+### `root-h263-16cif-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-h263-16cif-pointer.patch`](../../patches/android-16/a13-completion/root-h263-16cif-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `0e69de884de6715740f6c86e35b9beee5bd0a94f9053a4fbe14c8fa70d9e2ef9`
+- Size/stat: 533 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/av`
+
+### `root-hardware-interfaces-fps-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-hardware-interfaces-fps-pointer.patch`](../../patches/android-16/a13-completion/root-hardware-interfaces-fps-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8bdc8e3b971b475f95943454556252ec63c7b340315f8457bb6b17603782b56c`
+- Size/stat: 574 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `hardware/interfaces`
+
+### `root-ignore-houdini-payload.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-ignore-houdini-payload.patch`](../../patches/android-16/a13-completion/root-ignore-houdini-payload.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8b91937047f6ec439099dfa753cd157354a74cd404dcf94ba5d8e9fc6decd91a`
+- Size/stat: 241 bytes, 1 files, 1 hunks, +3/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `.gitignore`
+
+### `root-managed-su-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-managed-su-pointer.patch`](../../patches/android-16/a13-completion/root-managed-su-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `56365c5bb10c5b29ccf304a6b57a2d93495f56d4392fce481826d7cb50c2934d`
+- Size/stat: 534 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `system/extras`
+
+### `root-media-compat-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-media-compat-pointer.patch`](../../patches/android-16/a13-completion/root-media-compat-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `203c319d6b5cd1f4c2e31ba83d4904ad8f51aa0d9a338711db5d65eddd579870`
+- Size/stat: 543 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/av`
+
+### `root-readiness-runtime-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-readiness-runtime-pointer.patch`](../../patches/android-16/a13-completion/root-readiness-runtime-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d8fb723021782fea46d0e58badcafd071f1955343a62e0445d5524ddce0899fd`
+- Size/stat: 537 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/av`
+
+### `root-readiness-service-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-readiness-service-pointer.patch`](../../patches/android-16/a13-completion/root-readiness-service-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1f3b3ca7e2f83107db022b76defff166996256ee373e429bc272c37a58235005`
+- Size/stat: 562 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/native`
+
+### `root-servicemanager-readiness-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-servicemanager-readiness-pointer.patch`](../../patches/android-16/a13-completion/root-servicemanager-readiness-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c6c95a423ad64469e8ce7f9a2378cf89761d5e7d35b17cf460c1bb56ad448417`
+- Size/stat: 544 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/av`
+
+### `root-swcodec-sphal-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-swcodec-sphal-pointer.patch`](../../patches/android-16/a13-completion/root-swcodec-sphal-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `aa311a4d9f8f5efe390083cace9444fe11a6d3413390fe1fd1294c615b4624b0`
+- Size/stat: 534 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `frameworks/av`
+
+### `root-system-core-completion-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-system-core-completion-pointer.patch`](../../patches/android-16/a13-completion/root-system-core-completion-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1b8fb35295503ec2ba1c74d53e3e025d4f48c470da64e25ef5375b180ae7e868`
+- Size/stat: 237 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `system/core`
+
+### `root-system-security-prng-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-system-security-prng-pointer.patch`](../../patches/android-16/a13-completion/root-system-security-prng-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8cd49dd81d72d3e192e4edd93aadf060c7588e83a3f0e2d86260823fde1731bd`
+- Size/stat: 921 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `system/security`
+
+### `root-vold-quota-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-vold-quota-pointer.patch`](../../patches/android-16/a13-completion/root-vold-quota-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `1e14617435ef471c10af11c0c09ae1cfb4a8d2b6b35af8708c5572079984e7b9`
+- Size/stat: 530 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `system/vold`
+
+### `settings-accessibility-hearing-aid.patch`
+
+- Artifact: [`patches/android-16/a13-completion/settings-accessibility-hearing-aid.patch`](../../patches/android-16/a13-completion/settings-accessibility-hearing-aid.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `aa92e696dc81dc39dd102f935c8ebf7392c28307ac6db655b8d0a9db68ed34c9`
+- Size/stat: 1717 bytes, 1 files, 2 hunks, +6/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `src/com/android/settings/accessibility/AccessibilityHearingAidPreferenceController.java`
+
+### `settings-bst-activity-aliases.patch`
+
+- Artifact: [`patches/android-16/a13-completion/settings-bst-activity-aliases.patch`](../../patches/android-16/a13-completion/settings-bst-activity-aliases.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2b19c8d7b9c8e07dc64147e82f6ade3816ca4c435f5ba92a6e511b572c663bab`
+- Size/stat: 3333 bytes, 1 files, 1 hunks, +60/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `AndroidManifest.xml`
+
+### `settings-fallback-home.patch`
+
+- Artifact: [`patches/android-16/a13-completion/settings-fallback-home.patch`](../../patches/android-16/a13-completion/settings-fallback-home.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `c99879badd3fc6e4b67589cb3ceb197b057c6effe87351eb127620e1ca3f242f`
+- Size/stat: 5579 bytes, 1 files, 6 hunks, +56/-16
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `src/com/android/settings/FallbackHome.java`
+
+### `settings-product-policy.patch`
+
+- Artifact: [`patches/android-16/a13-completion/settings-product-policy.patch`](../../patches/android-16/a13-completion/settings-product-policy.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `192f25c7771d84f62341d29bdd3a3a2b5924c032dc20b654be9f1ee495398d34`
+- Size/stat: 16992 bytes, 11 files, 30 hunks, +141/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `AndroidManifest.xml`
+  - `res/xml/top_level_settings_bst.xml`
+  - `src/com/android/settings/gestures/GesturesSettingPreferenceController.java`
+  - `src/com/android/settings/homepage/SettingsHomepageActivity.java`
+  - `src/com/android/settings/homepage/TopLevelSettings.java`
+  - `src/com/android/settings/inputmethod/PhysicalKeyboardFragment.java`
+  - `src/com/android/settings/inputmethod/PhysicalKeyboardPreferenceController.java`
+  - `src/com/android/settings/language/PointerSpeedController.java`
+  - `src/com/android/settings/system/ResetPreferenceController.java`
+  - `src/com/android/settings/system/SystemUpdatePreferenceController.kt`
+  - `src/com/android/settings/users/MultiUserPreferenceController.java`
+
+### `settings-storage-iec.patch`
+
+- Artifact: [`patches/android-16/a13-completion/settings-storage-iec.patch`](../../patches/android-16/a13-completion/settings-storage-iec.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8d8c8b42347c23e0ae936cd2e8445515dc516c2d3adc475bab809ef170d26cb1`
+- Size/stat: 740 bytes, 1 files, 1 hunks, +1/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `src/com/android/settings/deviceinfo/storage/StorageUtils.java`
+
+### `system-core-a13-completion.patch`
+
+- Artifact: [`patches/android-16/a13-completion/system-core-a13-completion.patch`](../../patches/android-16/a13-completion/system-core-a13-completion.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8b9252ed344e2670edebeb85c413b7861395564603e3d9d5e82eadb10007c0ea`
+- Size/stat: 33148 bytes, 11 files, 42 hunks, +377/-58
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 7 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `healthd/BatteryMonitor.cpp`
+  - `init/property_service.cpp`
+  - `init/selinux.cpp`
+  - `init/service.cpp`
+  - `init/util.cpp`
+  - `libcutils/fs_config.cpp`
+  - `libutils/binder/Unicode.cpp`
+  - `rootdir/etc/hosts`
+  - `rootdir/init.rc`
+  - `rootdir/ueventd.rc`
+  - `toolbox/getevent.c`
+
+### `system-extras-managed-su.patch`
+
+- Artifact: [`patches/android-16/a13-completion/system-extras-managed-su.patch`](../../patches/android-16/a13-completion/system-extras-managed-su.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `87a74e48de64137ebeddba0e6a1b20c157541b8c945f2831331e264b7b5060cf`
+- Size/stat: 51278 bytes, 15 files, 15 hunks, +1399/-6
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `su/Android.bp`
+  - `su/hd-hcall`
+  - `su/hd-vmsg`
+  - `su/hd-xpl`
+  - `su/su.c`
+  - `su/su_crypto.c`
+  - `su/su_crypto.h`
+  - `su/su_hcall_wrapper.cpp`
+  - `su/su_hcall_wrapper.h`
+  - `su/su_packages.c`
+  - `su/su_packages.h`
+  - `su/su_report.c`
+  - `su/su_report.h`
+  - `su/su_whitelist.c`
+  - `su/su_whitelist.h`
+
+### `system-security-prng-seeder.patch`
+
+- Artifact: [`patches/android-16/a13-completion/system-security-prng-seeder.patch`](../../patches/android-16/a13-completion/system-security-prng-seeder.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f96da35d0b33fac12a56cbf6dfd2770d8e97694d37004dc6b6974ab7c3981a7a`
+- Size/stat: 1684 bytes, 1 files, 1 hunks, +2/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `prng_seeder/Android.bp`
+
+### `system-vold-mountsf-trigger.patch`
+
+- Artifact: [`patches/android-16/a13-completion/system-vold-mountsf-trigger.patch`](../../patches/android-16/a13-completion/system-vold-mountsf-trigger.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `9c47ebed1c88c57d6cedca353d9c0a484c1db2bd2aac809ec9cfe991c5712f35`
+- Size/stat: 655 bytes, 1 files, 2 hunks, +3/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `VolumeManager.cpp`
+
+### `system-vold-quota-ioctls.patch`
+
+- Artifact: [`patches/android-16/a13-completion/system-vold-quota-ioctls.patch`](../../patches/android-16/a13-completion/system-vold-quota-ioctls.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `53565d2055b1e82a430affae873a63c50566cb1841a22c2fb28160e638602e08`
+- Size/stat: 2165 bytes, 1 files, 1 hunks, +4/-43
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `Utils.cpp`
+
+### `telephony-sim-locale.patch`
+
+- Artifact: [`patches/android-16/a13-completion/telephony-sim-locale.patch`](../../patches/android-16/a13-completion/telephony-sim-locale.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8435526046f6697cfafd9a3369d434e2eaa4ff8eab62e325abff9d6ba9acfb13`
+- Size/stat: 829 bytes, 1 files, 1 hunks, +9/-0
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `src/com/android/phone/PhoneInterfaceManager.java`
+
+### `wifi-integration.patch`
+
+- Artifact: [`patches/android-16/a13-completion/wifi-integration.patch`](../../patches/android-16/a13-completion/wifi-integration.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `d29b4016eaad3e2d7f887766df333370f52ebd10d2c753b2a58ab2e2bf834cb2`
+- Size/stat: 3066 bytes, 1 files, 3 hunks, +20/-12
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `service/java/com/android/server/wifi/WifiServiceImpl.java`
+
 ### `aosp16__art.patch`
 
 - Artifact: [`patches/android-16/patches/aosp16__art.patch`](../../patches/android-16/patches/aosp16__art.patch)
 - Category: AOSP16 project snapshots
 - SHA-256: `9bf72daf4bccb697886d5341ee4ccf8a82db8ef50db4057f5be7cbd431f60b06`
 - Size/stat: 789 bytes, 1 files, 1 hunks, +5/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-art`: status=`boot-archived`, phase=`P1`, project=`art`
 - Overlap: none detected by changed path
@@ -131,7 +7081,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `8fa4e15f67288d91f2bf1d68c6da17e44f96f78a919c5d7c47406310262b9a16`
 - Size/stat: 6676 bytes, 7 files, 10 hunks, +32/-12
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-build-make`: status=`boot-archived`, phase=`P1`, project=`build/make`
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
@@ -150,10 +7100,10 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `98e6220628048675c02c6431fb9ebbdc2a9242d5c2a7bf09a59b016c2239a336`
 - Size/stat: 4509 bytes, 6 files, 6 hunks, +40/-2
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-build-soong`: status=`boot-archived`, phase=`P1`, project=`build/soong`
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `bin/mm`
   - `bin/mmm`
@@ -168,10 +7118,10 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `ff0fddf7f6d969341a1b6a97813c9bc8efab14f20872b5506d605ba4e14a0799`
 - Size/stat: 392246 bytes, 170 files, 76 hunks, +15568/-1
-- Binary payload: yes
+- Binary evidence: reference only; no payload bytes
 - Registry mapping:
   - `boot-device-generic-common`: status=`boot-archived`, phase=`P1`, project=`device/generic/common`
-- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Overlap: **yes**, 11 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `BoardConfig.mk`
   - `LICENSE`
@@ -350,7 +7300,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `5a1968205750ca9dc65f1d2e2d384980c78572260986c407e807678dbd841420`
 - Size/stat: 1175 bytes, 1 files, 2 hunks, +3/-5
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-device-generic-goldfish`: status=`boot-archived`, phase=`P1`, project=`device/generic/goldfish`
 - Overlap: none detected by changed path
@@ -363,10 +7313,10 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `3ecfe90784171d287cd12d48e424264fa3c60cded46931f9b2ebe8a7ae945822`
 - Size/stat: 3190 bytes, 3 files, 4 hunks, +36/-17
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-device-generic-x86_64`: status=`boot-archived`, phase=`P1`, project=`device/generic/x86_64`
-- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `AndroidProducts.mk`
   - `BoardConfig.mk`
@@ -378,7 +7328,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `ffaabaa230206adaacfde98d26b92e367e7fb2054c07f11c84942192774c236f`
 - Size/stat: 751 bytes, 1 files, 1 hunks, +4/-5
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-external-boringssl`: status=`boot-archived`, phase=`P1`, project=`external/boringssl`
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
@@ -391,10 +7341,10 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `38f4b50f95746f33f9449830446b988fd440ec9a3f0db5cd39631aab876cd9d3`
 - Size/stat: 958973 bytes, 97 files, 253 hunks, +20668/-88
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-frameworks-base`: status=`boot-archived`, phase=`P1`, project=`frameworks/base`
-- Overlap: **yes**, 46 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Overlap: **yes**, 93 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `cmds/bootanimation/BootAnimationUtil.cpp`
   - `cmds/pagefusion/Android.bp`
@@ -500,9 +7450,8 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `1f6aaeff944bbd520e4f45237a6a86200fe0181a71d75310fcb7eeac931ff0f0`
 - Size/stat: 2001 bytes, 1 files, 2 hunks, +5/-0
-- Binary payload: no
-- Registry mapping:
-  - `p2-d8-telephony-subscription`: status=`ported`, phase=`P2`, project=`frameworks/base`
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `telephony/java/android/telephony/SubscriptionManager.java`
@@ -513,9 +7462,8 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `d1c3af66d284637697b2efe38251192e013ed93824cafa0654d5f2e26c5676b6`
 - Size/stat: 95132 bytes, 7 files, 7 hunks, +2983/-0
-- Binary payload: no
-- Registry mapping:
-  - `win-frameworks-base-pagefusion`: status=`ported`, phase=`P2`, project=`frameworks/base`
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 7 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `cmds/pagefusion/Android.bp`
@@ -532,9 +7480,9 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `176f9b22a9680e3f5e5c08777fa67aa6ac57bc2920587559b9f3a7a097a179e9`
 - Size/stat: 1960 bytes, 1 files, 2 hunks, +12/-8
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
-  - `boot-frameworks-base-r262-temp`: status=`removed`, phase=`P2`, project=`frameworks/base`
+  - `boot-frameworks-base-r262-temp`: status=`boot-archived`, phase=`P2`, project=`frameworks/base`
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `libs/WindowManager/Shell/src/com/android/wm/shell/transition/Transitions.java`
@@ -545,7 +7493,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `8424f1e91d0daea449391c418dfb0a5c162c81d60f48e156339898192cb907f7`
 - Size/stat: 5399 bytes, 3 files, 3 hunks, +50/-53
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-frameworks-native`: status=`boot-archived`, phase=`P1`, project=`frameworks/native`
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
@@ -560,9 +7508,8 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `2cc247d014bf73d6c5255d7e9f7d977ab22df14f651c551d408260fc06df608e`
 - Size/stat: 163624 bytes, 10 files, 11 hunks, +3821/-0
-- Binary payload: no
-- Registry mapping:
-  - `win-frameworks-native`: status=`ported`, phase=`P2`, project=`frameworks/native`
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `libs/binder/Android.bp`
@@ -582,7 +7529,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `bf339482528d15a26c048c82fd59d132360397955685aa2cde4cadacd8b78bc1`
 - Size/stat: 1009 bytes, 2 files, 3 hunks, +3/-3
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-hardware-google-aemu`: status=`boot-archived`, phase=`P1`, project=`hardware/google/aemu`
 - Overlap: none detected by changed path
@@ -596,7 +7543,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `1ea416b4e906e3238d79a65954f5e7b5f4681a1113d3485554fae908062c2355`
 - Size/stat: 808 bytes, 2 files, 2 hunks, +2/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-hardware-interfaces`: status=`boot-archived`, phase=`P1`, project=`hardware/interfaces`
 - Overlap: none detected by changed path
@@ -610,7 +7557,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `1e000280b3595535813f99f34488418f0fd8953fd285702a00f7970ad8b1acf3`
 - Size/stat: 3238 bytes, 2 files, 2 hunks, +0/-86
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-hardware-libhardware`: status=`boot-archived`, phase=`P1`, project=`hardware/libhardware`
 - Overlap: none detected by changed path
@@ -624,7 +7571,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `05a8557df5dc532a8596db997d448833ab99483b8d3e7220bfd9a7b30292c6e9`
 - Size/stat: 5322 bytes, 4 files, 5 hunks, +27/-5
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-packages-launcher3`: status=`boot-archived`, phase=`P1`, project=`packages/apps/Launcher3`
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
@@ -640,11 +7587,11 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `f2d51165446d1e4da2a7a19cba570a62836f1a13945b3629230342ded164be22`
 - Size/stat: 21450 bytes, 13 files, 32 hunks, +222/-26
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-system-core`: status=`boot-archived`, phase=`P1`, project=`system/core`
   - `temp-selinux-permissive-bypasses`: status=`boot-archived`, phase=`P2`, project=`system/core/init`
-- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Overlap: **yes**, 6 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `init/coldboot.cpp`
   - `init/first_stage_init.cpp`
@@ -666,10 +7613,10 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `48553a7aec938afe107a84e7bf6cdcaac889254e93eff6598ae36eadcadbb33b`
 - Size/stat: 2770 bytes, 3 files, 3 hunks, +7/-13
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-system-hwservicemanager`: status=`boot-archived`, phase=`P1`, project=`system/hwservicemanager`
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `Android.bp`
   - `hwservicemanager.rc`
@@ -681,7 +7628,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `2bf58406a0160fc85b4b07dd408963eb2a8fb617a4e2645679eb82c082520e79`
 - Size/stat: 711 bytes, 1 files, 1 hunks, +11/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: none detected by changed path
 - Changed paths:
@@ -693,7 +7640,7 @@
 - Category: AOSP16 project snapshots
 - SHA-256: `c7cd5fa5086067860e05de6fad00bf59c773febe9d4adda1c40e281099f8bf03`
 - Size/stat: 773 bytes, 1 files, 1 hunks, +4/-2
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-system-security`: status=`boot-archived`, phase=`P1`, project=`system/security`
 - Overlap: none detected by changed path
@@ -706,7 +7653,7 @@
 - Category: Host/build/graphics companion patches
 - SHA-256: `a877f50eb3c9fc04e16b7003ed19155c75060f8b45f909a474efa18f1b78ed49`
 - Size/stat: 25249 bytes, 7 files, 39 hunks, +164/-53
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-app-player-buildscripts`: status=`boot-archived`, phase=`P1`, project=`app-player/buildscripts`
 - Overlap: none detected by changed path
@@ -725,10 +7672,10 @@
 - Category: Host/build/graphics companion patches
 - SHA-256: `361e9ba643106bd8090a169221b0357d70c6cea0e3c9e87a62a0a303546e51e4`
 - Size/stat: 22494 bytes, 15 files, 26 hunks, +122/-51
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-goldfish-opengl-pie`: status=`boot-archived`, phase=`P1`, project=`ggl/goldfish-opengl-pie`
-- Overlap: none detected by changed path
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `Android.mk`
   - `shared/GoldfishAddressSpace/include/goldfish_address_space_android.impl`
@@ -752,7 +7699,7 @@
 - Category: Host/build/graphics companion patches
 - SHA-256: `46c95497093b5697fdc137b3058024b6bf3c9a653878d633fd5a4c0a42c9c2d7`
 - Size/stat: 22342 bytes, 7 files, 31 hunks, +211/-41
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping:
   - `boot-hd-guest`: status=`boot-archived`, phase=`P1`, project=`hd/guest`
 - Overlap: none detected by changed path
@@ -771,9 +7718,9 @@
 - Category: P2 bionic/art source overlays
 - SHA-256: `131b884f3953c5cc825361e575c86461d0a0ec7b186bdd10bb943b593ac8ba30`
 - Size/stat: 26055 bytes, 5 files, 17 hunks, +529/-21
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 5 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `libnativebridge/libnativebridge.map.txt`
   - `libnativebridge/native_bridge.cc`
@@ -787,9 +7734,9 @@
 - Category: P2 bionic/art source overlays
 - SHA-256: `ca7baf55bb6c56f9190382b991fc2d59701f93831c8b6e09853b82a95c5fec38`
 - Size/stat: 45611 bytes, 16 files, 35 hunks, +873/-7
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Overlap: **yes**, 16 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `libc/SYSCALLS.TXT`
   - `libc/arch-x86/syscalls/ioperm.S`
@@ -814,7 +7761,7 @@
 - Category: P2 external source overlays
 - SHA-256: `b67dd6392cae8c30ae4711118b2702ad872dd6fb3c96f11e2f70867640483bd7`
 - Size/stat: 1194 bytes, 2 files, 2 hunks, +11/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -827,7 +7774,7 @@
 - Category: P2 external source overlays
 - SHA-256: `80898602138ceee2de2cec1c122a1fc5fc81ee08ab5bbba8f060624e51680987`
 - Size/stat: 4097 bytes, 2 files, 3 hunks, +64/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: none detected by changed path
 - Changed paths:
@@ -840,7 +7787,7 @@
 - Category: P2 aggregate/candidate snapshots
 - SHA-256: `ab20034bea4a1d6215d4d30ac34cf016c3231ba0ac23b8b7d8c895766aa1ae77`
 - Size/stat: 31080 bytes, 1 files, 2 hunks, +584/-60
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -852,7 +7799,7 @@
 - Category: P2 aggregate/candidate snapshots
 - SHA-256: `ebccb531f921feb55362abdf101d7991ae048cf202bc96c30fc700871cea5c5f`
 - Size/stat: 7131 bytes, 2 files, 6 hunks, +83/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -865,7 +7812,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `d11a0687b269705365456ee6c0ae88e90e8198a60b49bbaa690d17216c703bd6`
 - Size/stat: 3714 bytes, 3 files, 6 hunks, +25/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -879,7 +7826,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `a3dcd295e0e2680ce6b3ed80a1c5e6b1a815eb81d0afba8e83572f99684b7380`
 - Size/stat: 5502 bytes, 1 files, 7 hunks, +75/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -891,7 +7838,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `b3a0f1100212eaa20a215d7569425e077d57766202b571e9df17279629ec8e19`
 - Size/stat: 7783 bytes, 1 files, 6 hunks, +119/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -903,7 +7850,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `88e42c5a8ecdb611eea248880fa27d350f7cf5ce68e8a8552b99c3f8790acccc`
 - Size/stat: 10852 bytes, 1 files, 7 hunks, +186/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -915,7 +7862,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `394ba92ceaf45e781313401ad231d9959e46f5b1bb89be5bed7c6a5eaa4c16e3`
 - Size/stat: 14642 bytes, 1 files, 5 hunks, +254/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -927,7 +7874,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `8428b2a3f9c21074757fcadedae3270a4455a2518632af10a1403075487fd610`
 - Size/stat: 34444 bytes, 1 files, 11 hunks, +640/-8
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -939,7 +7886,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `ccbc9586960b0dcbab562309c9d40e8545865b131703b9cb587d6d5faef9280d`
 - Size/stat: 31215 bytes, 1 files, 7 hunks, +443/-7
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -951,7 +7898,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `6605414d7cf1f6bf37acc8682c77c72fdcc7bd7085924dec8eaf7ca9b78d87de`
 - Size/stat: 7575 bytes, 1 files, 4 hunks, +122/-2
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -963,7 +7910,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `fb85c1ae8384ab9d04e73475541d355779163a264110441a3f2330fe09c13523`
 - Size/stat: 2953 bytes, 1 files, 3 hunks, +36/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -975,7 +7922,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `8260b65732a0119f0212f1e13b8a61200b82a1db49d582f406f16db13734e202`
 - Size/stat: 4981 bytes, 2 files, 6 hunks, +50/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -988,7 +7935,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `41fb3440e391ddeffcf0d7e8aa16a78bbb725c7dff1cb1fba2f083895dce2d82`
 - Size/stat: 9787 bytes, 2 files, 4 hunks, +119/-2
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1001,7 +7948,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `c4cbc4d5400b46bce5603437a5bda98ea6ef481b68b280ccbe04686710e54e0f`
 - Size/stat: 6108 bytes, 2 files, 6 hunks, +74/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1014,7 +7961,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `38f4a69356be17d8a88f01b96828564931f36ac73081cbd896d3214d4d58867e`
 - Size/stat: 10736 bytes, 2 files, 13 hunks, +117/-3
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1027,7 +7974,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `fd5753bffc54b46691cd975a4d234ece8c4db1fe191f2532216f90969905f9e6`
 - Size/stat: 9390 bytes, 2 files, 14 hunks, +96/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1040,7 +7987,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `70d3e0ca95a12846602f10f276da7dee40d5440206a9dea282cd669b431dbea2`
 - Size/stat: 4386 bytes, 1 files, 5 hunks, +54/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1052,7 +7999,7 @@
 - Category: P2 framework core/app surgical patches
 - SHA-256: `33482883a0a5e901d3947e85967b460441e1e4f417880c750e1072e7bd6874ba`
 - Size/stat: 2983 bytes, 1 files, 2 hunks, +45/-4
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1064,7 +8011,7 @@
 - Category: P2 framework peripheral surgical patches
 - SHA-256: `509bed947eda40bfa71b200c9f7854c911b1e3ecfa3601d32e21b54dbdd5751f`
 - Size/stat: 1694 bytes, 2 files, 3 hunks, +11/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1077,7 +8024,7 @@
 - Category: P2 framework peripheral surgical patches
 - SHA-256: `dac82deebb68f7f2b22d09e858bfe3efd851e3216f54208430ec39d113f49013`
 - Size/stat: 1413 bytes, 1 files, 2 hunks, +7/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1089,7 +8036,7 @@
 - Category: P2 framework peripheral surgical patches
 - SHA-256: `514de046864fca0b7ed4c02c9ca8d593ecc617c9c832ba9989d9f5dfb60076df`
 - Size/stat: 1918 bytes, 1 files, 3 hunks, +16/-2
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1101,7 +8048,7 @@
 - Category: P2 framework peripheral surgical patches
 - SHA-256: `f11f8c2a829002f1befd54c9491d50b3da059b41a6350e7c92a3c6f4f6fca0fb`
 - Size/stat: 1218 bytes, 1 files, 2 hunks, +4/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1113,7 +8060,7 @@
 - Category: P2 framework peripheral surgical patches
 - SHA-256: `78d0656f5e86d5219958b187ef271f6498f61189c6111fc9dd961a7c8153230c`
 - Size/stat: 1340 bytes, 1 files, 2 hunks, +7/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1125,7 +8072,7 @@
 - Category: P2 framework peripheral surgical patches
 - SHA-256: `42626e0260d2b6687e546202e8aa6ca48a0cf502526b4e965684ea5de9eefb49`
 - Size/stat: 1404 bytes, 1 files, 2 hunks, +5/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1137,7 +8084,7 @@
 - Category: P2 framework peripheral surgical patches
 - SHA-256: `2f0b45c288766e9979ec511a1a2407de39cd3e8705a94f8873937ef509d658a6`
 - Size/stat: 2250 bytes, 1 files, 2 hunks, +21/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1149,7 +8096,7 @@
 - Category: P2 framework peripheral surgical patches
 - SHA-256: `51edb75752ccfb187f63af13b3f1408efe103fa89d7a48aa72c8c3cc1726ab77`
 - Size/stat: 1336 bytes, 1 files, 2 hunks, +6/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1161,7 +8108,7 @@
 - Category: P2 framework peripheral surgical patches
 - SHA-256: `5db61ac9c5f9d4625e41482e6a74e84be25466a14525f5ceb89aea3da00e51ca`
 - Size/stat: 2671 bytes, 1 files, 3 hunks, +26/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1173,9 +8120,8 @@
 - Category: P2 framework services surgical patches
 - SHA-256: `f0cae6ff030ba8c8216d06ab8242e17d7f8356653a91fb2ef5e4f1a1c6d796b5`
 - Size/stat: 3126 bytes, 2 files, 3 hunks, +29/-1
-- Binary payload: no
-- Registry mapping:
-  - `win-frameworks-base`: status=`in_progress`, phase=`P2`, project=`frameworks/base`
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `services/core/java/com/android/server/appop/AppOpsService.java`
@@ -1187,7 +8133,7 @@
 - Category: P2 framework services surgical patches
 - SHA-256: `a5f0561ff91f6e3753e6afeb9957d6ae3756aa0d25ed04a49f77f3d784beb1e0`
 - Size/stat: 2600 bytes, 1 files, 4 hunks, +9/-3
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1199,7 +8145,7 @@
 - Category: P2 framework services surgical patches
 - SHA-256: `d9e713b5fd38241f0e07384eb550854765ede7d41f95b54f47a4d682195b4e5b`
 - Size/stat: 2259 bytes, 1 files, 3 hunks, +12/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1211,7 +8157,7 @@
 - Category: P2 framework services surgical patches
 - SHA-256: `8fd518421b9d5b535b0bec1205761c253409b4727fe63dc91a22a4c8f81bc720`
 - Size/stat: 4164 bytes, 1 files, 4 hunks, +40/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1223,7 +8169,7 @@
 - Category: P2 framework WM surgical patches
 - SHA-256: `3e1ce9efca9381c0f6391c73056fd29b978159840bf36d2a518fb975213c8a6a`
 - Size/stat: 6595 bytes, 2 files, 7 hunks, +66/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1236,7 +8182,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `26c6356c881b0e3d5d486a3fee17ec7559ea8938468644ef9a2a0c74a6e7fa7e`
 - Size/stat: 656 bytes, 1 files, 1 hunks, +1/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: none detected by changed path
 - Changed paths:
@@ -1248,9 +8194,9 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `02a4c055b030f3105abe7f9650747c46a1af497752a89d139e27ae906a43e51e`
 - Size/stat: 726 bytes, 1 files, 1 hunks, +4/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `healthd/BatteryMonitor.cpp`
 
@@ -1260,9 +8206,9 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `b8aec155526523365d0606a6d3af888584da1fb3dc23e02415ade1ed5709fe4f`
 - Size/stat: 1946 bytes, 2 files, 3 hunks, +15/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `services/camera/libcameraservice/CameraService.cpp`
   - `services/camera/libcameraservice/common/CameraProviderManager.cpp`
@@ -1273,9 +8219,9 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `0730f549c28dacc7f9f31e6d4a046b9f59e855742279b4f8042625d2c23a7608`
 - Size/stat: 677 bytes, 1 files, 1 hunks, +2/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `service/java/com/android/server/wifi/WifiServiceImpl.java`
 
@@ -1285,9 +8231,9 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `9e0eeb160d043958ee5ec5f8df21eea8d15e7f9fa1c91164512d3b3a4be54995`
 - Size/stat: 1066 bytes, 1 files, 1 hunks, +10/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `java/src/com/android/inputmethod/latin/LatinIME.java`
 
@@ -1297,7 +8243,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `08c8b630a463207896f909aedfe7598447c97d4c223f472e03b3f74f1857fe86`
 - Size/stat: 1923 bytes, 1 files, 3 hunks, +9/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: none detected by changed path
 - Changed paths:
@@ -1309,7 +8255,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `c476343ce6de2accfdec30d8b667628030c4bd9b2d65771eb4a5bfebf610db21`
 - Size/stat: 3340 bytes, 2 files, 6 hunks, +13/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: none detected by changed path
 - Changed paths:
@@ -1322,7 +8268,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `2e5c7e3f3fadee471a740d5fafe57fda830bebb1a480af8f99850a08c978c966`
 - Size/stat: 1081 bytes, 1 files, 1 hunks, +9/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1334,7 +8280,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `33bd0ff924d39b429e919711b15bdbce625ac43c66ea6c3ecc0a7bf6d518bb20`
 - Size/stat: 839 bytes, 1 files, 1 hunks, +1/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1346,7 +8292,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `4bc4bf3676fa830d2bffabf43e6a848d86bae2e8824a9268b7466a7e0d951f1a`
 - Size/stat: 23565 bytes, 1 files, 5 hunks, +465/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1358,7 +8304,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `946494dd37f2ccea4dc326672efba7322bcaae8ac8b2b48729e0a565bcffd834`
 - Size/stat: 1182 bytes, 2 files, 2 hunks, +0/-2
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1371,7 +8317,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `fd2bfc1f49f61d3e9030b811e62a48c80a5f5ecf172ce909f0434c4d1327be70`
 - Size/stat: 1795 bytes, 1 files, 2 hunks, +25/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: none detected by changed path
 - Changed paths:
@@ -1383,7 +8329,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `b80b6565b7d3ffd17fbb4c721b2fcc210364e1a01491a5da2af9554e6e0c7804`
 - Size/stat: 815 bytes, 1 files, 1 hunks, +7/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: none detected by changed path
 - Changed paths:
@@ -1395,9 +8341,9 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `7f80ad7c45d5e2659f420b09b8590e98cfbe25d24fbb79e2c2beebc2fa9e29ff`
 - Size/stat: 2121 bytes, 3 files, 4 hunks, +7/-6
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `target/product/handheld_system.mk`
   - `target/product/runtime_libart.mk`
@@ -1409,9 +8355,9 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `d54f4a0729bc0eaa292b58dc6e8b81a4cf5de3b72e8d395000219c06d1217426`
 - Size/stat: 1791 bytes, 3 files, 3 hunks, +24/-1
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 3 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `adb.cpp`
   - `adb.h`
@@ -1423,7 +8369,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `a43e6b1ec4a723e81cfed642a58c42ae8674609f97f347e1c409cf05976f4005`
 - Size/stat: 2576 bytes, 1 files, 2 hunks, +28/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: none detected by changed path
 - Changed paths:
@@ -1435,7 +8381,7 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `294e125d0ed2d7b840303338568758bd99fae048e7e33661e8f14be2aa74ea12`
 - Size/stat: 1239 bytes, 1 files, 2 hunks, +7/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: none detected by changed path
 - Changed paths:
@@ -1447,9 +8393,9 @@
 - Category: P2 cross-project mechanical patches
 - SHA-256: `698cca7ad6ad6469d1f1e83896d91d275110b056447fe9dbf78bbb57ce14b687`
 - Size/stat: 849 bytes, 1 files, 2 hunks, +7/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `media/libmedia/IMediaSource.cpp`
 
@@ -1459,7 +8405,7 @@
 - Category: P2 aggregate/candidate snapshots
 - SHA-256: `2008fbeca9612d3d8d16323f59830565c9ebe62e17b3f5f2f68ed7606cdf3807`
 - Size/stat: 96037 bytes, 8 files, 8 hunks, +3034/-0
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 8 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1478,7 +8424,7 @@
 - Category: P2 aggregate/candidate snapshots
 - SHA-256: `a78307d17fa0cf840f347219e683fe35e4ae0c30cc545d7e6589209bf4a59b3a`
 - Size/stat: 36593 bytes, 1 files, 6 hunks, +626/-107
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
@@ -1490,9 +8436,9 @@
 - Category: P2 aggregate/candidate snapshots
 - SHA-256: `d3d4a950d354eb4d72b8e25fbfdc88c31712c9ab703f30c1eae924620876167a`
 - Size/stat: 5073722 bytes, 1 files, 3204 hunks, +25592/-45812
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `core/java/android/app/ActivityManager.java`
 
@@ -1502,7 +8448,7 @@
 - Category: Patch-equivalent untracked payloads
 - SHA-256: `073438d55e58e2fb47f8dbba29d042638625d1da02dfc6bf91dbd89f44dfe821`
 - Size/stat: 1936 bytes, 2 files, 3 hunks, +6/-2
-- Binary payload: no
+- Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
 - Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:

@@ -1,0 +1,27 @@
+From 40b602220f9ae253265cdc0a908ed513c01dc857 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 14 Sep 2023 13:55:12 +0800
+Subject: [PATCH 015/224] [A13] Using 0x90 (0xe0 0x10) scancode for HOME and
+ 0x99 (0xe0 0x19) scancode for RECENT functionality.
+
+      Originally these keys are assigned for PREVIOUSSONG and NEXTSONG
+---
+ data/keyboards/Generic.kl | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data/keyboards/Generic.kl b/data/keyboards/Generic.kl
+index c81473ddcfc6..64ea9c3f1e40 100644
+--- a/data/keyboards/Generic.kl
++++ b/data/keyboards/Generic.kl
+@@ -182,9 +182,9 @@ key 159   FORWARD
+ key 160   MEDIA_CLOSE
+ key 161   MEDIA_EJECT
+ key 162   MEDIA_EJECT
+-key 163   MEDIA_NEXT
++key 163   APP_SWITCH      #MEDIA_NEXT
+ key 164   MEDIA_PLAY_PAUSE
+-key 165   MEDIA_PREVIOUS
++key 165   HOME            #MEDIA_PREVIOUS
+ key 166   MEDIA_STOP
+ key 167   MEDIA_RECORD
+ key 168   MEDIA_REWIND

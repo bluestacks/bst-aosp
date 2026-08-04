@@ -1,0 +1,18 @@
+diff --git a/sepolicy/houdini/shell.te b/sepolicy/houdini/shell.te
+index 4522568..6920f88 100644
+--- a/sepolicy/houdini/shell.te
++++ b/sepolicy/houdini/shell.te
+@@ -2,4 +2,3 @@ allow shell same_process_hal_file:file rx_file_perms;
+ allowxperm shell self:fifo_file ioctl TIOCGPTN;
+ get_prop(shell, vendor_houdini_default_prop)
+ allow shell system_file:file { read execute map open getattr execute_no_trans };
+-
+diff --git a/sepolicy/houdini/vendor_init.te b/sepolicy/houdini/vendor_init.te
+index b66ac1a..9acc6a4 100644
+--- a/sepolicy/houdini/vendor_init.te
++++ b/sepolicy/houdini/vendor_init.te
+@@ -1,4 +1,3 @@
+ set_prop(vendor_init, vendor_houdini_default_prop)
+ allow vendor_init binfmt_miscfs:file write;
+ allow vendor_init binfmt_miscfs:chr_file { create setattr unlink rw_file_perms };
+-

@@ -1,0 +1,162 @@
+From cd161672739a1bc726e71fd178696cdd425d53f8 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Mon, 13 Nov 2023 18:02:02 +0800
+Subject: [PATCH 063/224] [A13] Add config.db entry xcpu
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 121 ++++++++++++++++++++
+ 1 file changed, 121 insertions(+)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index e7c595e24cac..cc96aa07de3f 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -94,6 +94,7 @@
+ #include "filesystem_utils.h"
+ 
+ #include "nativebridge/native_bridge.h"
++#include <binder/BstFilterAppsManager.h>
+ 
+ namespace {
+ 
+@@ -1785,6 +1786,107 @@ static void BindMountStorageDirs(JNIEnv* env, jobjectArray pkg_data_info_list,
+   }
+ }
+ 
++static char g_pkgname[256];
++
++static inline void init_pkgname(const char* app_data_dir_in)
++{
++    g_pkgname[0] = 0;
++    if (app_data_dir_in == nullptr) return;
++
++    const char* str = strrchr(app_data_dir_in, '/');
++    if (str == nullptr) return;
++
++    size_t len = strlen(++str);
++    if (len >= sizeof(g_pkgname)) len = sizeof(g_pkgname) - 1;
++    memcpy(g_pkgname, str, len);
++    g_pkgname[len] = 0;
++}
++
++#define BST_MAX_SMALL_FILE_SIZE (1024 * 1024)
++/** Allocate a buffer to read a small regular file. */
++char* _bst_read_small_file(const char* file_path, loff_t* file_size)
++{
++    FILE *fp;
++    struct stat st;
++    char *buf = NULL;
++    loff_t f_size = 0;
++    ssize_t bytes = 0;
++
++    fp = fopen(file_path, "r");
++    if (!fp) {
++        // ALOGE("Error in fopen file %s\n", file_path);
++        goto out;
++    }
++
++    if (fstat(fileno(fp), &st) && !S_ISREG(st.st_mode)) {
++        ALOGE("Error in fstat file %s\n", file_path);
++        goto out;
++    }
++
++    /* file is opened successfully, read it in a buffer */
++    f_size = st.st_size;
++    if (f_size <= 0) {
++        ALOGE("Error in getting size of file %s\n", file_path);
++        goto out;
++    }
++
++    if (f_size > BST_MAX_SMALL_FILE_SIZE) {
++        ALOGE("The size of the file %s is too large\n", file_path);
++        goto out;
++    }
++
++    /* The file content is expected as a string, so allocate one more byte.*/
++    buf = (char *)malloc(f_size + 1);
++    if (!buf) {
++        ALOGE("Error in allocating buffer for file %s\n", file_path);
++        goto out;
++    }
++
++    memset(buf, 0, sizeof(buf));
++    bytes = fread(buf, f_size, 1, fp);
++    if (bytes < 0) {
++        ALOGE("Error in reading file %s\n", file_path);
++        free(buf);
++        buf = NULL;
++        goto out;
++    }
++
++    *file_size = f_size;
++    // ALOGE("File %s read successfully\n", file_path);
++
++out:
++    if (fp != NULL)
++        fclose(fp);
++
++    return buf;
++}
++
++bool bst_is_xcpu_app(const char *calling_pkg)
++{
++#define XCPU_FILE_PATH "/data/downloads/.tmp/.bstXcpuApps"
++    char *file_buf, *temp, *token;
++    loff_t file_size  = 0;
++    bool ret = false;
++
++    file_buf = _bst_read_small_file(XCPU_FILE_PATH, &file_size);
++    if (!file_buf || !calling_pkg)
++        goto out;
++
++    // Read app name line by line
++    temp = file_buf;
++    while ((token = strsep(&temp, ";")) != NULL && strlen(token) > 0) {
++        if (strcmp(token, calling_pkg) == 0) {
++            ret = true;
++            break;
++        }
++    }
++
++out:
++    if (file_buf)
++        free(file_buf);
++
++    return ret;
++}
+ // Utility routine to specialize a zygote child process.
+ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids, jint runtime_flags,
+                              jobjectArray rlimits, jlong permitted_capabilities,
+@@ -1846,6 +1948,8 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+                              fail_fn);
+     }
+ 
++    init_pkgname(app_data_dir.has_value() ? app_data_dir.value().c_str() : nullptr);
++
+     // If this zygote isn't root, it won't be able to create a process group,
+     // since the directory is owned by root.
+     if (!is_system_server && getuid() == 0) {
+@@ -1866,6 +1970,23 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+         android::PreInitializeNativeBridge(app_data_dir.has_value() ? app_data_dir.value().c_str()
+                                                                     : nullptr,
+                                            instruction_set.value().c_str());
++
++        // Bug BS4-413 fix: Currently, we modify intel patch to replace cpuinfo field: Hardware value
++        // from 'placeholder' to arm specific cpu info.
++        // This app is reading cpuinfo hardware field to determine underlying system abi, thus getting
++        // arm as a result leading to crash when opening a dexFile.
++        // Bind mounting original cpuinfo file kept in /system/etc for such apps via query to BstFilterAppsManager.
++        if (uid >= 10000 && bst_is_xcpu_app(g_pkgname)) {
++            char cpuinfo_path[32] = "/etc/xcpuinfo";
++            // Bind-mount
++            if (TEMP_FAILURE_RETRY(mount(cpuinfo_path,         // Source.
++                                    "/proc/cpuinfo",     // Target.
++                                    nullptr,             // FS type.
++                                    MS_BIND,             // Mount flags: bind mount.
++                                    nullptr)) == -1) {   // "Data."
++                ALOGW("Failed to bind-mount %s as /proc/cpuinfo: %s", cpuinfo_path, strerror(errno));
++            }
++        }
+     }
+ 
+     if (is_system_server) {

@@ -1,0 +1,19 @@
+From d207910e4e144fce42f2b042da9f10b10d0cc05e Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 22:08:37 +0800
+Subject: [PATCH] [A16] Restore remaining media compatibility
+
+---
+ frameworks/av | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/frameworks/av b/frameworks/av
+index baf5110..0cbd760 160000
+--- a/frameworks/av
++++ b/frameworks/av
+@@ -1 +1 @@
+-Subproject commit baf511039a8385af9f599e70076f0731dd4b7682
++Subproject commit 0cbd76021f2969956b0662515f4fc8a31fc54565
+-- 
+2.34.1
+

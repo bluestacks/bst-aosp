@@ -1,0 +1,91 @@
+From 5b6ab0fcd46e2a508369b09f28d2d3c4604b72ae Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 31 Aug 2023 11:33:10 +0800
+Subject: [PATCH 007/224] [A13] Changes for native mouse pointer.
+
+---
+ core/java/android/hardware/input/IInputManager.aidl  |  1 +
+ core/java/android/hardware/input/InputManager.java   |  9 +++++++++
+ core/java/android/view/PointerIcon.java              | 12 +++++++++++-
+ .../android/server/input/InputManagerService.java    |  6 ++++++
+ 4 files changed, 27 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/hardware/input/IInputManager.aidl b/core/java/android/hardware/input/IInputManager.aidl
+index 3a07bb0d7736..c10c1b62b554 100644
+--- a/core/java/android/hardware/input/IInputManager.aidl
++++ b/core/java/android/hardware/input/IInputManager.aidl
+@@ -126,6 +126,7 @@ interface IInputManager {
+     // Remove the runtime association between the input port and the display port. Any existing
+     // static association for the cleared input port will be restored.
+     void removePortAssociation(in String inputPort);
++    void bstReloadPointerIcon();
+ 
+     // Add a runtime association between the input device and display.
+     void addUniqueIdAssociation(in String inputPort, in String displayUniqueId);
+diff --git a/core/java/android/hardware/input/InputManager.java b/core/java/android/hardware/input/InputManager.java
+index baf8836c5af5..aaf83bb1b258 100644
+--- a/core/java/android/hardware/input/InputManager.java
++++ b/core/java/android/hardware/input/InputManager.java
+@@ -1239,6 +1239,15 @@ public final class InputManager {
+         }
+     }
+ 
++    /** @hide */
++    public void bstReloadPointerIcon() {
++        try {
++            mIm.bstReloadPointerIcon();
++        } catch (RemoteException ex) {
++            throw ex.rethrowFromSystemServer();
++        }
++    }
++
+     /**
+      * Request or release pointer capture.
+      * <p>
+diff --git a/core/java/android/view/PointerIcon.java b/core/java/android/view/PointerIcon.java
+index 2a8e7e468616..834c458e5f96 100644
+--- a/core/java/android/view/PointerIcon.java
++++ b/core/java/android/view/PointerIcon.java
+@@ -35,6 +35,8 @@ import android.graphics.drawable.Drawable;
+ import android.hardware.display.DisplayManager;
+ import android.os.Build;
+ import android.os.Parcel;
++import android.os.SystemProperties;
++import android.provider.Settings;
+ import android.os.Parcelable;
+ import android.util.Log;
+ import android.util.SparseArray;
+@@ -216,7 +218,15 @@ public final class PointerIcon implements Parcelable {
+             throw new IllegalArgumentException("context must not be null");
+         }
+ 
+-        if (type == TYPE_NULL) {
++        // BST Change -- returning NULL ICON,if show touches setting is disabled as we want to disable cursor pointer
++        boolean showTouches = Settings.System.getInt(context.getContentResolver(), Settings.System.SHOW_TOUCHES, 0) == 1 ;
++        boolean showNativeMousePointer = SystemProperties.getBoolean("bst.config.show_mouse_ptr", false);
++
++        if (showTouches || showNativeMousePointer) {
++             if (type == TYPE_NULL) {
++                return gNullIcon;
++            }
++        } else {
+             return gNullIcon;
+         }
+ 
+diff --git a/services/core/java/com/android/server/input/InputManagerService.java b/services/core/java/com/android/server/input/InputManagerService.java
+index 89e0d0510cf8..b2edb18b1c33 100644
+--- a/services/core/java/com/android/server/input/InputManagerService.java
++++ b/services/core/java/com/android/server/input/InputManagerService.java
+@@ -2367,6 +2367,12 @@ public class InputManagerService extends IInputManager.Stub
+         }
+     }
+ 
++    // Binder call
++    @Override
++    public void bstReloadPointerIcon() {
++        mNative.reloadPointerIcons();
++    }
++
+     /**
+      * Add a runtime association between the input port and the display port. This overrides any
+      * static associations.

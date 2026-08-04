@@ -1,0 +1,19 @@
+From a0f18013851fb3e7006bd37426f79625fbe0593e Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 00:46:21 +0800
+Subject: [PATCH] [A16] Restore default Vulkan driver fallback
+
+---
+ frameworks/native | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/frameworks/native b/frameworks/native
+index 2ee235d..1025aa3 160000
+--- a/frameworks/native
++++ b/frameworks/native
+@@ -1 +1 @@
+-Subproject commit 2ee235d5ec3a055713a9d48f40d43de001a4fcb9
++Subproject commit 1025aa3a15899e31274c82f00794e6bbbe243a64
+-- 
+2.34.1
+

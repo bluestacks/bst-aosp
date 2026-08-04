@@ -1,0 +1,26 @@
+From 2a548c0c67f4e7c4704f6883d081a637ed9f3317 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 31 Oct 2023 16:56:26 +0800
+Subject: [PATCH 054/224] [A13] [ROB-4550] Code change sync from Pie
+
+Fixing timeout issue of NetworkPolicyService
+
+In case of BandwidthControl disabled, System will wait 30s
+for initService to complete without initCompleteSignal countdown.
+---
+ .../com/android/server/net/NetworkPolicyManagerService.java     | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+index 2f818fa10b72..13722086e214 100644
+--- a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
++++ b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+@@ -927,6 +927,8 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
+             Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND);
+             if (!isBandwidthControlEnabled()) {
+                 Slog.w(TAG, "bandwidth controls disabled, unable to enforce policy");
++                // Call countDown to gracefully return from initService
++                initCompleteSignal.countDown();
+                 return;
+             }
+ 

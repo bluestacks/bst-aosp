@@ -1,0 +1,28 @@
+From f0aa8c92b54e2d911fa544176b9d8be9358c5922 Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Thu, 26 Oct 2023 13:51:02 +0800
+Subject: [PATCH 041/224] [A13] There was a case in which fb-schedule was
+ corrupt in /data/backup, java.lang.NullPointerException was seen in
+ BackupManagerService.java so to handle this case,raising an exception which
+ we catch in catch block and delete the corrupt file and return a proper queue
+ instead of null.
+
+---
+ .../com/android/server/backup/UserBackupManagerService.java   | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/backup/java/com/android/server/backup/UserBackupManagerService.java b/services/backup/java/com/android/server/backup/UserBackupManagerService.java
+index 14cfce7cc679..6293433cf0bd 100644
+--- a/services/backup/java/com/android/server/backup/UserBackupManagerService.java
++++ b/services/backup/java/com/android/server/backup/UserBackupManagerService.java
+@@ -990,7 +990,9 @@ public class UserBackupManagerService {
+                             TAG,
+                             addUserIdToLogMessage(
+                                     mUserId, "Unknown backup schedule version " + version));
+-                    return null;
++                    // throwing an exception, so that we catch this in catch block
++                    // and delete the corrupt file and return a proper queue instead of null
++                    throw new Exception("Unknown backup schedule version");
+                 }
+ 
+                 final int numPackages = in.readInt();

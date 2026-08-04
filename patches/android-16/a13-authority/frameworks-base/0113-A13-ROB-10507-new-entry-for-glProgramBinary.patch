@@ -1,0 +1,130 @@
+From 6778ad39dee61c9a992987bbeab18b6109f60f5c Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Wed, 28 Feb 2024 15:37:20 +0800
+Subject: [PATCH 113/224] [A13] ROB-10507: new entry for glProgramBinary
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 51 +++++++++++++++++++
+ 3 files changed, 67 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 1add443b18aa..0db117d71811 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1486,6 +1486,21 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public boolean isGLProgramBinaryApp(String pkgName)
++    {
++        try{
++            return mService.isGLProgramBinaryApp(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
+     /**
+      * Gets an BstFilterAppsManager instance associated with a Context.
+      * @hide
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index ad413b2746eb..b688f5768b3e 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -103,4 +103,5 @@ interface IBstFilterAppsService
+     boolean isAngleDisabled(String pkgName);
+     boolean isFbScreenLockApp(String pkgName);
+     boolean isOneStorePay(String pkgName);
++    boolean isGLProgramBinaryApp(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 3c62e414612a..8d8bcb126407 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -174,6 +174,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mGlNativeSyncDisabledAppList = new TreeSet<String>();
+     private Set<String>           mAngleDisabledAppList = new TreeSet<String>();
+ 	private Set<String>           mOneStorePayAppList = new TreeSet<String>();
++    private Set<String>           mGLProgramBinaryAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2342,6 +2343,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mOneStorePayAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("GLPB")) {
++                                    synchronized (mGLProgramBinaryAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mGLProgramBinaryAppList \n");
++                                        mGLProgramBinaryAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mGLProgramBinaryAppList \n");
++                                            mGLProgramBinaryAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mGLProgramBinaryAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -2968,6 +2985,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mOneStorePayAppList.clear();
+         }
+ 
++        synchronized (mGLProgramBinaryAppList)
++        {
++            mGLProgramBinaryAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -6489,6 +6511,35 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return false;
+     }
+ 
++    /**
++     * Check if this app need turn on glProgramBinary
++     * case ROB-10507: Adding a new entry name: GLPB
++     * @hide
++     */
++    public boolean isGLProgramBinaryApp(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in GLProgramBinary app list\n");
++        initLists();
++
++        synchronized (mGLProgramBinaryAppList)
++        {
++            if (mGLProgramBinaryAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mGLProgramBinaryAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in GLProgramBinary App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
+     private static class ActivityManagerServiceHolder {
+         static final ActivityManagerInternal mActivityManagerService = LocalServices.getService(ActivityManagerInternal.class);
+     };

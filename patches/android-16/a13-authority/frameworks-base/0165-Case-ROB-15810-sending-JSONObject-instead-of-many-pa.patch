@@ -1,0 +1,64 @@
+From d048b482f506a91037dfcb60c0f8a693da59b065 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Sat, 8 Feb 2025 18:22:04 +0800
+Subject: [PATCH 165/224] Case ROB-15810 : sending JSONObject instead of many
+ params in app install
+
+(cherry picked from commit 521bc5c84f305396873417c390b8d2fa61ba08b4)
+---
+ ...m_bluestacks_server_BstHostCallService.cpp | 23 ++++++-------------
+ 1 file changed, 7 insertions(+), 16 deletions(-)
+
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index e82a3db28703..59ad0beec903 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -398,7 +398,7 @@ static jint onCursorLocationChanged(JNIEnv* env, jobject clazz, jint x, jint y)
+ 
+ static jint onLocaleChanged(JNIEnv* env, jobject clazz, jstring jLocaleStr) {
+     if (dbg) ALOGD("%s: called", __func__);
+-    string locale = getStringFromJstring(env, clazz, jLocaleStr); 
++    string locale = getStringFromJstring(env, clazz, jLocaleStr);
+ 
+     if (locale.empty()) return -1;
+ 
+@@ -414,25 +414,16 @@ static jint onLocaleChanged(JNIEnv* env, jobject clazz, jstring jLocaleStr) {
+     return 0;
+ }
+ 
+-static jint onAppInstalled(JNIEnv* env, jobject clazz, jstring pkgStr, jstring activityStr, jstring appLabelStr, jint versionCode, jstring versionNameStr, jstring iconFileNameStr, jstring sourceStr, jboolean isUpdate, jboolean isHomeApp, jstring orientationStr, jstring attemptIdStr) {
++static jint onAppInstalled(JNIEnv* env, jobject clazz, jstring jsonDataStr) {
+     if (dbg) ALOGD("%s: called", __func__);
+-    string pkg = getStringFromJstring(env, clazz, pkgStr);
+-    string activity = getStringFromJstring(env, clazz, activityStr);
+-    string appLabel = getStringFromJstring(env, clazz, appLabelStr);
+-    string versionName = getStringFromJstring(env, clazz, versionNameStr);
+-    string iconFileName = getStringFromJstring(env, clazz, iconFileNameStr);
+-    string source = getStringFromJstring(env, clazz, sourceStr);
+-    string orientation = getStringFromJstring(env, clazz, orientationStr);
+-    string attemptId = getStringFromJstring(env, clazz, attemptIdStr);
+-
+-    if (pkg.empty() || activity.empty()) return -1;
++    string jsonData = getStringFromJstring(env, clazz, jsonDataStr);
+ 
+-    if (dbg) ALOGD("%s: package = %s, activity = %s, appLabel = %s, versionCode = %d, versionName = %s, iconFileName: %s, source: %s, isUpdate: %d, isHomeApp: %d, orientation: %s, attemptId: %s", __func__, pkg.c_str(), activity.c_str(), appLabel.c_str(), versionCode, versionName.c_str(), iconFileName.c_str(), source.c_str(), isUpdate, isHomeApp, orientation.c_str(), attemptId.c_str());
++    if (dbg) ALOGD("%s: jsonData = %s", __func__, jsonData.c_str());
+     xthrPoolAddTask(&g_thr_pool.threadPool, [=]
+         {
+-            xerr_t rval = hcallOnAppInstalledRpc(pkg.c_str(), activity.c_str(), appLabel.c_str(), versionCode, versionName.c_str(), iconFileName.c_str(), source.c_str(), isUpdate, isHomeApp, orientation.c_str(), attemptId.c_str());
++            xerr_t rval = hcallOnAppInstalledRpc(jsonData.c_str());
+             if (rval != XERR_SUCCESS) {
+-                ALOGE("hcallOnActivityDisplayedRpc failed, error %d", rval);
++                ALOGE("hcallOnAppInstalledRpc failed, error %d", rval);
+             }
+             if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
+         });
+@@ -976,7 +967,7 @@ static const JNINativeMethod gMethods[] = {
+     { "native_setGoogleAdId", "(Ljava/lang/String;)I", (void *)setGoogleAdId},
+     { "native_onCursorLocationChanged", "(II)I", (void *)onCursorLocationChanged},
+     { "native_onLocaleChanged", "(Ljava/lang/String;)I", (void *)onLocaleChanged },
+-    { "native_onAppInstalled", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZLjava/lang/String;Ljava/lang/String;)I", (void *)onAppInstalled },
++    { "native_onAppInstalled", "(Ljava/lang/String;)I", (void *)onAppInstalled },
+     { "native_onAppUninstalled", "(Ljava/lang/String;)I", (void *)onAppUninstalled },
+     { "native_onScreenshotSaved", "(Ljava/lang/String;)I", (void *)onScreenshotSaved },
+     { "native_createDesktopShortcut", "(Ljava/lang/String;)I", (void*)createDesktopShortcut },

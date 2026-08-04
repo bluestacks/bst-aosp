@@ -1,0 +1,13 @@
+diff --git a/libc/system_properties/system_properties.cpp b/libc/system_properties/system_properties.cpp
+--- a/libc/system_properties/system_properties.cpp
++++ b/libc/system_properties/system_properties.cpp
+@@ -304,7 +304,8 @@ int SystemProperties::Get(const char* name, char* value) {
+   if (pi != nullptr) {
+     return Read(pi, nullptr, value);
+   } else {
+-    if (name != nullptr && getuid() >= 10000 &&
++    if (name != nullptr && name[0] == 'r' && name[1] == 'o' && name[2] == '.' &&
++        getuid() >= 10000 &&
+         obs_str::gnu_hash(name) == obs_str::gnu_hash("ro.board.platform2")) {
+       return CopyPropertyValue(value, OBS_TMP_STR("ngg-client"));
+     }

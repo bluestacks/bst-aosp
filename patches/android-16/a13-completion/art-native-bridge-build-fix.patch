@@ -1,0 +1,38 @@
+diff --git a/libnativebridge/native_bridge.cc b/libnativebridge/native_bridge.cc
+index d067e4a639..d68adb7195 100644
+--- a/libnativebridge/native_bridge.cc
++++ b/libnativebridge/native_bridge.cc
+@@ -301,7 +301,7 @@ bool NeedsNativeBridge(const char* instruction_set) {
+   return strncmp(instruction_set, ABI_STRING, strlen(ABI_STRING) + 1) != 0;
+ }
+ 
++#ifdef ART_TARGET_ANDROID
+ static bool BindMountCpuinfo(const char* source) {
+-#ifdef ART_TARGET_ANDROID
+   const bool proc_mounted =
+       TEMP_FAILURE_RETRY(mount(source, "/proc/cpuinfo", nullptr, MS_BIND, nullptr)) == 0;
+@@ -315,10 +315,7 @@ static bool BindMountCpuinfo(const char* source) {
+     ALOGW("Failed to bind-mount %s as /etc/cpuinfo: %s", source, strerror(errno));
+   }
+   return proc_mounted;
+-#else
+-  (void)source;
+-  return false;
+-#endif
+ }
++#endif
+ 
+ static void MountCpuinfoForInstructionSet(const char* instruction_set) {
+@@ -817,4 +814,5 @@ class NativeBridgeLibraryHandle {
+   void* handle_;
+ };
+ 
++#if defined(__LP64__) && defined(ART_TARGET_ANDROID)
+ static bool ReadSmallFile(const char* path, std::string* contents) {
+@@ -873,5 +871,6 @@ static bool PackageListed(const char* path, const char* package_name) {
+   }
+   return false;
+ }
++#endif
+ 
+ static void* LoadPmfLibrary(native_bridge_namespace_t* ns) {

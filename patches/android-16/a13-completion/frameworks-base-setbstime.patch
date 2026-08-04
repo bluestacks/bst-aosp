@@ -1,0 +1,159 @@
+From 422258e748a7141b6dd0afeb3e81e334760f7932 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Mon, 3 Aug 2026 20:31:19 +0800
+Subject: [PATCH] [A16] Restore setBstIME support
+
+Port A13 cae884de5d0f through the Android 16 IME Binder, global-invoker, callback, and ZeroJankProxy layers. Execute enable-and-select work on the IME handler and preserve per-user settings semantics.
+---
+ .../IInputMethodManagerGlobalInvoker.java     | 13 +++++++++++
+ .../view/inputmethod/InputMethodManager.java  | 14 ++++++++++++
+ .../internal/view/IInputMethodManager.aidl    |  2 ++
+ .../inputmethod/IInputMethodManagerImpl.java  |  7 ++++++
+ .../InputMethodManagerService.java            | 22 +++++++++++++++++++
+ .../server/inputmethod/ZeroJankProxy.java     |  6 ++++-
+ 6 files changed, 63 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/view/inputmethod/IInputMethodManagerGlobalInvoker.java b/core/java/android/view/inputmethod/IInputMethodManagerGlobalInvoker.java
+index fe5afe437834..cb2aa9eb83ae 100644
+--- a/core/java/android/view/inputmethod/IInputMethodManagerGlobalInvoker.java
++++ b/core/java/android/view/inputmethod/IInputMethodManagerGlobalInvoker.java
+@@ -337,6 +337,19 @@ final class IInputMethodManagerGlobalInvoker {
+         }
+     }
+ 
++    @AnyThread
++    static void setBstIMEFromClient(@NonNull String imeId) {
++        final IInputMethodManager service = getService();
++        if (service == null) {
++            return;
++        }
++        try {
++            service.setBstIMEFromClient(imeId);
++        } catch (RemoteException e) {
++            throw e.rethrowFromSystemServer();
++        }
++    }
++
+     @AnyThread
+     @RequiresPermission(allOf = {
+             Manifest.permission.WRITE_SECURE_SETTINGS,
+diff --git a/core/java/android/view/inputmethod/InputMethodManager.java b/core/java/android/view/inputmethod/InputMethodManager.java
+index f6c61140201e..b555fccf8e4e 100644
+--- a/core/java/android/view/inputmethod/InputMethodManager.java
++++ b/core/java/android/view/inputmethod/InputMethodManager.java
+@@ -4585,6 +4585,20 @@ public final class InputMethodManager {
+         IInputMethodManagerGlobalInvoker.showInputMethodPickerFromSystem(mode, displayId);
+     }
+ 
++    /**
++     * Enables and selects the supplied input method.
++     *
++     * @hide
++     */
++    public void setBstIME(@NonNull String imeId) {
++        try {
++            Log.d(TAG, "setBstIME: " + imeId);
++            IInputMethodManagerGlobalInvoker.setBstIMEFromClient(imeId);
++        } catch (Exception e) {
++            Log.w(TAG, "Unable to set BlueStacks IME", e);
++        }
++    }
++
+     @GuardedBy("mH")
+     private void showInputMethodPickerLocked() {
+         IInputMethodManagerGlobalInvoker.showInputMethodPickerFromClient(mClient,
+diff --git a/core/java/com/android/internal/view/IInputMethodManager.aidl b/core/java/com/android/internal/view/IInputMethodManager.aidl
+index 29363a533a03..65028e2b6aa4 100644
+--- a/core/java/com/android/internal/view/IInputMethodManager.aidl
++++ b/core/java/com/android/internal/view/IInputMethodManager.aidl
+@@ -104,6 +104,8 @@ interface IInputMethodManager {
+     oneway void showInputMethodPickerFromClient(in IInputMethodClient client,
+             int auxiliarySubtypeMode);
+ 
++    oneway void setBstIMEFromClient(String imeId);
++
+     @EnforcePermission(allOf = {"WRITE_SECURE_SETTINGS", "INTERACT_ACROSS_USERS_FULL"})
+     @JavaPassthrough(annotation="@android.annotation.RequiresPermission(allOf = {android.Manifest."
+     + "permission.WRITE_SECURE_SETTINGS, android.Manifest.permission.INTERACT_ACROSS_USERS_FULL})")
+diff --git a/services/core/java/com/android/server/inputmethod/IInputMethodManagerImpl.java b/services/core/java/com/android/server/inputmethod/IInputMethodManagerImpl.java
+index baa1d1ca77c0..2a48a1f161ba 100644
+--- a/services/core/java/com/android/server/inputmethod/IInputMethodManagerImpl.java
++++ b/services/core/java/com/android/server/inputmethod/IInputMethodManagerImpl.java
+@@ -126,6 +126,8 @@ final class IInputMethodManagerImpl extends IInputMethodManager.Stub {
+ 
+         void showInputMethodPickerFromClient(IInputMethodClient client, int auxiliarySubtypeMode);
+ 
++        void setBstIMEFromClient(String imeId);
++
+         @PermissionVerified(allOf = {
+                 Manifest.permission.INTERACT_ACROSS_USERS_FULL,
+                 Manifest.permission.WRITE_SECURE_SETTINGS})
+@@ -300,6 +302,11 @@ final class IInputMethodManagerImpl extends IInputMethodManager.Stub {
+         mCallback.showInputMethodPickerFromClient(client, auxiliarySubtypeMode);
+     }
+ 
++    @Override
++    public void setBstIMEFromClient(String imeId) {
++        mCallback.setBstIMEFromClient(imeId);
++    }
++
+     @EnforcePermission(allOf = {
+             Manifest.permission.WRITE_SECURE_SETTINGS,
+             Manifest.permission.INTERACT_ACROSS_USERS_FULL})
+diff --git a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+index 69b27e57fe6a..1c80689c8064 100644
+--- a/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
++++ b/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java
+@@ -4097,6 +4097,28 @@ public final class InputMethodManagerService implements IInputMethodManagerImpl.
+         }
+     }
+ 
++    @Override
++    public void setBstIMEFromClient(String imeId) {
++        if (TextUtils.isEmpty(imeId)) {
++            Slog.w(TAG, "Ignoring empty BlueStacks IME id");
++            return;
++        }
++        final int callingUserId = UserHandle.getCallingUserId();
++        mHandler.post(() -> {
++            synchronized (ImfLock.class) {
++                final int userId = resolveImeUserIdLocked(callingUserId);
++                final InputMethodSettings settings = InputMethodSettingsRepository.get(userId);
++                if (!settings.getMethodMap().containsKey(imeId)) {
++                    Slog.w(TAG, "Ignoring unknown BlueStacks IME id: " + imeId);
++                    return;
++                }
++                setInputMethodEnabledLocked(imeId, true, userId);
++                updateInputMethodsFromSettingsLocked(true, userId);
++                setInputMethodLocked(imeId, NOT_A_SUBTYPE_INDEX, userId);
++            }
++        });
++    }
++
+     @IInputMethodManagerImpl.PermissionVerified(allOf = {
+             Manifest.permission.INTERACT_ACROSS_USERS_FULL,
+             Manifest.permission.WRITE_SECURE_SETTINGS})
+diff --git a/services/core/java/com/android/server/inputmethod/ZeroJankProxy.java b/services/core/java/com/android/server/inputmethod/ZeroJankProxy.java
+index 910c9a688969..c9057611017c 100644
+--- a/services/core/java/com/android/server/inputmethod/ZeroJankProxy.java
++++ b/services/core/java/com/android/server/inputmethod/ZeroJankProxy.java
+@@ -193,6 +193,11 @@ final class ZeroJankProxy implements IInputMethodManagerImpl.Callback {
+         mInner.showInputMethodPickerFromClient(client, auxiliarySubtypeMode);
+     }
+ 
++    @Override
++    public void setBstIMEFromClient(String imeId) {
++        mInner.setBstIMEFromClient(imeId);
++    }
++
+     @IInputMethodManagerImpl.PermissionVerified(allOf = {
+             Manifest.permission.INTERACT_ACROSS_USERS_FULL,
+             Manifest.permission.WRITE_SECURE_SETTINGS})
+@@ -370,4 +375,3 @@ final class ZeroJankProxy implements IInputMethodManagerImpl.Callback {
+         mInner.dump(fd, fout, args);
+     }
+ }
+-
+-- 
+2.34.1
+

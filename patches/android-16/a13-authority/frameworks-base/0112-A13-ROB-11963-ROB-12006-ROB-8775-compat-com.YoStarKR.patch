@@ -1,0 +1,164 @@
+From 7e22ff78568bb54ca8573791d59ba6b044289724 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Wed, 28 Feb 2024 14:42:04 +0800
+Subject: [PATCH 112/224] [A13] ROB-11963 ROB-12006 ROB-8775: [compat]
+ com.YoStarKR.One.Arknight - Cannot in-app purchase
+
+---
+ core/java/android/app/Instrumentation.java    | 17 ++++++
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 52 +++++++++++++++++++
+ 4 files changed, 85 insertions(+)
+
+diff --git a/core/java/android/app/Instrumentation.java b/core/java/android/app/Instrumentation.java
+index ecb54934d416..49f6503e3852 100644
+--- a/core/java/android/app/Instrumentation.java
++++ b/core/java/android/app/Instrumentation.java
+@@ -60,6 +60,7 @@ import android.widget.Toast;
+ 
+ import com.android.internal.content.ReferrerIntent;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
+ import com.bluestacks.os.BstHostCallManager;
+ import com.bluestacks.os.BstUtilsManager;
+ import java.io.File;
+@@ -2001,6 +2002,22 @@ public class Instrumentation {
+      * If this intent is forwarded to host, return true else false
+      */
+     private boolean fwdIntentToHost(Context context, Intent intent) {
++        if (Process.myUid() >= 10000) {
++            /**
++             * ROB-11963 ROB-12006 ROB-8775: [compat] com.YoStarKR.One.Arknight - Cannot in-app purchase
++             * The root cause that the game cannot support IAP on OneStore is that the mExtras parameter is being parsed without an in-app corresponding datebase file.
++             * Our current solution is to enter the payment activity without parsing the mExtras parameter.
++             * Since the payment activity appears as a Pop-up box, not as a web page on browser, and false is returned.
++             */
++            String pkgname = context.getBasePackageName();
++            BstFilterAppsManager bfam = BstFilterAppsManager.getInstance();
++            if (pkgname != null && bfam.isOneStorePay(pkgname)) {
++                if (intent.getAction() != null && intent.getAction().equals("com.onestore.component.iap.ACTION_PURCHASE_RESERVATION")) {
++                    return false;
++                }
++            }
++        }
++
+         // check if extra is present in intent
+         if (!intent.getBooleanExtra("openOnHostBrowser", false)) {
+             return false;
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 05090384677c..1add443b18aa 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1587,4 +1587,19 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isOneStorePay(String pkgName)
++    {
++        try {
++            return mService.isOneStorePay(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index dc1ce7123929..ad413b2746eb 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -102,4 +102,5 @@ interface IBstFilterAppsService
+     boolean isGlNativeSyncDisabled(String pkgName);
+     boolean isAngleDisabled(String pkgName);
+     boolean isFbScreenLockApp(String pkgName);
++    boolean isOneStorePay(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index d82e0484ae77..3c62e414612a 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -173,6 +173,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mDhdgList = new TreeSet<String>();
+     private Set<String>           mGlNativeSyncDisabledAppList = new TreeSet<String>();
+     private Set<String>           mAngleDisabledAppList = new TreeSet<String>();
++	private Set<String>           mOneStorePayAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2324,6 +2325,23 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mAngleDisabledAppList,pkgException);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("oneStorePay"))) {
++                                    synchronized (mOneStorePayAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding packageName :" + packageName + " to mOneStorePayAppList\n");
++
++                                        mOneStorePayAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mOneStorePayAppList\n");
++                                            mOneStorePayAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mOneStorePayAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -2945,6 +2963,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mAngleDisabledAppList.clear();
+         }
+ 
++        synchronized (mOneStorePayAppList)
++        {
++            mOneStorePayAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -6653,4 +6676,33 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isOneStorePay(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mOneStorePayAppList app list\n");
++        initLists();
++
++        synchronized (mOneStorePayAppList)
++        {
++            if (mOneStorePayAppList.contains(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mOneStorePayAppList App List\n");
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mOneStorePayAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mOneStorePayAppList App List\n");
++                    return true;
++                }
++            }
++        }
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mOneStorePayAppList App List\n");
++        return false;
++    }
+ }

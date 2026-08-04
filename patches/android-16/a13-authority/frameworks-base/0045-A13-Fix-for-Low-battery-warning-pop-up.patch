@@ -1,0 +1,32 @@
+From 9b5b73f59d3a8058e9c2437db3898d3a94611c31 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Sat, 28 Oct 2023 12:39:59 +0800
+Subject: [PATCH 045/224] [A13] Fix for Low battery warning pop-up
+
+---
+ .../core/java/com/android/server/BatteryService.java | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/services/core/java/com/android/server/BatteryService.java b/services/core/java/com/android/server/BatteryService.java
+index e282679d8695..2964781e266a 100644
+--- a/services/core/java/com/android/server/BatteryService.java
++++ b/services/core/java/com/android/server/BatteryService.java
+@@ -459,6 +459,18 @@ public final class BatteryService extends SystemService {
+     private void processValuesLocked(boolean force) {
+         boolean logOutlier = false;
+         long dischargeDuration = 0;
++        // fixing battery level to 100%,voltage to 5000mv(5.000V),temp to 25 degree.
++        // values changed after checking in android emulator
++        // Some chinese apps(com.hcg.cok.cn1 - clash of king)check battery level,
++        // voltage and quits if level is less than some threshold value.
++        mHealthInfo.chargerAcOnline = false;
++        mHealthInfo.batteryStatus = BatteryManager.BATTERY_STATUS_NOT_CHARGING ;
++        mHealthInfo.batteryHealth = BatteryManager.BATTERY_HEALTH_GOOD;
++        mHealthInfo.batteryLevel = 100;
++        mHealthInfo.batteryPresent = true;
++        mHealthInfo.batteryVoltageMillivolts = 5000;
++        mHealthInfo.batteryTemperatureTenthsCelsius = 250;
++        mHealthInfo.batteryTechnology = "Li-ion";
+ 
+         mBatteryLevelCritical =
+             mHealthInfo.batteryStatus != BatteryManager.BATTERY_STATUS_UNKNOWN

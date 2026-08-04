@@ -1,0 +1,36 @@
+From 77cc3eba5b1f39ea5aa6f91646e9c5fc4cac6d1d Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 20:32:37 +0800
+Subject: [PATCH] [A16] Allow the legacy FFmpeg media makefiles
+
+---
+ ui/build/androidmk_denylist.go | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/ui/build/androidmk_denylist.go b/ui/build/androidmk_denylist.go
+index 18e6bad0f..a1c31012a 100644
+--- a/ui/build/androidmk_denylist.go
++++ b/ui/build/androidmk_denylist.go
+@@ -67,6 +67,19 @@ var androidmk_allowlist []string = []string{
+ 	"packages/apps/BstCommandProcessor/Android.mk",
+ 	"packages/apps/BstCommandProcessor/jni/Android.mk",
+ 	"packages/apps/BstSettings/Android.mk",
++	"hardware/intel/common/vaapi/Android.mk",
++	"hardware/intel/common/vaapi/src/Android.mk",
++	"external/ffmpeg/Android.mk",
++	"external/ffmpeg/libavcodec/Android.mk",
++	"external/ffmpeg/libavformat/Android.mk",
++	"external/ffmpeg/libavutil/Android.mk",
++	"external/ffmpeg/libswresample/Android.mk",
++	"external/ffmpeg/libswscale/Android.mk",
++	"external/stagefright-plugins/Android.mk",
++	"external/stagefright-plugins/data/Android.mk",
++	"external/stagefright-plugins/extractor/Android.mk",
++	"external/stagefright-plugins/omx/Android.mk",
++	"external/stagefright-plugins/utils/Android.mk",
+ 	"frameworks/base/services/java/com/bluestacks/server/native/Android.mk",
+ 	"external/bluestacks/sensors/Android.mk",
+ 	"external/bluestacks/bstshutdown/Android.mk",
+-- 
+2.34.1
+

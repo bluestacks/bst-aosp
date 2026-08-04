@@ -1,0 +1,42 @@
+From fa9bb993e37ddb56d083a7ecae7a73387adf04a2 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 17:39:20 +0800
+Subject: [PATCH] [A16] Use release ART on android_x86_64
+
+---
+ android_x86_64.mk | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/android_x86_64.mk b/android_x86_64.mk
+index 14250b3..9481f93 100755
+--- a/android_x86_64.mk
++++ b/android_x86_64.mk
+@@ -14,6 +14,10 @@
+ # limitations under the License.
+ #
+ 
++# Use the release ART APEX for the production-compatible BlueStacks guest,
++# including eng builds used by the Windows image pipeline.
++PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD := false
++
+ # includes the base of Android-x86 platform
+ $(call inherit-product,device/generic/common/x86_64.mk)
+ 
+@@ -36,14 +40,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
+ # 16 enforces this globally; keeping it here documents the board-level source.
+ PRODUCT_ENFORCE_VINTF_MANIFEST := true
+ 
+-# Keep the product exclusions at the device layer so release configuration in
+-# build/make remains untouched.
+-PRODUCT_PACKAGES -= \
+-    BasicDreams \
+-    BluetoothMidiService \
+-    ManagedProvisioning \
+-    MmsService
+-
+ # Overrides
+ PRODUCT_NAME := android_x86_64
+ PRODUCT_BRAND := Android-x86
+-- 
+2.34.1
+

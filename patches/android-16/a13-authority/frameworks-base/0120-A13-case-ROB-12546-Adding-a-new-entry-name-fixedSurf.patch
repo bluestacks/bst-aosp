@@ -1,0 +1,167 @@
+From e148a5bf34ad6fa2cf8c4cebc17757e54cc6093e Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 8 Mar 2024 15:31:12 +0800
+Subject: [PATCH 120/224] [A13]case ROB-12546: Adding a new entry name
+ fixedSurfaceRotation to fix surface rotation issue
+
+---
+ core/java/android/view/Display.java           |  4 ++
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 +++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 61 +++++++++++++++++++
+ 4 files changed, 81 insertions(+)
+
+diff --git a/core/java/android/view/Display.java b/core/java/android/view/Display.java
+index 8051201844b3..fc589f2e20ca 100644
+--- a/core/java/android/view/Display.java
++++ b/core/java/android/view/Display.java
+@@ -106,6 +106,7 @@ public final class Display {
+ 
+     private String mLastPkg;
+     private boolean mModifyDisplayRotation = false;
++    private int mFixedSurfaceRotation = -1;
+ 
+     // Temporary display metrics structure used for compatibility mode.
+     private final DisplayMetrics mTempMetrics = new DisplayMetrics();
+@@ -944,6 +945,7 @@ public final class Display {
+                         if (DEBUG) Log.w(TAG, "trying to query bstfilter apps service for pkg: " + callingApp);
+                         IBstFilterAppsService bstfilter = IBstFilterAppsService.Stub.asInterface(ServiceManager.getService(Context.BST_FILTER_APPS));
+                         mModifyDisplayRotation = bstfilter.isModifyDisplayRotationApp(callingApp);
++                        mFixedSurfaceRotation = bstfilter.getFixedSurfaceRotationRequired(callingApp);
+                         mLastPkg = callingApp;
+                     }
+                 }
+@@ -957,6 +959,8 @@ public final class Display {
+                 return ((mDisplayInfo.rotation == 0) ? 1 : 0);
+             }
+ 
++            if (mFixedSurfaceRotation >= 0) return mFixedSurfaceRotation;
++
+             return getLocalRotation();
+         }
+     }
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 1d0d722b5ce3..201cd369913b 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1680,4 +1680,19 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public int getFixedSurfaceRotationRequired(String pkgName)
++    {
++        try{
++            return mService.getFixedSurfaceRotationRequired(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return -1;
++        }
++    }
++
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 2b2303015fab..766dd13b5fac 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -108,4 +108,5 @@ interface IBstFilterAppsService
+     String getGLShaderWorkaround(String pkgName);
+     boolean isDrmEnabled(String pkgName);
+     boolean isTexTargetCheckDisabled(String pkgName);
++    int getFixedSurfaceRotationRequired(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 842e546d6df6..192358e0e94a 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -179,6 +179,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Map<String, String>   mGLShaderWorkaroundList = new HashMap<String, String>();
+     private Set<String>           mDrmEnabledAppList = new TreeSet<String>();
+     private Set<String>           mTexTargetCheckDisabledAppList = new TreeSet<String>();
++    private Map<String, Integer>  mFixedSurfaceRotationAppList = new HashMap<String, Integer>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2423,6 +2424,20 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mTexTargetCheckDisabledAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("fixedSurfaceRotation")) {
++                                    synchronized (mFixedSurfaceRotationAppList) {
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mFixedSurfaceRotationAppList \n");
++                                        int fixedSurfaceRotation = Integer.parseInt(value);
++                                        mFixedSurfaceRotationAppList.put(packageName, fixedSurfaceRotation);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mFixedSurfaceRotationAppList \n");
++                                                mFixedSurfaceRotationAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mFixedSurfaceRotationAppList,pkgException,fixedSurfaceRotation);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3075,6 +3090,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mTexTargetCheckDisabledAppList.clear();
+         }
+ 
++        synchronized (mFixedSurfaceRotationAppList)
++        {
++            mFixedSurfaceRotationAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -6953,4 +6973,45 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return false;
+     }
+ 
++    /**
++     * this is a hack for fixed surface rotation issue
++     * case ROB-12546: Adding a new entry name: fixedSurfaceRotation
++     * @hide
++     */
++    public int getFixedSurfaceRotationRequired(String pkgName)
++    {
++        int fixedSurfaceRotation = -1;
++        if (pkgName == null || pkgName.trim().length() <= 0)
++        {
++            Slog.e(TAG, "invalid arguments to FixedSurfaceRotation, pkgName = " + pkgName);
++            return fixedSurfaceRotation;
++        }
++
++        if(DEBUG) Slog.d(TAG, " Trying to look for " + pkgName + " in FixedSurfaceRotation AppList\n");
++        initLists();
++
++        synchronized (mFixedSurfaceRotationAppList)
++        {
++            if (mFixedSurfaceRotationAppList.containsKey(pkgName))
++            {
++                if(DEBUG) Slog.d(TAG, pkgName + " requires fixed surface rotation to  work properly");
++                fixedSurfaceRotation = mFixedSurfaceRotationAppList.get(pkgName);
++                if(DEBUG) Slog.d(TAG,"The fixed surface rotation for package: " + pkgName + " is : " + fixedSurfaceRotation);
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mFixedSurfaceRotationAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if(DEBUG) Slog.d(TAG, pkgName + " requires fixed surface rotation to work properly");
++                    fixedSurfaceRotation = mFixedSurfaceRotationAppList.get(wildcardMatchedPackageName);
++                    if(DEBUG) Slog.d(TAG,"The fixed surface rotation for package: " + pkgName + " matched with : " + wildcardMatchedPackageName + " is : " + fixedSurfaceRotation);
++
++                }
++            }
++        }
++
++        return fixedSurfaceRotation;
++    }
++
+ }

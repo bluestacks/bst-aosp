@@ -1,0 +1,125 @@
+From 4092ba85ffafa2faa241b37725d4d93086438928 Mon Sep 17 00:00:00 2001
+From: jammy <jammy@bluestacks.com>
+Date: Thu, 6 Feb 2025 10:40:27 +0800
+Subject: [PATCH 164/224] Case ROB-15194: bc3 & bc7 support on GL mode
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 50 +++++++++++++++++++
+ 3 files changed, 66 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 6b78ef5a6831..c38bb3591194 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1890,4 +1890,19 @@ public class BstFilterAppsManager {
+             return false;
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isBptcApp(String pkgName)
++    {
++        try {
++            return mService.isBptcApp(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 0c42266f0414..271fb864dd5d 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -122,4 +122,5 @@ interface IBstFilterAppsService
+     boolean isRotateDisabled(String pkgName);
+     boolean isUnreal5App(String pkgName);
+     boolean isUE5PBDisabled(String pkgName);
++    boolean isBptcApp(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 41c5041e172b..32811b70cfa2 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -195,6 +195,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mRotateDisabledAppList = new TreeSet<String>();
+     private Map<String, Boolean>  mUnreal5AppMap = new HashMap<String, Boolean>();
+     private Set<String>           mUE5PBDisabledAppList = new TreeSet<String>();
++    private Set<String>   	      mBptcAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2661,6 +2662,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mUE5PBDisabledAppList,pkgException);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("bptc"))) {
++                                    synchronized (mBptcAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to BptcAppList \n");
++                                        mBptcAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from BptcAppList \n");
++                                            mBptcAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mBptcAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3378,6 +3395,12 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mUE5PBDisabledAppList.clear();
+         }
+ 
++        /* clear old mBptcAppList */
++        synchronized (mBptcAppList)
++        {
++            mBptcAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7724,4 +7747,31 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+         return false;
+     }
++
++    /**
++     * @hide
++     */
++    public boolean isBptcApp(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in Bptc app list\n");
++        initLists();
++
++        synchronized (mBptcAppList)
++        {
++            if (mBptcAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mBptcAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in Bptc App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

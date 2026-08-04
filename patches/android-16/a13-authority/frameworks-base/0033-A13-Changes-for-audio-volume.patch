@@ -1,0 +1,85 @@
+From aa46797b4f245390eafa0067f6036f9dc9b119ac Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Wed, 11 Oct 2023 15:57:37 +0800
+Subject: [PATCH 033/224] [A13] Changes for audio volume
+
+1. Keeping default volume max for music stream.
+2. Sending hcall onVolumeChanged while volume is updated.
+---
+ media/java/android/media/AudioSystem.java     |  6 ++---
+ .../android/server/audio/AudioService.java    | 26 ++++++++++++++++---
+ 2 files changed, 26 insertions(+), 6 deletions(-)
+
+diff --git a/media/java/android/media/AudioSystem.java b/media/java/android/media/AudioSystem.java
+index 7ccbe51bbd49..bc08a7ac0d30 100644
+--- a/media/java/android/media/AudioSystem.java
++++ b/media/java/android/media/AudioSystem.java
+@@ -2294,10 +2294,10 @@ public class AudioSystem
+     public static int[] DEFAULT_STREAM_VOLUME = new int[] {
+         4,  // STREAM_VOICE_CALL
+         7,  // STREAM_SYSTEM
+-        5,  // STREAM_RING           // configured in AudioService by config_audio_notif_vol_default
+-        5, // STREAM_MUSIC
++        7,  // STREAM_RING           // configured in AudioService by config_audio_notif_vol_default
++        15, // STREAM_MUSIC
+         6,  // STREAM_ALARM
+-        5,  // STREAM_NOTIFICATION   // configured in AudioService by config_audio_ring_vol_default
++        7,  // STREAM_NOTIFICATION   // configured in AudioService by config_audio_ring_vol_default
+         7,  // STREAM_BLUETOOTH_SCO
+         7,  // STREAM_SYSTEM_ENFORCED
+         5, // STREAM_DTMF
+diff --git a/services/core/java/com/android/server/audio/AudioService.java b/services/core/java/com/android/server/audio/AudioService.java
+index 96395c89af91..4d4fab21f964 100644
+--- a/services/core/java/com/android/server/audio/AudioService.java
++++ b/services/core/java/com/android/server/audio/AudioService.java
+@@ -212,6 +212,8 @@ import java.util.concurrent.atomic.AtomicInteger;
+ import java.util.function.BooleanSupplier;
+ import java.util.stream.Collectors;
+ 
++import com.bluestacks.os.BstHostCallManager;
++
+ /**
+  * The implementation of the audio service for volume, audio focus, device management...
+  * <p>
+@@ -1086,7 +1088,7 @@ public class AudioService extends IAudioService.Stub
+                         MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] / 4;
+             } else {
+                 AudioSystem.DEFAULT_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] =
+-                        MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] / 3;
++                        MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC];
+             }
+         }
+ 
+@@ -4410,12 +4412,30 @@ public class AudioService extends IAudioService.Stub
+     {
+         streamType = mStreamVolumeAlias[streamType];
+ 
+-        if (streamType == AudioSystem.STREAM_MUSIC && isFullVolumeDevice(device)) {
+-            flags &= ~AudioManager.FLAG_SHOW_UI;
++        if (streamType == AudioSystem.STREAM_MUSIC) {
++            flags = updateFlagsForTvPlatform(flags);
++            if (isFullVolumeDevice(device)) {
++                flags &= ~AudioManager.FLAG_SHOW_UI;
++            }
++            //sending volume data to host if there is any change in STREAM_MUSIC
++            bstSendVolumeToHost(index);
+         }
+         mVolumeController.postVolumeChanged(streamType, flags);
+     }
+ 
++    private void bstSendVolumeToHost(int index) {
++        int volume = index / 10;
++        boolean mute = mStreamStates[AudioSystem.STREAM_MUSIC].mIsMuted;
++
++        Log.d(TAG, "bstSendVolumeToHost: currentVolume = " + volume + " mute = " + mute);
++
++        BstHostCallManager bstHostCallManagerSvc = (BstHostCallManager) mContext.getSystemService(Context.BST_HOST_CALL);
++        int rval = bstHostCallManagerSvc.onVolumeChanged(mute, volume);
++        if (rval != 0) {
++            Log.w(TAG, "ERROR in sending volume data request, rval = " + rval);
++        }
++    }
++
+     // Don't show volume UI when:
+     //  - Hdmi-CEC system audio mode is on and we are a TV panel
+     private int updateFlagsForTvPlatform(int flags) {

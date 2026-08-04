@@ -1,0 +1,83 @@
+From 04790f5719f844d04d982382ea62bd27156dcc09 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 26 Mar 2024 14:54:11 +0800
+Subject: [PATCH] [A13] ROB-8705: hook the method
+ com.google.ccc.abuse.droidguard.DroidGuard.ssNative() to fix device
+ incompatible error.
+
+---
+ runtime/jni/jni_internal.cc | 44 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 44 insertions(+)
+
+diff --git a/runtime/jni/jni_internal.cc b/runtime/jni/jni_internal.cc
+index e3153fdace..b881419e84 100644
+--- a/runtime/jni/jni_internal.cc
++++ b/runtime/jni/jni_internal.cc
+@@ -2553,6 +2553,34 @@ class JNI {
+                                                                      buf);
+   }
+ 
++  static jbyteArray hooked_ssNative(JNIEnv* env, jobject jo ATTRIBUTE_UNUSED, jlong handle ATTRIBUTE_UNUSED, jobjectArray arr ATTRIBUTE_UNUSED) {
++    return env->NewByteArray(0);
++  }
++
++  /**
++  * check if droidguard hook is disabled.
++  */
++  static jboolean bst_is_dhdg(JNIEnv* env, jint uid) {
++    jclass bst_cls_manager = env->FindClass("com/bluestacks/os/BstFilterAppsManager");
++    if (bst_cls_manager == nullptr) {
++      return false;
++    }
++    jmethodID bst_method_get_instance = env->GetStaticMethodID(bst_cls_manager, "getInstance", "()Lcom/bluestacks/os/BstFilterAppsManager;");
++    if (bst_method_get_instance == nullptr) {
++      return false;
++    }
++    jobject bst_instance = env->CallStaticObjectMethod(bst_cls_manager, bst_method_get_instance);
++    if (bst_instance == nullptr) {
++      return false;
++    }
++
++    jmethodID bst_method_is_dhdg = env->GetMethodID(bst_cls_manager, "isDhdg", "(I)Z");
++    if (bst_method_is_dhdg == nullptr) {
++      return false;
++    }
++    return env->CallBooleanMethod(bst_instance, bst_method_is_dhdg, uid);
++  }
++
+   static jint RegisterNatives(JNIEnv* env,
+                               jclass java_class,
+                               const JNINativeMethod* methods,
+@@ -2573,6 +2601,7 @@ class JNI {
+       return JNI_OK;
+     }
+     CHECK_NON_NULL_ARGUMENT_FN_NAME("RegisterNatives", methods, JNI_ERR);
++    const uid_t uid = getuid();
+     for (jint i = 0; i < method_count; ++i) {
+       const char* name = methods[i].name;
+       const char* sig = methods[i].signature;
+@@ -2680,6 +2709,21 @@ class JNI {
+         // TODO: make this a hard register error in the future.
+       }
+ 
++      if (uid >= 10000 && !strncmp(name, "ssNative", strlen("ssNative"))) {
++        // ROB-8705: hook com.google.ccc.abuse.droidguard.DroidGuard.ssNative() and return an empty byte array
++        // to temporary fix device incompatible error .
++        constexpr const char pat[] = "byte[] com.google.ccc.abuse.droidguard.DroidGuard.ssNative(long, java.lang.String[])";
++        constexpr auto patlen = sizeof(pat) - 1;
++
++        const auto& str = m->PrettyMethod();
++        const bool is_equal = str.size() == patlen && memcmp(str.data(), pat, patlen) == 0;
++        if (is_equal) {
++          static bool enable_hook = !bst_is_dhdg(env, getuid());
++          if (enable_hook) {
++            fnPtr = (const void*)hooked_ssNative;
++          }
++        }
++      }
+       const void* final_function_ptr = class_linker->RegisterNative(soa.Self(), m, fnPtr);
+       UNUSED(final_function_ptr);
+     }
+-- 
+2.34.1
+

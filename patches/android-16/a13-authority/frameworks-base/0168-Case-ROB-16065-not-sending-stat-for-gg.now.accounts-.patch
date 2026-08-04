@@ -1,0 +1,26 @@
+From bd98e1ff2a869a944b461c98dc597a22e5b6ec67 Mon Sep 17 00:00:00 2001
+From: Build Master <build@bluestacks.com>
+Date: Mon, 3 Mar 2025 23:48:10 +0530
+Subject: [PATCH 168/224] Case ROB-16065 : not sending stat for gg.now.accounts
+ and gg.now.billing.service2
+
+---
+ .../java/com/android/server/pm/PackageManagerService.java    | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 437d58b6975d..701dda957707 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -2834,7 +2834,10 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+         if ("android.hardware.nowgg".equalsIgnoreCase(name)) {
+             int pid = Binder.getCallingPid();
+             String pkgName = BstUtils.getAppNameFromPid(pid);
+-            if (BST_DEBUG) Log.d(TAG, "Package "+pkgName+" queried for feature "+name);
++            if (pkgName.equalsIgnoreCase("gg.now.accounts") || pkgName.equalsIgnoreCase("gg.now.billing.service2")) {
++                return true;
++            }
++            if (BST_DEBUG) Log.d(TAG, "Package " + pkgName + " queried for feature " + name);
+             reportNowggPltfDetectionToCloud(pkgName);
+             return true ;
+         }

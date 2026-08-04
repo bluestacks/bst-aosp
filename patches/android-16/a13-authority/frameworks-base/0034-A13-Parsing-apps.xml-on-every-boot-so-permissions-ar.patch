@@ -1,0 +1,41 @@
+From 9c9d6318ef469d6dce6c1e7923e885038af04b7c Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Mon, 16 Oct 2023 10:57:03 +0800
+Subject: [PATCH 034/224] [A13] Parsing apps.xml on every boot so permissions
+ are granted as per the latest apps.xml
+
+---
+ .../com/android/server/pm/PackageManagerService.java     | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 91aed93ec864..c81a30faa1d3 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -360,6 +360,7 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+ 
+     // Flags to disable permission revoke for bluestacks apps.
+     private static final boolean BST_DEBUG = SystemProperties.getInt("bst.debug.pm", 0) == 0 ? false : true;
++    private static final String bstDefaultAppPermissionsFile = "/data/downloads/.dp/apps.xml";
+ 
+     static final int SCAN_NO_DEX = 1 << 0;
+     static final int SCAN_UPDATE_SIGNATURE = 1 << 1;
+@@ -4186,10 +4187,18 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+                         grantPermissionsUserIds, userId);
+             }
+         }
++        boolean bstDefaultPermissionsGranted = false;
+         // If we upgraded grant all default permissions before kicking off.
+         for (int userId : grantPermissionsUserIds) {
+             mLegacyPermissionManager.grantDefaultPermissions(userId);
++            bstDefaultPermissionsGranted = true;
+         }
++
++        // Reading apps.xml on every boot (except the first boot).
++        if (!bstDefaultPermissionsGranted) {
++            mLegacyPermissionManager.assignPermissionsToBstApps(bstDefaultAppPermissionsFile);
++        }
++
+         if (grantPermissionsUserIds == EMPTY_INT_ARRAY) {
+             // If we did not grant default permissions, we preload from this the
+             // default permission exceptions lazily to ensure we don't hit the

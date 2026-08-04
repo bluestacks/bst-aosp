@@ -1,0 +1,154 @@
+From ea79024fc44f46bc856735a919bdfbc67b35c5ce Mon Sep 17 00:00:00 2001
+From: Emin Huang <emin@bluestacks.com>
+Date: Tue, 22 Apr 2025 18:26:20 +0800
+Subject: [PATCH 184/224] ROB-16456: add etherNetType entry for freely
+ switching between ethernet or wireless network type
+
+---
+ core/java/Android.bp                          |  1 +
+ core/java/android/content/Context.java        |  0
+ .../bluestacks/os/BstFilterAppsManager.java   | 15 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 53 +++++++++++++++++++
+ 5 files changed, 70 insertions(+)
+ mode change 100644 => 100755 core/java/Android.bp
+ mode change 100644 => 100755 core/java/android/content/Context.java
+
+diff --git a/core/java/Android.bp b/core/java/Android.bp
+old mode 100644
+new mode 100755
+index 77589a213e17..581b62ba705d
+--- a/core/java/Android.bp
++++ b/core/java/Android.bp
+@@ -191,6 +191,7 @@ filegroup {
+         "com/android/internal/util/WakeupMessage.java",
+         // TODO: delete as soon as NetworkStatsFactory stops using
+         "com/android/internal/util/ProcFileReader.java",
++        "com/bluestacks/os/IBstFilterAppsService.aidl",
+     ],
+ }
+ 
+diff --git a/core/java/android/content/Context.java b/core/java/android/content/Context.java
+old mode 100644
+new mode 100755
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index c38bb3591194..2af5655b07da 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1664,6 +1664,21 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public boolean isEtherNetType(String pkgName)
++    {
++        try {
++            return mService.isEtherNetType(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
+     /**
+      * Check if tex target check is disabled for this app or not.
+      * @hide
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 271fb864dd5d..ceefa2deaba0 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -123,4 +123,5 @@ interface IBstFilterAppsService
+     boolean isUnreal5App(String pkgName);
+     boolean isUE5PBDisabled(String pkgName);
+     boolean isBptcApp(String pkgName);
++    boolean isEtherNetType(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 32811b70cfa2..89bdb4a73b62 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -178,6 +178,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mGLUnmapBufferPerfAppList = new TreeSet<String>();
+     private Map<String, String>   mGLShaderWorkaroundList = new HashMap<String, String>();
+     private Set<String>           mDrmEnabledAppList = new TreeSet<String>();
++    private Set<String>           mEtherNetTypeAppList = new TreeSet<String>();
+     private Set<String>           mTexTargetCheckDisabledAppList = new TreeSet<String>();
+     private Map<String, Integer>  mFixedSurfaceRotationAppList = new HashMap<String, Integer>();
+     private List<String>          mIapSettingList = new ArrayList<String>();
+@@ -2465,6 +2466,24 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mDrmEnabledAppList,pkgException);
+                                     }
+                                 }
++                                else if ((key.equalsIgnoreCase("etherNetType"))) {
++                                    synchronized (mEtherNetTypeAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding packageName :" + packageName + " to mEtherNetTypeAppList\n");
++
++                                        mEtherNetTypeAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG) {
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mEtherNetTypeAppList\n");
++                                            }
++                                            mEtherNetTypeAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mEtherNetTypeAppList,pkgException);
++                                    }
++                                }
+                                 else if (key.equalsIgnoreCase("TTCDisabled")) {
+                                     synchronized (mTexTargetCheckDisabledAppList) {
+                                         if (value.equalsIgnoreCase("false")) {
+@@ -3325,6 +3344,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mDrmEnabledAppList.clear();
+         }
+ 
++        synchronized (mEtherNetTypeAppList)
++        {
++            mEtherNetTypeAppList.clear();
++        }
++
+         synchronized (mTexTargetCheckDisabledAppList)
+         {
+             mTexTargetCheckDisabledAppList.clear();
+@@ -7260,6 +7284,35 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return false;
+     }
+ 
++    /**
++     * @hide
++     */
++    public boolean isEtherNetType(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mEtherNetTypeAppList app list\n");
++        initLists();
++
++        synchronized (mEtherNetTypeAppList)
++        {
++            if (mEtherNetTypeAppList.contains(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mEtherNetTypeAppList App List\n");
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mEtherNetTypeAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mEtherNetTypeAppList App List\n");
++                    return true;
++                }
++            }
++        }
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mEtherNetTypeAppList App List\n");
++        return false;
++    }
++
+     public boolean isTexTargetCheckDisabled(String pkgName)
+     {
+         if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in TexTargetCheckDisabled app list\n");

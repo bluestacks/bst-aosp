@@ -1,0 +1,24 @@
+From b19e17995222fb5d314be414a3e44a22102f2398 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 17:07:19 +0800
+Subject: [PATCH] [A16] Install xmllint for guest data recovery
+
+---
+ packages.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/packages.mk b/packages.mk
+index cd48eed..0fbd7e6 100755
+--- a/packages.mk
++++ b/packages.mk
+@@ -47,6 +47,7 @@ PRODUCT_PACKAGES := \
+     sshd \
+     su \
+     v86d \
++    xmllint \
+     pagefusion
+ 
+ PRODUCT_PACKAGES += \
+-- 
+2.34.1
+

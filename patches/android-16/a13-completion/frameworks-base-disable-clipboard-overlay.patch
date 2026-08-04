@@ -1,0 +1,44 @@
+From 8a5cc437df8b1276ddb75c14e6af0867df5d1202 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 10:20:06 +0800
+Subject: [PATCH] [A16] Disable the SystemUI clipboard overlay
+
+Port A13 authority commit e48800cdf040 to the Android 16 multi-user clipboard listener. Do not register the overlay listener and retain the unconditional suppression contract so app-player continues to use its host clipboard path without Android copy UI.
+---
+ .../clipboardoverlay/ClipboardListener.java         | 13 ++-----------
+ 1 file changed, 2 insertions(+), 11 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java b/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java
+index e05bfd96107f..58232d95aea0 100644
+--- a/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java
++++ b/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java
+@@ -118,10 +118,7 @@ public class ClipboardListener implements
+ 
+     @Override
+     public void start() {
+-        if (clipboardOverlayMultiuser()) {
+-            mUserTracker.addCallback(mCallback, mMainExecutor);
+-        }
+-        mClipboardManagerForUser.addPrimaryClipChangedListener(this);
++        // The clipboard overlay is not used by app-player.
+     }
+ 
+     @Override
+@@ -177,13 +174,7 @@ public class ClipboardListener implements
+     @VisibleForTesting
+     static boolean shouldSuppressOverlay(ClipData clipData, String clipSource,
+             boolean isEmulator) {
+-        if (!(isEmulator || SHELL_PACKAGE.equals(clipSource))) {
+-            return false;
+-        }
+-        if (clipData == null || clipData.getDescription().getExtras() == null) {
+-            return false;
+-        }
+-        return clipData.getDescription().getExtras().getBoolean(EXTRA_SUPPRESS_OVERLAY, false);
++        return true;
+     }
+ 
+     boolean shouldShowToast(ClipData clipData) {
+-- 
+2.34.1
+

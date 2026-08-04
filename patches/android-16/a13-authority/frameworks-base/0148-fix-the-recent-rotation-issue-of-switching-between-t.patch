@@ -1,0 +1,58 @@
+From 036a6922fa4a1413d357e88c2798947b911bf0fe Mon Sep 17 00:00:00 2001
+From: allen-bst <70563899+allen-bst@users.noreply.github.com>
+Date: Mon, 22 Jul 2024 15:44:29 +0800
+Subject: [PATCH 148/224] fix the recent rotation issue of switching between
+ two vertical screen apps (#158)
+
+---
+ .../server/wm/RecentsAnimationController.java | 23 ++++++++++++++++---
+ 1 file changed, 20 insertions(+), 3 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/RecentsAnimationController.java b/services/core/java/com/android/server/wm/RecentsAnimationController.java
+index f3590a01c4bc..81171505ba6d 100644
+--- a/services/core/java/com/android/server/wm/RecentsAnimationController.java
++++ b/services/core/java/com/android/server/wm/RecentsAnimationController.java
+@@ -36,6 +36,7 @@ import static com.android.server.wm.WindowManagerInternal.AppTransitionListener;
+ import android.annotation.IntDef;
+ import android.annotation.NonNull;
+ import android.app.WindowConfiguration;
++import android.content.Context;
+ import android.graphics.GraphicBuffer;
+ import android.graphics.Point;
+ import android.graphics.Rect;
+@@ -78,6 +79,8 @@ import java.io.PrintWriter;
+ import java.util.ArrayList;
+ import java.util.stream.Collectors;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++
+ /**
+  * Controls a single instance of the remote driven recents animation. In particular, this allows
+  * the calling SystemUI to animate the visible task windows as a part of the transition. The remote
+@@ -937,9 +940,23 @@ public class RecentsAnimationController implements DeathRecipient {
+                         mPendingAnimations.size(), reorderMode);
+ 
+         // If move to original task, we need to restore the desired rotation
+-        if (REORDER_MOVE_TO_ORIGINAL_POSITION == reorderMode
+-                && 2 == mPendingAnimations.size() && mBackupRotate >= 0) {
+-            mService.sendOrientationToHostAsync(mBackupRotate);
++        if (REORDER_MOVE_TO_ORIGINAL_POSITION == reorderMode && mBackupRotate >= 0) {
++            if (2 == mPendingAnimations.size()) {
++                mService.sendOrientationToHostAsync(mBackupRotate);
++            } else if (mNavBarAttachedApp != null && mNavBarAttachedApp.getConfiguration() != null) {
++                int orientation = mNavBarAttachedApp.getConfiguration().orientation == 1 ? 1 : 0;
++                final BstFilterAppsManager bstFilterApps =
++                        (BstFilterAppsManager) mService.mContext.getSystemService(Context.BST_FILTER_APPS);
++                if (bstFilterApps != null && mNavBarAttachedApp.info != null &&
++                        mNavBarAttachedApp.info.packageName != null) {
++                    if (bstFilterApps.isSmallScreenApp(mNavBarAttachedApp.info.packageName)) {
++                        orientation = 1;
++                    } else if (bstFilterApps.isPortraitDisabled(mNavBarAttachedApp.info.packageName)) {
++                        orientation = 0;
++                    }
++                }
++                mService.sendOrientationToHostAsync(orientation);
++            }
+             mBackupRotate = -1;
+         }
+ 

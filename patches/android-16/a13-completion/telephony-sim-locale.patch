@@ -1,0 +1,18 @@
+diff --git a/src/com/android/phone/PhoneInterfaceManager.java b/src/com/android/phone/PhoneInterfaceManager.java
+index 942b988..a45277f 100644
+--- a/src/com/android/phone/PhoneInterfaceManager.java
++++ b/src/com/android/phone/PhoneInterfaceManager.java
+@@ -8139,4 +8139,13 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
+         enforceTelephonyFeatureWithException(getCurrentPackageName(),
+                 PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION, "getSimLocaleForSubscriber");
+ 
++        String locale = SystemProperties.get("persist.sys.locale", "");
++        if (!locale.isEmpty()) {
++            return locale;
++        }
++        locale = SystemProperties.get("bst.locale", "");
++        if (!locale.isEmpty()) {
++            return locale;
++        }
++
+         final Phone phone = getPhone(subId);

@@ -1,0 +1,231 @@
+From c6b0ba64ca690e1aa2889060ffb76e5b4a83c55b Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Tue, 14 Nov 2023 10:14:24 +0800
+Subject: [PATCH 064/224] [A13] Added changes related to
+ bstOnDisplayedPackageChange
+
+---
+ .../android/server/wm/ActivityStarter.java    |   2 +
+ .../server/wm/ActivityTaskSupervisor.java     | 148 ++++++++++++++++++
+ .../core/java/com/android/server/wm/Task.java |   2 +
+ 3 files changed, 152 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/ActivityStarter.java b/services/core/java/com/android/server/wm/ActivityStarter.java
+index aad89b441732..ca3f75ba2e1c 100644
+--- a/services/core/java/com/android/server/wm/ActivityStarter.java
++++ b/services/core/java/com/android/server/wm/ActivityStarter.java
+@@ -1181,6 +1181,8 @@ class ActivityStarter {
+                 callerApp = wpc;
+             }
+         }
++
++        mSupervisor.bstOnDisplayedPackageChange(aInfo.applicationInfo.packageName, aInfo.name, callingPackage);
+         final ActivityRecord r = new ActivityRecord.Builder(mService)
+                 .setCaller(callerApp)
+                 .setLaunchedFromPid(callingPid)
+diff --git a/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java b/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
+index 0e4efd002342..5582b7ffd5e8 100644
+--- a/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
++++ b/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
+@@ -84,6 +84,7 @@ import android.Manifest;
+ import android.annotation.Nullable;
+ import android.app.Activity;
+ import android.app.ActivityManager;
++import android.app.ActivityManagerNative;
+ import android.app.ActivityManagerInternal;
+ import android.app.ActivityOptions;
+ import android.app.AppOpsManager;
+@@ -123,11 +124,13 @@ import android.os.Message;
+ import android.os.PowerManager;
+ import android.os.RemoteException;
+ import android.os.SystemClock;
++import android.os.SystemProperties;
+ import android.os.Trace;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+ import android.os.WorkSource;
+ import android.provider.MediaStore;
++import android.provider.Settings;
+ import android.util.ArrayMap;
+ import android.util.MergedConfiguration;
+ import android.util.Slog;
+@@ -150,7 +153,9 @@ import com.android.server.am.UserState;
+ import com.android.server.pm.PackageManagerServiceUtils;
+ import com.android.server.utils.Slogf;
+ import com.android.server.wm.ActivityMetricsLogger.LaunchingState;
++import com.bluestacks.os.BstHostCallManager;
+ import com.bluestacks.os.BstFilterAppsManager;
++import com.bluestacks.os.BstUtilsManager;
+ 
+ import java.io.FileDescriptor;
+ import java.io.PrintWriter;
+@@ -366,6 +371,19 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+ 
+     private ActivityMetricsLogger mActivityMetricsLogger;
+ 
++     /**
++     * Disable the hard keyboard for this specific activity irrespective of user's original setting.
++     */
++    static boolean bstSpecialAppKeyboardHandlingEnabled = false;
++
++    private String previousPackageName = null;
++
++    // Variable to hold whether headset is plugged in or not currently, default set to unplugged state
++    private boolean currHeadsetState = false;
++
++    // variable for storing the main callingPackage name
++    private String mPreviousCallingPackage = "" ;
++
+     /** Check if placing task or activity on specified display is allowed. */
+     boolean canPlaceEntityOnDisplay(int displayId, int callingPid, int callingUid,
+             ActivityInfo activityInfo) {
+@@ -2675,6 +2693,136 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+         }
+     }
+ 
++    /**
++     * This method handles IME related changes for special apps defined in
++     * softkeyboard_activity file or when switching from a special app
++     * To check if softkeyboard should be shown we use isSoftKeyboardRequired
++     * method of BstUtilsManager.
++     * */
++    private void handleIMEForSpecialApps(String packageName, String activityName, String callingPackage) {
++        // Firstly check if this is one of those activities for which we need to disable the
++        // hard keyboard irrespective of original settings. If that is not the case, check
++        // whether this is the first activity change after setting the soft keyboard, if so
++        // restore the original hard keyboard setting.
++        BstFilterAppsManager bstfilter = (BstFilterAppsManager) mService.mContext.getSystemService(Context.BST_FILTER_APPS);
++        BstUtilsManager bstUtils = (BstUtilsManager) mService.mContext.getSystemService(Context.BST_UTILS);
++
++        boolean usePhysicalKeyboard = false;
++        boolean isSoftKeyboardRequired = false;
++        String softKeyboardModifier = "soft";
++
++        // handling for isSoftKeyboardModifier, as if callingPackageName  is valid and require softkeyboard then we force current PackageName to use softkeyboard, this fixes BS4-2693: com.netmarble.bnsmkr--as this app requires soft entry and it opens chrome for faceboook login , but after returning from chrome its facebookActivity recreate due to change in configuration of keyboard
++        // these changes fix this issue as we maintain same keyboard configuration(soft) for this app and for the app that opens through it too
++        if (callingPackage != null && callingPackage.trim().length() > 0 && !callingPackage.equalsIgnoreCase(mPreviousCallingPackage) && !packageName.equalsIgnoreCase(callingPackage)) {
++            mPreviousCallingPackage = callingPackage;
++        }
++
++        isSoftKeyboardRequired = bstfilter.isSoftKeyboardRequired(packageName, activityName) || bstfilter.isSoftKeyboardRequired(mPreviousCallingPackage, activityName);
++        if (isSoftKeyboardRequired)
++            softKeyboardModifier = bstfilter.getSoftKeyboardModifier(packageName);
++
++        boolean isShowImeWithHardKeyboardEnabled = false;
++        isShowImeWithHardKeyboardEnabled = bstUtils.isBstSoftKeyboardEnabled();
++
++        if (isSoftKeyboardRequired) {
++            String id = Settings.Secure.getString(mService.mContext.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD);
++
++            if (id != null && id.equals("com.android.inputmethod.latin/.LatinIME") &&
++                    (softKeyboardModifier.equals("hard") || softKeyboardModifier.equals("pass"))) {
++                Slog.d(TAG, "TopActivityInfo, pkgName: " + packageName + " activityName: " + activityName + " modifier is hard/pass in softkeyboard file and ime is LatinIME so not enabling soft keyboard");
++                // In gamemanager this can happen as we can switch from a package for which softkeyboard was enabled
++                // to a package for which we had "hard/pass" entry in softkeyboard_activity.db file
++                // if soft keyboard was already enabled, disabling it
++                if (isShowImeWithHardKeyboardEnabled) {
++                    Slog.d(TAG, "TopActivityInfo, pkgName: " + packageName + " activityName: " + activityName + " softKeyboard was enabled so disabling it");
++                    usePhysicalKeyboard = true;
++                    bstUtils.setBstSoftKeyboardStatus(!usePhysicalKeyboard);
++                    bstSpecialAppKeyboardHandlingEnabled = false;
++                }
++            } else if (!isShowImeWithHardKeyboardEnabled) {
++                // This is one of the special app. Disable hard keyboard if its currently enabled
++                usePhysicalKeyboard = false;
++                bstUtils.setBstSoftKeyboardStatus(!usePhysicalKeyboard);
++                bstSpecialAppKeyboardHandlingEnabled = true;
++                Slog.d(TAG, "TopActivityInfo, pkgName: " + packageName + " activityName: " + activityName + " disabling hard keyboard - in special apps list");
++            }
++        } else if (bstSpecialAppKeyboardHandlingEnabled && isShowImeWithHardKeyboardEnabled) {
++            // This is the first activity after setting the soft keyboard forcefully for specific filtered apps,
++            // so restoring the original hard keyboard settings value.
++            usePhysicalKeyboard = true;
++            bstUtils.setBstSoftKeyboardStatus(!usePhysicalKeyboard);
++            bstSpecialAppKeyboardHandlingEnabled = false;
++            Slog.d(TAG, "TopActivityInfo, pkgName: " + packageName + " activityName: " + activityName + " enabling hard keyboard as moved away from special apps list");
++        }
++    }
++
++    /**
++     * @hide
++     */
++    public void bstOnDisplayedPackageChange(String packageName, String activityName, String callingPackage) {
++        //1. Send current top Activity info to WindowsAgent and set soft/hard keyboard status according to app setting.
++        handleIMEForSpecialApps(packageName, activityName, callingPackage);
++
++        Slog.d(TAG, "TopActivityInfo, pkgName: " + packageName
++                    + " activityName: " + activityName
++                    + " callingPackage: " + callingPackage
++                    + " bstSpecialAppKeyboardHandling Enabled = " + bstSpecialAppKeyboardHandlingEnabled);
++
++        String trimmedPackageName = packageName;
++        String trimmedActivityName = activityName;
++        String trimmedCallingPackageName = callingPackage;
++
++        if (packageName.length() > SystemProperties.PROP_VALUE_MAX)
++            trimmedPackageName = packageName.substring(0,SystemProperties.PROP_VALUE_MAX);
++        if (activityName.length() > SystemProperties.PROP_VALUE_MAX)
++            trimmedActivityName = activityName.substring(0,SystemProperties.PROP_VALUE_MAX);
++        if (callingPackage != null && callingPackage.length() > SystemProperties.PROP_VALUE_MAX)
++            trimmedCallingPackageName = callingPackage.substring(0,SystemProperties.PROP_VALUE_MAX);
++
++        //2. Set topPackageName and topActivityName
++        SystemProperties.set("bst.config.top_package_name", trimmedPackageName);
++        SystemProperties.set("bst.config.top_activity_name", trimmedActivityName);
++
++        //3. Set callingPackage
++        String previousCallingPackageName = SystemProperties.get("bst.config.calling_package", null);
++        if (trimmedCallingPackageName != null && !trimmedCallingPackageName.isEmpty() && !trimmedCallingPackageName.equals(previousCallingPackageName)) {
++            SystemProperties.set("bst.config.calling_package", trimmedCallingPackageName);
++        }
++
++        //4. Checks if package requires headset property to be modified.
++        bstSendHeadsetIntent(packageName);
++        return;
++    }
++
++    // Checks if Package requires headset property to be modified.
++    private void bstSendHeadsetIntent(String pkgName) {
++        if (pkgName == null || pkgName.isEmpty())
++            return;
++
++        BstFilterAppsManager bstfilter = (BstFilterAppsManager) mService.mContext.getSystemService(Context.BST_FILTER_APPS);
++        boolean pluggedin = bstfilter.isHeadsetRequired(pkgName);
++        int state = 0;  //0 for unplugged, 1 for plugged.
++        int microphone = 0; //1 if headset has a microphone, 0 otherwise
++        if (pluggedin != currHeadsetState) {
++            //  Pack up the values and broadcast them to everyone
++            Intent intent = new Intent(Intent.ACTION_HEADSET_PLUG);
++            intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
++
++            if (pluggedin) {
++                state = 1;
++                microphone = 1;
++            }
++
++            intent.putExtra("state", state);
++            intent.putExtra("name", "BlueStacks"); //Headset type, human readable string
++            intent.putExtra("microphone", microphone);
++
++            Slog.d(TAG, "Sending broadcastStickyIntent ACTION_HEADSET_PLUG: state: " + state + " mic: " + microphone + " pkgName : " + pkgName);
++            ActivityManagerNative.broadcastStickyIntent(intent, null, UserHandle.myUserId());
++            currHeadsetState = pluggedin;
++        }
++    }
++
+     /**
+      * Fills the info that needs to iterate all activities of task, such as the number of
+      * non-finishing activities and collecting launch cookies.
+diff --git a/services/core/java/com/android/server/wm/Task.java b/services/core/java/com/android/server/wm/Task.java
+index a259baae1277..6b76fad23541 100644
+--- a/services/core/java/com/android/server/wm/Task.java
++++ b/services/core/java/com/android/server/wm/Task.java
+@@ -5012,6 +5012,8 @@ class Task extends TaskFragment {
+             return resumeNextFocusableActivityWhenRootTaskIsEmpty(prev, options);
+         }
+ 
++        mTaskSupervisor.bstOnDisplayedPackageChange(topActivity.packageName, topActivity.intent.getComponent().flattenToShortString(), "");
++
+         final boolean[] resumed = new boolean[1];
+         final TaskFragment topFragment = topActivity.getTaskFragment();
+         resumed[0] = topFragment.resumeTopActivity(prev, options, deferPause);

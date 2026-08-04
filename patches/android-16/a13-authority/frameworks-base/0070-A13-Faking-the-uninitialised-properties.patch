@@ -1,0 +1,32 @@
+From 328b36affd6dec49064a29b71e46f064c01695af Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Thu, 16 Nov 2023 16:43:25 +0800
+Subject: [PATCH 070/224] [A13] Faking the uninitialised properties
+
+---
+ core/jni/android_os_SystemProperties.cpp | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/core/jni/android_os_SystemProperties.cpp b/core/jni/android_os_SystemProperties.cpp
+index 7f3b32e1abed..c02321220c18 100644
+--- a/core/jni/android_os_SystemProperties.cpp
++++ b/core/jni/android_os_SystemProperties.cpp
+@@ -69,6 +69,18 @@ void ReadProperty(JNIEnv* env, jstring keyJ, Functor&& functor)
+ #if defined(__BIONIC__)
+     const prop_info* prop = __system_property_find(key.c_str());
+     if (!prop) {
++        // There is no system property with the given @key. But since we have to
++        // fake some property values to third party, so anyway we will read the value.
++        // Our patch in bionic will handle this null-pi condition.
++        char name[key.size() + 1];
++        char value[PROP_VALUE_MAX] = {0};
++        memcpy(name, key.c_str(), key.size());
++        name[key.size()] = '\0';
++
++        int len = __system_property_read(prop, name, value);
++        if(len > 0){
++            std::forward<Functor>(functor)(static_cast<const char*>(value));
++        }
+         return;
+     }
+     ReadProperty(prop, std::forward<Functor>(functor));

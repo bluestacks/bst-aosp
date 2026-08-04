@@ -1,0 +1,29 @@
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index 1232293..4bba30f 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -1980,12 +1980,6 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+         MountInitOverride(fail_fn, env);
+     }
+ 
+-    if (uid >= AID_APP_START && nice_name_ptr != nullptr
+-            && strncmp(nice_name_ptr, "jp.co.mixi.monsterstrike",
+-                       strlen("jp.co.mixi.monsterstrike")) == 0) {
+-        SetBuildVersionSdkInt(env, 30);
+-    }
+-
+     // If this zygote isn't root, it won't be able to create a process group,
+     // since the directory is owned by root.
+     if (getuid() == 0) {
+@@ -2125,6 +2119,11 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+     runtime_flags &= ~RuntimeFlags::NATIVE_HEAP_ZERO_INIT_ENABLED;
+ 
+     const char* nice_name_ptr = nice_name.has_value() ? nice_name.value().c_str() : nullptr;
++    if (uid >= AID_APP_START && nice_name_ptr != nullptr
++            && strncmp(nice_name_ptr, "jp.co.mixi.monsterstrike",
++                       strlen("jp.co.mixi.monsterstrike")) == 0) {
++        SetBuildVersionSdkInt(env, 30);
++    }
+     android_mallopt_gwp_asan_options_t gwp_asan_options;
+     const char* kGwpAsanAppRecoverableSysprop =
+             "persist.device_config.memory_safety_native.gwp_asan_recoverable_apps";

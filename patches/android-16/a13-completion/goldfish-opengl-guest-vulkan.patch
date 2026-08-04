@@ -1,0 +1,69 @@
+From 840a3eadac139e3640a604bbd2ff1986c00b74d3 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 00:36:38 +0800
+Subject: [PATCH] [A16] Restore BlueStacks guest Vulkan
+
+---
+ Android.mk                    |  3 ++-
+ shared/RTVboxGuest/Android.mk | 11 ++++++++++-
+ system/vulkan_enc/Android.mk  |  3 +--
+ 3 files changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 494461c1..fcba28b0 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -107,7 +107,8 @@ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 16 && echo PreJellyBean),PreJelly
+ endif
+ 
+ # ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 27 && echo isApi28OrHigher),isApi28OrHigher)
+-GFXSTREAM := false
++GFXSTREAM := true
++EMUGL_COMMON_CFLAGS += -DGFXSTREAM
+ # endif
+ 
+ # Include common definitions used by all the modules included later
+diff --git a/shared/RTVboxGuest/Android.mk b/shared/RTVboxGuest/Android.mk
+index 59fc83c9..46d3d00c 100644
+--- a/shared/RTVboxGuest/Android.mk
++++ b/shared/RTVboxGuest/Android.mk
+@@ -18,6 +18,15 @@ LOCAL_SHARED_LIBRARIES := libutils libcutils libbinder liblog
+ LOCAL_C_INCLUDES += frameworks/native/include system/core/include
+ include $(BUILD_STATIC_LIBRARY)
+ 
++include $(CLEAR_VARS)
++LOCAL_MODULE := libRTVboxGuestClient_vendor
++LOCAL_MODULE_TAGS := optional
++LOCAL_VENDOR_MODULE := true
++LOCAL_SRC_FILES := IRTVboxGuestService.cpp
++LOCAL_SHARED_LIBRARIES := libutils libcutils libbinder liblog
++LOCAL_C_INCLUDES += frameworks/native/include system/core/include
++include $(BUILD_STATIC_LIBRARY)
++
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := RTVboxGuestTest
+ LOCAL_MODULE_TAGS := optional
+@@ -28,4 +37,4 @@ LOCAL_C_INCLUDES += frameworks/native/include system/core/include
+ include $(BUILD_EXECUTABLE)
+ 
+ 
+-$(call emugl-end-module)
+\ No newline at end of file
++$(call emugl-end-module)
+diff --git a/system/vulkan_enc/Android.mk b/system/vulkan_enc/Android.mk
+index e4bcb10a..61ab45a0 100644
+--- a/system/vulkan_enc/Android.mk
++++ b/system/vulkan_enc/Android.mk
+@@ -116,8 +116,7 @@ $(call emugl-export,SHARED_LIBRARIES,libgui)
+ else
+ $(call emugl-export,SHARED_LIBRARIES,libsync libnativewindow)
+ $(call emugl-export,SHARED_LIBRARIES,libsync )
+-LOCAL_STATIC_LIBRARIES += libarect libRTVboxGuestClient
++LOCAL_STATIC_LIBRARIES += libarect libRTVboxGuestClient_vendor
+ endif
+ 
+ $(call emugl-end-module)
+-
+-- 
+2.34.1
+

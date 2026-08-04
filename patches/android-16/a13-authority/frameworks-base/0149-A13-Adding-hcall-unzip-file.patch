@@ -1,0 +1,106 @@
+From 2be4182090986541fd24959ec476fd2a1842f220 Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Sun, 29 Sep 2024 17:32:10 +0800
+Subject: [PATCH 149/224] [A13] Adding hcall unzip file
+
+---
+ .../com/bluestacks/os/BstHostCallManager.java | 11 ++++++++++
+ .../bluestacks/os/IBstHostCallService.aidl    |  1 +
+ .../bluestacks/server/BstHostCallService.java | 10 ++++++++++
+ ...m_bluestacks_server_BstHostCallService.cpp | 20 +++++++++++++++++++
+ 4 files changed, 42 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index 87c555bef32c..df9ba9d7ceb7 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -538,4 +538,15 @@ public class BstHostCallManager {
+             throw new RuntimeException(e);
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public int unzipFile(String fileName, String attemptId, String source, String pkgName) {
++        try {
++            return mBstHostCallService.unzipFile(fileName, attemptId, source, pkgName);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index b26fc0ccd49c..224234efba3f 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -48,4 +48,5 @@ interface IBstHostCallService {
+     int onAdsInfoClick();
+     int removeBootLoadingScreen(boolean onAdShown);
+     int interstitialAdCompleted(String source, String action);
++    int unzipFile(String fileName, String attemptId, String source, String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index 446c7f74161e..9c24305d3a3d 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -409,6 +409,15 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_interstitialAdCompleted(source, action);
+     }
+ 
++
++    /**
++     * @hide
++     */
++    public int unzipFile(String fileName, String attemptId, String source, String pkgName) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService unzipFile, fileName: " + fileName + " attemptId: " + attemptId + " source:" + source + " pkgName: " + pkgName);
++        return native_unzipFile(fileName, attemptId, source, pkgName);
++    }
++
+     private static native final int native_init();
+     private static native int native_initImeStatus(String imeName);
+     private static native int native_initInputDebuggingStatus(boolean showTouches, boolean showPointerLocation);
+@@ -456,4 +465,5 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_onAdsInfoClick();
+     private static native int native_removeBootLoadingScreen(boolean isAdShown);
+     private static native int native_interstitialAdCompleted(String source, String action);
++    private static native int native_unzipFile(String fileName, String attemptId, String source, String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index a56d0feebfc9..45d805e23bb5 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -849,6 +849,25 @@ static jint interstitialAdCompleted(JNIEnv* env, jobject clazz, jstring sourceSt
+     return 0;
+ }
+ 
++
++static jint unzipFile(JNIEnv* env, jobject clazz, jstring fileNameStr, jstring attemptIdStr, jstring sourceStr, jstring pkgNameStr) {
++    if (dbg) ALOGD("%s", __func__);
++
++    string fileName = getStringFromJstring(env, clazz, fileNameStr);
++    string attemptId = getStringFromJstring(env, clazz, attemptIdStr);
++    string source = getStringFromJstring(env, clazz, sourceStr);
++    string pkgName = getStringFromJstring(env, clazz, pkgNameStr);
++
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallUnzipFileRpc(fileName.c_str(), attemptId.c_str(), source.c_str(), pkgName.c_str());
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
+ /*
+  * JNI registration.
+  */
+@@ -902,6 +921,7 @@ static const JNINativeMethod gMethods[] = {
+     { "native_onAdsInfoClick", "()I", (void*)onAdsInfoClick },
+     { "native_removeBootLoadingScreen", "(Z)I", (void*)removeBootLoadingScreen },
+     { "native_interstitialAdCompleted", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)interstitialAdCompleted }
++    { "native_unzipFile", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)unzipFile }
+ };
+ 
+ // This function only registers the native methods

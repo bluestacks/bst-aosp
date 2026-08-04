@@ -1,0 +1,202 @@
+From 4def8ddcff33e01d47fd29ed4f2aae57be6f0ed3 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Sat, 28 Oct 2023 14:44:22 +0800
+Subject: [PATCH 046/224] [A13] Changes to Hide the Bluestacks packages.
+
+---
+ .../com/android/server/pm/ComputerEngine.java | 88 +++++++++++++++++++
+ 1 file changed, 88 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
+index 46b7460dff1b..9d2436b9ac73 100644
+--- a/services/core/java/com/android/server/pm/ComputerEngine.java
++++ b/services/core/java/com/android/server/pm/ComputerEngine.java
+@@ -107,6 +107,7 @@ import android.provider.ContactsContract;
+ import android.text.TextUtils;
+ import android.util.ArrayMap;
+ import android.util.ArraySet;
++import android.util.BstUtils;
+ import android.util.Log;
+ import android.util.LogPrinter;
+ import android.util.LongSparseLongArray;
+@@ -169,6 +170,7 @@ import java.util.Objects;
+ import java.util.Set;
+ import java.util.UUID;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
+ /**
+  * This class contains the implementation of the Computer functions.  It
+  * is entirely self-contained - it has no implicit access to
+@@ -409,6 +411,7 @@ public class ComputerEngine implements Computer {
+     private final CompilerStats mCompilerStats;
+     private final BackgroundDexOptService mBackgroundDexOptService;
+     private final PackageManagerInternal.ExternalSourcesPolicy mExternalSourcesPolicy;
++    BstFilterAppsManager mBstfilter = null;
+ 
+     // PackageManagerService attributes that are primitives are referenced through the
+     // pms object directly.  Primitives are the only attributes so referenced.
+@@ -880,6 +883,23 @@ public class ComputerEngine implements Computer {
+ 
+     protected ActivityInfo getActivityInfoInternalBody(ComponentName component,
+             @PackageManager.ResolveInfoFlagsBits long flags, int filterCallingUid, int userId) {
++        int pid = Binder.getCallingPid();
++        String callingPackage = "";
++        boolean isHideFromPkg = false;
++        if (filterCallingUid >= 10000) {
++            callingPackage = BstUtils.getAppNameFromPid(pid);
++            if (mBstfilter == null)
++                mBstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++            isHideFromPkg = mBstfilter.isHideBstActivityInfo(callingPackage);
++        }
++        boolean isAppPrivileged = isHideFromPkg ? BstUtils.bstIsCallingAppPrivileged(filterCallingUid, callingPackage) : false;
++        // We return if some app is trying to get bluestacks package specific activityInfo.
++        if (isHideFromPkg
++                && BstUtils.hideBlueStacksPkg(component.getPackageName(), isAppPrivileged)) {
++            if (DEBUG_PACKAGE_INFO) Log.v(TAG, "Calling app: " + callingPackage + " queried for activityinfo: " + component + " returning null");
++            return null;
++        }
++
+         ParsedActivity a = mComponentResolver.getActivity(component);
+ 
+         if (DEBUG_PACKAGE_INFO) Log.v(TAG, "getActivityInfo " + component + ": " + a);
+@@ -975,6 +995,23 @@ public class ComputerEngine implements Computer {
+     protected ApplicationInfo getApplicationInfoInternalBody(String packageName,
+             @PackageManager.ApplicationInfoFlagsBits long flags,
+             int filterCallingUid, int userId) {
++        // Check if this enquiry is for one of the bluestacks app or not. If yes,
++        // decide whether to show ApplicationInfo to caller or not.
++        if (packageName != null && packageName.startsWith("com.bluestacks")  && Binder.getCallingUid() != Process.SYSTEM_UID) {
++            int pid = Binder.getCallingPid();
++            int uid = Binder.getCallingUid();
++            String callingApp = "";
++            if (uid >= 10000)
++                callingApp = BstUtils.getAppNameFromPid(pid);
++            boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(uid, callingApp);
++            if (DEBUG_PACKAGE_INFO) Log.v (TAG, "getApplicationInfo, enquiry for bluestacks app " + packageName + " from app: " + callingApp + " pid: " + pid);
++            //Show ApplicationInfo for bluestacks apps to calling process only if its either one of the bluestacks or android default app
++            if (BstUtils.hideBlueStacksPkg(packageName, isAppPrivileged))
++            {
++                if (DEBUG_PACKAGE_INFO) Log.v (TAG, "getApplicationInfo(" + packageName + "), called from app = " + callingApp + " (pid: " + pid + ")");
++                return null;
++            }
++        }
+         // writer
+         // Normalize package name to handle renamed packages and static libs
+         packageName = resolveInternalPackageName(packageName,
+@@ -1774,6 +1811,20 @@ public class ComputerEngine implements Computer {
+ 
+     public PackageStateInternal getPackageStateInternal(String packageName,
+             int callingUid) {
++        int pid = Binder.getCallingPid();
++        int uid = Binder.getCallingUid();
++        String callingApp = "";
++        if (uid >= 10000)
++            callingApp = BstUtils.getAppNameFromPid(pid);
++        boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(uid, callingApp);
++        // Check if this enquiry is for one of the bluestacks app or not. If yes,
++        // decide whether to show packageInfo to caller or not.
++        if (DEBUG_PACKAGE_INFO) Log.v (TAG, "getPackageInfo(" + packageName + "), called from app = " + callingApp + " (pid: " + pid + ")");
++
++        //Show packageInfo for bluestacks apps to calling process only if its either one of the bluestacks or android default app
++        if (BstUtils.hideBlueStacksPkg(packageName, isAppPrivileged))
++            return null;
++
+         packageName = resolveInternalPackageNameInternalLocked(
+                 packageName, PackageManager.VERSION_CODE_HIGHEST, callingUid);
+         return mSettings.getPackage(packageName);
+@@ -1799,6 +1850,12 @@ public class ComputerEngine implements Computer {
+         final boolean listUninstalled = (flags & MATCH_KNOWN_PACKAGES) != 0;
+         final boolean listApex = (flags & MATCH_APEX) != 0;
+         final boolean listFactory = (flags & MATCH_FACTORY_ONLY) != 0;
++        int pid = Binder.getCallingPid();
++        String callingApp = "";
++        if (callingUid >= 10000)
++            callingApp = BstUtils.getAppNameFromPid(pid);
++        boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(callingUid, callingApp);
++        if (DEBUG_PACKAGE_INFO) Log.v (TAG, "getInstalledPackages called from app: " + callingApp + " pid: " + pid);
+ 
+         ArrayList<PackageInfo> list;
+         if (listUninstalled) {
+@@ -1820,6 +1877,13 @@ public class ComputerEngine implements Computer {
+                 if (shouldFilterApplication(ps, callingUid, userId)) {
+                     continue;
+                 }
++                if (ps.getPkg() != null) {
++                    if (BstUtils.hideBlueStacksPkg(ps.getPkg().getPackageName(), isAppPrivileged))
++                        continue;
++                } else {
++                    if (BstUtils.hideBlueStacksPkg(ps.getPackageName(), isAppPrivileged))
++                        continue;
++                }
+                 final PackageInfo pi = generatePackageInfo(ps, flags, userId);
+                 if (pi != null) {
+                     list.add(pi);
+@@ -1828,6 +1892,8 @@ public class ComputerEngine implements Computer {
+         } else {
+             list = new ArrayList<>(mPackages.size());
+             for (AndroidPackage p : mPackages.values()) {
++                if (BstUtils.hideBlueStacksPkg(p.getPackageName(), isAppPrivileged))
++                    continue;
+                 PackageStateInternal ps = getPackageStateInternal(p.getPackageName());
+                 if (listFactory) {
+                     if (!p.isSystem()) {
+@@ -3673,9 +3739,19 @@ public class ComputerEngine implements Computer {
+         final int callingUid = Binder.getCallingUid();
+         enforceCrossUserPermission(callingUid, userId, false /*requireFullPermission*/,
+                 false /*checkShell*/, "is package available");
++        //put check here for returning false if some other application asks for com.bluestacks.* is available
++        int pid = Binder.getCallingPid();
++        int uid = Binder.getCallingUid();
++        String callingApp = "";
++        if (uid >= 10000)
++            callingApp = BstUtils.getAppNameFromPid(pid);
++        boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(uid, callingApp);
++        if (DEBUG_PACKAGE_INFO) Log.v (TAG, "isPackageAvailable called from app: " + callingApp + " pid: " + pid + " for packageName " + packageName);
+ 
+         final PackageStateInternal ps = getPackageStateInternal(packageName);
+         if (ps != null && ps.getPkg() != null) {
++            if (BstUtils.hideBlueStacksPkg(ps.getPackageName(), isAppPrivileged))
++                return false;
+             if (shouldFilterApplication(ps, callingUid, userId)) {
+                 return false;
+             }
+@@ -4693,6 +4769,12 @@ public class ComputerEngine implements Computer {
+                 false /* checkShell */,
+                 "get installed application info");
+ 
++        int pid = Binder.getCallingPid();
++        String callingApp = "";
++        if (callingUid >= 10000)
++            callingApp = BstUtils.getAppNameFromPid(pid);
++        boolean isAppPrivileged = BstUtils.bstIsCallingAppPrivileged(callingUid, callingApp);
++
+         ArrayList<ApplicationInfo> list;
+         final ArrayMap<String, ? extends PackageStateInternal> packageStates =
+                 getPackageStates();
+@@ -4705,6 +4787,8 @@ public class ComputerEngine implements Computer {
+                     effectiveFlags |= PackageManager.MATCH_ANY_USER;
+                 }
+                 if (ps.getPkg() != null) {
++                    if (BstUtils.hideBlueStacksPkg(ps.getPkg().getPackageName(), isAppPrivileged))
++                        continue;
+                     if (filterSharedLibPackage(ps, callingUid, userId, flags)) {
+                         continue;
+                     }
+@@ -4717,6 +4801,8 @@ public class ComputerEngine implements Computer {
+                         ai.packageName = resolveExternalPackageName(ps.getPkg());
+                     }
+                 } else {
++                    if (BstUtils.hideBlueStacksPkg(ps.getPackageName(), isAppPrivileged))
++                        continue;
+                     // Shared lib filtering done in generateApplicationInfoFromSettingsLPw
+                     // and already converts to externally visible package name
+                     ai = generateApplicationInfoFromSettings(ps.getPackageName(),
+@@ -4733,6 +4819,8 @@ public class ComputerEngine implements Computer {
+                 if (pkg == null) {
+                     continue;
+                 }
++                if (BstUtils.hideBlueStacksPkg(pkg.getPackageName(), isAppPrivileged))
++                    continue;
+                 if (filterSharedLibPackage(packageState, Binder.getCallingUid(), userId, flags)) {
+                     continue;
+                 }

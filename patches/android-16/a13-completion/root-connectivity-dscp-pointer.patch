@@ -1,0 +1,24 @@
+From 01328ab7feb121873313529116b460cc6073d481 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 02:47:09 +0800
+Subject: [PATCH] [A16] Update DSCP policy loading
+
+Advance packages/modules/Connectivity to ce5d67fa66f1f56450a22f274ccc39a6207108a6.
+
+Source: A13 56a3aff5be6304f88eba2fcdee09cde8ad42fd5c.
+
+The component restores the bounded-loop unroll optimization in the relocated A16 BPF source. The installed APEX and system objects were built with -Werror and read back byte-identical.
+---
+ packages/modules/Connectivity | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/modules/Connectivity b/packages/modules/Connectivity
+index 2f0481f..ce5d67f 160000
+--- a/packages/modules/Connectivity
++++ b/packages/modules/Connectivity
+@@ -1 +1 @@
+-Subproject commit 2f0481f305cadd2280cee75506be803219ad6629
++Subproject commit ce5d67fa66f1f56450a22f274ccc39a6207108a6
+-- 
+2.34.1
+

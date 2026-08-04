@@ -1,0 +1,31 @@
+From 42926aca562dc5622f69908258fd04cdd07201a3 Mon Sep 17 00:00:00 2001
+From: allen-bst <70563899+allen-bst@users.noreply.github.com>
+Date: Fri, 24 Nov 2023 15:52:42 +0800
+Subject: [PATCH 089/224] [A13]  Disabling lockNow function,chinese app 365
+ lockscreen (#92)
+
+app player caused dead issue
+---
+ .../android/server/devicepolicy/DevicePolicyManagerService.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java b/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java
+index 538d6bc85278..4b0765160fd7 100644
+--- a/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java
++++ b/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java
+@@ -5324,6 +5324,7 @@ public class DevicePolicyManagerService extends BaseIDevicePolicyManager {
+ 
+     @Override
+     public void lockNow(int flags, boolean parent) {
++        /* Disabling this function --chinese app--app player caused dead issue
+         final CallerIdentity caller = getCallerIdentity();
+ 
+         final int callingUserId = caller.getUserId();
+@@ -5398,6 +5399,7 @@ public class DevicePolicyManagerService extends BaseIDevicePolicyManager {
+                 .setAdmin(adminComponent)
+                 .setInt(flags)
+                 .write();
++        */
+     }
+ 
+     @Override

@@ -1,0 +1,527 @@
+From 2c364040bb48604e65e0c2443c5e914e77606d86 Mon Sep 17 00:00:00 2001
+From: emin-bst <88364888+emin-bst@users.noreply.github.com>
+Date: Wed, 16 Apr 2025 18:12:45 +0800
+Subject: [PATCH 183/224] Merge pull request #187 from emin-bst/bst-v5.22.75
+
+ROB-15885: [A13] camera is inverted - com.instagram.android
+---
+ .../android/content/res/ResourcesImpl.java    | 62 ++++++++++++++
+ core/java/android/util/BstUtils.java          | 27 ++++++
+ core/java/android/view/Display.java           | 53 ++++++++++++
+ .../bluestacks/os/BstFilterAppsManager.java   |  6 +-
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  2 +-
+ .../server/wm/ActivityClientController.java   |  1 +
+ .../server/wm/ActivityStartController.java    |  3 +
+ .../server/wm/WindowManagerService.java       | 82 ++++++++++++++++++-
+ .../server/BstFilterAppsService.java          | 35 ++++----
+ 9 files changed, 244 insertions(+), 27 deletions(-)
+ mode change 100644 => 100755 core/java/android/content/res/ResourcesImpl.java
+ mode change 100644 => 100755 core/java/android/util/BstUtils.java
+ mode change 100644 => 100755 core/java/android/view/Display.java
+ mode change 100644 => 100755 services/core/java/com/android/server/wm/ActivityClientController.java
+ mode change 100644 => 100755 services/core/java/com/android/server/wm/ActivityStartController.java
+ mode change 100644 => 100755 services/core/java/com/android/server/wm/WindowManagerService.java
+
+diff --git a/core/java/android/content/res/ResourcesImpl.java b/core/java/android/content/res/ResourcesImpl.java
+old mode 100644
+new mode 100755
+index 128086b4f31f..47cfb863897c
+--- a/core/java/android/content/res/ResourcesImpl.java
++++ b/core/java/android/content/res/ResourcesImpl.java
+@@ -40,11 +40,13 @@ import android.graphics.drawable.ColorStateListDrawable;
+ import android.graphics.drawable.Drawable;
+ import android.graphics.drawable.DrawableContainer;
+ import android.icu.text.PluralRules;
++import android.os.Binder;
+ import android.os.Build;
+ import android.os.LocaleList;
+ import android.os.SystemProperties;
+ import android.os.Trace;
+ import android.util.AttributeSet;
++import android.util.BstUtils;
+ import android.util.DisplayMetrics;
+ import android.util.Log;
+ import android.util.LongSparseArray;
+@@ -162,6 +164,35 @@ public class ResourcesImpl {
+         sPreloadedDrawables[1] = new LongSparseArray<>();
+     }
+ 
++    private int mCachedCustomDpi = -1;
++
++    private int getCustomDpi() {
++        try {
++            if (mCachedCustomDpi == -1) {
++                int ppid = android.os.Process.myPpid();
++
++                if (ppid != 1 && ppid != 2) {
++                    int uid = Binder.getCallingUid();
++                    if (uid >= 10000) {
++                        int pid = android.os.Process.myPid();
++                        String callingApp = BstUtils.getAppNameFromPid(pid);
++                        mCachedCustomDpi = BstUtils.bstIsCallingAppPrivileged(uid, callingApp) ? 0 : BstUtils.GetCustomDpi();
++                    } else {
++                        mCachedCustomDpi = 0;
++                    }
++                } else {
++                    mCachedCustomDpi = 0;
++                }
++            }
++        } catch (Exception ex) {
++            Slog.d (TAG, "Exception while getting custom DPI: " + ex);
++            ex.printStackTrace();
++            mCachedCustomDpi = 0;
++        }
++
++        return mCachedCustomDpi;
++    }
++
+     /**
+      * Creates a new ResourcesImpl object with CompatibilityInfo.
+      *
+@@ -196,10 +227,41 @@ public class ResourcesImpl {
+     DisplayMetrics getDisplayMetrics() {
+         if (DEBUG_CONFIG) Slog.v(TAG, "Returning DisplayMetrics: " + mMetrics.widthPixels
+                 + "x" + mMetrics.heightPixels + " " + mMetrics.density);
++
++        int CustomDpiValue = getCustomDpi();
++        if (CustomDpiValue != 0) {
++            float DpiRatio = CustomDpiValue / 160f;
++            mMetrics.density = DpiRatio;
++            mMetrics.densityDpi = CustomDpiValue;
++            mMetrics.scaledDensity = DpiRatio;
++            if (DEBUG_CONFIG) Slog.v(TAG, "Fake density:" + mMetrics.density + ", densityDpi:"
++                + mMetrics.densityDpi + ", scaledDensity:" + mMetrics.scaledDensity
++                + ", xdpi:"+ mMetrics.xdpi + ", ydpi:" + mMetrics.ydpi);
++        }
+         return mMetrics;
+     }
+ 
+     Configuration getConfiguration() {
++        int CustomDpiValue = getCustomDpi();
++        if (CustomDpiValue != 0) {
++            Configuration fakeConfig = new Configuration();
++            fakeConfig.setTo(mConfiguration);
++            float DpiRatio = CustomDpiValue / 160f;
++            int left = mConfiguration.windowConfiguration.getAppBounds().left;
++            int right = mConfiguration.windowConfiguration.getAppBounds().right;
++            int top = mConfiguration.windowConfiguration.getAppBounds().top;
++            int bottom = mConfiguration.windowConfiguration.getAppBounds().bottom;
++            fakeConfig.screenWidthDp = (int)Math.floor((right - left) / DpiRatio);
++            fakeConfig.smallestScreenWidthDp = (int)Math.floor((bottom - top) / DpiRatio);
++            fakeConfig.screenHeightDp = fakeConfig.smallestScreenWidthDp - (mConfiguration.smallestScreenWidthDp - mConfiguration.screenHeightDp);
++            fakeConfig.densityDpi = CustomDpiValue;
++
++            if (DEBUG_CONFIG) Slog.v(TAG, "Fake screenWidthDp:" + fakeConfig.screenWidthDp
++                + ", smallestScreenWidthDp:" + fakeConfig.smallestScreenWidthDp
++                + ", screenHeightDp:" + fakeConfig.screenHeightDp
++                + ", densityDpi:" + fakeConfig.densityDpi);
++            return fakeConfig;
++        }
+         return mConfiguration;
+     }
+ 
+diff --git a/core/java/android/util/BstUtils.java b/core/java/android/util/BstUtils.java
+old mode 100644
+new mode 100755
+index e8df0efb6049..3b19f53968ba
+--- a/core/java/android/util/BstUtils.java
++++ b/core/java/android/util/BstUtils.java
+@@ -1,8 +1,10 @@
+ package android.util;
+ 
++import android.content.Context;
+ import android.os.Binder;
+ import android.os.FileUtils;
+ import android.os.Process;
++import android.os.ServiceManager;
+ import android.os.StrictMode;
+ import android.os.SystemProperties;
+ 
+@@ -26,6 +28,8 @@ import java.util.HashSet;
+ 
+ import org.json.JSONObject;
+ 
++import com.bluestacks.os.IBstFilterAppsService;
++
+ public final class BstUtils {
+     private static final String TAG = "BstUtils";
+     private static final String TAG_BST_REFERRAL = "BstUtils-Affiliate";
+@@ -438,4 +442,27 @@ public final class BstUtils {
+                   || callingApp.startsWith("com.android.")
+                   || callingApp.startsWith("android.process.media"))));
+     }
++
++    // Function returns custom dpi value if we config dpi entry for specific app
++    public static int GetCustomDpi() {
++        try {
++            int ppid = android.os.Process.myPpid();
++            if (ppid != 1 && ppid != 2 && Binder.getCallingUid() >= 10000) {
++                String CustomDpi = "";
++                int pid = android.os.Process.myPid();
++                String callingApp = BstUtils.getAppNameFromPid(pid);
++                IBstFilterAppsService bstfilter = IBstFilterAppsService.Stub.asInterface(ServiceManager.getService(Context.BST_FILTER_APPS));
++                if (bstfilter != null) CustomDpi = bstfilter.getCustomDpi(callingApp);
++                if (CustomDpi.equals("160") || CustomDpi.equals("240") || CustomDpi.equals("320") || CustomDpi.equals("400") || CustomDpi.equals("480")) {
++                    int CustomDpiValue = Integer.parseInt(CustomDpi);
++                    if (DEBUG) Log.d(TAG, "Fake density:" + CustomDpi + " for pkg:" + callingApp);
++                    return CustomDpiValue;
++                }
++            }
++        } catch (Exception ex) {
++            Log.d (TAG, "Exception while Fake density: " + ex);
++            ex.printStackTrace();
++        }
++        return 0;
++    }
+ }
+diff --git a/core/java/android/view/Display.java b/core/java/android/view/Display.java
+old mode 100644
+new mode 100755
+index fc589f2e20ca..c0ec9cf6b431
+--- a/core/java/android/view/Display.java
++++ b/core/java/android/view/Display.java
+@@ -516,6 +516,35 @@ public final class Display {
+     /** @hide */
+     public static final int DISPLAY_MODE_ID_FOR_FRAME_RATE_OVERRIDE = 0xFF;
+ 
++    private int mCachedCustomDpi = -1;
++
++    private int getCustomDpi() {
++        try {
++            if (mCachedCustomDpi == -1) {
++                int ppid = android.os.Process.myPpid();
++
++                if (ppid != 1 && ppid != 2) {
++                    int uid = Binder.getCallingUid();
++                    if (uid >= 10000) {
++                        int pid = android.os.Process.myPid();
++                        String callingApp = BstUtils.getAppNameFromPid(pid);
++                        mCachedCustomDpi = BstUtils.bstIsCallingAppPrivileged(uid, callingApp) ? 0 : BstUtils.GetCustomDpi();
++                    } else {
++                        mCachedCustomDpi = 0;
++                    }
++                } else {
++                    mCachedCustomDpi = 0;
++                }
++            }
++        } catch (Exception ex) {
++            Log.d (TAG, "Exception while getting custom DPI: " + ex);
++            ex.printStackTrace();
++            mCachedCustomDpi = 0;
++        }
++
++        return mCachedCustomDpi;
++    }
++
+     /**
+      * Internal method to create a display.
+      * The display created with this method will have a static {@link DisplayAdjustments} applied.
+@@ -621,6 +650,11 @@ public final class Display {
+         synchronized (mLock) {
+             updateDisplayInfoLocked();
+             outDisplayInfo.copyFrom(mDisplayInfo);
++            int CustomDpiValue = getCustomDpi();
++            if (CustomDpiValue != 0) {
++                outDisplayInfo.logicalDensityDpi = CustomDpiValue;
++                if (DEBUG) Log.v(TAG, "Fake density: " + outDisplayInfo.logicalDensityDpi);
++            }
+             return mIsValid;
+         }
+     }
+@@ -1462,6 +1496,15 @@ public final class Display {
+         synchronized (mLock) {
+             updateDisplayInfoLocked();
+             mDisplayInfo.getAppMetrics(outMetrics, getDisplayAdjustments());
++            int CustomDpiValue = getCustomDpi();
++            if (CustomDpiValue != 0) {
++                float DpiRatio = CustomDpiValue / 160f;
++                outMetrics.density = DpiRatio;
++                outMetrics.densityDpi = CustomDpiValue;
++                outMetrics.scaledDensity = DpiRatio;
++                if (DEBUG) Log.v(TAG, "Fake density: " + outMetrics.density + ", densityDpi: "
++                    + outMetrics.densityDpi + ", scaledDensity: " + outMetrics.scaledDensity);
++            }
+         }
+     }
+ 
+@@ -1598,6 +1641,16 @@ public final class Display {
+             }
+             mDisplayInfo.getLogicalMetrics(outMetrics,
+                     CompatibilityInfo.DEFAULT_COMPATIBILITY_INFO, null);
++            int CustomDpiValue = getCustomDpi();
++            if (CustomDpiValue != 0) {
++                float DpiRatio = CustomDpiValue / 160f;
++                outMetrics.density = DpiRatio;
++                outMetrics.densityDpi = CustomDpiValue;
++                outMetrics.scaledDensity = DpiRatio;
++                if (DEBUG) Log.v(TAG, "Fake density: " + outMetrics.density + ", densityDpi: "
++                    + outMetrics.densityDpi + ", scaledDensity: " + outMetrics.scaledDensity);
++            }
++
+             final @Surface.Rotation int rotation = getLocalRotation();
+             if (rotation != mDisplayInfo.rotation) {
+                 adjustMetrics(outMetrics, mDisplayInfo.rotation, rotation);
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index c38bb3591194..eafeaf260e45 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -380,15 +380,15 @@ public class BstFilterAppsManager {
+     /**
+      * @hide
+      */
+-    public boolean isCustomDpiApp(String pkgName)
++    public String getCustomDpi(String pkgName)
+     {
+         try {
+-            return mService.isCustomDpiApp(pkgName);
++            return mService.getCustomDpi(pkgName);
+         } catch(Exception e) {
+             // Catching the error and returning default behavior as if entry was not
+             // present in config.db
+             if (DEBUG) e.printStackTrace();
+-            return false;
++            return "";
+         }
+     }
+ 
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 271fb864dd5d..87b4444ad12a 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -18,7 +18,7 @@ interface IBstFilterAppsService
+     boolean isMarketRequired(String pkgName);
+     boolean isHeadsetRequired(String pkgName);
+     boolean isPortraitDisabled(String pkgName);
+-    boolean isCustomDpiApp(String pkgName);
++    String getCustomDpi(String pkgName);
+     boolean isGlv1notimpApp(String pkgName);
+     boolean isPvrtcApp(String pkgName);
+     boolean isXarchApp(int uid);
+diff --git a/services/core/java/com/android/server/wm/ActivityClientController.java b/services/core/java/com/android/server/wm/ActivityClientController.java
+old mode 100644
+new mode 100755
+index 725254513519..df3d9092be2f
+--- a/services/core/java/com/android/server/wm/ActivityClientController.java
++++ b/services/core/java/com/android/server/wm/ActivityClientController.java
+@@ -167,6 +167,7 @@ class ActivityClientController extends IActivityClientController.Stub {
+         final long origId = Binder.clearCallingIdentity();
+         synchronized (mGlobalLock) {
+             ActivityRecord.activityRefreshedLocked(token);
++            mService.mWindowManager.changeDisplayDensity(null, null);
+         }
+         Binder.restoreCallingIdentity(origId);
+     }
+diff --git a/services/core/java/com/android/server/wm/ActivityStartController.java b/services/core/java/com/android/server/wm/ActivityStartController.java
+old mode 100644
+new mode 100755
+index 4663662c5585..a7f4256096c6
+--- a/services/core/java/com/android/server/wm/ActivityStartController.java
++++ b/services/core/java/com/android/server/wm/ActivityStartController.java
+@@ -128,6 +128,9 @@ public class ActivityStartController {
+      *         considered invalid and no longer modified or used.
+      */
+     ActivityStarter obtainStarter(Intent intent, String reason) {
++        if (intent != null && intent.getComponent() != null) {
++            mService.mWindowManager.changeDisplayDensity(intent.getComponent().getPackageName(), intent.getComponent().getClassName());
++        }
+         return mFactory.obtain().setIntent(intent).setReason(reason);
+     }
+ 
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+old mode 100644
+new mode 100755
+index 1a6eb67501f5..b128f19374e6
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -2066,15 +2066,54 @@ public class WindowManagerService extends IWindowManager.Stub
+         mPolicy.setBstProposedRotation(proposedRotation);
+     }
+ 
++    /* This new function is used to change DPI value of specified apps at runtime. */
++    public void changeDisplayDensity(String packageName, String activityName) {
++         String topPackageName = packageName != null ? packageName : android.os.SystemProperties.get("bst.config.top_package_name", null);
++         if (topPackageName == null || topPackageName.isEmpty()) {
++            return;
++         }
++
++         String customDpi = mBstFilterApps.getCustomDpi(topPackageName);
++         int density = 0;
++
++         if (customDpi.equals("160") || customDpi.equals("240") || customDpi.equals("320") || customDpi.equals("400") || customDpi.equals("480")) {
++            density = Integer.parseInt(customDpi);
++         }
++
++         if (density > 0) {
++            String topActivityName = activityName != null ? activityName : android.os.SystemProperties.get("bst.config.top_activity_name", null);
++            int index = topActivityName.indexOf('/');
++            if (index >= 0) {
++                topActivityName = topActivityName.substring(index + 1);
++            }
++         }
++
++         try {
++             int initialDensity = getInitialDisplayDensity(Display.DEFAULT_DISPLAY);
++             int currDensity = getBaseDisplayDensity(Display.DEFAULT_DISPLAY);
++
++             if (density > 0 && currDensity != density) {
++                setForcedDisplayDensityforApp(Display.DEFAULT_DISPLAY, density, UserHandle.USER_CURRENT);
++
++             } else if (density == 0 && initialDensity != currDensity) {
++                clearForcedDisplayDensityForApp(Display.DEFAULT_DISPLAY, UserHandle.USER_CURRENT);
++             }
++
++         } catch (Exception e) {
++             Slog.i(TAG, "Exception in changing setting density to " + density);
++             e.printStackTrace();
++         }
++    }
++
+     /* This function is used to change DPI value of portrait apps at runtime. */
+     private void changeDisplayDensity(int density) {
+-         boolean isCustomDpiApp = false;
++         String customDpi = "";
+          String topPackageName = android.os.SystemProperties.get("bst.config.top_package_name", null);
+-         isCustomDpiApp = mBstFilterApps.isCustomDpiApp(topPackageName);
++         customDpi = mBstFilterApps.getCustomDpi(topPackageName);
+ 
+-         if (!isCustomDpiApp && density > 0)
++         if (customDpi.equals("") && density > 0)
+          {
+-             Slog.i(TAG, "Not Changing default density value for app : " + topPackageName + " isCustomDpiApp: " + isCustomDpiApp + " density : " + density);
++             Slog.i(TAG, "Not Changing default density value for app : " + topPackageName + " customDpi: " + customDpi + " density : " + density);
+              return;
+          }
+ 
+@@ -5955,6 +5994,23 @@ public class WindowManagerService extends IWindowManager.Stub
+         return -1;
+     }
+ 
++    private void setForcedDisplayDensityforApp(int displayId, int density, int userId) {
++        final int targetUserId = ActivityManager.handleIncomingUser(Binder.getCallingPid(),
++                Binder.getCallingUid(), userId, false, true, "setForcedDisplayDensityForUser",
++                null);
++        final long ident = Binder.clearCallingIdentity();
++        try {
++            synchronized (mGlobalLock) {
++                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
++                if (displayContent != null) {
++                    displayContent.setForcedDensity(density, targetUserId);
++                }
++            }
++        } finally {
++            Binder.restoreCallingIdentity(ident);
++        }
++    }
++
+     @Override
+     public void setForcedDisplayDensityForUser(int displayId, int density, int userId) {
+         if (mContext.checkCallingOrSelfPermission(WRITE_SECURE_SETTINGS)
+@@ -5978,6 +6034,24 @@ public class WindowManagerService extends IWindowManager.Stub
+         }
+     }
+ 
++    private void clearForcedDisplayDensityForApp(int displayId, int userId) {
++        final int callingUserId = ActivityManager.handleIncomingUser(Binder.getCallingPid(),
++                Binder.getCallingUid(), userId, false, true, "clearForcedDisplayDensityForUser",
++                null);
++        final long ident = Binder.clearCallingIdentity();
++        try {
++            synchronized (mGlobalLock) {
++                final DisplayContent displayContent = mRoot.getDisplayContent(displayId);
++                if (displayContent != null) {
++                    displayContent.setForcedDensity(displayContent.mInitialDisplayDensity,
++                            callingUserId);
++                }
++            }
++        } finally {
++            Binder.restoreCallingIdentity(ident);
++        }
++    }
++
+     @Override
+     public void clearForcedDisplayDensityForUser(int displayId, int userId) {
+         if (mContext.checkCallingOrSelfPermission(WRITE_SECURE_SETTINGS)
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 32811b70cfa2..a96588656528 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -101,7 +101,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mWhiteList = new TreeSet<String>();
+     private Set<String>           mHeadsetRequiredAppList = new TreeSet<String>();
+     private Set<String>           mMarketRequiredAppList = new TreeSet<String>();
+-    private Set<String>           mCustomDpiAppList = new TreeSet<String>();
++    private Map<String, String>   mCustomDpiAppList = new HashMap<String, String>();
+     private Set<String>           mClearInstallAppList = new TreeSet<String>();
+     private Set<String>           mAmdInstallAppList = new TreeSet<String>();
+     private Set<String>           mFbScreenLockAppList = new TreeSet<String>();
+@@ -1109,18 +1109,15 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                 }
+                                 else if ((key.equalsIgnoreCase("dpi"))) {
+                                     synchronized (mCustomDpiAppList) {
+-                                        if (value.equalsIgnoreCase("false")) {
+-                                            packageName = "~" + packageName;
+-                                        }
+                                         if (DEBUG)
+-                                            Slog.d(TAG, "Adding " + packageName + " to customDpiAppList\n");
+-                                        mCustomDpiAppList.add(packageName);
++                                            Slog.d(TAG, "Adding " + packageName + ";" + value + " to customDpiAppList \n");
++                                        mCustomDpiAppList.put(packageName, value);
+                                         if (packageName.startsWith("~")) {
+                                             if (DEBUG)
+                                                 Slog.d(TAG, "Removing " + origPackageName + " from customDpiAppList \n");
+                                             mCustomDpiAppList.remove(packageName.substring(1));
+                                         }
+-                                        removePackageEntryFromList(mCustomDpiAppList,pkgException);
++                                        removePackageEntryFromList(mCustomDpiAppList,pkgException,value);
+                                     }
+                                 }
+                                 else if ((key.equalsIgnoreCase("full"))) {
+@@ -4343,36 +4340,36 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     /**
+      * @hide
+      */
+-    public boolean isCustomDpiApp(String pkgName)
++    public String getCustomDpi(String pkgName)
+     {
+-        boolean found = false;
+-        if(DEBUG) Slog.d(TAG, " Trying to look for " + pkgName + " in custome DPI App List\n");
++        String res = "";
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in custome DPI App list\n");
+         if (pkgName == null)
+         {
+-            Slog.e(TAG, "invalid arguments to isCustomDpiApp, pkgName = " + pkgName);
+-            return found;
++            Slog.e(TAG, "invalid arguments to custome DPI App, pkgName = " + pkgName);
++            return res;
+         }
+ 
+         initLists();
+ 
+         synchronized (mCustomDpiAppList)
+         {
+-            if (mCustomDpiAppList.contains(pkgName))
++            if (mCustomDpiAppList.containsKey(pkgName))
+             {
+-                if(DEBUG) Slog.d(TAG, pkgName + " is in custome DPI App List\n");
+-                found = true;
++                if (DEBUG) Slog.d(TAG, pkgName + " is in custome DPI App List\n");
++                res = mCustomDpiAppList.get(pkgName);
+             }
+             else
+             {
+                 String wildcardMatchedPackageName = isPackageMatchedWilcard(mCustomDpiAppList, pkgName);
+-                if( wildcardMatchedPackageName != null)
++                if(wildcardMatchedPackageName != null)
+                 {
+-                    if(DEBUG) Slog.d(TAG, pkgName + " is in custom DPI App List\n");
+-                    found = true;
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in custome DPI App List\n");
++                    res = mCustomDpiAppList.get(wildcardMatchedPackageName);
+                 }
+             }
+         }
+-        return found;
++        return res;
+     }
+ 
+     /**

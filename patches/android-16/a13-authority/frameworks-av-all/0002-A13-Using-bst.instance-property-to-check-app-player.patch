@@ -1,0 +1,38 @@
+From fb5c43d6d3c0c7b89ab3e6a8c71779610ee89e76 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Wed, 18 Oct 2023 16:35:22 +0800
+Subject: [PATCH 02/21] [A13] Using bst.instance property to check app-player
+
+---
+ media/libstagefright/omx/OMXStore.cpp | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/media/libstagefright/omx/OMXStore.cpp b/media/libstagefright/omx/OMXStore.cpp
+index ab285009a1..930fbb7fb0 100644
+--- a/media/libstagefright/omx/OMXStore.cpp
++++ b/media/libstagefright/omx/OMXStore.cpp
+@@ -124,15 +124,21 @@ static bool isTV() {
+     return kIsTv;
+ }
+ 
+-static bool isAppPlayerBooted() {
+-    return android::base::GetIntProperty("bst.config.boot_completed", -1) == 1 ? true : false;
++static bool isAppPlayer() {
++    std::string instance = android::base::GetProperty("bst.instance", "");
++
++    if (!instance.empty() && instance == "Tiramisu64") {
++        return true;
++    }
++
++    return false;
+ }
+ 
+ void OMXStore::addPlugin(OMXPluginBase *plugin) {
+     Mutex::Autolock autoLock(mLock);
+ 
+     bool typeTV = isTV();
+-    bool appPlayer = isAppPlayerBooted();
++    bool appPlayer = isAppPlayer();
+     int firstApiLevel = getFirstApiLevel();
+ 
+     OMX_U32 index = 0;

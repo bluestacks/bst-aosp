@@ -1,0 +1,83 @@
+From f6371e7ca93b09dccac2bc460a3a8f69ee48d81f Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Wed, 1 Nov 2023 11:01:17 +0800
+Subject: [PATCH 055/224] [A13] When Status bar is hidden ,then if someone
+ queries for status_bar_height
+
+,then changing status_bar_height res to bst_system_bar_height , which
+value is set to 0 in dimen.xml
+---
+ .../android/content/res/ResourcesImpl.java    | 39 +++++++++++++++++++
+ 1 file changed, 39 insertions(+)
+
+diff --git a/core/java/android/content/res/ResourcesImpl.java b/core/java/android/content/res/ResourcesImpl.java
+index ff072916292b..128086b4f31f 100644
+--- a/core/java/android/content/res/ResourcesImpl.java
++++ b/core/java/android/content/res/ResourcesImpl.java
+@@ -42,6 +42,7 @@ import android.graphics.drawable.DrawableContainer;
+ import android.icu.text.PluralRules;
+ import android.os.Build;
+ import android.os.LocaleList;
++import android.os.SystemProperties;
+ import android.os.Trace;
+ import android.util.AttributeSet;
+ import android.util.DisplayMetrics;
+@@ -78,6 +79,7 @@ import java.util.Locale;
+ public class ResourcesImpl {
+     static final String TAG = "Resources";
+ 
++    private static final boolean DEBUG_BST = SystemProperties.getBoolean("bst.debug.status_bar", false);
+     private static final boolean DEBUG_LOAD = false;
+     private static final boolean DEBUG_CONFIG = false;
+ 
+@@ -94,6 +96,8 @@ public class ResourcesImpl {
+     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.R, trackingBug = 170729553)
+     private boolean mPreloading;
+ 
++    private static final boolean mBstHideStatusBar = (SystemProperties.getInt("bst.enable_statusbar", 1) == 0 ? true : false);
++
+     // Information about preloaded resources.  Note that they are not
+     // protected by a lock, because while preloading in zygote we are all
+     // single-threaded, and after that these are immutable.
+@@ -249,6 +253,41 @@ public class ResourcesImpl {
+         if (name == null) {
+             throw new NullPointerException("name is null");
+         }
++
++        // Now we keep the default behaviour and do not return zero when navigation bar is hidden.
++        // So in all cases value will be fetched from dimension file. We changed hasNavigationBar
++        // method to return value accordingly. If this causes problem with apps then we can enable
++        // these changes.
++        if (mBstHideStatusBar) {
++            String resourceName = name;
++            String resourceType = defType;
++            String pkg = defPackage;
++            // to parse package out of full qualified name of the form "package:type/entry" or "package:entry"
++            // If it is fully qualified, then it reduces in the form "type/entry"
++            if (resourceName.contains(":"))
++            {
++                pkg = resourceName.split(":")[0];
++                resourceName = resourceName.split(":")[1];
++            }
++            // to parse resourceName and resourceType out of name of the form "type/entry"
++            if (resourceName.contains("/"))
++            {
++                resourceName = resourceName.split("/")[1];
++                resourceType = resourceName.split("/")[0];
++            }
++            // BST - making sure the lookup package is "android" - not some personal resource of a package
++            if (resourceType != null && resourceType.equals("dimen") && pkg != null && pkg.equals("android"))
++            {
++                // returning 0 if status_bar is queried and corresponding bar is hidden in the app-player
++                if (resourceName.equals("status_bar_height"))
++                {
++                    if (DEBUG_BST) Log.d(TAG, "returning 0 for query: " + resourceName);
++                    name = "bst_system_bar_height";
++                    defType = "dimen";
++                    defPackage = "android";
++                }
++            }
++        }
+         try {
+             return Integer.parseInt(name);
+         } catch (Exception e) {

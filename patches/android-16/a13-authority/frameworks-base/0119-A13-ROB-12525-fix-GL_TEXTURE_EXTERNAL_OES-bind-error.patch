@@ -1,0 +1,123 @@
+From 66ca8b99f1135d013f90810b3a6a224b8f65dfc2 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 8 Mar 2024 14:49:25 +0800
+Subject: [PATCH 119/224] [A13]ROB-12525: fix GL_TEXTURE_EXTERNAL_OES bind
+ error
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 16 +++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 46 +++++++++++++++++++
+ 3 files changed, 63 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 9566f79fd3bd..1d0d722b5ce3 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1664,4 +1664,20 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * Check if tex target check is disabled for this app or not.
++     * @hide
++     */
++    public boolean isTexTargetCheckDisabled(String pkgName)
++    {
++        try {
++            return mService.isTexTargetCheckDisabled(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
++
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 1640f884fd52..2b2303015fab 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -107,4 +107,5 @@ interface IBstFilterAppsService
+     boolean isGLUnmapBufferPerfApp(String pkgName);
+     String getGLShaderWorkaround(String pkgName);
+     boolean isDrmEnabled(String pkgName);
++    boolean isTexTargetCheckDisabled(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index ce3949b01cc7..842e546d6df6 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -178,6 +178,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mGLUnmapBufferPerfAppList = new TreeSet<String>();
+     private Map<String, String>   mGLShaderWorkaroundList = new HashMap<String, String>();
+     private Set<String>           mDrmEnabledAppList = new TreeSet<String>();
++    private Set<String>           mTexTargetCheckDisabledAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2406,6 +2407,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mDrmEnabledAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("TTCDisabled")) {
++                                    synchronized (mTexTargetCheckDisabledAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mTexTargetCheckDisabledAppList \n");
++                                        mTexTargetCheckDisabledAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mTexTargetCheckDisabledAppList \n");
++                                            mTexTargetCheckDisabledAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mTexTargetCheckDisabledAppList,pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3053,6 +3070,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mDrmEnabledAppList.clear();
+         }
+ 
++        synchronized (mTexTargetCheckDisabledAppList)
++        {
++            mTexTargetCheckDisabledAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -6907,4 +6929,28 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return false;
+     }
+ 
++    public boolean isTexTargetCheckDisabled(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in TexTargetCheckDisabled app list\n");
++        initLists();
++
++        synchronized (mTexTargetCheckDisabledAppList)
++        {
++            if (mTexTargetCheckDisabledAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mTexTargetCheckDisabledAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in TexTargetCheckDisabled App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
+ }

@@ -1,0 +1,69 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -235,6 +235,66 @@
+             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
+         </activity-alias>
+ 
++        <!-- Stable entry points used by the BlueStacks Settings client. -->
++        <activity-alias
++            android:name=".BstLocationSettings"
++            android:taskAffinity="com.android.settings"
++            android:label="@string/location_settings_title"
++            android:targetActivity="Settings$LocationSettingsActivity"
++            android:exported="true">
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.location.LocationSettings" />
++        </activity-alias>
++
++        <activity-alias
++            android:name=".BstAccessibilitySettings"
++            android:label="@string/accessibility_settings_title"
++            android:taskAffinity="com.android.settings"
++            android:targetActivity="Settings$AccessibilitySettingsActivity"
++            android:exported="true">
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.accessibility.AccessibilitySettings" />
++        </activity-alias>
++
++        <activity-alias
++            android:name=".BstStorageSettings"
++            android:label="@string/storage_settings_title"
++            android:exported="true"
++            android:targetActivity="Settings$StorageDashboardActivity">
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.deviceinfo.StorageDashboardFragment" />
++        </activity-alias>
++
++        <activity-alias
++            android:name=".BstAccountsSettings"
++            android:taskAffinity="com.android.settings"
++            android:label="@string/account_dashboard_title"
++            android:targetActivity="Settings$AccountDashboardActivity"
++            android:exported="true">
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.accounts.AccountDashboardFragment" />
++        </activity-alias>
++
++        <activity-alias
++            android:name=".BstAboutPhone"
++            android:exported="true"
++            android:label="@string/about_settings"
++            android:taskAffinity="com.android.settings"
++            android:targetActivity="Settings$MyDeviceInfoActivity">
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.deviceinfo.aboutphone.MyDeviceInfoFragment" />
++        </activity-alias>
++
++        <activity-alias
++            android:name=".BstAccountSyncSettings"
++            android:taskAffinity=""
++            android:label="@string/account_sync_settings_title"
++            android:targetActivity="Settings$AccountSyncSettingsActivity"
++            android:exported="true">
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.accounts.AccountSyncSettings" />
++        </activity-alias>
++
+         <receiver android:name=".SettingsInitialize"
+             android:exported="true">

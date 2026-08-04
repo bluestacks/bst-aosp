@@ -1,0 +1,93 @@
+From 9f7db03352b1d1ed7987c75c6d08267556972982 Mon Sep 17 00:00:00 2001
+From: Jason Zhou <85154920+jason-bst@users.noreply.github.com>
+Date: Wed, 26 Feb 2025 15:42:26 +0800
+Subject: [PATCH 181/224] Merge pull request #170 from
+ jason-bst/bst-v5.22.0-ROB15830
+
+ROB-15830: query bfam for shared preferences only once
+---
+ core/java/android/app/SharedPreferencesImpl.java | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/core/java/android/app/SharedPreferencesImpl.java b/core/java/android/app/SharedPreferencesImpl.java
+index f732e787206f..2db9ee64bd13 100644
+--- a/core/java/android/app/SharedPreferencesImpl.java
++++ b/core/java/android/app/SharedPreferencesImpl.java
+@@ -93,6 +93,8 @@ final class SharedPreferencesImpl implements SharedPreferences {
+     @GuardedBy("mLock")
+     private String packageName = null;
+ 
++    @GuardedBy("mLock")
++    private boolean mBstDefaultSet = false;
+     @GuardedBy("mLock")
+     private Map<String, Object> mMap;
+     @GuardedBy("mLock")
+@@ -307,6 +309,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
+     @Nullable
+     public String getString(String key, @Nullable String defValue) {
+         if (packageName == null || "zygote".equals(packageName)) {
++            mBstDefaultSet = false;
+             packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
+         }
+ 
+@@ -342,7 +345,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
+         int len = 0;
+         String oneSetting = "";
+ 
+-        if (!"1".equals(SystemProperties.get("sys.boot_completed")))
++        if (mBstDefaultSet || !"1".equals(SystemProperties.get("sys.boot_completed")))
+             return;
+ 
+ 
+@@ -359,8 +362,10 @@ final class SharedPreferencesImpl implements SharedPreferences {
+             }
+         }
+ 
+-        if (!mFile.getName().equals(spFilename))
++        if (!mFile.getName().equals(spFilename)) {
++            mBstDefaultSet = true;
+             return;
++        }
+ 
+         while (len < spKeyValueSequences.length())
+         {
+@@ -431,6 +436,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
+                     break;
+             }
+         }
++        mBstDefaultSet = true;
+     }
+ 
+     // ROB-11560 set Extreme and high fps by default for martial egame
+@@ -468,6 +474,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
+         //If the value is present in the list then we will disable the game settings for the package by default it will be on.
+         //For package com.dts.freefireth, we will modify the keys.
+         if (packageName == null || "zygote".equals(packageName)) {
++            mBstDefaultSet = false;
+             packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
+         }
+ 
+@@ -492,6 +499,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
+     @Override
+     public long getLong(String key, long defValue) {
+         if (packageName == null || "zygote".equals(packageName)) {
++            mBstDefaultSet = false;
+             packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
+         }
+ 
+@@ -508,6 +516,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
+     @Override
+     public float getFloat(String key, float defValue) {
+         if (packageName == null || "zygote".equals(packageName)) {
++            mBstDefaultSet = false;
+             packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
+         }
+         synchronized (mLock) {
+@@ -523,6 +532,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
+     @Override
+     public boolean getBoolean(String key, boolean defValue) {
+         if (packageName == null || "zygote".equals(packageName)) {
++            mBstDefaultSet = false;
+             packageName = BstUtils.getAppNameFromPid(Binder.getCallingPid());
+         }
+         synchronized (mLock) {

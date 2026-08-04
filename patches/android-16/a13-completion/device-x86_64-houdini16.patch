@@ -1,0 +1,16 @@
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index f1dd8b2..5420e02 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -21,6 +21,11 @@ TARGET_USERIMAGES_SPARSE_EXT_DISABLED := true
+ 
+ include device/generic/common/BoardConfig.mk
+ 
++# Intel's Houdini package installs its payload through LOCAL_POST_INSTALL_CMD.
++BUILD_BROKEN_INCORRECT_PARTITION_IMAGES := true
++
++BOARD_SEPOLICY_DIRS += device/generic/common/sepolicy/houdini
++
+ # android_x86_64 does not inherit the goldfish generic product, so attach the
+ # legacy BlueStacks graphics declarations used by the external HIDL stack.
+ DEVICE_MANIFEST_FILE += device/generic/common/manifest/android.hardware.graphics.allocator@2.0.xml

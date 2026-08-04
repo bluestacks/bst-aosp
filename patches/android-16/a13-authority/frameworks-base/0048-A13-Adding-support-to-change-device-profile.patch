@@ -1,0 +1,66 @@
+From d0c915247a889c7d77a6e4a4218ac0c837125ff0 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Mon, 30 Oct 2023 09:43:23 +0800
+Subject: [PATCH 048/224] [A13] Adding support to change device profile
+
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 39 +++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index e6b4a34a5315..e7c595e24cac 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -914,6 +914,33 @@ void SetThreadName(const std::string& thread_name) {
+   android::base::SetDefaultTag(buf);
+ }
+ 
++// This function modifies the value of <field> (BRAND, MODEL, MANUFACTURER, FINGERPRINT) in Build.java class.
++static void BstSetDeviceProperties(JNIEnv* env, const char* prop_name, jclass build_class, const char* field) {
++
++    char prop_value[PROPERTY_VALUE_MAX];
++    int len = __system_property_get(prop_name, prop_value);
++    if (len == 0) {
++        ALOGW("Property %s has value null", prop_name);
++        return;
++    }
++
++    jfieldID field_id = env->GetStaticFieldID(build_class, field, "Ljava/lang/String;");
++    if (field_id == nullptr) {
++        env->ExceptionClear();
++        ALOGW("Could not find %s field.", field);
++        return;
++    }
++
++    jstring str = env->NewStringUTF(prop_value);
++    if (str == nullptr) {
++        env->ExceptionClear();
++        ALOGW("Could not create string %s.", prop_value);
++        return;
++    }
++
++    env->SetStaticObjectField(build_class, field_id, str);
++}
++
+ static void SetCpuAbiList(JNIEnv* env, jclass build_class, const char* field, std::vector <std::string> val) {
+   jfieldID field_id = env->GetStaticFieldID(build_class, field, "[Ljava/lang/String;");
+   if (field_id == nullptr) {
+@@ -1988,6 +2015,18 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+     }
+ 
+ 
++    jclass bclass_id = env->FindClass("android/os/Build");
++    if (bclass_id != nullptr) {
++        BstSetDeviceProperties(env, "ro.product.board", bclass_id, "BOARD");
++        BstSetDeviceProperties(env, "ro.product.brand", bclass_id, "BRAND");
++        BstSetDeviceProperties(env, "ro.product.device", bclass_id, "DEVICE");
++        BstSetDeviceProperties(env, "ro.product.manufacturer", bclass_id, "MANUFACTURER");
++        BstSetDeviceProperties(env, "ro.product.model", bclass_id, "MODEL");
++        BstSetDeviceProperties(env, "ro.product.name", bclass_id, "PRODUCT");
++        BstSetDeviceProperties(env, "ro.build.fingerprint", bclass_id, "FINGERPRINT");
++        BstSetDeviceProperties(env, "ro.hardware", bclass_id, "HARDWARE");
++    }
++
+     if (uid >= 10000 && nice_name_ptr != nullptr && !strncmp(nice_name_ptr, "com.android.vending", strlen("com.android.vending"))) {
+ 
+ #define X86          "x86"

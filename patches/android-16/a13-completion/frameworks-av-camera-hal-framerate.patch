@@ -1,0 +1,33 @@
+From 52932704dcc721eacdc692bfe8990115ab8041d2 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 01:38:53 +0800
+Subject: [PATCH] [A16] Restore camera HAL frame rate fallback
+
+---
+ media/libstagefright/CameraSource.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/media/libstagefright/CameraSource.cpp b/media/libstagefright/CameraSource.cpp
+index f0ef6e5d64..27c642f02b 100644
+--- a/media/libstagefright/CameraSource.cpp
++++ b/media/libstagefright/CameraSource.cpp
+@@ -554,6 +554,16 @@ status_t CameraSource::initWithCameraAccess(
+     if ((err = isCameraColorFormatSupported(params)) != OK) {
+         return err;
+     }
++    const char* supportedFrameRates =
++            params.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES);
++    CHECK(supportedFrameRates != nullptr);
++    char buffer[4];
++    snprintf(buffer, sizeof(buffer), "%d", frameRate);
++    if (strstr(supportedFrameRates, buffer) == nullptr) {
++        frameRate = atoi(supportedFrameRates);
++    } else {
++        frameRate = params.getPreviewFrameRate();
++    }
+ 
+     // Set the camera to use the requested video frame size
+     // and/or frame rate.
+-- 
+2.34.1
+

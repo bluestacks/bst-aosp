@@ -1,0 +1,24 @@
+diff --git a/src/com/android/settings/accessibility/AccessibilityHearingAidPreferenceController.java b/src/com/android/settings/accessibility/AccessibilityHearingAidPreferenceController.java
+--- a/src/com/android/settings/accessibility/AccessibilityHearingAidPreferenceController.java
++++ b/src/com/android/settings/accessibility/AccessibilityHearingAidPreferenceController.java
+@@ -95,7 +95,9 @@ public class AccessibilityHearingAidPreferenceController extends BasePreferenceC
+         filter.addAction(BluetoothLeAudio.ACTION_LE_AUDIO_CONNECTION_STATE_CHANGED);
+         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+         mContext.registerReceiver(mHearingAidChangedReceiver, filter);
+-        mLocalBluetoothManager.getEventManager().registerCallback(this);
++        if (mLocalBluetoothManager.getEventManager() != null) {
++            mLocalBluetoothManager.getEventManager().registerCallback(this);
++        }
+         // Can't get connected hearing aids when hearing aids related profiles are not ready. The
+         // profiles will be ready after the services are connected. Needs to add listener and
+         // updates the information when all hearing aids related services are connected.
+@@ -107,7 +109,9 @@ public class AccessibilityHearingAidPreferenceController extends BasePreferenceC
+     @Override
+     public void onStop() {
+         mContext.unregisterReceiver(mHearingAidChangedReceiver);
+-        mLocalBluetoothManager.getEventManager().unregisterCallback(this);
++        if (mLocalBluetoothManager.getEventManager() != null) {
++            mLocalBluetoothManager.getEventManager().unregisterCallback(this);
++        }
+         mProfileManager.removeServiceListener(this);
+     }

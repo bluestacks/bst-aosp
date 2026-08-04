@@ -1,0 +1,81 @@
+diff --git a/nativebridge/libnb.cpp b/nativebridge/libnb.cpp
+index 056e80d..774eff0 100755
+--- a/nativebridge/libnb.cpp
++++ b/nativebridge/libnb.cpp
+@@ -562,8 +562,14 @@ static bool native_bridge2_isCompatibleWith(uint32_t version)
+ {
+     ALOGV("enter native_bridge2_isCompatibleWith %u", version);
+     NativeBridgeCallbacks* const cb = native_handle ? get_callbacks() : nullptr;
+-    const bool ret = cb ? cb->isCompatibleWith(version) : version <= 3;
+-    return ret;
++    if (cb == nullptr) {
++        return version <= 3;
++    }
++    // A backend cannot provide callbacks beyond the size declared by its
++    // interface version, even if its compatibility callback is permissive.
++    return version <= cb->version && cb->isCompatibleWith(version);
+ }
+ 
+ static NativeBridgeSignalHandlerFn native_bridge2_getSignalHandler(int signal)
+@@ -657,6 +663,43 @@ static void native_bridge6_preZygoteFork()
+     if (cb) cb->preZygoteFork();
+ }
+ 
++static void *native_bridge7_getTrampolineWithJNICallType(void *handle,
++                                                         const char *name,
++                                                         const char *shorty,
++                                                         uint32_t len,
++                                                         JNICallType jni_call_type)
++{
++    ALOGV("enter native_bridge7_getTrampolineWithJNICallType %s", name);
++    NativeBridgeCallbacks *cb = get_callbacks();
++    return cb && cb->version >= 7 && cb->getTrampolineWithJNICallType
++        ? cb->getTrampolineWithJNICallType(handle, name, shorty, len, jni_call_type)
++        : nullptr;
++}
++
++static void *native_bridge7_getTrampolineForFunctionPointer(const void *method,
++                                                            const char *shorty,
++                                                            uint32_t len,
++                                                            JNICallType jni_call_type)
++{
++    ALOGV("enter native_bridge7_getTrampolineForFunctionPointer %p", method);
++    NativeBridgeCallbacks *cb = get_callbacks();
++    return cb && cb->version >= 7 && cb->getTrampolineForFunctionPointer
++        ? cb->getTrampolineForFunctionPointer(method, shorty, len, jni_call_type)
++        : nullptr;
++}
++
++static bool native_bridge8_isNativeBridgeFunctionPointer(const void *method)
++{
++    ALOGV("enter native_bridge8_isNativeBridgeFunctionPointer %p", method);
++    NativeBridgeCallbacks *cb = get_callbacks();
++    return cb && cb->version >= 8 && cb->isNativeBridgeFunctionPointer
++        ? cb->isNativeBridgeFunctionPointer(method)
++        : false;
++}
++
+ static void __attribute__ ((destructor)) on_dlclose()
+ {
+     if (native_handle) {
+@@ -670,7 +713,7 @@ extern "C" {
+ 
+ NativeBridgeCallbacks NativeBridgeItf = {
+     // v1
+-    .version = 6,
++    .version = 8,
+     .initialize = native_bridge2_initialize,
+     .loadLibrary = native_bridge2_loadLibrary,
+     .getTrampoline = native_bridge2_getTrampoline,
+@@ -693,6 +736,11 @@ NativeBridgeCallbacks NativeBridgeItf = {
+     .getExportedNamespace = native_bridge5_getExportedNamespace,
+     // v6
+     .preZygoteFork = native_bridge6_preZygoteFork,
++    // v7
++    .getTrampolineWithJNICallType = native_bridge7_getTrampolineWithJNICallType,
++    .getTrampolineForFunctionPointer = native_bridge7_getTrampolineForFunctionPointer,
++    // v8
++    .isNativeBridgeFunctionPointer = native_bridge8_isNativeBridgeFunctionPointer,
+ };
+ 
+ } // extern "C"

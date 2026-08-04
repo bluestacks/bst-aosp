@@ -1,0 +1,136 @@
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 06277afd0da1..cde0b01c7be0 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -22,6 +22,7 @@ import static android.content.pm.PackageManager.APP_METADATA_SOURCE_INSTALLER;
+ import static android.content.pm.PackageManager.APP_METADATA_SOURCE_UNKNOWN;
+ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
+ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
++import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+ import static android.content.pm.PackageManager.INSTALL_FAILED_ALREADY_EXISTS;
+ import static android.content.pm.PackageManager.INSTALL_FAILED_BAD_PERMISSION_GROUP;
+ import static android.content.pm.PackageManager.INSTALL_FAILED_DEPRECATED_SDK_VERSION;
+@@ -4015,6 +4016,38 @@ final class InstallPackageHelper {
+         filterApps.updateAbiEntry(packageSetting.getAppId(), packageName, action);
+     }
+ 
++    @GuardedBy({"mPm.mInstallLock", "mPm.mLock"})
++    private void handleBstBlacklistActionAfterScan(ParsedPackage parsedPackage) {
++        final String packageName = parsedPackage.getPackageName();
++        final PackageSetting packageSetting = mPm.mSettings.getPackageLPr(packageName);
++        if (packageSetting == null
++                || (packageSetting.isSystem() && !packageSetting.isUpdatedSystemApp())) {
++            return;
++        }
++        final BstFilterAppsManager filterApps = (BstFilterAppsManager)
++                mContext.getSystemService(Context.BST_FILTER_APPS);
++        if (filterApps == null) {
++            return;
++        }
++
++        final String action = filterApps.getBlackListAction(packageName);
++        final int enabledState = packageSetting.getEnabled(UserHandle.USER_SYSTEM);
++        if (filterApps.isBlackListed(packageName, parsedPackage.getVersionName())) {
++            if ("disable".equalsIgnoreCase(action)
++                    && enabledState != COMPONENT_ENABLED_STATE_DISABLED) {
++                packageSetting.setEnabled(COMPONENT_ENABLED_STATE_DISABLED,
++                        UserHandle.USER_SYSTEM, "android");
++            } else if ("uninstall".equalsIgnoreCase(action)) {
++                mPm.addBstBlacklistedPackageForUninstall(packageName);
++            }
++        }
++        if ("enable".equalsIgnoreCase(action)
++                && enabledState == COMPONENT_ENABLED_STATE_DISABLED) {
++            packageSetting.setEnabled(COMPONENT_ENABLED_STATE_ENABLED,
++                    UserHandle.USER_SYSTEM, "android");
++        }
++    }
++
+     @GuardedBy({"mPm.mInstallLock", "mPm.mLock"})
+     private int scanDirectoryForFilesToParse(ParallelPackageParser parallelPackageParser,
+             ScanParams scanParams) {
+@@ -4114,6 +4147,7 @@ final class InstallPackageHelper {
+                 addForInitLI(result.parsedPackage, scanParams.parseFlags, scanParams.scanFlags,
+                         new UserHandle(UserHandle.USER_SYSTEM), scanParams.apexInfo);
+                 updateBstAbiEntryAfterScan(result.parsedPackage);
++                handleBstBlacklistActionAfterScan(result.parsedPackage);
+             } catch (PackageManagerException e) {
+                 errorCode = e.error;
+                 errorMsg = "Failed to scan " + result.scanFile + ": " + e.getMessage();
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 808adc121e5b..4e1a4c62a822 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -263,11 +263,13 @@ import com.bluestacks.os.BstFilterAppsManager;
+ import libcore.util.EmptyArray;
+ import libcore.util.HexEncoding;
+ 
++import java.io.BufferedWriter;
+ import java.io.ByteArrayInputStream;
+ import java.io.ByteArrayOutputStream;
+ import java.io.File;
+ import java.io.FileDescriptor;
+ import java.io.FileNotFoundException;
++import java.io.FileWriter;
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.PrintWriter;
+@@ -938,8 +940,12 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+     private static final long PRUNE_UNUSED_SHARED_LIBRARIES_DELAY =
+             TimeUnit.MINUTES.toMillis(3); // 3 minutes
+ 
++    private static final String BST_BLACKLISTED_PACKAGE_LIST_PATH =
++            "/data/downloads/.tmp/.blc";
++
+     // When the service constructor finished plus a delay (used for broadcast delay computation)
+     private long mServiceStartWithDelay;
++    private final Set<String> mBstBlacklistedPackagesForUninstall = new ArraySet<>();
+ 
+     static final long DEFAULT_UNUSED_STATIC_SHARED_LIB_MIN_CACHE_PERIOD =
+             TimeUnit.DAYS.toMillis(7); /* 7 days */
+@@ -2594,9 +2600,45 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+ 
+         mServiceStartWithDelay = SystemClock.uptimeMillis() + (60 * 1000L);
+ 
++        writeBstBlacklistedPackageList();
++
+         Slog.i(TAG, "Fix for b/169414761 is applied");
+     }
+ 
++    void addBstBlacklistedPackageForUninstall(String packageName) {
++        mBstBlacklistedPackagesForUninstall.add(packageName);
++    }
++
++    private void writeBstBlacklistedPackageList() {
++        final File outputFile = new File(BST_BLACKLISTED_PACKAGE_LIST_PATH);
++        if (mBstBlacklistedPackagesForUninstall.isEmpty()) {
++            if (outputFile.exists() && !outputFile.delete()) {
++                Slog.w(TAG, "Unable to delete stale blacklist file " + outputFile);
++            }
++            return;
++        }
++
++        final File parent = outputFile.getParentFile();
++        if (parent != null && !parent.exists() && !parent.mkdirs() && !parent.exists()) {
++            Slog.e(TAG, "Unable to create blacklist directory " + parent);
++            return;
++        }
++        final List<String> packages = new ArrayList<>(mBstBlacklistedPackagesForUninstall);
++        Collections.sort(packages);
++        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile, false))) {
++            for (String packageName : packages) {
++                writer.write(packageName);
++                writer.write(';');
++            }
++        } catch (IOException e) {
++            Slog.e(TAG, "Unable to write blacklisted package list " + outputFile, e);
++            return;
++        }
++        if (FileUtils.setPermissions(BST_BLACKLISTED_PACKAGE_LIST_PATH, 0644, -1, -1) != 0) {
++            Slog.e(TAG, "Unable to set permissions on blacklist file " + outputFile);
++        }
++    }
++
+     @GuardedBy("mLock")
+     void updateInstantAppInstallerLocked(String modifiedPackage) {
+         // we're only interested in updating the installer application when 1) it's not

@@ -1,0 +1,115 @@
+From 0e00bcbdbe7938a458ba52f9a9a4ce6e9ac2ba4a Mon Sep 17 00:00:00 2001
+From: jammy <jammy@bluestacks.com>
+Date: Fri, 21 Mar 2025 15:19:08 +0800
+Subject: [PATCH 174/224] case ROB-15565: enable vulkan globally
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   |  4 +--
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  2 +-
+ .../server/BstFilterAppsService.java          | 30 ++++++++-----------
+ 3 files changed, 16 insertions(+), 20 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index c38bb3591194..f4020f75184f 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1397,7 +1397,7 @@ public class BstFilterAppsManager {
+     /**
+      * @hide
+      */
+-    public boolean isVulkanRequired(String pkgName)
++    public String isVulkanRequired(String pkgName)
+     {
+         try {
+             return mService.isVulkanRequired(pkgName);
+@@ -1405,7 +1405,7 @@ public class BstFilterAppsManager {
+             // Catching the error and returning default behavior as if entry was not
+             // present in config.db
+             if (DEBUG) e.printStackTrace();
+-            return false;
++            return "";
+         }
+     }
+ 
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 271fb864dd5d..7af036a44259 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -86,7 +86,7 @@ interface IBstFilterAppsService
+     boolean isGetNowggAccountsListApp(int uid);
+     boolean isGoogleSignInRequired(String pkgName);
+     String getMouseAction(String pkgName, String activity);
+-    boolean isVulkanRequired(String pkgName);
++    String isVulkanRequired(String pkgName);
+     boolean isForceKillApp(String pkgName);
+     boolean isFixedDisplayRotationApp(String pkgName);
+     String getGameDefaultSetting(String pkgName);
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 32811b70cfa2..021004b0a955 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -160,7 +160,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mGetNowggAccountsList = new TreeSet<String>();
+     private Set<String>           mGoogleSignInReqdAppList = new TreeSet<String>();
+     private Map<String, Map<String, String>> mMouseActionConfiguredAppList = new HashMap<String, Map<String, String>>();
+-    private Set<String>           mVulkanReqdAppList = new TreeSet<String>();
++    private Map<String, String>   mVulkanReqdAppList = new HashMap<String, String>();
+     private Set<String>           mForceKillAppList = new TreeSet<String>();
+     private Map<String, String>   mGameDefaultSettingAppList = new HashMap<String, String>();
+     private Set<String>           mHppDisabledAppList = new TreeSet<String>();
+@@ -2204,18 +2204,13 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                  }
+                                 else if (key.equalsIgnoreCase("vulkan")) {
+                                    synchronized (mVulkanReqdAppList) {
+-                                        if (value.equalsIgnoreCase("false")) {
+-                                            packageName = "~" + packageName;
+-                                        }
+                                         if (DEBUG)
+-                                            Slog.d(TAG, "Adding " + packageName + " to mVulkanReqdAppList \n");
+-                                        mVulkanReqdAppList.add(packageName);
++                                            Slog.d(TAG, "Adding " + packageName + ";" + value + " to mVulkanReqdAppList\n");
++                                        mVulkanReqdAppList.put(packageName, value);
+                                         if (packageName.startsWith("~")) {
+-                                            if (DEBUG)
+-                                                Slog.d(TAG, "Removing " + origPackageName + " from mVulkanReqdAppList \n");
+                                             mVulkanReqdAppList.remove(packageName.substring(1));
+                                         }
+-                                        removePackageEntryFromList(mVulkanReqdAppList, pkgException);
++                                        removePackageEntryFromList(mVulkanReqdAppList,pkgException,value);
+                                     }
+                                 }
+                                 else if (key.equalsIgnoreCase("forceKill")) {
+@@ -6717,24 +6712,25 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+      * checks if vulkan support needed for this app or not
+      * @hide
+      */
+-    public boolean isVulkanRequired(String pkgName)
++    public String isVulkanRequired(String pkgName)
+     {
+-        boolean res = false;
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mVulkanReqdAppList list\n");
+         initLists();
++        String res = "";
+         synchronized (mVulkanReqdAppList)
+         {
+-            if (mVulkanReqdAppList.contains(pkgName))
++            if (mVulkanReqdAppList.containsKey(pkgName))
+             {
+-                if (DEBUG) Slog.d(TAG, pkgName + " is in mVulkanReqdAppList App List " + "\n");
+-                res = true;
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mVulkanReqdAppList List\n");
++                res = mVulkanReqdAppList.get(pkgName);
+             }
+             else
+             {
+                 String wildcardMatchedPackageName = isPackageMatchedWilcard(mVulkanReqdAppList, pkgName);
+-                if (wildcardMatchedPackageName != null)
++                if(wildcardMatchedPackageName != null)
+                 {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in mVulkanReqdAppList App List " + "\n");
+-                    res = true;
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mVulkanReqdAppList List\n");
++                    res = mVulkanReqdAppList.get(wildcardMatchedPackageName);
+                 }
+             }
+         }

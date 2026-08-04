@@ -1,0 +1,440 @@
+From d803b524b1d857a17fcddc6b920089c43b25e7f8 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Fri, 8 Mar 2024 17:35:04 +0800
+Subject: [PATCH 121/224] [A13]add iap interceptor
+
+---
+ core/java/android/app/ActivityThread.java     |  43 ++++++++
+ .../app/PaymentRedirectProxyActivity.java     | 104 ++++++++++++++++++
+ .../bluestacks/os/BstFilterAppsManager.java   |  12 ++
+ .../com/bluestacks/os/BstHostCallManager.java |  11 ++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |   1 +
+ .../bluestacks/os/IBstHostCallService.aidl    |   1 +
+ .../server/BstFilterAppsService.java          |  83 ++++++++++++++
+ .../bluestacks/server/BstHostCallService.java |   9 ++
+ ...m_bluestacks_server_BstHostCallService.cpp |  20 +++-
+ 9 files changed, 283 insertions(+), 1 deletion(-)
+ create mode 100755 core/java/com/android/internal/app/PaymentRedirectProxyActivity.java
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 8f96e57dc100..a69fd7b372dc 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -233,6 +233,7 @@ import java.io.IOException;
+ import java.io.PrintWriter;
+ import java.lang.ref.WeakReference;
+ import java.lang.reflect.Method;
++import java.lang.reflect.Field;
+ import java.net.InetAddress;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+@@ -2003,6 +2004,29 @@ public final class ActivityThread extends ClientTransactionHandler
+         throw new ForegroundServiceDidNotStartInTimeException(message, inner);
+     }
+ 
++    private static Object bstGetDeclaredField(Object instance, String fieldName) {
++        try {
++            Field field = instance.getClass().getDeclaredField(fieldName);
++            field.setAccessible(true);
++            return field.get(instance);
++        } catch (NoSuchFieldException e) {
++
++        } catch (IllegalAccessException e) {
++
++        }
++        return null;
++    }
++
++    private static Object bstInvokeNonPublicMethods(Object instance, String methodName, Class<?>[] parameterTypes, Object[] params) {
++        try {
++            Method method = instance.getClass().getDeclaredMethod(methodName, parameterTypes);
++            method.setAccessible(true);
++            return method.invoke(instance, params);
++        } catch (Exception e) {
++        }
++        return null;
++    }
++
+     class H extends Handler {
+         public static final int BIND_APPLICATION        = 110;
+         @UnsupportedAppUsage
+@@ -2302,6 +2326,25 @@ public final class ActivityThread extends ClientTransactionHandler
+                     break;
+                 case EXECUTE_TRANSACTION:
+                     final ClientTransaction transaction = (ClientTransaction) msg.obj;
++                    List<ClientTransactionItem> clientCallbacks = (List<ClientTransactionItem>)bstInvokeNonPublicMethods(transaction, "getCallbacks", null, null);
++                    if (clientCallbacks != null) {
++                        BstFilterAppsManager bfam = (BstFilterAppsManager) getSystemContext().getSystemService(Context.BST_FILTER_APPS);
++                        for (ClientTransactionItem item : clientCallbacks) {
++                                Intent launchIntent = (Intent)bstGetDeclaredField(item, "mIntent");
++                                ComponentName origComponent = launchIntent != null ? launchIntent.getComponent() : null;
++                                if (launchIntent != null && origComponent != null
++                                    && origComponent.getClassName().equals("com.android.billingclient.api.ProxyBillingActivity")) {
++                                    Slog.d(TAG, "found google proxy billing activity " + origComponent);
++                                    if (!launchIntent.hasExtra("bst_hooked")) {
++                                        String iapSetting = bfam.getIapSetting(origComponent.getPackageName());
++                                        if (iapSetting != null &&  !iapSetting.equals("")) {
++                                            launchIntent.setComponent(new ComponentName(origComponent.getPackageName(), "com.android.internal.app.PaymentRedirectProxyActivity"));
++                                            launchIntent.putExtra("bst_iap_setting", iapSetting);
++                                        }
++                                    }
++                                }
++                        }
++                    }
+                     mTransactionExecutor.execute(transaction);
+                     if (isSystem()) {
+                         // Client transactions inside system process are recycled on the client side
+diff --git a/core/java/com/android/internal/app/PaymentRedirectProxyActivity.java b/core/java/com/android/internal/app/PaymentRedirectProxyActivity.java
+new file mode 100755
+index 000000000000..922e264af904
+--- /dev/null
++++ b/core/java/com/android/internal/app/PaymentRedirectProxyActivity.java
+@@ -0,0 +1,104 @@
++package com.android.internal.app;
++
++import android.app.Activity;
++import android.content.Context;
++import android.content.Intent;
++import android.content.pm.PackageInfo;
++import android.content.pm.PackageManager;
++import android.net.Uri;
++import android.os.Bundle;
++import android.text.TextUtils;
++import com.bluestacks.os.BstHostCallManager;
++import android.content.SharedPreferences;
++
++public class PaymentRedirectProxyActivity extends Activity {
++    private static final int REQ_CODE = 100;
++    private static final String SHARED_CONFIG_FILE_NAME = "bst_sp_iap_settings";
++    private static final String SP_KEY_DONT_SHOW_AGAIN = "sp_dont_show_again";
++    private static final String SP_KEY_IAP_CLICK_ACTION_TYPE = "sp_click_action_type";
++    private static final String BST_IAP_SETTING_KEY = "bst_iap_setting";
++
++    private Bundle origBundle;
++
++    @Override
++    protected void onCreate( Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++
++        origBundle = getIntent().getExtras();
++
++        SharedPreferences sp = getSharedPreferences(SHARED_CONFIG_FILE_NAME, Context.MODE_PRIVATE);
++
++        Intent chooseIntent = new Intent();
++        chooseIntent.setClassName("gg.now.billing.interceptor", "gg.now.billing.interceptor.PaymentChooserActivity");
++        chooseIntent.putExtra("bst_from_pkg", getPackageName());
++        chooseIntent.putExtra("bst_from_app_version", getAppVersionName());
++        chooseIntent.putExtra("bst_dont_show_agin", sp.getBoolean(SP_KEY_DONT_SHOW_AGAIN , false));
++        chooseIntent.putExtra("bst_click_action_type", sp.getString(SP_KEY_IAP_CLICK_ACTION_TYPE, "PlayStoreIAP"));
++        if (origBundle != null) {
++            chooseIntent.putExtra(BST_IAP_SETTING_KEY, origBundle.getString(BST_IAP_SETTING_KEY));
++        }
++        startActivityForResult(chooseIntent, REQ_CODE);
++    }
++
++    private String getAppVersionName () {
++        String versionName = "";
++        try {
++            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
++            versionName = pInfo.versionName;
++        } catch (PackageManager.NameNotFoundException e) {
++            e.printStackTrace();
++        }
++        return versionName;
++    }
++
++    private static void cancelPurchase(final Context context) {
++        Intent var10000 = new Intent("com.android.vending.billing.PURCHASES_UPDATED");
++        var10000.setPackage(context.getApplicationContext().getPackageName());
++        var10000.putExtra("RESPONSE_CODE", 1);
++        var10000.putExtra("DEBUG_MESSAGE", "Billing dialog closed.");
++        context.sendBroadcast(var10000);
++    }
++
++    @Override
++    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
++        super.onActivityResult(requestCode, resultCode, data);
++        if (requestCode == REQ_CODE && resultCode == RESULT_OK) {
++            boolean dontShowAgain = data.getBooleanExtra("bst_dont_show_agin", false);
++            String actionType = data.getStringExtra("action_type");
++            String actionData = data.getStringExtra("action_data");
++            if (dontShowAgain) {
++                SharedPreferences.Editor editor = getSharedPreferences(SHARED_CONFIG_FILE_NAME, Context.MODE_PRIVATE).edit();
++                editor.putBoolean(SP_KEY_DONT_SHOW_AGAIN, true);
++                editor.putString(SP_KEY_IAP_CLICK_ACTION_TYPE, actionType);
++                editor.apply();
++            }
++            if (TextUtils.equals(actionType, "PlayStoreIAP")) {
++                Intent launcIntent = new Intent();
++                launcIntent.setClassName(this, "com.android.billingclient.api.ProxyBillingActivity");
++                launcIntent.putExtras(origBundle);
++                launcIntent.removeExtra(BST_IAP_SETTING_KEY);
++                launcIntent.putExtra("bst_hooked", true);
++                startActivity(launcIntent);
++                finish();
++                return;
++            } else if (TextUtils.equals(actionType, "OpenGuestUrl")) {
++                Intent view_intent = new Intent(Intent.ACTION_VIEW);
++                view_intent.setData(Uri.parse(actionData));
++                startActivity(view_intent);
++                cancelPurchase(this);
++                finish();
++                return;
++            } else if (TextUtils.equals(actionType, "ApplicationBrowser") || TextUtils.equals(actionType, "UserBrowser")) {
++                BstHostCallManager bstHostCallManagerService = (BstHostCallManager) getSystemService(Context.BST_HOST_CALL);
++                if (bstHostCallManagerService != null) {
++                    bstHostCallManagerService.handleCustomIap(actionType, actionData);
++                }
++                cancelPurchase(this);
++                finish();
++                return;
++            }
++        }
++        cancelPurchase(this);
++        finish();
++    }
++}
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 201cd369913b..74aeeefc24f8 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1695,4 +1695,16 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public String getIapSetting(String pkgName)
++    {
++        try {
++            return mService.getIapSetting(pkgName);
++        } catch(Exception e) {
++            if (DEBUG) e.printStackTrace();
++            return null;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index 00321b00f167..2c6a5faa26f7 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -494,4 +494,15 @@ public class BstHostCallManager {
+             throw new RuntimeException(e);
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public int handleCustomIap(String actionType, String actionData) {
++        try {
++            return mBstHostCallService.handleCustomIap(actionType, actionData);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index 766dd13b5fac..307f25af668f 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -109,4 +109,5 @@ interface IBstFilterAppsService
+     boolean isDrmEnabled(String pkgName);
+     boolean isTexTargetCheckDisabled(String pkgName);
+     int getFixedSurfaceRotationRequired(String pkgName);
++    String getIapSetting(String pkgName);
+ }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index 77312bec2902..b5de0d2c5a76 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -44,4 +44,5 @@ interface IBstHostCallService {
+     int onWalletMessage(String content);
+     int onCustomAppOrientationCompleted(String pkg);
+     int screenRecordingStarted(boolean started, boolean showTaps, int audioSource);
++    int handleCustomIap(String actionType, String actionData);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index 192358e0e94a..4f8247ad1f89 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -180,6 +180,9 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mDrmEnabledAppList = new TreeSet<String>();
+     private Set<String>           mTexTargetCheckDisabledAppList = new TreeSet<String>();
+     private Map<String, Integer>  mFixedSurfaceRotationAppList = new HashMap<String, Integer>();
++    private List<String>          mIapSettingList = new ArrayList<String>();
++    private Map<String, Integer>  mIapSettingPkgIndexMap = new HashMap<String, Integer>();
++    private Object                mIapSettingLock = new Object();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -884,6 +887,47 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         }
+     }
+ 
++    private void loadIapConfigSettings() {
++        synchronized (mIapSettingLock)
++        {
++            mIapSettingList.clear();
++            mIapSettingPkgIndexMap.clear();
++        }
++
++        File db = new File( configFilePath + ".iap_config");
++
++        readIapConfigSettings(db);
++    }
++
++    private void readIapConfigSettings(File db)
++    {
++        if(DEBUG) Slog.d(TAG, "reading file: " + db);
++        try {
++            // If no such file exists, return
++            if (!db.exists())
++                return;
++            String json_input_data = loadConfigDb(db);
++
++            JSONObject rootNode = new JSONObject(json_input_data);
++            JSONArray jsonArray = rootNode.getJSONArray("custom_iap_apps");
++            synchronized (mIapSettingLock)
++            {
++                for (int i = 0; i < jsonArray.length(); i++) {
++                    JSONObject itemNode = jsonArray.getJSONObject(i);
++                    mIapSettingList.add(itemNode.getJSONObject("data").toString());
++
++                    JSONArray pkgArray = itemNode.getJSONArray("show_on_packages");
++                    for (int j = 0; j < pkgArray.length(); j++) {
++                        mIapSettingPkgIndexMap.put(pkgArray.getString(j), i);
++                    }
++                }
++            }
++        } catch(Exception e) {
++            Slog.e(TAG, "Exception in trying to parse iap configs: " + e);
++            e.printStackTrace();
++        }
++    }
++
+     private String loadConfigDb(File db) {
+         String json = null;
+         try {
+@@ -3341,6 +3385,10 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                     if(DEBUG)     Slog.i(TAG, "User defined Custom App Settings has been modified.(" + event + ") Reloading ...\n");
+                     loadUserDefinedCustomAppSettings();
+                 }
++                else if (path.equals(".iap_config")) {
++                    if(DEBUG)     Slog.i(TAG, "IAP Settings has been modified.(" + event + ") Reloading ...\n");
++                    loadIapConfigSettings();
++                }
+             }
+         };
+         mObserver2.startWatching();
+@@ -3370,6 +3418,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                 loadWhitelist();
+                 loadAppSettingLists();
+                 loadUserDefinedCustomAppSettings();
++                loadIapConfigSettings();
+                 loadInstalledAbi2AppsList();       //This is to load list of apps installed in arm mode in system.
+                 monitorLists();
+ 
+@@ -7014,4 +7063,38 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return fixedSurfaceRotation;
+     }
+ 
++    /**
++     * @hide
++     */
++    public String getIapSetting(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in iap setting list\n");
++        initLists();
++
++        synchronized (mIapSettingLock)
++        {
++            if (mIapSettingPkgIndexMap.containsKey(pkgName))
++            {
++                if (DEBUG) Slog.d(TAG, pkgName + " is in iap setting list\n");
++                int index = mIapSettingPkgIndexMap.get(pkgName);
++                if (index > -1 && index < mIapSettingList.size()) {
++                    return mIapSettingList.get(index);
++                }
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mIapSettingPkgIndexMap, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in iap setting list\n");
++                    int index = mIapSettingPkgIndexMap.get(wildcardMatchedPackageName);
++                    if (index > -1 && index < mIapSettingList.size()) {
++                        return mIapSettingList.get(index);
++                    }
++                }
++            }
++        }
++        if (DEBUG) Slog.d(TAG, pkgName + " get iap setting failure\n");
++        return null;
++    }
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index 9b89c8dceff1..b1ea6be72f86 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -377,6 +377,14 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_onInstallApkCompleted(status, apkFileName, errorString, attemptId, packageName);
+     }
+ 
++    /**
++     * @hide
++     */
++    public int handleCustomIap(String actionType, String actionData) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService handleCustomIap actionType : " + actionType + ", actionData: " + actionData);
++        return native_handleCustomIap(actionType, actionData);
++    }
++
+     private static native final int native_init();
+     private static native int native_initImeStatus(String imeName);
+     private static native int native_initInputDebuggingStatus(boolean showTouches, boolean showPointerLocation);
+@@ -420,4 +428,5 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_onWalletMessage(String content);
+     private static native int native_onCustomAppOrientationCompleted(String pkg);
+     private static native int native_screenRecordingStarted(boolean started, boolean showTaps, int audioSource);
++    private static native int native_handleCustomIap(String actionType, String actionData);
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index 66c93780ac3e..c29bf82d7341 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -801,6 +801,23 @@ static jint screenRecordingStarted(JNIEnv* env, jobject clazz, jboolean started,
+     return 0;
+ }
+ 
++static jint handleCustomIap(JNIEnv* env, jobject clazz, jstring actionTypeStr, jstring actionDataStr) {
++    if (dbg) ALOGD("%s", __func__);
++
++    string actionType = getStringFromJstring(env, clazz, actionTypeStr);
++    string actionData = getStringFromJstring(env, clazz, actionDataStr);
++
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallHandleCustomIAPRpc(actionType.c_str(), actionData.c_str());
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
++
+ /*
+  * JNI registration.
+  */
+@@ -849,7 +866,8 @@ static const JNINativeMethod gMethods[] = {
+     { "native_onUpdateQuestRules", "(Ljava/lang/String;)I", (void*)onUpdateQuestRules },
+     { "native_onDifferentImagePkgClicked", "(Ljava/lang/String;)I", (void*)onDifferentImagePkgClicked },
+     { "native_onCustomAppOrientationCompleted", "(Ljava/lang/String;)I", (void*)onCustomAppOrientationCompleted },
+-    { "native_screenRecordingStarted", "(ZZI)I", (void*)screenRecordingStarted }
++    { "native_screenRecordingStarted", "(ZZI)I", (void*)screenRecordingStarted },
++    { "native_handleCustomIap", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)handleCustomIap }
+ };
+ 
+ // This function only registers the native methods

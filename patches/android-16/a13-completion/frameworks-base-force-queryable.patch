@@ -1,0 +1,26 @@
+From 93068e49ffed6d3423d5b576096bcfa4a44ba2bc Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Mon, 3 Aug 2026 20:37:04 +0800
+Subject: [PATCH] [A16] Expose Play Store and now.gg billing packages
+
+Port A13 5c509c6e1185 by adding com.android.vending and gg.now.billing.service2 to the framework force-queryable package list.
+---
+ core/res/res/values/config.xml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index 78f4266841c3..7c1bb56b78cd 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -1998,6 +1998,8 @@
+     <string-array name="config_forceQueryablePackages" translatable="false">
+         <item>com.android.settings</item>
+         <item>com.android.providers.settings</item>
++        <item>com.android.vending</item>
++        <item>gg.now.billing.service2</item>
+         <!-- Add packages here -->
+     </string-array>
+ 
+-- 
+2.34.1
+

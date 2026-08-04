@@ -1,0 +1,26 @@
+diff --git a/services/core/java/com/android/server/wm/ActivityRecord.java b/services/core/java/com/android/server/wm/ActivityRecord.java
+index 1a8e9583fa71..aebee9909903 100644
+--- a/services/core/java/com/android/server/wm/ActivityRecord.java
++++ b/services/core/java/com/android/server/wm/ActivityRecord.java
+@@ -426,7 +426,7 @@ final class ActivityRecord extends WindowToken {
+ 
+     // How long we wait until giving up on an activity telling us it has
+     // finished destroying itself.
+-    private static final int DESTROY_TIMEOUT = 10 * 1000;
++    private static final int DESTROY_TIMEOUT = 20 * 1000;
+ 
+     final ActivityTaskManagerService mAtmService;
+     final ActivityCallerState mCallerState;
+diff --git a/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java b/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
+index ac8b92854e68..b361393fd250 100644
+--- a/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
++++ b/services/core/java/com/android/server/wm/ActivityTaskSupervisor.java
+@@ -198,7 +198,7 @@ public class ActivityTaskSupervisor implements RecentTasks.Callbacks {
+     private static final int SLEEP_TIMEOUT = 5 * 1000 * Build.HW_TIMEOUT_MULTIPLIER;
+ 
+     // How long we can hold the launch wake lock before giving up.
+-    private static final int LAUNCH_TIMEOUT = 10 * 1000 * Build.HW_TIMEOUT_MULTIPLIER;
++    private static final int LAUNCH_TIMEOUT = 50 * 1000 * Build.HW_TIMEOUT_MULTIPLIER;
+ 
+     /** How long we wait until giving up on the activity telling us it released the top state. */
+     private static final int TOP_RESUMED_STATE_LOSS_TIMEOUT = 500;

@@ -1,0 +1,30 @@
+From d150d24b57af14d0d41d4d4cb2737d171caa215a Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 01:08:56 +0800
+Subject: [PATCH] [A16] Restore FPS refresh propagation
+
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index c448169766..a59217edd8 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -2523,8 +2523,12 @@ void SurfaceFlinger::onComposerHalSeamlessPossible(hal::HWDisplayId) {
+     // use this callback to know when to retry in case of SEAMLESS_NOT_POSSIBLE.
+ }
+ 
+-void SurfaceFlinger::onComposerHalRefresh(hal::HWDisplayId) {
++void SurfaceFlinger::onComposerHalRefresh(hal::HWDisplayId hwcDisplayId) {
+     Mutex::Autolock lock(mStateLock);
++    if (const auto displayId = getHwComposer().toPhysicalDisplayId(hwcDisplayId)) {
++        constexpr bool kAllowToEnable = false;
++        mScheduler->resyncToHardwareVsync(*displayId, kAllowToEnable);
++    }
+     scheduleComposite(FrameHint::kNone);
+ }
+ 
+-- 
+2.34.1
+

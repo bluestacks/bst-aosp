@@ -1,0 +1,23 @@
+From fd330f4d57c76f7be418975a9ea44cfe5fb32e70 Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Mon, 20 Nov 2023 18:02:09 +0800
+Subject: [PATCH 085/224] [A13] Case ROB-8853 : updating installation true for
+ non-market apps
+
+---
+ packages/SettingsProvider/res/values/defaults.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SettingsProvider/res/values/defaults.xml b/packages/SettingsProvider/res/values/defaults.xml
+index 99b15db780dc..3e1f7bee1fe3 100644
+--- a/packages/SettingsProvider/res/values/defaults.xml
++++ b/packages/SettingsProvider/res/values/defaults.xml
+@@ -38,7 +38,7 @@
+ 
+     <bool name="def_bluetooth_on">true</bool>
+     <bool name="def_wifi_display_on">false</bool>
+-    <bool name="def_install_non_market_apps">false</bool>
++    <bool name="def_install_non_market_apps">true</bool>
+     <!-- 0 == off, 3 == on -->
+     <integer name="def_location_mode">3</integer>
+     <bool name="assisted_gps_enabled">true</bool>

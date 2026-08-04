@@ -1,0 +1,24 @@
+From 53eb20abecc1b8b1a2d7e55fc1f3637e34a4fc39 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 02:30:37 +0800
+Subject: [PATCH] [A16] Update PRNG seeder startup policy
+
+Advance system/security to 6443d21a351b50b343ea7f037cb045585c4d0f26.
+
+Source: A13 system/security ef05d6c885bc1a74ff8bf37d322b0b9c1d86d31a.
+
+The component keeps prng_seeder buildable but removes its early-init rc registration for App Player guests without a hardware RNG. Module build and install-tree absence readback passed; boot and entropy validation remain required.
+---
+ system/security | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/system/security b/system/security
+index ef91dd6..6443d21 160000
+--- a/system/security
++++ b/system/security
+@@ -1 +1 @@
+-Subproject commit ef91dd6355d1dbc73e28951c8e8c5b92542338da
++Subproject commit 6443d21a351b50b343ea7f037cb045585c4d0f26
+-- 
+2.34.1
+

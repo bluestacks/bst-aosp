@@ -1,0 +1,61 @@
+From e5f9eab9f72202bce9fa67abd808c6176d50467a Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Tue, 14 Nov 2023 11:34:57 +0800
+Subject: [PATCH 065/224] [A13] ROB-9926: add the default profile file for the
+ specified app
+
+---
+ core/java/android/app/ActivityThread.java | 33 +++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index acc98b2bc978..8f96e57dc100 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -211,6 +211,8 @@ import com.android.org.conscrypt.OpenSSLSocketImpl;
+ import com.android.org.conscrypt.TrustedCertificateStore;
+ import com.android.server.am.MemInfoDumpProto;
+ 
++import com.bluestacks.os.BstFilterAppsManager;
++
+ import dalvik.system.AppSpecializationHooks;
+ import dalvik.system.CloseGuard;
+ import dalvik.system.VMDebug;
+@@ -6712,6 +6714,37 @@ public final class ActivityThread extends ClientTransactionHandler
+             mInstrumentation.basicInit(this);
+         }
+ 
++        BstFilterAppsManager bfam = (BstFilterAppsManager) getSystemContext().getSystemService(Context.BST_FILTER_APPS);
++        String bstPackageName = data.info.getPackageName();
++        String appsProfile = bfam.getDefaultProfile(bstPackageName);
++        if (appsProfile != null && appsProfile.length() > 1) {
++            try {
++                String spFilename = appsProfile.substring(appsProfile.indexOf('=') + 1, appsProfile.indexOf(','));
++                String spKeyValueSequences = appsProfile.substring(appsProfile.indexOf(('='), spFilename.length()) + 1);
++                File file = new File(spFilename);
++                if (!file.exists()) {
++                    File parentDir = file.getParentFile();
++                    if (!parentDir.exists()) {
++                        // Creating files in the /sdcard/Android/data/ directory requires permission
++                        if (spFilename.startsWith("/sdcard/Android/data/") ) {
++                            appContext.getImpl(appContext).getExternalFilesDir(null);
++                        }
++                        parentDir.mkdirs();
++                        parentDir.setReadable(true, false);
++                        parentDir.setWritable(true, false);
++                    }
++                    file.createNewFile();
++                    FileOutputStream fos = new FileOutputStream(file);
++                    fos.write(spKeyValueSequences.getBytes());
++                    file.setReadable(true, false);
++                    file.setWritable(true, false);
++                    fos.close();
++                }
++            } catch (Exception e) {
++                Slog.e(TAG, "bst create default profile failed!");
++            }
++        }
++
+         if ((data.appInfo.flags&ApplicationInfo.FLAG_LARGE_HEAP) != 0) {
+             dalvik.system.VMRuntime.getRuntime().clearGrowthLimit();
+         } else {

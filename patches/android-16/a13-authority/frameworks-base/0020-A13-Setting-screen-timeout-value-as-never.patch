@@ -1,0 +1,23 @@
+From 76ca09fba31d813a0e7791cfe3c89247f65a0e77 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Sat, 16 Sep 2023 15:08:40 +0800
+Subject: [PATCH 020/224] [A13] Setting screen timeout value as never
+
+---
+ .../java/com/android/server/power/PowerManagerService.java     | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index 651bb930c49b..06a1e864e4bd 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -220,7 +220,8 @@ public final class PowerManagerService extends SystemService
+ 
+     // Default timeout in milliseconds.  This is only used until the settings
+     // provider populates the actual default value (R.integer.def_screen_off_timeout).
+-    private static final int DEFAULT_SCREEN_OFF_TIMEOUT = 15 * 1000;
++    // Default timeout for screen off, if not found in settings database
++    private static final int DEFAULT_SCREEN_OFF_TIMEOUT = Integer.MAX_VALUE;
+     private static final int DEFAULT_SLEEP_TIMEOUT = -1;
+ 
+     // Screen brightness boost timeout.

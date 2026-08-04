@@ -1,0 +1,19 @@
+From e3f0a763b9c1feb71ffc982033e638be0c247862 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 01:41:09 +0800
+Subject: [PATCH] [A16] Update H.263 decoder limits
+
+---
+ frameworks/av | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/frameworks/av b/frameworks/av
+index 5293270..4261034 160000
+--- a/frameworks/av
++++ b/frameworks/av
+@@ -1 +1 @@
+-Subproject commit 52932704dcc721eacdc692bfe8990115ab8041d2
++Subproject commit 42610340d7fec9f2939d7628531710cef8ac15e5
+-- 
+2.34.1
+

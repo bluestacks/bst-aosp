@@ -1,0 +1,29 @@
+From e4873271093347785d45111c1bfa085aeeec5b9b Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Mon, 20 Nov 2023 11:44:07 +0800
+Subject: [PATCH 079/224] [A13] [BS4-4874] Skipping /data/downloads/.tmp dir
+
+while scanning for packages on boot for installing apps
+---
+ .../java/com/android/server/pm/InstallPackageHelper.java  | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 0f9876008d88..4a5a15f94f5d 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -3507,6 +3507,14 @@ final class InstallPackageHelper {
+                 // Ignore entries which are not packages
+                 continue;
+             }
++
++            if (file.getAbsolutePath().startsWith("/data/downloads/.tmp")) {
++                if (DEBUG_PACKAGE_SCANNING) {
++                    Log.d(TAG, "scanDirLI: continue " + file.getAbsolutePath());
++                }
++                continue;
++            }
++
+             if ((scanFlags & SCAN_DROP_CACHE) != 0) {
+                 final PackageCacher cacher = new PackageCacher(mPm.getCacheDir());
+                 Log.w(TAG, "Dropping cache of " + file.getAbsolutePath());

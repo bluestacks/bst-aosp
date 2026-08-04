@@ -1,0 +1,69 @@
+From 05b157131a384c9c6bf70ae66122592b6776443e Mon Sep 17 00:00:00 2001
+From: amit-bst <amit@bluestacks.com>
+Date: Fri, 24 Jan 2025 14:23:08 +0530
+Subject: [PATCH 166/224] Case ROB-15810 : sending JSONObject instead of many
+ params in app install (#335)
+
+Co-authored-by: Build Master <build@bluestacks.com>
+(cherry picked from commit 12651d6b690292c3b6c4d609e2de353c4b2c1b3d)
+---
+ core/java/com/bluestacks/os/BstHostCallManager.java       | 4 ++--
+ core/java/com/bluestacks/os/IBstHostCallService.aidl      | 2 +-
+ .../java/com/bluestacks/server/BstHostCallService.java    | 8 ++++----
+ 3 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index b456712749b8..90dfa13c391c 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -267,9 +267,9 @@ public class BstHostCallManager {
+     /**
+      * @hide
+      */
+-    public int onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String orientation, String attemptId) {
++    public int onAppInstalled(String jsonData) {
+         try {
+-            return mBstHostCallService.onAppInstalled(pkg, activity, appLabel, versionCode, versionName, iconFileName, source, isUpdate, isHomeApp, orientation, attemptId);
++            return mBstHostCallService.onAppInstalled(jsonData);
+         } catch (RemoteException e) {
+             throw new RuntimeException(e);
+         }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index 218690cc36bc..73709ebad3ff 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -22,7 +22,7 @@ interface IBstHostCallService {
+     int setGoogleAdId(String googleAdId);
+     int onCursorLocationChanged(int x, int y);
+     int onLocaleChanged(String locale);
+-    int onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String orientation, String attemptId);
++    int onAppInstalled(String jsonData);
+     int onAppUninstalled(String pkg);
+     int onScreenshotSaved(String fileName);
+     int createDesktopShortcut(String pkg);
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index 2e9cfcfda908..4134730b235b 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -212,9 +212,9 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     /**
+      * @hide
+      */
+-    public int onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String orientation, String attemptId) {
+-        if (DBG) Slog.d(TAG, "in BstHostCallService onAppInstalled, pkg : " + pkg + ", activity = " + activity + ", appLabel = " + appLabel + ", versionCode = " + versionCode + ", versionName = " + versionName + ", iconFileName = " + iconFileName + ", source = " + source + ", isUpdate = " + isUpdate + ", isHomeApp = " + isHomeApp + ", orientation = " + orientation + ", attemptId = " + attemptId);
+-        return native_onAppInstalled(pkg, activity, appLabel, versionCode, versionName, iconFileName, source, isUpdate, isHomeApp, orientation, attemptId);
++    public int onAppInstalled(String jsonData) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService onAppInstalled, jsonData : " + jsonData);
++        return native_onAppInstalled(jsonData);
+     }
+ 
+     /**
+@@ -481,7 +481,7 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_setGoogleAdId(String googleAdId);
+     private static native int native_onCursorLocationChanged(int x, int y);
+     private static native int native_onLocaleChanged(String locale);
+-    private static native int native_onAppInstalled(String pkg, String activity, String appLabel, int versionCode, String versionName, String iconFileName, String source, boolean isUpdate, boolean isHomeApp, String orientation, String attemptId);
++    private static native int native_onAppInstalled(String jsonData);
+     private static native int native_onAppUninstalled(String pkg);
+     private static native int native_onScreenshotSaved(String fileName);
+     private static native int native_createDesktopShortcut(String pkg);

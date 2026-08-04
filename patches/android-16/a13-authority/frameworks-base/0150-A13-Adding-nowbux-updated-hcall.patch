@@ -1,0 +1,103 @@
+From 68d541a59d2dd6ab5e822b14c34abc7b864dd0c1 Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Sun, 29 Sep 2024 17:40:22 +0800
+Subject: [PATCH 150/224] [A13] Adding nowbux updated hcall
+
+---
+ .../com/bluestacks/os/BstHostCallManager.java     | 11 +++++++++++
+ .../com/bluestacks/os/IBstHostCallService.aidl    |  1 +
+ .../com/bluestacks/server/BstHostCallService.java |  8 ++++++++
+ .../com_bluestacks_server_BstHostCallService.cpp  | 15 ++++++++++++++-
+ 4 files changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index df9ba9d7ceb7..2d1bd1bdbba9 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -539,6 +539,17 @@ public class BstHostCallManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public int onNowbuxUpdated() {
++        try {
++            return mBstHostCallService.onNowbuxUpdated();
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
++
+     /**
+      * @hide
+      */
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index 224234efba3f..ebfceeed8006 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -48,5 +48,6 @@ interface IBstHostCallService {
+     int onAdsInfoClick();
+     int removeBootLoadingScreen(boolean onAdShown);
+     int interstitialAdCompleted(String source, String action);
++    int onNowbuxUpdated();
+     int unzipFile(String fileName, String attemptId, String source, String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index 9c24305d3a3d..5745f7f7f04e 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -409,6 +409,13 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_interstitialAdCompleted(source, action);
+     }
+ 
++    /**
++     * @hide
++     */
++    public int onNowbuxUpdated() {
++        if (DBG) Slog.d(TAG, "in BstHostCallService onNowbuxUpdated");
++        return native_onNowbuxUpdated();
++    }
+ 
+     /**
+      * @hide
+@@ -465,5 +472,6 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_onAdsInfoClick();
+     private static native int native_removeBootLoadingScreen(boolean isAdShown);
+     private static native int native_interstitialAdCompleted(String source, String action);
++    private static native int native_onNowbuxUpdated();
+     private static native int native_unzipFile(String fileName, String attemptId, String source, String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index 45d805e23bb5..804c73660988 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -849,6 +849,18 @@ static jint interstitialAdCompleted(JNIEnv* env, jobject clazz, jstring sourceSt
+     return 0;
+ }
+ 
++static jint onNowbuxUpdated(JNIEnv* env, jobject clazz) {
++    if (dbg) ALOGD("%s: called", __func__);
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallOnNowbuxUpdatedRpc();
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
+ 
+ static jint unzipFile(JNIEnv* env, jobject clazz, jstring fileNameStr, jstring attemptIdStr, jstring sourceStr, jstring pkgNameStr) {
+     if (dbg) ALOGD("%s", __func__);
+@@ -920,7 +932,8 @@ static const JNINativeMethod gMethods[] = {
+     { "native_handleCustomIap", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)handleCustomIap },
+     { "native_onAdsInfoClick", "()I", (void*)onAdsInfoClick },
+     { "native_removeBootLoadingScreen", "(Z)I", (void*)removeBootLoadingScreen },
+-    { "native_interstitialAdCompleted", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)interstitialAdCompleted }
++    { "native_interstitialAdCompleted", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)interstitialAdCompleted },
++    { "native_onNowbuxUpdated", "()I", (void *)onNowbuxUpdated},
+     { "native_unzipFile", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)unzipFile }
+ };
+ 

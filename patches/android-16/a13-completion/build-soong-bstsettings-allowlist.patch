@@ -1,0 +1,24 @@
+From cfe9b2668c1b95014d52b276ae69837f93eda771 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 19:37:41 +0800
+Subject: [PATCH] [A16] Allow the BlueStacks settings makefile
+
+---
+ ui/build/androidmk_denylist.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/ui/build/androidmk_denylist.go b/ui/build/androidmk_denylist.go
+index f7123f67a..18e6bad0f 100644
+--- a/ui/build/androidmk_denylist.go
++++ b/ui/build/androidmk_denylist.go
+@@ -66,6 +66,7 @@ var androidmk_allowlist []string = []string{
+ 	"device/generic/common/app/Android.mk",
+ 	"packages/apps/BstCommandProcessor/Android.mk",
+ 	"packages/apps/BstCommandProcessor/jni/Android.mk",
++	"packages/apps/BstSettings/Android.mk",
+ 	"frameworks/base/services/java/com/bluestacks/server/native/Android.mk",
+ 	"external/bluestacks/sensors/Android.mk",
+ 	"external/bluestacks/bstshutdown/Android.mk",
+-- 
+2.34.1
+

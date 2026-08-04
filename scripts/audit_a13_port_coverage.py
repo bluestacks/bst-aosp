@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare the final A13 fork delta with AOSP16 and Android-16 source trees."""
+"""Compare every final A13 branch patch with AOSP16 and Android-16 trees."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ import shlex
 import subprocess
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +28,78 @@ CUSTOM_COMMIT_RE = re.compile(
     r"bst_|bstvmsg|bstpgaipc|qvirt|vbox",
     re.IGNORECASE,
 )
+
+TARGET_PATH_REWRITES = {
+    "device/generic/common": (
+        (
+            "libndk_tiramisu64/",
+            "libndk_baklava64/",
+            "Android platform codename update: Tiramisu to Baklava",
+        ),
+    ),
+    "frameworks/base": (
+        (
+            "core/java/com/android/internal/os/BatteryStatsImpl.java",
+            "services/core/java/com/android/server/power/stats/BatteryStatsImpl.java",
+            "Battery stats implementation moved into system_server power stats",
+        ),
+        (
+            "core/java/com/android/server/SystemConfig.java",
+            "services/core/java/com/android/server/SystemConfig.java",
+            "SystemConfig moved from framework core into system_server",
+        ),
+        (
+            "location/java/android/location/Location.java",
+            "core/java/android/location/Location.java",
+            "Location moved into framework core",
+        ),
+        (
+            "packages/SettingsProvider/res/xml/bookmarks.xml",
+            "core/res/res/xml/bookmarks.xml",
+            "Framework bookmarks moved out of SettingsProvider",
+        ),
+        (
+            "packages/SystemUI/src/com/android/systemui/screenshot/SaveImageInBackgroundTask.java",
+            "packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java",
+            "Screenshot persistence moved to ImageExporter",
+        ),
+        (
+            "packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotController.java",
+            "packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotController.kt",
+            "ScreenshotController migrated from Java to Kotlin",
+        ),
+        (
+            "packages/SystemUI/src/com/android/systemui/statusbar/StatusBarMobileView.java",
+            "packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/ui/view/ModernStatusBarMobileView.kt",
+            "Mobile status icon moved to the modern Kotlin pipeline",
+        ),
+        (
+            "services/core/java/com/android/server/NetworkManagementService.java",
+            "services/core/java/com/android/server/net/NetworkManagementService.java",
+            "NetworkManagementService moved into the server.net package",
+        ),
+        (
+            "services/core/java/com/android/server/NetworkTimeUpdateService.java",
+            "services/core/java/com/android/server/timedetector/NetworkTimeUpdateService.java",
+            "Network time service moved into the time detector package",
+        ),
+        (
+            "services/core/java/com/android/server/pm/VerificationParams.java",
+            "services/core/java/com/android/server/pm/VerifyingSession.java",
+            "Package verification state moved to VerifyingSession",
+        ),
+        (
+            "services/core/java/com/android/server/pm/permission/PermissionManagerServiceImpl.java",
+            "services/permission/java/com/android/server/permission/access/permission/PermissionService.kt",
+            "Runtime permission policy moved into the permission service",
+        ),
+        (
+            "services/core/java/com/android/server/wm/RecentsAnimationController.java",
+            "libs/WindowManager/Shell/src/com/android/wm/shell/recents/RecentsTransitionHandler.java",
+            "Legacy recents animation moved into WindowManager Shell transitions",
+        ),
+    ),
+}
 
 
 def run(cwd: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[bytes]:
@@ -106,6 +179,32 @@ def parse_added_lines(patch: str) -> dict[str, set[str]]:
     return additions
 
 
+def parse_changed_lines(patch: str) -> dict[str, dict[str, set[str]]]:
+    changes: dict[str, dict[str, set[str]]] = defaultdict(
+        lambda: {"added": set(), "removed": set()}
+    )
+    current: str | None = None
+    for line in patch.splitlines():
+        if line.startswith("diff --git "):
+            try:
+                parts = shlex.split(line)
+                current = parts[3][2:] if len(parts) >= 4 else None
+            except ValueError:
+                current = None
+            continue
+        if not current:
+            continue
+        if line.startswith("+") and not line.startswith("+++"):
+            normalized = normalize_line(line[1:])
+            if normalized:
+                changes[current]["added"].add(normalized)
+        elif line.startswith("-") and not line.startswith("---"):
+            normalized = normalize_line(line[1:])
+            if normalized:
+                changes[current]["removed"].add(normalized)
+    return changes
+
+
 def parse_commits(text: str) -> tuple[list[dict[str, Any]], dict[str, list[str]]]:
     commits: list[dict[str, Any]] = []
     file_refs: dict[str, list[str]] = defaultdict(list)
@@ -138,12 +237,85 @@ def is_custom_commit(commit: dict[str, Any]) -> bool:
     return bool(CUSTOM_COMMIT_RE.search(evidence))
 
 
+@lru_cache(maxsize=None)
 def source_file_lines(path: Path) -> set[str]:
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return set()
     return {value for line in text.splitlines() if (value := normalize_line(line))}
+
+
+def commit_target_evidence(
+    target_root: Path,
+    project: str,
+    relative: str,
+    surviving_added: set[str],
+    surviving_removed: set[str],
+) -> dict[str, Any]:
+    project_root = target_root / project
+    state: dict[str, Any] = {
+        "matched_path": None,
+        "path_adaptation": None,
+        "surviving_added_lines": len(surviving_added),
+        "surviving_removed_lines": len(surviving_removed),
+        "matched_added_lines": 0,
+        "matched_removed_lines": 0,
+        "coverage": None,
+        "classification": "target-project-missing",
+    }
+    total = len(surviving_added) + len(surviving_removed)
+    if total == 0:
+        state["classification"] = "superseded-in-a13"
+        return state
+    if not project_root.is_dir():
+        return state
+
+    candidate_paths = [(relative, None)]
+    for source_prefix, target_prefix, reason in TARGET_PATH_REWRITES.get(project, ()):
+        if relative.startswith(source_prefix):
+            candidate_paths.append((target_prefix + relative[len(source_prefix):], reason))
+    candidates = [
+        (project_root / candidate, reason)
+        for candidate, reason in candidate_paths
+        if (project_root / candidate).is_file()
+    ]
+    if not candidates:
+        if not surviving_added:
+            state["matched_removed_lines"] = len(surviving_removed)
+            state["coverage"] = 1.0
+            state["classification"] = "complete-removal-evidence"
+        else:
+            state["classification"] = "target-file-missing"
+        return state
+
+    best: tuple[float, int, int, Path, str | None] | None = None
+    for candidate, adaptation in candidates:
+        target_lines = source_file_lines(candidate)
+        matched_added = len(surviving_added & target_lines)
+        matched_removed = len(surviving_removed - target_lines)
+        coverage = (matched_added + matched_removed) / total
+        score = (coverage, matched_added, matched_removed, candidate, adaptation)
+        if best is None or score[:3] > best[:3]:
+            best = score
+    assert best is not None
+    coverage, matched_added, matched_removed, candidate, adaptation = best
+    state.update(
+        {
+            "matched_path": candidate.relative_to(project_root).as_posix(),
+            "path_adaptation": adaptation,
+            "matched_added_lines": matched_added,
+            "matched_removed_lines": matched_removed,
+            "coverage": round(coverage, 4),
+        }
+    )
+    if coverage == 1.0:
+        state["classification"] = "complete-line-evidence"
+    elif coverage >= 0.25:
+        state["classification"] = "partial-line-evidence"
+    else:
+        state["classification"] = "low-line-evidence"
+    return state
 
 
 def tree_identity(root: Path) -> dict[str, Any]:
@@ -281,6 +453,7 @@ def target_state(
         "project_exists": project_root.is_dir(),
         "requested_path": relative,
         "matched_path": None,
+        "path_adaptation": None,
         "exact_file": False,
         "substantive_added_lines": len(added_lines),
         "matched_added_lines": 0,
@@ -289,25 +462,35 @@ def target_state(
     }
     if not project_root.is_dir():
         return state
-    candidates = [project_root / relative]
-    candidates = [candidate for candidate in candidates if candidate.is_file()]
+    candidate_paths = [(relative, None)]
+    for source_prefix, target_prefix, reason in TARGET_PATH_REWRITES.get(project, ()):
+        if relative.startswith(source_prefix):
+            candidate_paths.append(
+                (target_prefix + relative[len(source_prefix):], reason)
+            )
+    candidates = [
+        (project_root / candidate, reason)
+        for candidate, reason in candidate_paths
+        if (project_root / candidate).is_file()
+    ]
     if not candidates:
         state["classification"] = "file-missing"
         return state
 
     a13_hash = sha256(a13_file) if a13_file.is_file() else None
-    best: tuple[float, int, Path, bool] | None = None
-    for candidate in candidates:
+    best: tuple[float, int, Path, bool, str | None] | None = None
+    for candidate, adaptation in candidates:
         exact = bool(a13_hash and sha256(candidate) == a13_hash)
         target_lines = source_file_lines(candidate) if added_lines else set()
         matched = len(added_lines & target_lines)
         coverage = matched / len(added_lines) if added_lines else 0.0
         score = 2.0 if exact else coverage
         if best is None or score > best[0]:
-            best = (score, matched, candidate, exact)
+            best = (score, matched, candidate, exact, adaptation)
     assert best is not None
-    _score, matched, candidate, exact = best
+    _score, matched, candidate, exact, adaptation = best
     state["matched_path"] = candidate.relative_to(project_root).as_posix()
+    state["path_adaptation"] = adaptation
     state["exact_file"] = exact
     state["matched_added_lines"] = matched
     if exact:
@@ -347,6 +530,7 @@ def inspect_project(
     android16_root: Path,
     project: str,
     requested_tag: str,
+    commit_detail: bool,
 ) -> dict[str, Any]:
     repository = a13_root / project
     result: dict[str, Any] = {"path": project, "errors": []}
@@ -371,15 +555,59 @@ def inspect_project(
         "--format=@@A13@@%H%x09%an%x09%ae%x09%s",
         f"{baseline}..HEAD",
     )
-    all_commits, _all_file_refs = parse_commits(log)
-    commits = [commit for commit in all_commits if is_custom_commit(commit)]
-    if method == "custom-project-empty-tree" and not commits:
-        commits = all_commits
-    result["non_merge_commit_count"] = len(all_commits)
-    result["custom_commit_count"] = len(commits)
+    commits, _all_file_refs = parse_commits(log)
+    for commit in commits:
+        commit["product_signal"] = is_custom_commit(commit)
+        if commit_detail:
+            commit_patch = git_text(
+                repository,
+                "show",
+                "--format=",
+                "--no-ext-diff",
+                "--no-renames",
+                "--unified=0",
+                "--no-color",
+                commit["commit"],
+            )
+            changed_lines = parse_changed_lines(commit_patch)
+            evidence: list[dict[str, Any]] = []
+            for relative in commit["files"]:
+                changed = changed_lines.get(relative, {"added": set(), "removed": set()})
+                final_file = repository / relative
+                final_lines = source_file_lines(final_file) if final_file.is_file() else set()
+                surviving_added = changed["added"] & final_lines
+                surviving_removed = changed["removed"] - final_lines
+                evidence.append(
+                    {
+                        "path": relative,
+                        "commit_added_lines": len(changed["added"]),
+                        "commit_removed_lines": len(changed["removed"]),
+                        "surviving_added_lines": len(surviving_added),
+                        "surviving_removed_lines": len(surviving_removed),
+                        "aosp16": commit_target_evidence(
+                            aosp16_root,
+                            project,
+                            relative,
+                            surviving_added,
+                            surviving_removed,
+                        ),
+                        "android16": commit_target_evidence(
+                            android16_root,
+                            project,
+                            relative,
+                            surviving_added,
+                            surviving_removed,
+                        ),
+                    }
+                )
+            commit["evidence"] = evidence
+    result["non_merge_commit_count"] = len(commits)
+    result["product_signal_commit_count"] = sum(
+        commit["product_signal"] for commit in commits
+    )
     if not commits:
         result["changed_file_count"] = 0
-        result["excluded_reason"] = "no-bluestacks-a13-commit-signal"
+        result["excluded_reason"] = "no-a13-branch-delta"
         return result
 
     file_refs: dict[str, list[str]] = defaultdict(list)
@@ -477,6 +705,17 @@ def main() -> int:
     parser.add_argument(
         "--scope", choices=("all", "submodules", "root"), default="all"
     )
+    parser.add_argument(
+        "--project",
+        action="append",
+        dest="projects",
+        help="limit submodule audit to this exact project path; repeat as needed",
+    )
+    parser.add_argument(
+        "--commit-detail",
+        action="store_true",
+        help="record surviving added/removed line evidence for every A13 commit",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -484,7 +723,7 @@ def main() -> int:
     aosp16_root = args.aosp16_root.expanduser().resolve()
     android16_root = args.android16_root.expanduser().resolve()
     payload = {
-        "schema_version": 2,
+        "schema_version": 4,
         "mode": "a13-port-coverage",
         "scope": args.scope,
         "identities": {
@@ -496,11 +735,22 @@ def main() -> int:
     }
     if args.scope in {"all", "submodules"}:
         paths = submodule_paths(a13_root)
+        if args.projects:
+            requested = set(args.projects)
+            unknown = sorted(requested - set(paths))
+            if unknown:
+                parser.error(f"unknown A13 project path(s): {', '.join(unknown)}")
+            paths = [path for path in paths if path in requested]
         with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as executor:
             projects = list(
                 executor.map(
                     lambda project: inspect_project(
-                        a13_root, aosp16_root, android16_root, project, args.base_tag
+                        a13_root,
+                        aosp16_root,
+                        android16_root,
+                        project,
+                        args.base_tag,
+                        args.commit_detail,
                     ),
                     paths,
                 )

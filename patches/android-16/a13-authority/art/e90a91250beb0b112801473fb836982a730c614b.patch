@@ -1,0 +1,39 @@
+From e90a91250beb0b112801473fb836982a730c614b Mon Sep 17 00:00:00 2001
+From: jace-bst <88761019+jace-bst@users.noreply.github.com>
+Date: Thu, 3 Jul 2025 17:13:00 +0800
+Subject: [PATCH] Merge pull request #15 from jace-bst/bst-v5.22.85-highFpsOpt
+
+ROB-16547: change isXperfMode to getXperfMode to support HighFps
+---
+ libnativeloader/native_loader_namespace.cpp | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/libnativeloader/native_loader_namespace.cpp b/libnativeloader/native_loader_namespace.cpp
+index 4528ec8f22..64b7cc785e 100644
+--- a/libnativeloader/native_loader_namespace.cpp
++++ b/libnativeloader/native_loader_namespace.cpp
+@@ -192,15 +192,15 @@ static inline bool bst_enable_high_fps()
+ 
+ static const char* g_progname = getprogname();
+ 
+-static inline bool bst_isXPerfMode(int uid, bool check_pkg = false)
++static inline int bst_isXPerfMode(int uid, bool check_pkg = false)
+ {
+-    if (uid < 10000) return false;
+-    if (check_pkg && g_progname && strcmp(g_progname, "chrome_zygote") == 0) return false;
++    if (uid < 10000) return 0;
++    if (check_pkg && g_progname && strcmp(g_progname, "chrome_zygote") == 0) return 0;
+     void* handle = OpenSystemLibrary("libbinder.so", RTLD_NOLOAD);
+-    if (handle == nullptr) return false;
+-    typedef bool Func(int);
++    if (handle == nullptr) return 0;
++    typedef int Func(int);
+     const auto func = reinterpret_cast<Func*>(dlsym(handle, "bst_isXPerfMode"));
+-    const bool ret = func ? func(uid) : false;
++    const int ret = func ? func(uid) : 0;
+     dlclose(handle);
+     return ret;
+ }
+-- 
+2.34.1
+

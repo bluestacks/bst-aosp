@@ -1,0 +1,144 @@
+From c7ecb7f88f5347649f723ade3b260bf616529141 Mon Sep 17 00:00:00 2001
+From: allen-bst <70563899+allen-bst@users.noreply.github.com>
+Date: Tue, 12 Mar 2024 15:05:05 +0800
+Subject: [PATCH 10/13] Fd size (#10)
+
+* [A13] ROB-9727: Black screen and Crash/Freeze issue in Mobile Legends Bang
+
+* [A13] ROB-10578: Crash/Freeze issue in com.riotgames.league.wildrift
+
+* [A13] ROB-12233: Wild Rift crashing on launch
+---
+ libc/bionic/fortify.cpp       | 18 ++++++++++++++++++
+ libc/bionic/poll.cpp          | 21 +++++++++++++++++++++
+ libc/private/bionic_fortify.h | 20 +++++++++++++++++++-
+ 3 files changed, 58 insertions(+), 1 deletion(-)
+
+diff --git a/libc/bionic/fortify.cpp b/libc/bionic/fortify.cpp
+index 88ae4779e..0b85d34ea 100644
+--- a/libc/bionic/fortify.cpp
++++ b/libc/bionic/fortify.cpp
+@@ -80,16 +80,34 @@
+ 
+ int __FD_ISSET_chk(int fd, const fd_set* set, size_t set_size) {
+   __check_fd_set("FD_ISSET", fd, set_size);
++  if (fd >= FD_SETSIZE) {
++    char process_name[256] = {0};
++    __get_process_name(process_name, sizeof(process_name) - 1);
++    if (!strcmp(process_name, "com.mobile.legends:UnityKillsMe"))
++        return 1;
++  }
+   return __FD_ISSET(fd, set);
+ }
+ 
+ void __FD_CLR_chk(int fd, fd_set* set, size_t set_size) {
+   __check_fd_set("FD_CLR", fd, set_size);
++  if (fd >= FD_SETSIZE) {
++    char process_name[256] = {0};
++    __get_process_name(process_name, sizeof(process_name) - 1);
++    if (!strcmp(process_name, "com.mobile.legends:UnityKillsMe"))
++        return;
++  }
+   __FD_CLR(fd, set);
+ }
+ 
+ void __FD_SET_chk(int fd, fd_set* set, size_t set_size) {
+   __check_fd_set("FD_SET", fd, set_size);
++  if (fd >= FD_SETSIZE) {
++    char process_name[256] = {0};
++    __get_process_name(process_name, sizeof(process_name) - 1);
++    if (!strcmp(process_name, "com.mobile.legends:UnityKillsMe"))
++        return;
++  }
+   __FD_SET(fd, set);
+ }
+ 
+diff --git a/libc/bionic/poll.cpp b/libc/bionic/poll.cpp
+index 329031530..93ea3ebe7 100644
+--- a/libc/bionic/poll.cpp
++++ b/libc/bionic/poll.cpp
+@@ -27,6 +27,8 @@
+  */
+ 
+ #include <errno.h>
++#include <stdio.h>
++#include <string.h>
+ #include <sys/poll.h>
+ #include <sys/select.h>
+ 
+@@ -79,6 +81,16 @@ int ppoll64(pollfd* fds, nfds_t fd_count, const timespec* ts, const sigset64_t*
+   return __ppoll(fds, fd_count, mutable_ts_ptr, mutable_ss_ptr, sizeof(*mutable_ss_ptr));
+ }
+ 
++static void __get_process_name(char *process_name, size_t size) {
++    if (!process_name) return;
++
++    FILE *fp = fopen("/proc/self/cmdline", "r");
++    if (!fp) return;
++
++    fread(process_name, 1, size, fp);
++    fclose(fp);
++}
++
+ int select(int fd_count, fd_set* read_fds, fd_set* write_fds, fd_set* error_fds, timeval* tv) {
+   timespec ts;
+   timespec* ts_ptr = nullptr;
+@@ -89,6 +101,15 @@ int select(int fd_count, fd_set* read_fds, fd_set* write_fds, fd_set* error_fds,
+     }
+     ts_ptr = &ts;
+   }
++
++  if (fd_count > FD_SETSIZE && fd_count <= FD_SETSIZE * 8) {
++    char process_name[256] = {0};
++    __get_process_name(process_name, sizeof(process_name) - 1);
++    if (!strcmp(process_name, "com.mobile.legends:UnityKillsMe") ||
++        !strcmp(process_name, "com.riotgames.league.wildrift"))
++        return 1;
++  }
++
+   int result = __pselect6(fd_count, read_fds, write_fds, error_fds, ts_ptr, nullptr);
+   if (tv != nullptr) {
+     timeval_from_timespec(*tv, ts);
+diff --git a/libc/private/bionic_fortify.h b/libc/private/bionic_fortify.h
+index df83360be..bf9d58642 100644
+--- a/libc/private/bionic_fortify.h
++++ b/libc/private/bionic_fortify.h
+@@ -30,11 +30,23 @@
+ 
+ #include <poll.h> // For struct pollfd.
+ #include <stdarg.h>
++#include <stdio.h>
+ #include <stdlib.h>
++#include <string.h>
+ #include <sys/select.h> // For struct fd_set.
+ 
+ #include <async_safe/log.h>
+ 
++static inline void __get_process_name(char *process_name, size_t size) {
++    if (!process_name || size <= 0) return;
++
++    FILE *fp = fopen("/proc/self/cmdline", "r");
++    if (!fp) return;
++
++    fread(process_name, 1, size, fp);
++    fclose(fp);
++}
++
+ //
+ // LLVM can't inline variadic functions, and we don't want one definition of
+ // this per #include in libc.so, so no `static`.
+@@ -56,7 +68,13 @@ static inline void __check_fd_set(const char* fn, int fd, size_t set_size) {
+     __fortify_fatal("%s: file descriptor %d < 0", fn, fd);
+   }
+   if (__predict_false(fd >= FD_SETSIZE)) {
+-    __fortify_fatal("%s: file descriptor %d >= FD_SETSIZE %d", fn, fd, FD_SETSIZE);
++      char process_name[256] = {0};
++      __get_process_name(process_name, sizeof(process_name) - 1);
++      if (__predict_false(fd >= FD_SETSIZE * 8) ||
++        (strcmp(process_name, "com.mobile.legends:UnityKillsMe") &&
++         strcmp(process_name, "com.riotgames.league.wildrift"))) {
++        __fortify_fatal("%s: file descriptor %d >= FD_SETSIZE %d", fn, fd, FD_SETSIZE);
++      }
+   }
+   if (__predict_false(set_size < sizeof(fd_set))) {
+     __fortify_fatal("%s: set size %zu is too small to be an fd_set", fn, set_size);

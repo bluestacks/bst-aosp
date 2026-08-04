@@ -1,0 +1,134 @@
+From f9faba1ec6fc383c821f8ef09335bd291ba631dd Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Sat, 11 May 2024 13:55:34 +0800
+Subject: [PATCH 143/224] [A13]ROB-13015: adding hcall implementation
+
+---
+ .../com/bluestacks/os/BstHostCallManager.java | 22 +++++++++++++++
+ .../bluestacks/os/IBstHostCallService.aidl    |  2 ++
+ .../bluestacks/server/BstHostCallService.java | 18 ++++++++++++
+ ...m_bluestacks_server_BstHostCallService.cpp | 28 ++++++++++++++++++-
+ 4 files changed, 69 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/com/bluestacks/os/BstHostCallManager.java b/core/java/com/bluestacks/os/BstHostCallManager.java
+index a84f60e7598e..87c555bef32c 100644
+--- a/core/java/com/bluestacks/os/BstHostCallManager.java
++++ b/core/java/com/bluestacks/os/BstHostCallManager.java
+@@ -516,4 +516,26 @@ public class BstHostCallManager {
+             throw new RuntimeException(e);
+         }
+     }
++
++    /**
++     * @hide
++     */
++    public int removeBootLoadingScreen(boolean isAdShown) {
++        try {
++            return mBstHostCallService.removeBootLoadingScreen(isAdShown);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
++
++    /**
++     * @hide
++     */
++    public int interstitialAdCompleted(String source, String action) {
++        try {
++            return mBstHostCallService.interstitialAdCompleted(source, action);
++        } catch (RemoteException e) {
++            throw new RuntimeException(e);
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstHostCallService.aidl b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+index 90e7d0d6d900..b26fc0ccd49c 100644
+--- a/core/java/com/bluestacks/os/IBstHostCallService.aidl
++++ b/core/java/com/bluestacks/os/IBstHostCallService.aidl
+@@ -46,4 +46,6 @@ interface IBstHostCallService {
+     int screenRecordingStarted(boolean started, boolean showTaps, int audioSource);
+     int handleCustomIap(String actionType, String actionData);
+     int onAdsInfoClick();
++    int removeBootLoadingScreen(boolean onAdShown);
++    int interstitialAdCompleted(String source, String action);
+ }
+diff --git a/services/java/com/bluestacks/server/BstHostCallService.java b/services/java/com/bluestacks/server/BstHostCallService.java
+index ecccad50a799..446c7f74161e 100644
+--- a/services/java/com/bluestacks/server/BstHostCallService.java
++++ b/services/java/com/bluestacks/server/BstHostCallService.java
+@@ -393,6 +393,22 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+         return native_handleCustomIap(actionType, actionData);
+     }
+ 
++    /**
++     * @hide
++     */
++    public int removeBootLoadingScreen(boolean isAdShown) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService removeBootLoadingScreen isAdShown : " + isAdShown);
++        return native_removeBootLoadingScreen(isAdShown);
++    }
++
++    /**
++     * @hide
++     */
++    public int interstitialAdCompleted(String source, String action) {
++        if (DBG) Slog.d(TAG, "in BstHostCallService interstitialAdCompleted source : " + source + ", action: " + action);
++        return native_interstitialAdCompleted(source, action);
++    }
++
+     private static native final int native_init();
+     private static native int native_initImeStatus(String imeName);
+     private static native int native_initInputDebuggingStatus(boolean showTouches, boolean showPointerLocation);
+@@ -438,4 +454,6 @@ public class BstHostCallService extends IBstHostCallService.Stub {
+     private static native int native_screenRecordingStarted(boolean started, boolean showTaps, int audioSource);
+     private static native int native_handleCustomIap(String actionType, String actionData);
+     private static native int native_onAdsInfoClick();
++    private static native int native_removeBootLoadingScreen(boolean isAdShown);
++    private static native int native_interstitialAdCompleted(String source, String action);
+ }
+diff --git a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+index 16ddd188d083..a56d0feebfc9 100644
+--- a/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
++++ b/services/java/com/bluestacks/server/native/com_bluestacks_server_BstHostCallService.cpp
+@@ -825,6 +825,30 @@ static jint onAdsInfoClick(JNIEnv* env, jobject clazz) {
+     return rval;
+ }
+ 
++static jint removeBootLoadingScreen(JNIEnv* env, jobject clazz, jboolean isAdShown) {
++    if (dbg) ALOGD("%s: enable = %d", __func__, isAdShown);
++    jint rval = hcallRemoveBootLoadingScreenRpc(isAdShown);
++    if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++    return rval;
++}
++
++static jint interstitialAdCompleted(JNIEnv* env, jobject clazz, jstring sourceStr, jstring actionStr) {
++    if (dbg) ALOGD("%s", __func__);
++
++    string source = getStringFromJstring(env, clazz, sourceStr);
++    string action = getStringFromJstring(env, clazz, actionStr);
++
++    xthrPoolAddTask(&g_thr_pool.threadPool, [=]
++        {
++            xerr_t rval = hcallInterstitialAdCompletedRpc(source.c_str(), action.c_str());
++            if (rval != XERR_SUCCESS) {
++                ALOGE("RPC failed for %s, error %d", __func__, rval);
++            }
++            if (dbg) ALOGD("%s: returning, rval = %d", __func__, rval);
++        });
++    return 0;
++}
++
+ /*
+  * JNI registration.
+  */
+@@ -875,7 +899,9 @@ static const JNINativeMethod gMethods[] = {
+     { "native_onCustomAppOrientationCompleted", "(Ljava/lang/String;)I", (void*)onCustomAppOrientationCompleted },
+     { "native_screenRecordingStarted", "(ZZI)I", (void*)screenRecordingStarted },
+     { "native_handleCustomIap", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)handleCustomIap },
+-    { "native_onAdsInfoClick", "()I", (void*)onAdsInfoClick }
++    { "native_onAdsInfoClick", "()I", (void*)onAdsInfoClick },
++    { "native_removeBootLoadingScreen", "(Z)I", (void*)removeBootLoadingScreen },
++    { "native_interstitialAdCompleted", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)interstitialAdCompleted }
+ };
+ 
+ // This function only registers the native methods

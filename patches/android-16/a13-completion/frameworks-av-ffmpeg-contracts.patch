@@ -1,0 +1,133 @@
+From 150806ec0f95a55a059f81528f9c5695847787b2 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 20:32:36 +0800
+Subject: [PATCH] [A16] Restore FFmpeg media type contracts
+
+---
+ .../include/media/stagefright/MetaDataBase.h  | 25 ++++++++++++++++
+ media/module/foundation/MediaDefs.cpp         | 29 ++++++++++++++++++
+ .../media/stagefright/foundation/MediaDefs.h  | 30 +++++++++++++++++++
+ 3 files changed, 84 insertions(+)
+
+diff --git a/media/libstagefright/include/media/stagefright/MetaDataBase.h b/media/libstagefright/include/media/stagefright/MetaDataBase.h
+index 0a5d4019fd..d5989a1df1 100644
+--- a/media/libstagefright/include/media/stagefright/MetaDataBase.h
++++ b/media/libstagefright/include/media/stagefright/MetaDataBase.h
+@@ -312,6 +312,31 @@ enum {
+     kTypeHCOS        = 'hcos',
+ };
+ 
++enum {
++    kTypeDivXVer_3_11,
++    kTypeDivXVer_4,
++    kTypeDivXVer_5,
++    kTypeDivXVer_6,
++};
++
++enum {
++    kTypeWMA,
++    kTypeWMAPro,
++    kTypeWMALossLess,
++};
++
++enum {
++    kTypeWMVVer_7,
++    kTypeWMVVer_8,
++    kTypeWMVVer_9,
++};
++
++enum {
++    kTypeRVVer_G2,
++    kTypeRVVer_8,
++    kTypeRVVer_9,
++};
++
+ enum {
+     kCryptoModeUnencrypted = 0,
+     kCryptoModeAesCtr      = 1,
+diff --git a/media/module/foundation/MediaDefs.cpp b/media/module/foundation/MediaDefs.cpp
+index b2572a8cc7..8d86ec1af6 100644
+--- a/media/module/foundation/MediaDefs.cpp
++++ b/media/module/foundation/MediaDefs.cpp
+@@ -143,4 +143,33 @@ const char *MEDIA_MIMETYPE_TEXT_CEA_608 = "text/cea-608";
+ const char *MEDIA_MIMETYPE_TEXT_CEA_708 = "text/cea-708";
+ const char *MEDIA_MIMETYPE_DATA_TIMED_ID3 = "application/x-id3v4";
+ 
++const char *MEDIA_MIMETYPE_VIDEO_FLV1 = "video/x-flv";
++const char *MEDIA_MIMETYPE_VIDEO_RV = "video/vnd.rn-realvideo";
++const char *MEDIA_MIMETYPE_VIDEO_VC1 = "video/vc1";
++const char *MEDIA_MIMETYPE_VIDEO_WMV = "video/x-ms-wmv";
++const char *MEDIA_MIMETYPE_VIDEO_FFMPEG = "video/ffmpeg";
++
++const char *MEDIA_MIMETYPE_AUDIO_APE = "audio/x-ape";
++const char *MEDIA_MIMETYPE_AUDIO_RA = "audio/vnd.rn-realaudio";
++const char *MEDIA_MIMETYPE_AUDIO_FFMPEG = "audio/ffmpeg";
++
++const char *MEDIA_MIMETYPE_CONTAINER_APE = "audio/x-ape";
++const char *MEDIA_MIMETYPE_CONTAINER_ASF = "video/x-ms-asf";
++const char *MEDIA_MIMETYPE_CONTAINER_DIVX = "video/divx";
++const char *MEDIA_MIMETYPE_CONTAINER_DTS = "audio/vnd.dts";
++const char *MEDIA_MIMETYPE_CONTAINER_FLAC = "audio/flac";
++const char *MEDIA_MIMETYPE_CONTAINER_FLV = "video/x-flv";
++const char *MEDIA_MIMETYPE_CONTAINER_MOV = "video/quicktime";
++const char *MEDIA_MIMETYPE_CONTAINER_MP2 = "audio/mpeg2";
++const char *MEDIA_MIMETYPE_CONTAINER_MPG = "video/mpeg";
++const char *MEDIA_MIMETYPE_CONTAINER_RA = "audio/vnd.rn-realaudio";
++const char *MEDIA_MIMETYPE_CONTAINER_RM = "video/vnd.rn-realvideo";
++const char *MEDIA_MIMETYPE_CONTAINER_TS = "video/mp2t";
++const char *MEDIA_MIMETYPE_CONTAINER_WEBM = "video/webm";
++const char *MEDIA_MIMETYPE_CONTAINER_WMA = "audio/x-ms-wma";
++const char *MEDIA_MIMETYPE_CONTAINER_WMV = "video/x-ms-wmv";
++const char *MEDIA_MIMETYPE_CONTAINER_VC1 = "video/vc1";
++const char *MEDIA_MIMETYPE_CONTAINER_HEVC = "video/hevc";
++const char *MEDIA_MIMETYPE_CONTAINER_FFMPEG = "video/ffmpeg";
++
+ }  // namespace android
+diff --git a/media/module/foundation/include/media/stagefright/foundation/MediaDefs.h b/media/module/foundation/include/media/stagefright/foundation/MediaDefs.h
+index d02f6c20e4..8581f2db08 100644
+--- a/media/module/foundation/include/media/stagefright/foundation/MediaDefs.h
++++ b/media/module/foundation/include/media/stagefright/foundation/MediaDefs.h
+@@ -137,10 +137,40 @@ extern const char *MEDIA_MIMETYPE_TEXT_CEA_608;
+ extern const char *MEDIA_MIMETYPE_TEXT_CEA_708;
+ extern const char *MEDIA_MIMETYPE_DATA_TIMED_ID3;
+ 
++extern const char *MEDIA_MIMETYPE_VIDEO_FLV1;
++extern const char *MEDIA_MIMETYPE_VIDEO_RV;
++extern const char *MEDIA_MIMETYPE_VIDEO_VC1;
++extern const char *MEDIA_MIMETYPE_VIDEO_WMV;
++extern const char *MEDIA_MIMETYPE_VIDEO_FFMPEG;
++
++extern const char *MEDIA_MIMETYPE_AUDIO_APE;
++extern const char *MEDIA_MIMETYPE_AUDIO_RA;
++extern const char *MEDIA_MIMETYPE_AUDIO_FFMPEG;
++
++extern const char *MEDIA_MIMETYPE_CONTAINER_APE;
++extern const char *MEDIA_MIMETYPE_CONTAINER_ASF;
++extern const char *MEDIA_MIMETYPE_CONTAINER_DIVX;
++extern const char *MEDIA_MIMETYPE_CONTAINER_DTS;
++extern const char *MEDIA_MIMETYPE_CONTAINER_FLAC;
++extern const char *MEDIA_MIMETYPE_CONTAINER_FLV;
++extern const char *MEDIA_MIMETYPE_CONTAINER_MOV;
++extern const char *MEDIA_MIMETYPE_CONTAINER_MP2;
++extern const char *MEDIA_MIMETYPE_CONTAINER_MPG;
++extern const char *MEDIA_MIMETYPE_CONTAINER_RA;
++extern const char *MEDIA_MIMETYPE_CONTAINER_RM;
++extern const char *MEDIA_MIMETYPE_CONTAINER_TS;
++extern const char *MEDIA_MIMETYPE_CONTAINER_WEBM;
++extern const char *MEDIA_MIMETYPE_CONTAINER_VC1;
++extern const char *MEDIA_MIMETYPE_CONTAINER_HEVC;
++extern const char *MEDIA_MIMETYPE_CONTAINER_WMA;
++extern const char *MEDIA_MIMETYPE_CONTAINER_WMV;
++extern const char *MEDIA_MIMETYPE_CONTAINER_FFMPEG;
++
+ // These are values exported to JAVA API that need to be in sync with
+ // frameworks/base/media/java/android/media/AudioFormat.java. Unfortunately,
+ // they are not defined in frameworks/av, so defining them here.
+ enum AudioEncoding {
++    kAudioEncodingInvalid = 0,
+     kAudioEncodingPcm16bit = 2,
+     kAudioEncodingPcm8bit = 3,
+     kAudioEncodingPcmFloat = 4,
+-- 
+2.34.1
+

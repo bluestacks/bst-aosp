@@ -1,0 +1,28 @@
+From 58dd9b4c83c6acf6f7f41d2ae9a6ecf5c835dcba Mon Sep 17 00:00:00 2001
+From: muzhong-bst <muzhong@bluestacks.com>
+Date: Wed, 8 Nov 2023 13:43:51 +0800
+Subject: [PATCH] [A13] Changing abort message to error message as we are
+ facing boot failure related issue over here
+
+---
+ runtime/oat_quick_method_header.cc | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/runtime/oat_quick_method_header.cc b/runtime/oat_quick_method_header.cc
+index 8fbf02abea..3612b052aa 100644
+--- a/runtime/oat_quick_method_header.cc
++++ b/runtime/oat_quick_method_header.cc
+@@ -46,7 +46,9 @@ uint32_t OatQuickMethodHeader::ToDexPc(ArtMethod** frame,
+     }
+   }
+   if (abort_on_failure) {
+-    LOG(FATAL) << "Failed to find Dex offset for PC offset "
++    // Do not abort even if abort_on_failure log is enabled as we are facing
++    // boot failure related issues in 64-bit related builds.
++    LOG(ERROR) << "Failed to find Dex offset for PC offset "
+            << reinterpret_cast<void*>(sought_offset)
+            << "(PC " << reinterpret_cast<void*>(pc) << ", entry_point=" << entry_point
+            << " current entry_point=" << method->GetEntryPointFromQuickCompiledCode()
+-- 
+2.34.1
+

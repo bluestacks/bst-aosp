@@ -1,0 +1,22 @@
+From 3fca2ee1746a4837fda3caffb2cdc28141f38ee0 Mon Sep 17 00:00:00 2001
+From: michael-bst <michael@bluestacks.com>
+Date: Thu, 20 Mar 2025 10:15:40 +0800
+Subject: [PATCH 173/224] fix compile error. (#179)
+
+---
+ .../core/java/com/android/server/am/ActivityManagerService.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 2d192e470376..b50d9cc61625 100755
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -14175,7 +14175,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+                             bstIntent.putExtras(bundle);
+                         }
+                         bstIntent.putExtra("pkgName", pkgName);
+-                        mServices.startServiceLocked(null, bstIntent, null, 0, 0, false, null, userId);
++                        mServices.startServiceLocked(null, bstIntent, null, 0, 0, false, null, null, userId);
+                     }
+                 } else {
+                     if (DEBUG_BST_GPSTATS) Log.w(TAG_BST_GPSTATS, "pkgName is null");

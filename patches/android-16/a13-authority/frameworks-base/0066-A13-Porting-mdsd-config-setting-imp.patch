@@ -1,0 +1,180 @@
+From e8b17680656324016e163cc480edffa021837c06 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Tue, 14 Nov 2023 15:36:08 +0800
+Subject: [PATCH 066/224] [A13] Porting mdsd config setting imp
+
+---
+ core/java/android/os/Environment.java | 88 ++++++++++++++++++++++++++-
+ 1 file changed, 85 insertions(+), 3 deletions(-)
+
+diff --git a/core/java/android/os/Environment.java b/core/java/android/os/Environment.java
+index 5177cb4f8549..1874ea356a7b 100644
+--- a/core/java/android/os/Environment.java
++++ b/core/java/android/os/Environment.java
+@@ -33,18 +33,23 @@ import android.content.pm.ApplicationInfo;
+ import android.content.pm.PackageManager;
+ import android.os.storage.StorageManager;
+ import android.os.storage.StorageVolume;
++import android.system.Os;
++import android.util.BstUtils;
+ import android.provider.MediaStore;
+ import android.text.TextUtils;
+ import android.util.Log;
+ 
+ import java.io.File;
+ import java.io.IOException;
++import java.lang.StringBuilder;
+ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.LinkedList;
+ import java.util.List;
+ import java.util.Objects;
+ 
++import com.bluestacks.os.IBstFilterAppsService;
++
+ /**
+  * Provides access to environment variables.
+  */
+@@ -157,6 +162,10 @@ public class Environment {
+     private static UserEnvironment sCurrentUser;
+     private static boolean sUserRequired;
+ 
++    // BST: Sdcard emulation path in /data partition for cases like 14080, 12660.
++    private static final String SDCARD_EMUL_PATH = "/sdcard_emul";
++    private static boolean modifySdPathForFnCall = false;
++
+     static {
+         initForCurrentUser();
+     }
+@@ -182,6 +191,51 @@ public class Environment {
+             final StorageVolume[] volumes = StorageManager.getVolumeList(mUserId,
+                     StorageManager.FLAG_FOR_WRITE);
+             final File[] files = new File[volumes.length];
++
++            // Case 14080, 12660 temp fix.
++            // Apps download large zipped resource files under externalStorage. It takes time to unzip/open/read
++            // such resources which results in app progress loader stuck for a long time giving a expression that the app is not
++            // loading.
++            // Modifying externalStorage dir for all such apps as of now.
++            // Asking BstFilterAppsService whether the packageName is one for which we need to modify this path.
++
++            try {
++                int pid = android.os.Process.myPid();
++                String packageName = BstUtils.getAppNameFromPid(pid);
++                IBstFilterAppsService mBstFilter = IBstFilterAppsService.Stub.asInterface(ServiceManager.getService(Context.BST_FILTER_APPS));
++                File[] cachedOrigExternalPath = new File[1];
++                cachedOrigExternalPath[0] = volumes[0].getPathFile();
++
++                if (modifySdPathForFnCall && packageName != null && mBstFilter.isModifysdPathReqd(packageName)) {
++                    // Let us change the externalDir for this app.
++                    String emulatedExternalStorageDir = new StringBuilder(DIR_DATA).append("/").append(packageName).append(SDCARD_EMUL_PATH).toString();
++                    // Not populating other volume lengths for now.
++                    files[0] = new File(DIR_ANDROID_DATA, emulatedExternalStorageDir);
++
++                    // Case BS4-2783: The obb file is downloaded and installed by vending in /sdcard/Android/obb/<pkg>/.
++                    // We do not modify the obb path even for isModifysdPathReqd packages.
++                    // However, if such app tries to build the obb path manually via getExternalStorageDirectory() and appending
++                    // "/Android/obb", it will result in detecting missing obb file as seen in app Rangers of Oblivion.
++                    // Hence, creating a symlink to the dowloaded obb file to bypass such error.
++                    File emulatedObbPath = (buildPaths(files, DIR_ANDROID, DIR_OBB))[0];
++                    File actualObbPath = (buildPaths(cachedOrigExternalPath, DIR_ANDROID, DIR_OBB, packageName))[0];
++                    String[] actualObbPathFiles = actualObbPath.list();
++                    if (actualObbPathFiles != null && actualObbPathFiles.length > 0 && !emulatedObbPath.exists()) {
++                        // Let us create the obb dir under sdcard_emul dir and create a symlink to the actual
++                        // obb dir created for the pkg in /sdcard.
++                        emulatedObbPath.mkdirs();
++                        File emulatedObbFullPath = new File(emulatedObbPath, packageName);
++                        Os.symlink(actualObbPath.toString(), emulatedObbFullPath.toString());
++                    }
++                    return files;
++                }
++            } catch (Exception e) {
++                // If exception generated, let us fallback to original flow.
++                Log.w(TAG, "Error in getting isModifysdPathReqd from bstFilterAppsService, exception: " + e.getMessage());
++            } finally {
++                modifySdPathForFnCall = false;
++            }
++
+             for (int i = 0; i < volumes.length; i++) {
+                 files[i] = volumes[i].getPathFile();
+             }
+@@ -203,6 +257,7 @@ public class Environment {
+         }
+ 
+         public File[] buildExternalStorageAndroidDataDirs() {
++            modifySdPathForFnCall = true;
+             return buildPaths(getExternalDirs(), DIR_ANDROID, DIR_DATA);
+         }
+ 
+@@ -211,6 +266,7 @@ public class Environment {
+         }
+ 
+         public File[] buildExternalStorageAppDataDirs(String packageName) {
++            modifySdPathForFnCall = true;
+             return buildPaths(getExternalDirs(), DIR_ANDROID, DIR_DATA, packageName);
+         }
+ 
+@@ -223,10 +279,12 @@ public class Environment {
+         }
+ 
+         public File[] buildExternalStorageAppFilesDirs(String packageName) {
++            modifySdPathForFnCall = true;
+             return buildPaths(getExternalDirs(), DIR_ANDROID, DIR_DATA, packageName, DIR_FILES);
+         }
+ 
+         public File[] buildExternalStorageAppCacheDirs(String packageName) {
++            modifySdPathForFnCall = true;
+             return buildPaths(getExternalDirs(), DIR_ANDROID, DIR_DATA, packageName, DIR_CACHE);
+         }
+     }
+@@ -1247,7 +1305,15 @@ public class Environment {
+      *         {@link #MEDIA_BAD_REMOVAL}, or {@link #MEDIA_UNMOUNTABLE}.
+      */
+     public static String getExternalStorageState(File path) {
+-        final StorageVolume volume = StorageManager.getStorageVolume(path, UserHandle.myUserId());
++        StorageVolume volume = null;
++        // BST: If path is of our SDCARD_EMUL_PATH, return the correct state of the storage media.
++        if (path.toString().contains(SDCARD_EMUL_PATH)) {
++            final File externalDir = sCurrentUser.getExternalDirs()[0];
++            volume = StorageManager.getStorageVolume(externalDir, UserHandle.myUserId());
++        } else {
++            volume = StorageManager.getStorageVolume(path, UserHandle.myUserId());
++        }
++
+         if (volume != null) {
+             return volume.getState();
+         } else {
+@@ -1279,7 +1345,15 @@ public class Environment {
+      *             device.
+      */
+     public static boolean isExternalStorageRemovable(@NonNull File path) {
+-        final StorageVolume volume = StorageManager.getStorageVolume(path, UserHandle.myUserId());
++        StorageVolume volume = null;
++        // BST: If path is of SDCARD_EMUL_PATH, return the correct state of the storage media whether is physically removable.
++        if (path.toString().contains(SDCARD_EMUL_PATH)) {
++            final File externalDir = sCurrentUser.getExternalDirs()[0];
++            volume = StorageManager.getStorageVolume(externalDir, UserHandle.myUserId());
++        } else {
++            volume = StorageManager.getStorageVolume(path, UserHandle.myUserId());
++        }
++
+         if (volume != null) {
+             return volume.isRemovable();
+         } else {
+@@ -1322,7 +1396,15 @@ public class Environment {
+      *             device.
+      */
+     public static boolean isExternalStorageEmulated(@NonNull File path) {
+-        final StorageVolume volume = StorageManager.getStorageVolume(path, UserHandle.myUserId());
++        StorageVolume volume = null;
++        // BST: If path is of SDCARD_EMUL_PATH, return the correct value whether storage media is emulated.
++        if (path.toString().contains(SDCARD_EMUL_PATH)) {
++            final File externalDir = sCurrentUser.getExternalDirs()[0];
++            volume = StorageManager.getStorageVolume(externalDir, UserHandle.myUserId());
++        } else {
++            volume = StorageManager.getStorageVolume(path, UserHandle.myUserId());
++        }
++
+         if (volume != null) {
+             return volume.isEmulated();
+         } else {

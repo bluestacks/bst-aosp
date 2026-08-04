@@ -1,0 +1,180 @@
+From cc76efe395787dee2fb54886357ef526ce55162d Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 12 Oct 2023 16:52:32 +0800
+Subject: [PATCH 032/224] [A13] Attaching GrallocUploadThread to JVM env
+
+The renderthread needs to access BstFilterAppsService via binder during initialization,
+to ensure the binder IPC calls work fine, we need to attach the thread with JVM env.
+Otherwise, it will lead to a crash issue. Below is corresponding log:
+
+F DEBUG   : pid: 32226, tid: 2899, name: GrallocUploadTh  >>> system_server <<<
+F DEBUG   : uid: 1000
+F DEBUG   : signal 6 (SIGABRT), code -1 (SI_QUEUE), fault addr --------
+F DEBUG   : Abort message: 'Binder thread started or Java binder used, but env null. Attach JVM?'
+F DEBUG   :     rax 0000000000000000  rbx 0000000000007de2  rcx 00007437395d067f  rdx 0000000000000006
+F DEBUG   :     r8  0000000000000001  r9  0000000000000001  r10 00007433e583ed50  r11 0000000000000207
+F DEBUG   :     r12 00007433e583f430  r13 00007433e583ef60  r14 00007433e583ed48  r15 0000000000000b53
+F DEBUG   :     rdi 0000000000007de2  rsi 0000000000000b53
+F DEBUG   :     rbp 0000000000000000  rsp 00007433e583ed40  rip 00007437395d067f
+---
+ libs/hwui/HardwareBitmapUploader.cpp          | 24 +++++++++++++++++++
+ libs/hwui/HardwareBitmapUploader.h            |  5 ++++
+ .../jni/android_graphics_HardwareRenderer.cpp | 18 +++++++++++++-
+ libs/hwui/renderthread/RenderThread.cpp       |  3 ++-
+ libs/hwui/renderthread/RenderThread.h         |  5 +++-
+ 5 files changed, 52 insertions(+), 3 deletions(-)
+
+diff --git a/libs/hwui/HardwareBitmapUploader.cpp b/libs/hwui/HardwareBitmapUploader.cpp
+index c24cabb287de..730816267608 100644
+--- a/libs/hwui/HardwareBitmapUploader.cpp
++++ b/libs/hwui/HardwareBitmapUploader.cpp
+@@ -39,6 +39,8 @@
+ 
+ namespace android::uirenderer {
+ 
++static JVMAttachOrDetachHook gOnJVMHook = nullptr;
++
+ class AHBUploader;
+ // This helper uploader classes allows us to upload using either EGL or Vulkan using the same
+ // interface.
+@@ -60,6 +62,7 @@ public:
+         std::lock_guard _lock{mLock};
+         LOG_ALWAYS_FATAL_IF(mPendingUploads, "terminate called while uploads in progress");
+         if (mUploadThread) {
++            AttachOrDetachCurrentThread(true);
+             mUploadThread->requestExit();
+             mUploadThread->join();
+             mUploadThread = nullptr;
+@@ -80,6 +83,18 @@ public:
+         mUploadThread->queue().postDelayed(5000_ms, [this](){ this->idleTimeoutCheck(); });
+     }
+ 
++    void AttachOrDetachCurrentThread(bool detach = false){
++        auto hook = HardwareBitmapUploader::getOnJVMHook();
++        if (!mUploadThread || !hook){
++            return;
++        }
++
++        mUploadThread->queue().runSync([hook, detach]() {
++            hook("GrallocUploadThread", detach);
++        });
++    }
++
++
+ protected:
+     std::mutex mLock;
+     sp<ThreadBase> mUploadThread = nullptr;
+@@ -115,6 +130,7 @@ private:
+         }
+         if (!mUploadThread->isRunning()) {
+             mUploadThread->start("GrallocUploadThread");
++            AttachOrDetachCurrentThread();
+         }
+ 
+         onBeginUpload();
+@@ -300,6 +316,14 @@ static bool checkSupport(AHardwareBuffer_Format format) {
+     return buffer != nullptr;
+ }
+ 
++void HardwareBitmapUploader::setOnJVMHook(JVMAttachOrDetachHook onJVMHook) {
++    gOnJVMHook = onJVMHook;
++}
++
++JVMAttachOrDetachHook HardwareBitmapUploader::getOnJVMHook() {
++    return gOnJVMHook;
++}
++
+ bool HardwareBitmapUploader::hasFP16Support() {
+     static bool hasFP16Support = checkSupport(AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT);
+     return hasFP16Support;
+diff --git a/libs/hwui/HardwareBitmapUploader.h b/libs/hwui/HardwareBitmapUploader.h
+index 81057a24c29c..1e43cd6ea6ea 100644
+--- a/libs/hwui/HardwareBitmapUploader.h
++++ b/libs/hwui/HardwareBitmapUploader.h
+@@ -20,11 +20,16 @@
+ 
+ namespace android::uirenderer {
+ 
++typedef void (*JVMAttachOrDetachHook)(const char* name, bool detach);
++
+ class HardwareBitmapUploader {
+ public:
+     static void initialize();
+     static void terminate();
+ 
++    static void setOnJVMHook(JVMAttachOrDetachHook onJVMHook);
++    static JVMAttachOrDetachHook getOnJVMHook();
++
+     static sk_sp<Bitmap> allocateHardwareBitmap(const SkBitmap& sourceBitmap);
+ 
+ #ifdef __ANDROID__
+diff --git a/libs/hwui/jni/android_graphics_HardwareRenderer.cpp b/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
+index c48448dffdd2..79616bee8c48 100644
+--- a/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
++++ b/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
+@@ -997,9 +997,25 @@ static void attachRenderThreadToJvm(const char* name) {
+     mJvm->AttachCurrentThreadAsDaemon(&env, (void*) &args);
+ }
+ 
++static void attachOrDetachCurrentThread(const char* name, bool detach) {
++    LOG_ALWAYS_FATAL_IF(!mJvm, "No jvm but we set the hook??");
++
++    if (detach){
++        mJvm->DetachCurrentThread();
++        return;
++    }
++
++    JavaVMAttachArgs args;
++    args.version = JNI_VERSION_1_4;
++    args.name = name;
++    args.group = NULL;
++    JNIEnv* env;
++    mJvm->AttachCurrentThread(&env, (void*) &args);
++}
++
+ int register_android_view_ThreadedRenderer(JNIEnv* env) {
+     env->GetJavaVM(&mJvm);
+-    RenderThread::setOnStartHook(&attachRenderThreadToJvm);
++    RenderThread::setOnStartHook(&attachRenderThreadToJvm, &attachOrDetachCurrentThread);
+ 
+     jclass hardwareRenderer = FindClassOrDie(env,
+             "android/graphics/HardwareRenderer");
+diff --git a/libs/hwui/renderthread/RenderThread.cpp b/libs/hwui/renderthread/RenderThread.cpp
+index 01b956cb3dd5..50daf3257e04 100644
+--- a/libs/hwui/renderthread/RenderThread.cpp
++++ b/libs/hwui/renderthread/RenderThread.cpp
+@@ -190,9 +190,10 @@ bool RenderThread::hasInstance() {
+     return gHasRenderThreadInstance;
+ }
+ 
+-void RenderThread::setOnStartHook(JVMAttachHook onStartHook) {
++void RenderThread::setOnStartHook(JVMAttachHook onStartHook, JVMAttachOrDetachHook onJVMHook) {
+     LOG_ALWAYS_FATAL_IF(hasInstance(), "can't set an onStartHook after we've started...");
+     gOnStartHook = onStartHook;
++    HardwareBitmapUploader::setOnJVMHook(onJVMHook);
+ }
+ 
+ JVMAttachHook RenderThread::getOnStartHook() {
+diff --git a/libs/hwui/renderthread/RenderThread.h b/libs/hwui/renderthread/RenderThread.h
+index c1f6790b25b2..32ce65cb50e5 100644
+--- a/libs/hwui/renderthread/RenderThread.h
++++ b/libs/hwui/renderthread/RenderThread.h
+@@ -57,6 +57,9 @@ namespace VectorDrawable {
+ class Tree;
+ }
+ 
++typedef void (*JVMAttachHook)(const char* name);
++typedef void (*JVMAttachOrDetachHook)(const char* name, bool detach);
++
+ namespace renderthread {
+ 
+ class CanvasContext;
+@@ -132,7 +135,7 @@ class RenderThread : private ThreadBase {
+ 
+ public:
+     // Sets a callback that fires before any RenderThread setup has occurred.
+-    static void setOnStartHook(JVMAttachHook onStartHook);
++    static void setOnStartHook(JVMAttachHook onStartHook, JVMAttachOrDetachHook onUploaderStartHook);
+     static JVMAttachHook getOnStartHook();
+ 
+     WorkQueue& queue() { return ThreadBase::queue(); }

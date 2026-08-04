@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "artifacts": [
+    {
+      "name": "A13 Widevine DRM engine",
+      "classification": "restricted-external-binary",
+      "preservation": "identity-only-in-review-repository",
+      "source": {
+        "tree": "~/app-player/android-13",
+        "branch": "bst-v5.22.210",
+        "project": "frameworks/av",
+        "commit": "bb15209c81865750681a87e371fa645797818492",
+        "path": "drm/mediadrm/plugins/widevine/default/libwvdrmengine.so",
+        "git_blob": "e5447cf72965ac74dcf3e6a7be310994c9f6ef60",
+        "bytes": 1250188,
+        "sha256": "3ce02cd40b4daf0eea672917ec3e8a7611a2245437b346106fa970f7154552e4"
+      },
+      "target": {
+        "tree": "~/android-16",
+        "branch": "aosp16-bst-merge",
+        "project": "frameworks/av",
+        "introducing_commit": "0edb96a328b99742a8c3583e3d1aafc501308252",
+        "path": "drm/mediadrm/plugins/widevine/default/libwvdrmengine.so",
+        "git_blob": "e5447cf72965ac74dcf3e6a7be310994c9f6ef60",
+        "bytes": 1250188,
+        "sha256": "3ce02cd40b4daf0eea672917ec3e8a7611a2245437b346106fa970f7154552e4"
+      },
+      "canonical_code_evidence": {
+        "path": "patches/android-16/a13-authority/frameworks-av-all/0019-A13-ROB-11904-Support-DRM-widevine.patch",
+        "format": "git-format-patch --no-binary",
+        "bytes": 86429,
+        "sha256": "a1303aa16ff16e23e050c8353299d0aac1043e2e7106acd73ce07cc55f8534e9"
+      },
+      "excluded_embedded_exports": [
+        {
+          "former_path": "patches/android-16/a13-authority/frameworks-av/0001-A13-ROB-11904-Support-DRM-widevine.patch",
+          "bytes": 1025563,
+          "sha256": "fce54b3c4013744d69f01f666aa65859b4bdcf687b01be1e7b093a8baf263fa9",
+          "stable_patch_id": "cecfbbfa2d6a65e1764e40e4ab0172986eace92d"
+        },
+        {
+          "former_path": "patches/android-16/a13-authority/frameworks-av-all/0019-A13-ROB-11904-Support-DRM-widevine.patch",
+          "bytes": 1025557,
+          "sha256": "99b2c73d206bcfe11dcb10339f539bee0152953bce461c45897bff17d96cc796",
+          "stable_patch_id": "cecfbbfa2d6a65e1764e40e4ab0172986eace92d"
+        }
+      ],
+      "decision": "Keep source and target identity, one payload-free code patch, and the exact binary path/hash mapping. Do not duplicate the restricted binary bytes in the review repository.",
+      "license_gate": "Provenance and redistribution authorization must be confirmed before publication outside the authorized component repository."
+    }
+  ]
+}

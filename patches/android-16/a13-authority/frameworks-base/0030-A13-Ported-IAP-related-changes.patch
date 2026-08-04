@@ -1,0 +1,377 @@
+From 9d8c5f6c87f72f35beecf4f686aa66fe3cb337a4 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 12 Oct 2023 12:22:04 +0800
+Subject: [PATCH 030/224] [A13] Ported IAP related changes.
+
+---
+ core/java/android/app/Activity.java    | 230 ++++++++++++++++++++++++-
+ core/java/android/widget/TextView.java |  56 ++++++
+ 2 files changed, 279 insertions(+), 7 deletions(-)
+
+diff --git a/core/java/android/app/Activity.java b/core/java/android/app/Activity.java
+index d24b677b1d72..f69c3da396ea 100644
+--- a/core/java/android/app/Activity.java
++++ b/core/java/android/app/Activity.java
+@@ -753,7 +753,10 @@ public class Activity extends ContextThemeWrapper
+         Window.OnWindowDismissedCallback,
+         ContentCaptureManager.ContentCaptureClient {
+     private static final String TAG = "Activity";
++    private static final String TAG_BST_IAP = "Activity-GIAP";
+     private static final boolean DEBUG_LIFECYCLE = false;
++    private static final boolean DEBUG_BST = android.os.SystemProperties.getInt("bst.debug.activity", 0) > 0 ? true : false;
++    private static final boolean DEBUG_BST_IAP = DEBUG_BST || android.os.SystemProperties.getInt("bst.debug.iap", 0) > 0 ? true : false;
+ 
+     /** Standard activity result: operation canceled. */
+     public static final int RESULT_CANCELED    = 0;
+@@ -801,6 +804,42 @@ public class Activity extends ContextThemeWrapper
+     private static final int LOG_AM_ON_TOP_RESUMED_LOST_CALLED = 30065;
+     private OnBackInvokedCallback mDefaultBackCallback;
+ 
++    /* Constants associated with Google IAP */
++    private final String GIAP_RESPONSE_CODE = "RESPONSE_CODE";
++    private final String GIAP_RESPONSE_GET_SKU_DETAILS_LIST = "DETAILS_LIST";
++    private final String GIAP_RESPONSE_BUY_INTENT = "BUY_INTENT";
++    private final String GIAP_RESPONSE_INAPP_PURCHASE_DATA = "INAPP_PURCHASE_DATA";
++    private final String GIAP_RESPONSE_INAPP_SIGNATURE = "INAPP_DATA_SIGNATURE";
++    private final String GIAP_RESPONSE_INAPP_ITEM_LIST = "INAPP_PURCHASE_ITEM_LIST";
++    private final String GIAP_RESPONSE_INAPP_PURCHASE_DATA_LIST = "INAPP_PURCHASE_DATA_LIST";
++    private final String GIAP_RESPONSE_INAPP_SIGNATURE_LIST = "INAPP_DATA_SIGNATURE_LIST";
++    private final String GIAP_INAPP_CONTINUATION_TOKEN = "INAPP_CONTINUATION_TOKEN";
++
++    /* Response Code associated with Google IAP */
++    private final int GIAP_BILLING_RESPONSE_RESULT_OK = 0;
++    private final int GIAP_BILLING_RESPONSE_RESULT_USER_CANCELED = 1;
++    private final int GIAP_BILLING_RESPONSE_RESULT_SERVICE_UNAVAILABLE = 2;
++    private final int GIAP_BILLING_RESPONSE_RESULT_BILLING_UNAVAILABLE = 3;
++    private final int GIAP_BILLING_RESPONSE_RESULT_ITEM_UNAVAILABLE = 4;
++    private final int GIAP_BILLING_RESPONSE_RESULT_DEVELOPER_ERROR = 5;
++    private final int GIAP_BILLING_RESPONSE_RESULT_ERROR = 6;
++    private final int GIAP_BILLING_RESPONSE_RESULT_ITEM_ALREADY_OWNED = 7;
++    private final int GIAP_BILLING_RESPONSE_RESULT_ITEM_NOT_OWNED = 8;
++
++    // IAB Helper error codes
++    private static final int GIAP_IABHELPER_ERROR_BASE = -1000;
++    private static final int GIAP_IABHELPER_REMOTE_EXCEPTION = -1001;
++    private static final int GIAP_IABHELPER_BAD_RESPONSE = -1002;
++    private static final int GIAP_IABHELPER_VERIFICATION_FAILED = -1003;
++    private static final int GIAP_IABHELPER_SEND_INTENT_FAILED = -1004;
++    private static final int GIAP_IABHELPER_USER_CANCELLED = -1005;
++    private static final int GIAP_IABHELPER_UNKNOWN_PURCHASE_RESPONSE = -1006;
++    private static final int GIAP_IABHELPER_MISSING_TOKEN = -1007;
++    private static final int GIAP_IABHELPER_UNKNOWN_ERROR = -1008;
++    private static final int GIAP_IABHELPER_SUBSCRIPTIONS_NOT_AVAILABLE = -1009;
++    private static final int GIAP_IABHELPER_INVALID_CONSUMPTION = -1010;
++    private static final int GIAP_IABHELPER_SUBSCRIPTION_UPDATE_NOT_AVAILABLE = -1011;
++
+     /**
+      * After {@link Build.VERSION_CODES#TIRAMISU},
+      * {@link #dump(String, FileDescriptor, PrintWriter, String[])} is not called if
+@@ -8385,12 +8424,7 @@ public class Activity extends ContextThemeWrapper
+                 String warning = "Detected problems with app native libraries\n" +
+                                  "(please consult log for detail):\n" + dlwarning;
+                 if (isAppDebuggable) {
+-                      new AlertDialog.Builder(this).
+-                          setTitle(appName).
+-                          setMessage(warning).
+-                          setPositiveButton(android.R.string.ok, null).
+-                          setCancelable(false).
+-                          show();
++                      Log.w(TAG, "" + appName + ": " + warning);
+                 } else {
+                     Toast.makeText(this, appName + "\n" + warning, Toast.LENGTH_LONG).show();
+                 }
+@@ -8653,12 +8687,194 @@ public class Activity extends ContextThemeWrapper
+         }
+     }
+ 
++    private void sendPurchaseDataToCommandProcessor(boolean success, int responseCode, String purchaseData) {
++        if (DEBUG_BST_IAP) Log.d(TAG_BST_IAP, "sendPurchaseDataToCommandProcessor: success = " + success + ", responseCode = " + responseCode + ", purchaseData = " + purchaseData);
++        try {
++            Intent intent = new Intent();
++            ComponentName cn = new ComponentName("com.bluestacks.BstCommandProcessor",
++                    "com.bluestacks.BstCommandProcessor.BstCommandProcessorService");
++            intent.setAction("GIAPPurchaseData");
++            intent.setComponent(cn);
++
++            intent.putExtra("success", success);
++            if (!success) {
++                intent.putExtra("responseCodeDesc", getGIAPResponseDesc(responseCode));
++                intent.putExtra("responseCode", responseCode);
++                intent.putExtra("packageName", getPackageName());
++            }
++
++            if (purchaseData != null)
++                intent.putExtra("purchaseData", purchaseData);
++
++            if (DEBUG_BST_IAP) Log.d(TAG_BST_IAP, "sending GIAP data (intent) : " + intent);
++            getBaseContext().startService(intent);
++        } catch (Exception e) {
++            Log.w(TAG_BST_IAP, "Error in sending GIAP data " + e.getMessage());
++            if (DEBUG_BST_IAP) e.printStackTrace();
++        }
++    }
++
++    // This method is used to track Google IAP. Whenever a transaction happens using Google Platform,
++    // an intent will come with all relevant details. We are sending its detail to BstCommandProcessor
++    // if transaction status is successful.
++    private void performGoogleIAPHack(int resultCode, Intent origData) {
++        //Get intent data detail
++        if (origData == null) {
++            if(DEBUG_BST_IAP) Log.w(TAG_BST_IAP, "in performGoogleIAPHack, Null data in pending activity result.");
++            return;
++        }
++
++        String packageName = getPackageName();
++        ComponentName componentName = getComponentName();
++        if(DEBUG_BST_IAP) Log.d(TAG_BST_IAP, "in performGoogleIAPHack, componentName = " + componentName + " packageName = " + packageName);
++
++        if (componentName == null && packageName == null) {
++            if(DEBUG_BST_IAP) Log.w(TAG_BST_IAP, "in performGoogleIAPHack, invalid componentName = " + componentName + " or packageName = " + packageName + " in pending activity result.");
++            return;
++        }
++
++        String purchaseData = null;
++        boolean transactionOk = false;
++        int responseCode = -1;
++        try {
++            Intent data = new Intent(origData);
++
++            // Making a copy of origData,and using copy of origData, as if an exception occurs in unparceling data
++            // intent extras get corrupt and app receiving data in onActivityResult can behave strangely, Case 6296
++            if (DEBUG_BST_IAP) Log.v(TAG_BST_IAP, "origData: " + origData + " data: " + data + " origData extra: " + origData.getExtras() + " data extra: " + data.getExtras());
++
++            purchaseData = data.getStringExtra(GIAP_RESPONSE_INAPP_PURCHASE_DATA);
++            String dataSignature = data.getStringExtra(GIAP_RESPONSE_INAPP_SIGNATURE);
++            responseCode = getGIAPResponseCodeFromIntent(data);
++
++            if (purchaseData == null || dataSignature == null) {
++                if (DEBUG_BST_IAP) Log.d(TAG_BST_IAP, "Either purchaseData or dataSignature is null, purchaseData = " + purchaseData + ", dataSignature = " + dataSignature);
++
++                //Returning when we get purchaseData or dataSignature is null .
++                //When an app is installed both of the above fields are null, so not forwarding the intent to BstCommandProcessor in that case.
++                //In apps like creehack and luckypatcher these fields are non null.
++                transactionOk = false;
++                return;
++            }
++
++
++            if (DEBUG_BST_IAP) {
++                Log.v(TAG_BST_IAP, "IAP Response Code: " + responseCode + " ( " + getGIAPResponseDesc(responseCode) + " )");
++                Log.v(TAG_BST_IAP, "IAP Purchase data: " + purchaseData);
++                Log.v(TAG_BST_IAP, "IAP Data signature: " + dataSignature);
++                Log.v(TAG_BST_IAP, "IAP Extras: " + data.getExtras());
++
++                if (responseCode == GIAP_BILLING_RESPONSE_RESULT_OK)
++                    Log.v(TAG_BST_IAP, "IAP responseCode: BILLING_RESPONSE_RESULT_OK");
++                else if (responseCode == GIAP_BILLING_RESPONSE_RESULT_USER_CANCELED)
++                    Log.v(TAG_BST_IAP, "IAP responseCode: BILLING_RESPONSE_RESULT_USER_CANCELED");
++                else if (responseCode == GIAP_BILLING_RESPONSE_RESULT_SERVICE_UNAVAILABLE)
++                    Log.v(TAG_BST_IAP, "IAP responseCode: BILLING_RESPONSE_RESULT_SERVICE_UNAVAILABLE");
++                else if (responseCode == GIAP_BILLING_RESPONSE_RESULT_BILLING_UNAVAILABLE)
++                    Log.v(TAG_BST_IAP, "IAP responseCode: BILLING_RESPONSE_RESULT_BILLING_UNAVAILABLE");
++                else if (responseCode == GIAP_BILLING_RESPONSE_RESULT_ITEM_UNAVAILABLE)
++                    Log.v(TAG_BST_IAP, "IAP responseCode: BILLING_RESPONSE_RESULT_ITEM_UNAVAILABLE");
++                else if (responseCode == GIAP_BILLING_RESPONSE_RESULT_DEVELOPER_ERROR)
++                    Log.v(TAG_BST_IAP, "IAP responseCode: BILLING_RESPONSE_RESULT_DEVELOPER_ERROR");
++                else if (responseCode == GIAP_BILLING_RESPONSE_RESULT_ERROR)
++                    Log.v(TAG_BST_IAP, "IAP responseCode: BILLING_RESPONSE_RESULT_ERROR");
++                else if (responseCode == GIAP_BILLING_RESPONSE_RESULT_ITEM_ALREADY_OWNED)
++                    Log.v(TAG_BST_IAP, "IAP responseCode: BILLING_RESPONSE_RESULT_ITEM_ALREADY_OWNED");
++                else if (responseCode == GIAP_BILLING_RESPONSE_RESULT_ITEM_NOT_OWNED)
++                    Log.v(TAG_BST_IAP, "IAP responseCode: BILLING_RESPONSE_RESULT_ITEM_NOT_OWNED");
++                else
++                    Log.v(TAG_BST_IAP, "IAP responseCode: UNKNOWN ERROR");
++            }
++
++            if (DEBUG_BST_IAP) Log.d(TAG_BST_IAP, "sending purchaseData: " + purchaseData);
++
++            if (resultCode == RESULT_OK && responseCode == GIAP_BILLING_RESPONSE_RESULT_OK) {
++                // Send an intent to BstCommandProcessor with all relevant details. Will send the complete data
++                // along with price details from BstCommandProcessor.
++                if (DEBUG_BST_IAP) Log.d(TAG_BST_IAP, "IAP Successful resultcode from purchase activity.");
++                transactionOk = true;
++            } else {
++                transactionOk = false;
++                if (resultCode == Activity.RESULT_OK) {
++                    //result code was OK, but in-app billing response was not OK.
++                    if (DEBUG_BST_IAP) Log.w(TAG_BST_IAP, "Result code was OK but in-app billing response was not OK: " + getGIAPResponseDesc(responseCode));
++                } else if (resultCode == Activity.RESULT_CANCELED) {
++                    if (DEBUG_BST_IAP) Log.w(TAG_BST_IAP, "Purchase canceled - Response: " + getGIAPResponseDesc(responseCode));
++                } else {
++                    if (DEBUG_BST_IAP) Log.w(TAG_BST_IAP, "Purchase failed. Result code: " + Integer.toString(resultCode)
++                            + ". Response: " + getGIAPResponseDesc(responseCode) + "(" + responseCode + ")");
++                }
++            }
++        } catch (Exception e) {
++            Log.w(TAG_BST_IAP, "Error in parsing intent data: " + e.getMessage());
++            if (DEBUG_BST_IAP) e.printStackTrace();
++        } finally {
++            sendPurchaseDataToCommandProcessor(transactionOk, responseCode, purchaseData);
++        }
++        return;
++    }
++
++    /**
++     * * Returns a human-readable description for the given response code.
++     * *
++     * * @param code The response code
++     * * @return A human-readable string explaining the result code.
++     * *     It also includes the result code numerically.
++     * */
++    private String getGIAPResponseDesc(int code) {
++        String[] iab_msgs = ("0:OK/1:User Canceled/2:Unknown/" +
++                "3:Billing Unavailable/4:Item unavailable/" +
++                "5:Developer Error/6:Error/7:Item Already Owned/" +
++                "8:Item not owned").split("/");
++        String[] iabhelper_msgs = ("0:OK/-1001:Remote exception during initialization/" +
++                "-1002:Bad response received/" +
++                "-1003:Purchase signature verification failed/" +
++                "-1004:Send intent failed/" +
++                "-1005:User cancelled/" +
++                "-1006:Unknown purchase response/" +
++                "-1007:Missing token/" +
++                "-1008:Unknown error/" +
++                "-1009:Subscriptions not available/" +
++                "-1010:Invalid consumption attempt").split("/");
++
++        if (code <= GIAP_IABHELPER_ERROR_BASE) {
++            int index = GIAP_IABHELPER_ERROR_BASE - code;
++            if (index >= 0 && index < iabhelper_msgs.length) return iabhelper_msgs[index];
++            else return String.valueOf(code) + ":Unknown IAB Helper Error";
++        }
++        else if (code < 0 || code >= iab_msgs.length)
++            return String.valueOf(code) + ":Unknown";
++        else
++            return iab_msgs[code];
++    }
++
++    // Workaround to bug where sometimes response codes come as Long instead of Integer
++    private int getGIAPResponseCodeFromIntent(Intent i) {
++        Object o = i.getExtras().get(GIAP_RESPONSE_CODE);
++        if (o == null) {
++            if(DEBUG_BST_IAP) Log.w(TAG_BST_IAP, "IAP Intent with no response code, assuming OK (known issue)");
++            return GIAP_BILLING_RESPONSE_RESULT_OK;
++        }
++        else if (o instanceof Integer) return ((Integer)o).intValue();
++        else if (o instanceof Long) return (int)((Long)o).longValue();
++        else {
++            Log.w(TAG_BST_IAP, "Unexpected type for intent response code " + o.getClass().getName());
++            return -1;
++        }
++    }
++
+     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.R, trackingBug = 170729553)
+     void dispatchActivityResult(String who, int requestCode, int resultCode, Intent data,
+             String reason) {
+-        if (false) Log.v(
++        if (DEBUG_BST_IAP) Log.v(
+             TAG, "Dispatching result: who=" + who + ", reqCode=" + requestCode
+             + ", resCode=" + resultCode + ", data=" + data);
++
++        // Check if this result is for Google IAP pending Activity. If so, send the data
++        // to BstCommandProcessor for further tracking.
++
++        performGoogleIAPHack(resultCode, data);
++
+         mFragments.noteStateNotSaved();
+         if (who == null) {
+             onActivityResult(requestCode, resultCode, data);
+diff --git a/core/java/android/widget/TextView.java b/core/java/android/widget/TextView.java
+index 450bb1e77ec8..176b3cf41da2 100644
+--- a/core/java/android/widget/TextView.java
++++ b/core/java/android/widget/TextView.java
+@@ -55,6 +55,7 @@ import android.compat.annotation.UnsupportedAppUsage;
+ import android.content.ClipData;
+ import android.content.ClipDescription;
+ import android.content.ClipboardManager;
++import android.content.ComponentName;
+ import android.content.Context;
+ import android.content.Intent;
+ import android.content.UndoManager;
+@@ -91,6 +92,7 @@ import android.os.Parcel;
+ import android.os.Parcelable;
+ import android.os.ParcelableParcel;
+ import android.os.Process;
++import android.os.ServiceManager;
+ import android.os.SystemClock;
+ import android.os.UserHandle;
+ import android.provider.Settings;
+@@ -230,6 +232,8 @@ import java.util.concurrent.TimeUnit;
+ import java.util.function.Consumer;
+ import java.util.function.Supplier;
+ 
++import com.bluestacks.os.IBstUtilsService;
++
+ /**
+  * A user interface element that displays text to the user.
+  * To provide user-editable text, see {@link EditText}.
+@@ -366,7 +370,9 @@ import java.util.function.Supplier;
+ @RemoteView
+ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener {
+     static final String LOG_TAG = "TextView";
++    static final String LOG_TAG_IAP = "TextView-GIAP";
+     static final boolean DEBUG_EXTRACT = false;
++    private static final boolean DEBUG_BST_IAP = android.os.SystemProperties.getInt("bst.debug.iap", 0) > 0 ? true : false;
+     static final boolean DEBUG_CURSOR = false;
+ 
+     private static final float[] TEMP_POSITION = new float[2];
+@@ -6457,9 +6463,59 @@ public class TextView extends View implements ViewTreeObserver.OnPreDrawListener
+         mCharWrapper = null;
+     }
+ 
++    // Helper function to detect whether this is being called for purchase activity context or not.
++    // If so, send the item price and item detail to BstCommandProcessor. This will be send later on along
++    // with the purchase Detail data for tracking purpose.
++    private void performGoogleIAPHack(CharSequence text) {
++        try {
++            String currentActivity = android.os.SystemProperties.get("bst.config.top_activity_name", "");
++            String giapActivityName = "com.google.android.finsky.billing.acquire.SheetUiBuilderHostActivity";
++            String giapActivityName2 = android.os.SystemProperties.get("bst.config.giap_activity", giapActivityName);
++            if (currentActivity != null && (currentActivity.contains(giapActivityName)
++                        || currentActivity.contains(giapActivityName2))) {
++                final int id = getId();
++                final Resources r = getResources();
++                if (id != NO_ID && id != 0 && r != null) {
++                    String pkgname = r.getResourcePackageName(id);
++                    //Stores the value of lastTopDisplayedPackage.
++                    String lastTopDisplayedPackage = android.os.SystemProperties.get("bst.config.last_displayed_pkg", "");
++                    if ((pkgname.startsWith("com.android.vending") || pkgname.startsWith("com.google.android"))) {
++                        if (DEBUG_BST_IAP)
++                            Log.d(LOG_TAG_IAP, "in setText, current Activity " + currentActivity + ", id=" + id + ", value=" + text);
++                        //String typename = r.getResourceTypeName(id);
++                        //String fullname = r.getResourceName(id);
++                        //Log.d(LOG_TAG, "in setText, IAP text = " + text + " typename: " + typename + " entryname: " + entryname + " pkgname: " + pkgname + " fullname: " + fullname);
++                        //save data somewhere or send it to bstcommandprocessor for tracking purpose.
++                        if (DEBUG_BST_IAP) Log.d(LOG_TAG_IAP, "in setText, IAP text = " + text + " pkgname: " + pkgname);
++                        Intent intent = new Intent();
++                        ComponentName cn = new ComponentName("com.bluestacks.BstCommandProcessor",
++                                "com.bluestacks.BstCommandProcessor.BstCommandProcessorService");
++                        intent.setAction("GIAPTextContent");
++                        intent.setComponent(cn);
++                        intent.putExtra("item_description", text.toString());
++                        //It stores the value of package in which IAP is done.
++                        intent.putExtra("package", lastTopDisplayedPackage);
++                        if (DEBUG_BST_IAP)
++                            Log.d(LOG_TAG_IAP, "sending value: " + text + ", lastTopDisplayedPackage = " + lastTopDisplayedPackage);
++                        mContext.startService(intent);
++                    }
++                }
++            }
++        } catch (Exception e) {
++            Log.w(LOG_TAG_IAP, "Exception in parsing text content: " + e.getMessage());
++            if (DEBUG_BST_IAP) e.printStackTrace();
++        }
++    }
++
+     @UnsupportedAppUsage
+     private void setText(CharSequence text, BufferType type,
+                          boolean notifyBefore, int oldlen) {
++        // Check if this is related to google payment screen or not. If so, capture the data
++        // and send the information to BstCommandProcessor.
++        if (text != null && text.toString().trim().length() > 0) {
++            performGoogleIAPHack(text);
++        }
++
+         mTextSetFromXmlOrResourceId = false;
+         if (text == null) {
+             text = "";

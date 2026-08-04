@@ -1,0 +1,103 @@
+From 617233b5634902c6ecc698b34007f265692376e0 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 10:31:48 +0800
+Subject: [PATCH] [A16] Customize BlueStacks quick settings footer
+
+Port A13 authority commit 7534c8982878 to the Android 16 footer interactor and view-model. Route Settings to the BlueStacks settings activity and omit the power and user-switcher actions.
+---
+ .../interactor/FooterActionsInteractor.kt     |  9 +++++--
+ .../ui/viewmodel/FooterActionsViewModel.kt    | 26 ++-----------------
+ 2 files changed, 9 insertions(+), 26 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt b/packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt
+index 9dd09689b305..da3701a1baf8 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt
++++ b/packages/SystemUI/src/com/android/systemui/qs/footer/domain/interactor/FooterActionsInteractor.kt
+@@ -18,11 +18,11 @@ package com.android.systemui.qs.footer.domain.interactor
+ 
+ import android.app.admin.DevicePolicyEventLogger
+ import android.app.admin.DevicePolicyManager
++import android.content.ComponentName
+ import android.content.Context
+ import android.content.Intent
+ import android.content.IntentFilter
+ import android.os.UserHandle
+-import android.provider.Settings
+ import com.android.internal.jank.InteractionJankMonitor
+ import com.android.internal.logging.MetricsLogger
+ import com.android.internal.logging.UiEventLogger
+@@ -187,7 +187,12 @@ constructor(
+ 
+         metricsLogger.action(MetricsProto.MetricsEvent.ACTION_QS_EXPANDED_SETTINGS_LAUNCH)
+         activityStarter.startActivity(
+-            Intent(Settings.ACTION_SETTINGS),
++            Intent().setComponent(
++                ComponentName(
++                    "com.bluestacks.settings",
++                    "com.bluestacks.settings.SettingsActivity",
++                )
++            ),
+             true /* dismissShade */,
+             expandable.activityTransitionController(
+                 InteractionJankMonitor.CUJ_SHADE_APP_LAUNCH_FROM_SETTINGS_BUTTON
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt b/packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt
+index 95f0b75737e7..cea0d50bc212 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt
++++ b/packages/SystemUI/src/com/android/systemui/qs/footer/ui/viewmodel/FooterActionsViewModel.kt
+@@ -17,7 +17,6 @@
+ package com.android.systemui.qs.footer.ui.viewmodel
+ 
+ import android.content.Context
+-import android.util.Log
+ import android.view.ContextThemeWrapper
+ import androidx.lifecycle.DefaultLifecycleObserver
+ import androidx.lifecycle.Lifecycle
+@@ -36,7 +35,6 @@ import com.android.systemui.qs.dagger.QSFlagsModule.PM_LITE_ENABLED
+ import com.android.systemui.qs.footer.data.model.UserSwitcherStatusModel
+ import com.android.systemui.qs.footer.domain.interactor.FooterActionsInteractor
+ import com.android.systemui.qs.footer.domain.model.SecurityButtonConfig
+-import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsButtonViewModel.PowerActionViewModel
+ import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsButtonViewModel.SettingsActionViewModel
+ import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsButtonViewModel.UserSwitcherViewModel
+ import com.android.systemui.qs.panels.domain.interactor.TextFeedbackInteractor
+@@ -303,12 +301,7 @@ fun createFooterActionsViewModel(
+             }
+             .distinctUntilChanged()
+ 
+-    val power =
+-        if (showPowerButton) {
+-            PowerActionViewModel(qsThemedContext, ::onPowerButtonClicked)
+-        } else {
+-            null
+-        }
++    val power: FooterActionsButtonViewModel? = null
+ 
+     val textFeedback = textFeedbackInteractor.textFeedback.map { it.load(qsThemedContext) }
+ 
+@@ -332,22 +325,7 @@ fun userSwitcherViewModel(
+         .map { userSwitcherStatus ->
+             when (userSwitcherStatus) {
+                 UserSwitcherStatusModel.Disabled -> null
+-                is UserSwitcherStatusModel.Enabled -> {
+-                    if (userSwitcherStatus.currentUserImage == null) {
+-                        Log.e(
+-                            TAG,
+-                            "Skipped the addition of user switcher button because " +
+-                                "currentUserImage is missing",
+-                        )
+-                        return@map null
+-                    }
+-
+-                    userSwitcherButtonViewModel(
+-                        themedContext,
+-                        userSwitcherStatus,
+-                        onUserSwitcherClicked,
+-                    )
+-                }
++                is UserSwitcherStatusModel.Enabled -> null
+             }
+         }
+         .distinctUntilChanged()
+-- 
+2.34.1
+

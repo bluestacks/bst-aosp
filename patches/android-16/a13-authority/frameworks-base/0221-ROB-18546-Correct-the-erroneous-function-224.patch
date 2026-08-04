@@ -1,0 +1,47 @@
+From 371f93c93c48efa1863ce455f224b4c2861ece73 Mon Sep 17 00:00:00 2001
+From: jammy-bst <64055145+jammy-bst@users.noreply.github.com>
+Date: Tue, 27 Jan 2026 14:41:23 +0800
+Subject: [PATCH 221/224] ROB-18546:Correct the erroneous function (#224)
+
+(cherry picked from commit 132085f7fa538e9a83e70dcb6fff7d92e6278b88)
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 26 +++++--------------
+ 1 file changed, 7 insertions(+), 19 deletions(-)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 016872d69d89..90c34c9802dc 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -2019,25 +2019,13 @@ public class BstFilterAppsManager {
+      */
+     public boolean isFbCompleteCheckDisabled(String pkgName)
+     {
+-        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mFbCompleteCheckDisabledAppList app list\n");
+-        initLists();
+-
+-        synchronized (mFbCompleteCheckDisabledAppList)
+-        {
+-            if (mFbCompleteCheckDisabledAppList.contains(pkgName))
+-            {
+-                return true;
+-            }
+-            else
+-            {
+-                String wildcardMatchedPackageName = isPackageMatchedWilcard(mFbCompleteCheckDisabledAppList, pkgName);
+-                if(wildcardMatchedPackageName != null)
+-                {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in isFbCompleteCheckDisabled App List\n");
+-                    return true;
+-                }
+-            }
++        try {
++            return mService.isFbCompleteCheckDisabled(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
+         }
+-        return false;
+     }
+ }

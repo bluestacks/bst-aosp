@@ -1,0 +1,50 @@
+From 6f3c41bafb3565300092b707ef43261188ad31ee Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Sat, 11 May 2024 10:38:55 +0800
+Subject: [PATCH 142/224] [A13] ROB-13196:Adding an excpetion for
+ bstcommandprocessor Allowing packages to getSharedPreferences with normal
+ context before user unlock.
+
+---
+ core/java/android/app/ContextImpl.java | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/core/java/android/app/ContextImpl.java b/core/java/android/app/ContextImpl.java
+index 6d982ced385c..5142a87c38c6 100644
+--- a/core/java/android/app/ContextImpl.java
++++ b/core/java/android/app/ContextImpl.java
+@@ -566,9 +566,14 @@ class ContextImpl extends Context {
+             if (sp == null) {
+                 checkMode(mode);
+                 if (getApplicationInfo().targetSdkVersion >= android.os.Build.VERSION_CODES.O) {
++                    //allowing bluestacks packages to access credentials protected
++                    //storage (default storage) before user unlock.
+                     if (isCredentialProtectedStorage()
+                             && !getSystemService(UserManager.class)
+-                                    .isUserUnlockingOrUnlocked(UserHandle.myUserId())) {
++                                    .isUserUnlockingOrUnlocked(UserHandle.myUserId())
++                            && !getPackageName().startsWith("com.bluestacks.")
++                            && !getPackageName().equals("com.location.provider")
++                            && !getPackageName().equals("com.google.android.gms")) {
+                         throw new IllegalStateException("SharedPreferences in credential encrypted "
+                                 + "storage are not available until after user is unlocked");
+                     }
+@@ -1107,11 +1112,17 @@ class ContextImpl extends Context {
+     @Override
+     public void startActivityAsUser(Intent intent, Bundle options, UserHandle user) {
+         try {
+-            ActivityTaskManager.getService().startActivityAsUser(
++            mMainThread.getInstrumentation().bstReferrerHack(getOuterContext(), intent);
++            int res = ActivityTaskManager.getService().startActivityAsUser(
+                     mMainThread.getApplicationThread(), getOpPackageName(), getAttributionTag(),
+                     intent, intent.resolveTypeIfNeeded(getContentResolver()),
+                     null, null, 0, Intent.FLAG_ACTIVITY_NEW_TASK, null, options,
+                     user.getIdentifier());
++            if ((res == ActivityManager.START_INTENT_NOT_RESOLVED) || (res == ActivityManager.START_CLASS_NOT_FOUND))
++            {
++                res = mMainThread.getInstrumentation().bstHandleProprietryIntents(getOuterContext(), res, intent);
++            }
++            mMainThread.getInstrumentation().checkStartActivityResult(res,intent);
+         } catch (RemoteException e) {
+             throw e.rethrowFromSystemServer();
+         }

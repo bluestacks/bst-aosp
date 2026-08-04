@@ -1,0 +1,26 @@
+From b86a23fbba1314a63dc3be582e975a7754afeea9 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Wed, 11 Oct 2023 15:09:19 +0800
+Subject: [PATCH 027/224] [A13] Set bst props to default value as starting
+ zygote
+
+---
+ cmds/app_process/app_main.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/cmds/app_process/app_main.cpp b/cmds/app_process/app_main.cpp
+index 12083b6fe20b..df75b4d1575e 100644
+--- a/cmds/app_process/app_main.cpp
++++ b/cmds/app_process/app_main.cpp
+@@ -333,6 +333,11 @@ int main(int argc, char* const argv[])
+     }
+ 
+     if (zygote) {
++        property_set("bst.config.pm_ready", "0");
++        property_set("bst.config.top_package_name","");
++        property_set("bst.config.top_activity_name","");
++        property_set("bst.config.boot_completed", "0");
++        property_set("bst.config.screen_enabled", "0");
+         runtime.start("com.android.internal.os.ZygoteInit", args, zygote);
+     } else if (className) {
+         runtime.start("com.android.internal.os.RuntimeInit", args, zygote);

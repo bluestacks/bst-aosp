@@ -1,0 +1,153 @@
+From b58396a9a465ec3875e01d1719bd0beea971b359 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 20:32:27 +0800
+Subject: [PATCH] [A16] Adapt FFmpeg for the Android 16 media stack
+
+---
+ android/build.mk         | 1 -
+ libavcodec/Android.mk    | 2 ++
+ libavcodec/options.c     | 9 +++++++--
+ libavformat/Android.mk   | 2 ++
+ libavutil/Android.mk     | 2 ++
+ libswresample/Android.mk | 2 ++
+ libswscale/Android.mk    | 2 ++
+ 7 files changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/android/build.mk b/android/build.mk
+index 0bbfb37a7e..05c961baac 100644
+--- a/android/build.mk
++++ b/android/build.mk
+@@ -51,7 +51,6 @@ LOCAL_MODULE := lib$(NAME)
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+ LOCAL_ARM_MODE := arm
+-LOCAL_PROPRIETARY_MODULE := true
+ 
+ LOCAL_SRC_FILES := $(C_FILES) $(S_FILES)
+ 
+diff --git a/libavcodec/Android.mk b/libavcodec/Android.mk
+index 332d7fff1b..d0f0585674 100644
+--- a/libavcodec/Android.mk
++++ b/libavcodec/Android.mk
+@@ -10,6 +10,7 @@
+ 
+ LOCAL_PATH := $(call my-dir)
+ 
++ifneq ($(TARGET_ARCH),x86_64)
+ FFMPEG_MULTILIB := 32
+ include $(LOCAL_PATH)/../android/build.mk
+ 
+@@ -30,6 +31,7 @@ endif
+ 
+ LOCAL_MULTILIB := $(FFMPEG_MULTILIB)
+ include $(BUILD_SHARED_LIBRARY)
++endif
+ 
+ FFMPEG_MULTILIB := 64
+ include $(LOCAL_PATH)/../android/build.mk
+diff --git a/libavcodec/options.c b/libavcodec/options.c
+index 82e12179a6..04409d9891 100644
+--- a/libavcodec/options.c
++++ b/libavcodec/options.c
+@@ -213,6 +213,12 @@ FF_ENABLE_DEPRECATION_WARNINGS
+     avctx->extradata_size = 0;
+ }
+ 
++static void zero_padding(void *buffer, size_t size)
++{
++    if (size > 0)
++        memset(buffer, 0, size);
++}
++
+ int avcodec_copy_context(AVCodecContext *dest, const AVCodecContext *src)
+ {
+     const AVCodec *orig_codec = dest->codec;
+@@ -265,8 +271,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
+         if (!dest->obj) \
+             goto fail; \
+         memcpy(dest->obj, src->obj, size); \
+-        if (pad) \
+-            memset(((uint8_t *) dest->obj) + size, 0, pad); \
++        zero_padding(((uint8_t *) dest->obj) + size, pad); \
+     }
+     alloc_and_copy_or_fail(extradata,    src->extradata_size,
+                            AV_INPUT_BUFFER_PADDING_SIZE);
+diff --git a/libavformat/Android.mk b/libavformat/Android.mk
+index 4c8865408c..0c1536c280 100644
+--- a/libavformat/Android.mk
++++ b/libavformat/Android.mk
+@@ -10,6 +10,7 @@
+ 
+ LOCAL_PATH := $(call my-dir)
+ 
++ifneq ($(TARGET_ARCH),x86_64)
+ FFMPEG_MULTILIB := 32
+ include $(LOCAL_PATH)/../android/build.mk
+ 
+@@ -24,6 +25,7 @@ LOCAL_SHARED_LIBRARIES +=		\
+ 
+ LOCAL_MULTILIB := $(FFMPEG_MULTILIB)
+ include $(BUILD_SHARED_LIBRARY)
++endif
+ 
+ FFMPEG_MULTILIB := 64
+ include $(LOCAL_PATH)/../android/build.mk
+diff --git a/libavutil/Android.mk b/libavutil/Android.mk
+index 15782cea4c..4d521b213e 100644
+--- a/libavutil/Android.mk
++++ b/libavutil/Android.mk
+@@ -10,6 +10,7 @@
+ 
+ LOCAL_PATH := $(call my-dir)
+ 
++ifneq ($(TARGET_ARCH),x86_64)
+ FFMPEG_MULTILIB := 32
+ include $(LOCAL_PATH)/../android/build.mk
+ 
+@@ -26,6 +27,7 @@ LOCAL_MULTILIB := $(FFMPEG_MULTILIB)
+ LOCAL_CFLAGS += -isystem $(LOCAL_PATH)
+ 
+ include $(BUILD_SHARED_LIBRARY)
++endif
+ 
+ 
+ 
+diff --git a/libswresample/Android.mk b/libswresample/Android.mk
+index 23fa899df0..2c801e5f5e 100644
+--- a/libswresample/Android.mk
++++ b/libswresample/Android.mk
+@@ -10,11 +10,13 @@
+ 
+ LOCAL_PATH := $(call my-dir)
+ 
++ifneq ($(TARGET_ARCH),x86_64)
+ FFMPEG_MULTILIB := 32
+ include $(LOCAL_PATH)/../android/build.mk
+ 
+ LOCAL_MULTILIB := $(FFMPEG_MULTILIB)
+ include $(BUILD_SHARED_LIBRARY)
++endif
+ 
+ 
+ FFMPEG_MULTILIB := 64
+diff --git a/libswscale/Android.mk b/libswscale/Android.mk
+index b4a5f44e69..01c0ecb3d4 100644
+--- a/libswscale/Android.mk
++++ b/libswscale/Android.mk
+@@ -10,11 +10,13 @@
+ 
+ LOCAL_PATH := $(call my-dir)
+ 
++ifneq ($(TARGET_ARCH),x86_64)
+ FFMPEG_MULTILIB := 32
+ include $(LOCAL_PATH)/../android/build.mk
+ 
+ LOCAL_MULTILIB := $(FFMPEG_MULTILIB)
+ include $(BUILD_SHARED_LIBRARY)
++endif
+ 
+ FFMPEG_MULTILIB := 64
+ include $(LOCAL_PATH)/../android/build.mk
+-- 
+2.34.1
+

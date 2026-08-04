@@ -1,0 +1,34 @@
+From fc8608092e7fbdddd5a2afdc6534d214111ce168 Mon Sep 17 00:00:00 2001
+From: MarkJiang-bst <97725346+MarkJiang-bst@users.noreply.github.com>
+Date: Thu, 26 Mar 2026 15:06:00 +0800
+Subject: [PATCH 223/224] ROB-14680: fix cannot paste issue caused by device
+ locked (#228)
+
+---
+ .../java/com/android/server/clipboard/ClipboardService.java | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/services/core/java/com/android/server/clipboard/ClipboardService.java b/services/core/java/com/android/server/clipboard/ClipboardService.java
+index 666c6b5e82b2..faad4a4dbcb5 100755
+--- a/services/core/java/com/android/server/clipboard/ClipboardService.java
++++ b/services/core/java/com/android/server/clipboard/ClipboardService.java
+@@ -54,6 +54,7 @@ import android.os.IUserManager;
+ import android.os.Looper;
+ import android.os.Message;
+ import android.os.Parcel;
++import android.os.PowerManager;
+ import android.os.RemoteCallbackList;
+ import android.os.RemoteException;
+ import android.os.ServiceManager;
+@@ -921,6 +922,11 @@ public class ClipboardService extends SystemService {
+     private boolean isDeviceLocked(@UserIdInt int userId) {
+         final long token = Binder.clearCallingIdentity();
+         try {
++            boolean lockscreenDisabled = Settings.Secure.getInt(getContext().getContentResolver(), "lockscreen.disabled", 0) == 1;
++            boolean screenOn = ((PowerManager) getContext().getSystemService(Context.POWER_SERVICE)).isInteractive();
++            if (lockscreenDisabled && screenOn) {
++                return false;
++            }
+             final KeyguardManager keyguardManager = getContext().getSystemService(
+                     KeyguardManager.class);
+             return keyguardManager != null && keyguardManager.isDeviceLocked(userId);

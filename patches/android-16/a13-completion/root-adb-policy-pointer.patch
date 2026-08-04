@@ -1,0 +1,19 @@
+From f4dc6195f427963fd01bf199917541d65fb0ec82 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 22:54:53 +0800
+Subject: [PATCH] [A16] Restore complete ADB policy
+
+---
+ packages/modules/adb | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/modules/adb b/packages/modules/adb
+index c2a8b12..361c29e 160000
+--- a/packages/modules/adb
++++ b/packages/modules/adb
+@@ -1 +1 @@
+-Subproject commit c2a8b128974604c0ff10d67f1a471221decec248
++Subproject commit 361c29e743452cf1a6d944aa2d836de5fa776c1f
+-- 
+2.34.1
+

@@ -1,0 +1,11 @@
+diff --git a/init.x86.rc b/init.x86.rc
+index a8ff942..564cb94 100755
+--- a/init.x86.rc
++++ b/init.x86.rc
+@@ -3,7 +3,6 @@ import /init.superuser.rc
+ on early-init
+     write /proc/sys/kernel/ctrl-alt-del 1
+     mount binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
+-
+ 
+     write /sys/module/xt_qtaguid/parameters/ctrl_write_limited N

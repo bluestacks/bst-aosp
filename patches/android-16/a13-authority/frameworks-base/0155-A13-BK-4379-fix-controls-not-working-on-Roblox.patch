@@ -1,0 +1,122 @@
+From fd50ef986e30527bded529e8c629173aef187b7b Mon Sep 17 00:00:00 2001
+From: henry-bst <henry-bst@bluestacks.com>
+Date: Mon, 30 Sep 2024 12:34:38 +0800
+Subject: [PATCH 155/224] [A13] BK-4379:fix controls not working on Roblox
+
+---
+ .../bluestacks/os/BstFilterAppsManager.java   | 14 ++++++
+ .../bluestacks/os/IBstFilterAppsService.aidl  |  1 +
+ .../server/BstFilterAppsService.java          | 48 +++++++++++++++++++
+ 3 files changed, 63 insertions(+)
+
+diff --git a/core/java/com/bluestacks/os/BstFilterAppsManager.java b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+index 6cd14515153a..f30c1d926f99 100755
+--- a/core/java/com/bluestacks/os/BstFilterAppsManager.java
++++ b/core/java/com/bluestacks/os/BstFilterAppsManager.java
+@@ -1816,4 +1816,18 @@ public class BstFilterAppsManager {
+         }
+     }
+ 
++    /**
++     * @hide
++     */
++    public boolean isHardKeyBoard(String pkgName)
++    {
++        try {
++            return mService.isHardKeyBoard(pkgName);
++        } catch(Exception e) {
++            // Catching the error and returning default behavior as if entry was not
++            // present in config.db
++            if (DEBUG) e.printStackTrace();
++            return false;
++        }
++    }
+ }
+diff --git a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+index b551e59692be..ec63f8cce74a 100755
+--- a/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
++++ b/core/java/com/bluestacks/os/IBstFilterAppsService.aidl
+@@ -117,4 +117,5 @@ interface IBstFilterAppsService
+     String getGLHostInfo(String pkgName);
+     String getGLExtensionsIgnore(String pkgName);
+     boolean isEGLSurfaceIgnore(String pkgName);
++    boolean isHardKeyBoard(String pkgName);
+ }
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index f272130aeeb9..0420f225ac63 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -190,6 +190,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Map<String, String>   mGLHostInfoList = new HashMap<String, String>();
+     private Map<String, String>   mGLExtensionsIgnoreList = new HashMap<String, String>();
+     private Set<String>           mEGLSurfaceIgnoreAppList = new TreeSet<String>();
++    private Set<String>           mHardKeyBoardAppList = new TreeSet<String>();
+ 
+     private boolean mListsInited = false;
+     private String  mBrowserUrl  = "";
+@@ -2592,6 +2593,22 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                         removePackageEntryFromList(mEGLSurfaceIgnoreAppList,pkgException);
+                                     }
+                                 }
++                                else if (key.equalsIgnoreCase("HardKeyBoard")) {
++                                    synchronized (mHardKeyBoardAppList) {
++                                        if (value.equalsIgnoreCase("false")) {
++                                            packageName = "~" + packageName;
++                                        }
++                                        if (DEBUG)
++                                            Slog.d(TAG, "Adding " + packageName + " to mHardKeyBoardAppList \n");
++                                        mHardKeyBoardAppList.add(packageName);
++                                        if (packageName.startsWith("~")) {
++                                            if (DEBUG)
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mHardKeyBoardAppList \n");
++                                            mHardKeyBoardAppList.remove(packageName.substring(1));
++                                        }
++                                        removePackageEntryFromList(mHardKeyBoardAppList, pkgException);
++                                    }
++                                }
+                             }
+                             // one rule parsing finished, no need to parse other rule..
+                             // as more specific rules are above generic rule, if we have applied a more specific rule, do not apply generic rule
+@@ -3284,6 +3301,11 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+             mEGLSurfaceIgnoreAppList.clear();
+         }
+ 
++        synchronized (mHardKeyBoardAppList)
++        {
++            mHardKeyBoardAppList.clear();
++        }
++
+         if(DEBUG) Slog.d(TAG,"loading config Db");
+ 
+         // Giving 1st preference to /data/downloads/.config_user.db file, is this file is not present then we check for .config.db in /data/downloads/
+@@ -7435,4 +7457,30 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         return false;
+     }
+ 
++    /**
++     * @hide
++     */
++    public boolean isHardKeyBoard(String pkgName)
++    {
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in HardKeyBoard app list\n");
++        initLists();
++
++        synchronized (mHardKeyBoardAppList)
++        {
++            if (mHardKeyBoardAppList.contains(pkgName))
++            {
++                return true;
++            }
++            else
++            {
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mHardKeyBoardAppList, pkgName);
++                if(wildcardMatchedPackageName != null)
++                {
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in HardKeyBoard App List\n");
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
+ }

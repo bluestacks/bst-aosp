@@ -1,0 +1,25 @@
+From ea27c67acf8c013e2b343b9c5e4f573cda5a4819 Mon Sep 17 00:00:00 2001
+From: allen-bst <allen@bluestacks.com>
+Date: Fri, 17 Nov 2023 10:05:08 +0800
+Subject: [PATCH 072/224] [A13] Porting changes for blacklist config.db entry
+
+---
+ .../core/java/com/android/server/pm/InstallPackageHelper.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 24db1a639b6a..dd7adec59683 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -1190,8 +1190,10 @@ final class InstallPackageHelper {
+ 
+         String pkgName = res.mName = parsedPackage.getPackageName();
+         String versionName = parsedPackage.getVersionName();
++        BstFilterAppsManager bstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++        boolean isBlackListedApp = bstfilter.isBlackListed(pkgName,versionName);
+ 
+-        if (isGoogleAppUpdateUnsafe(pkgName)) {
++        if (isBlackListedApp || isGoogleAppUpdateUnsafe(pkgName)) {
+             res.mReturnCode = PackageManager.INSTALL_FAILED_INVALID_APK;
+             Slog.w(TAG, "The package [ " + pkgName + " v" + versionName + " ] that you are trying to install " +
+                     "has not been validated for this platform");

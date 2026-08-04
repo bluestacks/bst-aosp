@@ -1,0 +1,48 @@
+From 3bf8cc52c7b8280aec80d8ba8cc19251fa91e224 Mon Sep 17 00:00:00 2001
+From: Aaron He <aaron@bluestacks.com>
+Date: Thu, 21 Mar 2024 09:09:37 +0800
+Subject: [PATCH 131/224] [A13] Removing useless log of
+ bstSendTopDisplayedOnFocusChange
+
+---
+ .../java/com/android/server/wm/WindowManagerService.java | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index df23cb514d07..1a6eb67501f5 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -6171,11 +6171,8 @@ public class WindowManagerService extends IWindowManager.Stub
+         }
+ 
+         String activityRecordStr = activityRecord.toString();
+-        Slog.e(TAG, "bstSendTopDisplayedOnFocusChange activityRecordStr: " + activityRecordStr);
+         String[] splitsAppToken = activityRecordStr.split(" ");
+-        for (int i=0; i<splitsAppToken.length; i++) {
+-            Slog.e(TAG, i + ": " + splitsAppToken[i]);
+-        }
++
+         if (splitsAppToken.length < 4) {
+             Slog.e(TAG, "activityRecord is invalid, activityRecordStr: " + activityRecordStr + ", so returning");
+             return;
+@@ -6184,20 +6181,16 @@ public class WindowManagerService extends IWindowManager.Stub
+         String componentName = splitsAppToken[2].trim();
+         if (componentName.endsWith("}")) {
+             componentName = componentName.substring(0, componentName.length() - 1);
+-            Slog.e(TAG, "bstSendTopDisplayedOnFocusChange Modified componentName: " + componentName);
+         }
+-        Slog.e(TAG, "bstSendTopDisplayedOnFocusChange componentName: " + componentName);
+ 
+         if(packageName == null) {
+             if (DEBUG_VISIBILITY)  Slog.d(TAG, "packageName is null through getOwningPackage, falling back to parsing activityRecord to get packagename");
+             // See toString() of ActivityRecord for token format.
+             // We are assuming <package-name>/<activity-name> in the token string.
+             packageName = componentName.substring(0, componentName.indexOf("/")).trim();
+-            Slog.e(TAG, "bstSendTopDisplayedOnFocusChange packageName: " + packageName);
+         }
+ 
+         String activityName = componentName.substring(componentName.indexOf("/") + 1, componentName.length()).trim();
+-            Slog.e(TAG, "bstSendTopDisplayedOnFocusChange activityName: " + activityName);
+         if (activityName.startsWith(".")) {
+             activityName = packageName + activityName;
+         }

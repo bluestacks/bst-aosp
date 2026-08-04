@@ -1,0 +1,19 @@
+From e850c5dc86c02c5d75abb5bf8882d232423591d3 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Tue, 4 Aug 2026 23:52:20 +0800
+Subject: [PATCH] [A16] Restore absolute mouse coordinates
+
+---
+ frameworks/native | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/frameworks/native b/frameworks/native
+index 2449c48..dad15bb 160000
+--- a/frameworks/native
++++ b/frameworks/native
+@@ -1 +1 @@
+-Subproject commit 2449c48789d020360dca1363e88a476cf9638e4a
++Subproject commit dad15bbbd29371ef74f714bdcd89eef51c632611
+-- 
+2.34.1
+

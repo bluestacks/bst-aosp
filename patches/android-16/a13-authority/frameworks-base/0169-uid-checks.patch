@@ -1,0 +1,48 @@
+From 9f90bba2f27ed0c7d3d512b8a3462752ad3f5b40 Mon Sep 17 00:00:00 2001
+From: Build Master <build@bluestacks.com>
+Date: Tue, 4 Mar 2025 10:26:09 +0530
+Subject: [PATCH 169/224] uid checks
+
+---
+ .../server/pm/PackageManagerService.java      | 22 +++++++++++--------
+ 1 file changed, 13 insertions(+), 9 deletions(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 701dda957707..a5bf4702ac4a 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -2820,21 +2820,25 @@ public class PackageManagerService implements PackageSender, TestUtilityService
+             // if they are one of our partner apps.
+             int pid = Binder.getCallingPid();
+             int uid = Binder.getCallingUid();
+-            if (uid >= 10000) {
+-                String callingApp = BstUtils.getAppNameFromPid(pid);
+-                if (mBstfilter == null) {
+-                    mBstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
+-                }
+-                if (mBstfilter.isBluestacksPartnerApp(callingApp)) {
+-                    return true;
+-                }
++            if (uid < 10000) {
++                // returning true unconditionally for system apps
++                return true;
++            }
++
++            String callingApp = BstUtils.getAppNameFromPid(pid);
++            if (mBstfilter == null) {
++                mBstfilter = (BstFilterAppsManager) mContext.getSystemService(Context.BST_FILTER_APPS);
++            }
++            if (mBstfilter.isBluestacksPartnerApp(callingApp)) {
++                return true;
+             }
+         }
+ 
+         if ("android.hardware.nowgg".equalsIgnoreCase(name)) {
+             int pid = Binder.getCallingPid();
++            int uid = Binder.getCallingUid();
+             String pkgName = BstUtils.getAppNameFromPid(pid);
+-            if (pkgName.equalsIgnoreCase("gg.now.accounts") || pkgName.equalsIgnoreCase("gg.now.billing.service2")) {
++            if (pkgName.equalsIgnoreCase("gg.now.accounts") || pkgName.equalsIgnoreCase("gg.now.billing.service2") || uid < 10000) {
+                 return true;
+             }
+             if (BST_DEBUG) Log.d(TAG, "Package " + pkgName + " queried for feature " + name);

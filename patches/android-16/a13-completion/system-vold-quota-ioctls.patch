@@ -1,0 +1,73 @@
+From bf57a99ee447bc089e29ff52ac3624fae61a5fde Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 03:04:06 +0800
+Subject: [PATCH] [A16] Disable unsupported project quota ioctls
+
+---
+ Utils.cpp | 46 ++++------------------------------------------
+ 1 file changed, 4 insertions(+), 42 deletions(-)
+
+diff --git a/Utils.cpp b/Utils.cpp
+index 9ad828c..6dcf861 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -202,52 +202,14 @@ status_t SetDefaultAcl(const std::string& path, mode_t mode, uid_t uid, gid_t gi
+ }
+ 
+ int SetQuotaInherit(const std::string& path) {
+-    unsigned int flags;
+-
+-    android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(path.c_str(), O_RDONLY | O_CLOEXEC)));
+-    if (fd == -1) {
+-        PLOG(ERROR) << "Failed to open " << path << " to set project id inheritance.";
+-        return -1;
+-    }
+-
+-    int ret = ioctl(fd, FS_IOC_GETFLAGS, &flags);
+-    if (ret == -1) {
+-        PLOG(ERROR) << "Failed to get flags for " << path << " to set project id inheritance.";
+-        return ret;
+-    }
+-
+-    flags |= FS_PROJINHERIT_FL;
+-
+-    ret = ioctl(fd, FS_IOC_SETFLAGS, &flags);
+-    if (ret == -1) {
+-        PLOG(ERROR) << "Failed to set flags for " << path << " to set project id inheritance.";
+-        return ret;
+-    }
+-
++    // App Player storage does not implement project quota ioctls.
++    (void)path;
+     return 0;
+ }
+ 
+ int SetQuotaProjectId(const std::string& path, long projectId) {
+-    struct fsxattr fsx;
+-
+-    android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(path.c_str(), O_RDONLY | O_CLOEXEC)));
+-    if (fd == -1) {
+-        PLOG(ERROR) << "Failed to open " << path << " to set project id.";
+-        return -1;
+-    }
+-
+-    int ret = ioctl(fd, FS_IOC_FSGETXATTR, &fsx);
+-    if (ret == -1) {
+-        PLOG(ERROR) << "Failed to get extended attributes for " << path << " to get project id.";
+-        return ret;
+-    }
+-
+-    fsx.fsx_projid = projectId;
+-    ret = ioctl(fd, FS_IOC_FSSETXATTR, &fsx);
+-    if (ret == -1) {
+-        PLOG(ERROR) << "Failed to set project id on " << path;
+-        return ret;
+-    }
++    (void)path;
++    (void)projectId;
+     return 0;
+ }
+ 
+-- 
+2.34.1
+

@@ -1,0 +1,102 @@
+From 103707a8b82796f01c9b9f8fc24ee87669453859 Mon Sep 17 00:00:00 2001
+From: "henry@bluestacks.com" <henry@bluestacks.com>
+Date: Wed, 28 Feb 2024 17:15:30 +0800
+Subject: [PATCH 116/224] [A13] ROB-11186: Enable hpp mode in config.db by
+ default
+
+---
+ .../server/BstFilterAppsService.java          | 40 +++++++++----------
+ 1 file changed, 20 insertions(+), 20 deletions(-)
+
+diff --git a/services/java/com/bluestacks/server/BstFilterAppsService.java b/services/java/com/bluestacks/server/BstFilterAppsService.java
+index d059b1f76f34..3a76518d32ea 100755
+--- a/services/java/com/bluestacks/server/BstFilterAppsService.java
++++ b/services/java/com/bluestacks/server/BstFilterAppsService.java
+@@ -163,7 +163,7 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+     private Set<String>           mVulkanReqdAppList = new TreeSet<String>();
+     private Set<String>           mForceKillAppList = new TreeSet<String>();
+     private Map<String, String>   mGameDefaultSettingAppList = new HashMap<String, String>();
+-    private Set<String>           mHppEnabledAppList = new TreeSet<String>();
++    private Set<String>           mHppDisabledAppList = new TreeSet<String>();
+     private Set<String>           mHotFixAppList = new TreeSet<String>();
+     private Set<String>           mGLInvalidateFramebufferFilterAppList = new TreeSet<String>();
+     private Map<String, Integer>  mUnityFlickerAppList = new HashMap<String, Integer>();
+@@ -2175,20 +2175,20 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+                                      }
+                                 }
+                                 else if ((key.equalsIgnoreCase("hpp"))) {
+-                                    synchronized (mHppEnabledAppList) {
+-                                        if (value.equalsIgnoreCase("false")) {
++                                    synchronized (mHppDisabledAppList) {
++                                        if (value.equalsIgnoreCase("true")) {
+                                             packageName = "~" + packageName;
+                                         }
+                                         if (DEBUG)
+-                                            Slog.d(TAG, "Adding packageName :" + packageName + " to mHppEnabledAppList\n");
++                                            Slog.d(TAG, "Adding packageName :" + packageName + " to mHppDisabledAppList\n");
+ 
+-                                        mHppEnabledAppList.add(packageName);
++                                        mHppDisabledAppList.add(packageName);
+                                         if (packageName.startsWith("~")) {
+                                             if (DEBUG)
+-                                                Slog.d(TAG, "Removing " + origPackageName + " from mHppEnabledAppList\n");
+-                                                mHppEnabledAppList.remove(packageName.substring(1));
++                                                Slog.d(TAG, "Removing " + origPackageName + " from mHppDisabledAppList\n");
++                                                mHppDisabledAppList.remove(packageName.substring(1));
+                                         }
+-                                        removePackageEntryFromList(mHppEnabledAppList,pkgException);
++                                        removePackageEntryFromList(mHppDisabledAppList,pkgException);
+                                     }
+                                 }
+                                 else if ((key.equalsIgnoreCase("hotfix"))) {
+@@ -2960,9 +2960,9 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+         {
+             mGameDefaultSettingAppList.clear();
+         }
+-        synchronized (mHppEnabledAppList)
++        synchronized (mHppDisabledAppList)
+         {
+-            mHppEnabledAppList.clear();
++            mHppDisabledAppList.clear();
+         }
+         synchronized (mXperfModeList)
+         {
+@@ -6428,28 +6428,28 @@ public class BstFilterAppsService extends IBstFilterAppsService.Stub {
+      */
+     public boolean isHppEnabled(String pkgName)
+     {
+-        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mHppEnabledAppList app list\n");
++        if (DEBUG) Slog.d(TAG, "Trying to look for " + pkgName + " in mHppDisabledAppList app list\n");
+         initLists();
+ 
+-        synchronized (mHppEnabledAppList)
++        synchronized (mHppDisabledAppList)
+         {
+-            if (mHppEnabledAppList.contains(pkgName))
++            if (mHppDisabledAppList.contains(pkgName))
+             {
+-                if (DEBUG) Slog.d(TAG, pkgName + " is in mHppEnabledAppList App List\n");
+-                return true;
++                if (DEBUG) Slog.d(TAG, pkgName + " is in mHppDisabledAppList App List\n");
++                return false;
+             }
+             else
+             {
+-                String wildcardMatchedPackageName = isPackageMatchedWilcard(mHppEnabledAppList, pkgName);
++                String wildcardMatchedPackageName = isPackageMatchedWilcard(mHppDisabledAppList, pkgName);
+                 if(wildcardMatchedPackageName != null)
+                 {
+-                    if (DEBUG) Slog.d(TAG, pkgName + " is in mHppEnabledAppList App List\n");
+-                    return true;
++                    if (DEBUG) Slog.d(TAG, pkgName + " is in mHppDisabledAppList App List\n");
++                    return false;
+                 }
+             }
+         }
+-        if (DEBUG) Slog.d(TAG, pkgName + " is not in mHppEnabledAppList App List\n");
+-        return false;
++        if (DEBUG) Slog.d(TAG, pkgName + " is not in mHppDisabledAppList App List\n");
++        return true;
+     }
+ 
+     /**

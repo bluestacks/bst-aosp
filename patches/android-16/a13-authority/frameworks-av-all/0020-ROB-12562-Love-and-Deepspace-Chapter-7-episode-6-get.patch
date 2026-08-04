@@ -1,0 +1,57 @@
+From 9f10add70e8ed1797824f050bcc9a0938b8989e9 Mon Sep 17 00:00:00 2001
+From: Emin Huang <emin@bluestacks.com>
+Date: Tue, 11 Mar 2025 19:05:38 +0800
+Subject: [PATCH 20/21] ROB-12562: Love and Deepspace || Chapter 7 episode 6
+ gets stuck/freeze and crashes
+
+---
+ media/libmedia/IMediaSource.cpp | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 media/libmedia/IMediaSource.cpp
+
+diff --git a/media/libmedia/IMediaSource.cpp b/media/libmedia/IMediaSource.cpp
+old mode 100644
+new mode 100755
+index 36cd73be0e..0db6038807
+--- a/media/libmedia/IMediaSource.cpp
++++ b/media/libmedia/IMediaSource.cpp
+@@ -29,6 +29,8 @@
+ #include <media/stagefright/MediaSource.h>
+ #include <media/stagefright/MetaData.h>
+ 
++#include <binder/BstUtilsManager.h>
++
+ namespace android {
+ 
+ enum {
+@@ -88,6 +90,12 @@ public:
+             ALOGW("output:");
+             meta->dumpToLog();
+         }
++
++        BstUtilsManager butilmanager;
++        String16 pkgname = butilmanager.getAppNameFromPid(getpid());
++        if (!pkgname.compare(String16("com.papegames.lysk.en"))) {
++            mSupportReadMultiple = false;
++        }
+         return ret;
+     }
+ 
+@@ -195,7 +203,7 @@ public:
+ 
+     // Binder proxy adds readMultiple support.
+     virtual bool supportReadMultiple() {
+-        return true;
++        return mSupportReadMultiple;
+     }
+ 
+     virtual bool supportNonblockingRead() {
+@@ -220,6 +228,8 @@ private:
+ 
+     uint32_t mBuffersSinceStop; // Buffer tracking variable
+ 
++    bool mSupportReadMultiple = true;
++
+     // NuPlayer passes pointers-to-metadata around, so we use this to keep the metadata alive
+     // XXX: could we use this for caching, or does metadata change on the fly?
+     sp<MetaData> mMetaData;

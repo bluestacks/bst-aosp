@@ -4,16 +4,16 @@
 
 ## Summary
 
-- Patch artifacts: **574**
-- Total size: **21.55 MiB**
+- Patch artifacts: **577**
+- Total size: **21.56 MiB**
 - Artifacts containing binary patch data: **4**
 - Payload-free artifacts referencing binary differences: **2**
-- Unique changed paths: **775**
+- Unique changed paths: **793**
 
 | Category | Count |
 |---|---:|
 | AOSP16 project snapshots | 21 |
-| Host/build/graphics companion patches | 495 |
+| Host/build/graphics companion patches | 498 |
 | P2 aggregate/candidate snapshots | 5 |
 | P2 bionic/art source overlays | 2 |
 | P2 cross-project mechanical patches | 18 |
@@ -334,6 +334,7 @@
 | [`device-common-ntp-interval.patch`](../../patches/android-16/a13-completion/device-common-ntp-interval.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 0 | 0.6 | no | 0 |
 | [`device-common-treble-a16-services.patch`](../../patches/android-16/a13-completion/device-common-treble-a16-services.patch) | Host/build/graphics companion patches | 1 | 4 | 4 | 8 | 1.0 | no | 0 |
 | [`device-generic-x86_64-hal-selectors.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-hal-selectors.patch) | Host/build/graphics companion patches | 1 | 1 | 6 | 1 | 0.6 | no | 0 |
+| [`device-generic-x86_64-widevine-fcm-bridge.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch) | Host/build/graphics companion patches | 1 | 1 | 15 | 1 | 1.4 | no | 0 |
 | [`device-x86_64-houdini16.patch`](../../patches/android-16/a13-completion/device-x86_64-houdini16.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 0 | 0.7 | no | 0 |
 | [`device-x86_64-release-art.patch`](../../patches/android-16/a13-completion/device-x86_64-release-art.patch) | Host/build/graphics companion patches | 1 | 2 | 4 | 9 | 1.2 | no | 0 |
 | [`download-provider-retry-api-fix.patch`](../../patches/android-16/a13-completion/download-provider-retry-api-fix.patch) | Host/build/graphics companion patches | 1 | 4 | 7 | 3 | 2.3 | no | 0 |
@@ -485,6 +486,7 @@
 | [`root-bstime-ime-bridge.patch`](../../patches/android-16/a13-completion/root-bstime-ime-bridge.patch) | Host/build/graphics companion patches | 2 | 2 | 147 | 1 | 5.4 | no | 0 |
 | [`root-bstsettings-app.patch`](../../patches/android-16/a13-completion/root-bstsettings-app.patch) | Host/build/graphics companion patches | 85 | 77 | 4412 | 1 | 358.6 | embedded | 0 |
 | [`root-camera-hal-framerate-pointer.patch`](../../patches/android-16/a13-completion/root-camera-hal-framerate-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-completed-a13-authority-gitlinks.patch`](../../patches/android-16/a13-completion/root-completed-a13-authority-gitlinks.patch) | Host/build/graphics companion patches | 17 | 17 | 17 | 18 | 5.5 | no | 0 |
 | [`root-connectivity-captive-portal-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-captive-portal-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.0 | no | 0 |
 | [`root-connectivity-dscp-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-dscp-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.9 | no | 0 |
 | [`root-connectivity-network-presentation-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-network-presentation-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.0 | no | 0 |
@@ -508,6 +510,7 @@
 | [`root-system-core-completion-pointer.patch`](../../patches/android-16/a13-completion/root-system-core-completion-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.2 | no | 0 |
 | [`root-system-security-prng-pointer.patch`](../../patches/android-16/a13-completion/root-system-security-prng-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.9 | no | 0 |
 | [`root-vold-quota-pointer.patch`](../../patches/android-16/a13-completion/root-vold-quota-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-widevine-vintf-pointer.patch`](../../patches/android-16/a13-completion/root-widevine-vintf-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.6 | no | 0 |
 | [`settings-accessibility-hearing-aid.patch`](../../patches/android-16/a13-completion/settings-accessibility-hearing-aid.patch) | Host/build/graphics companion patches | 1 | 2 | 6 | 2 | 1.7 | no | 0 |
 | [`settings-bst-activity-aliases.patch`](../../patches/android-16/a13-completion/settings-bst-activity-aliases.patch) | Host/build/graphics companion patches | 1 | 1 | 60 | 0 | 3.3 | no | 0 |
 | [`settings-fallback-home.patch`](../../patches/android-16/a13-completion/settings-fallback-home.patch) | Host/build/graphics companion patches | 1 | 6 | 56 | 16 | 5.4 | no | 0 |
@@ -4625,6 +4628,18 @@
 - Changed paths:
   - `android_x86_64.mk`
 
+### `device-generic-x86_64-widevine-fcm-bridge.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f856a112a50706856a4ab87cf6d16ebf6c378ca8f383ee738117b1978c7d5806`
+- Size/stat: 1385 bytes, 1 files, 1 hunks, +15/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `framework_compatibility_matrix.xml`
+
 ### `device-x86_64-houdini16.patch`
 
 - Artifact: [`patches/android-16/a13-completion/device-x86_64-houdini16.patch`](../../patches/android-16/a13-completion/device-x86_64-houdini16.patch)
@@ -6647,6 +6662,34 @@
 - Changed paths:
   - `frameworks/av`
 
+### `root-completed-a13-authority-gitlinks.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-completed-a13-authority-gitlinks.patch`](../../patches/android-16/a13-completion/root-completed-a13-authority-gitlinks.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `41102ce29b4d81948516b698e38fa2368890bc0c1c8f795cd36b5be066fd9688`
+- Size/stat: 5622 bytes, 17 files, 17 hunks, +17/-18
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `art`
+  - `bionic`
+  - `build/make`
+  - `device/generic/x86_64`
+  - `external/libxml2`
+  - `external/skia`
+  - `frameworks/base`
+  - `frameworks/opt/telephony`
+  - `libcore`
+  - `packages/apps/Launcher3`
+  - `packages/apps/Settings`
+  - `packages/inputmethods/LatinIME`
+  - `packages/modules/Bluetooth`
+  - `packages/modules/NetworkStack`
+  - `packages/modules/Wifi`
+  - `packages/providers/DownloadProvider`
+  - `packages/services/Telephony`
+
 ### `root-connectivity-captive-portal-pointer.patch`
 
 - Artifact: [`patches/android-16/a13-completion/root-connectivity-captive-portal-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-captive-portal-pointer.patch)
@@ -6923,6 +6966,18 @@
 - Overlap: none detected by changed path
 - Changed paths:
   - `system/vold`
+
+### `root-widevine-vintf-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-widevine-vintf-pointer.patch`](../../patches/android-16/a13-completion/root-widevine-vintf-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `ae3f253c6a42cae023514bbc6c263ae80c09624406c571cce048725b64b3ae93`
+- Size/stat: 581 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `device/generic/x86_64`
 
 ### `settings-accessibility-hearing-aid.patch`
 

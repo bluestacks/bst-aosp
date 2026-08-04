@@ -1,0 +1,19 @@
+From 9ae09dd212ac1ecedfa7e41782e92d8f7a640d24 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 07:19:02 +0800
+Subject: [PATCH] [A16] Update Widevine VINTF compatibility
+
+---
+ device/generic/x86_64 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/device/generic/x86_64 b/device/generic/x86_64
+index fa9bb99..0062389 160000
+--- a/device/generic/x86_64
++++ b/device/generic/x86_64
+@@ -1 +1 @@
+-Subproject commit fa9bb993e37ddb56d083a7ecae7a73387adf04a2
++Subproject commit 00623898eb9bd0afc4374f6c79f805939f873311
+-- 
+2.34.1
+

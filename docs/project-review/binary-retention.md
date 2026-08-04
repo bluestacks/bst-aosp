@@ -17,7 +17,7 @@ implemented by [`manage_binary_artifacts.py`](../../scripts/manage_binary_artifa
 - `drop-duplicate-layout`: **10** files, **7.69 MiB**
 - `drop-generated-intermediate`: **7** files, **9.36 MiB**
 - `external-artifact-required`: **16** files, **28.88 MiB**
-- `keep-in-git`: **7** files, **5.00 MiB**
+- `keep-in-git`: **8** files, **8.61 MiB**
 - `security-tombstone`: **1** files, **0.00 MiB**
 
 ## Required External Bundles
@@ -37,6 +37,7 @@ identities. Until then they are recovery blockers, not completed evidence.
 | Decision | Status | Path | Bytes | Canonical/bundle | Reason |
 |---|---|---|---:|---|---|
 | `drop-duplicate-layout` | `complete` | `.codex-tmp/videobuf-core.ko` | 43752 | `references/henry-hd-guest/BootImage/initrd/boot/bstmods/videobuf-core.ko` | Bytes duplicate the canonical input; preserve only the layout/copy relation in the initrd assembly manifest. |
+| `keep-in-git` | `complete` | [`patches/android-16/a13-completion/root-ffmpeg-media-pipeline.patch.gz`](../../patches/android-16/a13-completion/root-ffmpeg-media-pipeline.patch.gz) | 3775872 | `-` | Repository clones can retrieve and verify this canonical historical payload. Opaque executables still require provenance and license review. |
 | `keep-in-git` | `complete` | [`patches/android-16/patches/p2-framework-rest/batchA-newfiles.tgz`](../../patches/android-16/patches/p2-framework-rest/batchA-newfiles.tgz) | 23439 | `-` | Repository clones can retrieve and verify this canonical historical payload. Opaque executables still require provenance and license review. |
 | `security-tombstone` | `complete` | `patches/android-16/untracked-src/aosp16__device_generic_common/apksigner/bluestacks-market.keystore` |  | `-` | Credential bytes must stay out of Git; retain identity and rotation record. |
 | `keep-in-git` | `complete` | [`patches/android-16/untracked-src/g1_hal_fixes.tar.gz`](../../patches/android-16/untracked-src/g1_hal_fixes.tar.gz) | 7126 | `-` | Repository clones can retrieve and verify this canonical historical payload. Opaque executables still require provenance and license review. |

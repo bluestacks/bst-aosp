@@ -22,6 +22,8 @@ HISTORY_DIR = ROOT / "docs" / "development-history"
 AOSP16_HISTORY_DIR = HISTORY_DIR / "aosp16"
 PROMOTION_HISTORY_DIR = HISTORY_DIR / "android16-merge"
 LOCAL_BINARY_EVIDENCE_PATH = REVIEW_DIR / "binary-local-evidence.json"
+EXCLUDED_PARTS = {".git", ".codex-tmp", ".triage_tmp", "__pycache__"}
+EXCLUDED_PREFIXES = (".tmp-", ".work-", "tmp-")
 
 GENERATED_PATHS = {
     "docs/project-review/README.md",
@@ -208,6 +210,14 @@ def git_index_blobs(paths: list[str]) -> dict[str, bytes]:
     return blobs
 
 
+def excluded(path: Path) -> bool:
+    parts = path.relative_to(ROOT).parts
+    return any(
+        part in EXCLUDED_PARTS or part.startswith(EXCLUDED_PREFIXES)
+        for part in parts
+    )
+
+
 def all_paths() -> list[str]:
     ignored = git_zpaths(
         "ls-files", "--others", "--ignored", "--exclude-standard", "-z"
@@ -216,7 +226,7 @@ def all_paths() -> list[str]:
         path.relative_to(ROOT).as_posix()
         for path in ROOT.rglob("*")
         if path.is_file()
-        and ".git" not in path.relative_to(ROOT).parts
+        and not excluded(path)
         and path.relative_to(ROOT).as_posix() not in ignored
     }
     paths.update(git_zpaths("ls-files", "-z"))
@@ -284,6 +294,10 @@ def purpose_from_path(path: str) -> str:
         return "Normative development and validation rule."
     if path.startswith("patches/android-16/patches/"):
         return "Archived AOSP16 customization patch used for replay and promotion review."
+    if path.startswith("patches/android-16/a13-authority/"):
+        return "Frozen Android 13 authority commit patch used for code-level port coverage review."
+    if path.startswith("patches/android-16/a13-completion/"):
+        return "Reviewed Android 16 promotion commit patch and root-pointer evidence."
     if path.startswith("patches/android-16/untracked-src/"):
         return "Source or payload snapshot that was not represented by a Git diff."
     if path.startswith("progress/"):
@@ -314,6 +328,11 @@ def classify_stage(path: str, text: str | None) -> str:
     if lower.startswith("docs/development-history/android16-merge/"):
         return "android16-promotion"
     if lower.startswith("docs/android-16-patch-review/"):
+        return "android16-promotion"
+    if lower.startswith((
+        "patches/android-16/a13-authority/",
+        "patches/android-16/a13-completion/",
+    )):
         return "android16-promotion"
     if lower.startswith("patches/android-16/"):
         return "aosp16-development"
@@ -446,7 +465,7 @@ def timeline_refs(text: str | None) -> list[str]:
                 refs.add(value.upper() if value.lower().startswith("p2-") else value)
             if len(refs) >= 80:
                 break
-    return sorted(refs, key=natural_key)
+    return sorted(refs, key=lambda value: (natural_key(value), value))
 
 
 def natural_key(value: str) -> list[Any]:
@@ -880,6 +899,7 @@ def patch_traceability() -> str:
         ROOT / "progress" / "porting-log.md",
         ROOT / "progress" / "android-16-boot-guide.md",
         ROOT / "patches" / "android-16" / "RESTORE.md",
+        PROMOTION_HISTORY_DIR / "a13-authority-completion.md",
     ]
     evidence = {
         path.relative_to(ROOT).as_posix(): path.read_text(

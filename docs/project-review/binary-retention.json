@@ -5,19 +5,19 @@
   "local_evidence_source": "docs/project-review/binary-local-evidence.json",
   "local_evidence_observed_at": "2026-07-31",
   "summary": {
-    "files": 41,
+    "files": 42,
     "by_decision": {
       "drop-duplicate-layout": 10,
       "drop-generated-intermediate": 7,
       "external-artifact-required": 16,
-      "keep-in-git": 7,
+      "keep-in-git": 8,
       "security-tombstone": 1
     },
     "bytes_by_decision": {
       "drop-duplicate-layout": 8067275,
       "drop-generated-intermediate": 9812885,
       "external-artifact-required": 30287038,
-      "keep-in-git": 5247535,
+      "keep-in-git": 9023407,
       "security-tombstone": 0
     },
     "external_bundles": {
@@ -48,6 +48,18 @@
       "canonical": "references/henry-hd-guest/BootImage/initrd/boot/bstmods/videobuf-core.ko",
       "artifact_bundle": null,
       "reason": "Bytes duplicate the canonical input; preserve only the layout/copy relation in the initrd assembly manifest."
+    },
+    {
+      "path": "patches/android-16/a13-completion/root-ffmpeg-media-pipeline.patch.gz",
+      "bytes": 3775872,
+      "sha256": "923f50348685ae6b1915b6bf1fef36f925be809c818c03314f0a37f83d9985df",
+      "availability": "repository",
+      "git_state": "tracked",
+      "decision": "keep-in-git",
+      "status": "complete",
+      "canonical": null,
+      "artifact_bundle": null,
+      "reason": "Repository clones can retrieve and verify this canonical historical payload. Opaque executables still require provenance and license review."
     },
     {
       "path": "patches/android-16/patches/p2-framework-rest/batchA-newfiles.tgz",

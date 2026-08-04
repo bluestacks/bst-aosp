@@ -35,8 +35,9 @@ features from scratch.
   [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2),
   historical root `298403a`. Its build and boot evidence remains historical
   evidence only.
-- Current local review root: `27488f4954b2c2fc81c7715969cf1439ff05de0f`.
-  It has not been pushed, submitted as a replacement PR, or boot-validated.
+- Current local review root: `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`.
+  Target-only `m droid` and `check-vintf-all` pass. It has not been pushed,
+  submitted as a replacement PR, packaged, deployed, or boot-validated.
 
 The promotion gate requires every submodule initialized, no detached projects,
 the root gitlink matching the reviewed component SHA, and every referenced SHA

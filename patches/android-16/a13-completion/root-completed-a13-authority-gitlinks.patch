@@ -1,0 +1,147 @@
+From 63eb48e49985e0a861536f3341daf4134548cb72 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 03:59:46 +0800
+Subject: [PATCH] [A16] Record completed A13 authority ports
+
+---
+ art                                 | 2 +-
+ bionic                              | 2 +-
+ build/make                          | 2 +-
+ device/generic/x86_64               | 2 +-
+ external/libxml2                    | 2 +-
+ external/skia                       | 2 +-
+ frameworks/base                     | 2 +-
+ frameworks/opt/telephony            | 2 +-
+ libcore                             | 2 +-
+ packages/apps/Launcher3             | 2 +-
+ packages/apps/Settings              | 2 +-
+ packages/inputmethods/LatinIME      | 2 +-
+ packages/modules/Bluetooth          | 2 +-
+ packages/modules/NetworkStack       | 2 +-
+ packages/modules/Wifi               | 2 +-
+ packages/providers/DownloadProvider | 2 +-
+ packages/services/Telephony         | 2 +-
+ 17 files changed, 17 insertions(+), 17 deletions(-)
+
+diff --git a/art b/art
+index f450225..81a67a9 160000
+--- a/art
++++ b/art
+@@ -1 +1 @@
+-Subproject commit f450225cfc2b2a0675236b85c5b45f25885614b8
++Subproject commit 81a67a9daf668addd86d47a05ced385d52ba8c62
+diff --git a/bionic b/bionic
+index 40a728d..be9ebc6 160000
+--- a/bionic
++++ b/bionic
+@@ -1 +1 @@
+-Subproject commit 40a728dc5e7eb47a6e79b098a418cae620e977d4
++Subproject commit be9ebc694619e1c521efd2d5437590385e2c5a75
+diff --git a/build/make b/build/make
+index 2872af3..9078146 160000
+--- a/build/make
++++ b/build/make
+@@ -1 +1 @@
+-Subproject commit 2872af3a817fc71bf4cbe625e5e4e8286e463324
++Subproject commit 90781461de1d7e7fa6806e622a2a3c6b0fa39d6f
+diff --git a/device/generic/x86_64 b/device/generic/x86_64
+index f3c81cd..fa9bb99 160000
+--- a/device/generic/x86_64
++++ b/device/generic/x86_64
+@@ -1 +1 @@
+-Subproject commit f3c81cdb52306a7ff09075d23635903621c5cc71
++Subproject commit fa9bb993e37ddb56d083a7ecae7a73387adf04a2
+diff --git a/external/libxml2 b/external/libxml2
+index 70aef28..c724771 160000
+--- a/external/libxml2
++++ b/external/libxml2
+@@ -1 +1 @@
+-Subproject commit 70aef28f676300c9c49c11a6922bb6a8d7701383
++Subproject commit c724771c911ee8730f829e2d6bcb513bf0038945
+diff --git a/external/skia b/external/skia
+index 22f5edb..0b9c613 160000
+--- a/external/skia
++++ b/external/skia
+@@ -1 +1 @@
+-Subproject commit 22f5edb6c1bf350d1d9d67bb429db1a5539f3c05
++Subproject commit 0b9c6137b24954b6a3452adeb2f305c77f50e0dc
+diff --git a/frameworks/base b/frameworks/base
+index 174fbdd..909eded 160000
+--- a/frameworks/base
++++ b/frameworks/base
+@@ -1 +1 @@
+-Subproject commit 174fbdd03ea9394114199061dc292bcd7fa7c38f
++Subproject commit 909ededdeaef7620d0e76eef5daccf2b992858f4
+diff --git a/frameworks/opt/telephony b/frameworks/opt/telephony
+index 3240a0b..2e929cd 160000
+--- a/frameworks/opt/telephony
++++ b/frameworks/opt/telephony
+@@ -1 +1 @@
+-Subproject commit 3240a0be5948fd6f9bc3e73815d035d5a28cc230
++Subproject commit 2e929cdce086df0cf42ad3e99ce030bb15ae12d1
+diff --git a/libcore b/libcore
+index 1c599b6..02a54f0 160000
+--- a/libcore
++++ b/libcore
+@@ -1 +1 @@
+-Subproject commit 1c599b67bcd3de5c50c79d0622e40b6de99b4cb4
++Subproject commit 02a54f0a80975d89248b6514e180dca09cb7477a
+diff --git a/packages/apps/Launcher3 b/packages/apps/Launcher3
+index c3d3c18..bc15ad5 160000
+--- a/packages/apps/Launcher3
++++ b/packages/apps/Launcher3
+@@ -1 +1 @@
+-Subproject commit c3d3c1832387e1fa10d316496721e7aace0d21f3
++Subproject commit bc15ad50ea5a68408133a1d6c4f83ff32656831e
+diff --git a/packages/apps/Settings b/packages/apps/Settings
+index 820be43..4011bdb 160000
+--- a/packages/apps/Settings
++++ b/packages/apps/Settings
+@@ -1 +1 @@
+-Subproject commit 820be433bc465ba31500d374afcfd0f745945737
++Subproject commit 4011bdb53de5b9a96a965b98004d8a03672596c4
+diff --git a/packages/inputmethods/LatinIME b/packages/inputmethods/LatinIME
+index 5ab068f..30cede3 160000
+--- a/packages/inputmethods/LatinIME
++++ b/packages/inputmethods/LatinIME
+@@ -1 +1 @@
+-Subproject commit 5ab068f58a3e166f85e28f8dbf94389c068be370
++Subproject commit 30cede3a4b41fabeb621af09301882d9750e8d05
+diff --git a/packages/modules/Bluetooth b/packages/modules/Bluetooth
+index 5323f31..7f96b59 160000
+--- a/packages/modules/Bluetooth
++++ b/packages/modules/Bluetooth
+@@ -1 +1 @@
+-Subproject commit 5323f31677c7dfa04de2e6e9fce1012ef4edaff2
++Subproject commit 7f96b596a749046fefd1fe87c683ecc2cdb48bc7
+diff --git a/packages/modules/NetworkStack b/packages/modules/NetworkStack
+index 853cb40..da967b7 160000
+--- a/packages/modules/NetworkStack
++++ b/packages/modules/NetworkStack
+@@ -1 +1 @@
+-Subproject commit 853cb402bf02cd935d06d42c1155b0023eabd3e6
++Subproject commit da967b74218a71de2409433653032f690f1f45af
+diff --git a/packages/modules/Wifi b/packages/modules/Wifi
+index e17bad7..025929c 160000
+--- a/packages/modules/Wifi
++++ b/packages/modules/Wifi
+@@ -1 +1 @@
+-Subproject commit e17bad78b2a2452d58630bebe489bee1e128e942
++Subproject commit 025929cf5db85fea57847db7b6e29b5f224c035d
+diff --git a/packages/providers/DownloadProvider b/packages/providers/DownloadProvider
+index a1f6f64..db61a3d 160000
+--- a/packages/providers/DownloadProvider
++++ b/packages/providers/DownloadProvider
+@@ -1 +1 @@
+-Subproject commit a1f6f64f40b78cfe4db4ac2763609c470f487cd4
++Subproject commit db61a3d4e87ab1312486fdb481573b990f22de53
+diff --git a/packages/services/Telephony b/packages/services/Telephony
+index f83c126..5d2c366 160000
+--- a/packages/services/Telephony
++++ b/packages/services/Telephony
+@@ -1 +1 @@
+-Subproject commit f83c1261e23243ef1fd0dc3de6bf16f19b0b024d
++Subproject commit 5d2c366658ee6222d1d7d1fc8d71f17937e78e06
+-- 
+2.34.1
+

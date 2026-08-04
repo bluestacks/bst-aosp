@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "stage": "android16-promotion",
+  "result": "layer1-build-passed",
+  "tree": "/home/clouddev/bst/workspace/markxu/android-16",
+  "branch": "aosp16-bst-merge",
+  "commit": "9ae09dd212ac1ecedfa7e41782e92d8f7a640d24",
+  "product": "android_x86_64-trunk_staging-eng",
+  "out_dir": "out",
+  "aosp16_output_used": false,
+  "commands": [
+    "m check-vintf-all -j8",
+    "m droid -j8"
+  ],
+  "artifacts": {
+    "system.img": {
+      "path": "out/target/product/x86_64/system.img",
+      "size": 2148761600,
+      "sha256": "f9b0ef01717ff18b5c134603fde4c4ad5408819801fe0c18b7a27afa6683dcea"
+    },
+    "bstime": {
+      "path": "out/target/product/x86_64/system/bin/bstime",
+      "sha256": "438d978a682546fbaa68ea5a2d816d53ce2c1c41e87754c4491ee97d1bafe448"
+    },
+    "widevine_service": {
+      "path": "out/target/product/x86_64/system/vendor/bin/hw/android.hardware.drm@1.3-service.widevine",
+      "sha256": "d325b5c14a93fefdce4a4f928c9097313114f07e58ab23f6a3878ffc8978525b"
+    },
+    "widevine_plugin": {
+      "path": "out/target/product/x86_64/system/vendor/lib/libwvdrmengine.so",
+      "sha256": "3ce02cd40b4daf0eea672917ec3e8a7611a2245437b346106fa970f7154552e4"
+    },
+    "libva": {
+      "path": "out/target/product/x86_64/system/vendor/lib64/libva.so",
+      "sha256": "c02c9eb1160779b5911160d242265829f9114412d52050e6e4d89dce629bd7ec"
+    },
+    "i965_driver": {
+      "path": "out/target/product/x86_64/system/vendor/lib64/dri/i965_drv_video.so",
+      "sha256": "dd983486ba8fed3ef98713c4abc420defb5fd9d0319d98fdaa8fb5a26ce4bf34"
+    }
+  },
+  "logs": {
+    "initial_failed_droid": {
+      "path": "/tmp/a16-full-droid-63eb48e.log",
+      "sha256": "8096b6f9c09e809e8ca7e3f65d88708d433eea6305352c1bf40890359b45c9ac",
+      "failure": "FCM 8 rejected the restored Widevine HIDL 1.3 manifest"
+    },
+    "check_vintf_all": {
+      "path": "/tmp/a16-check-vintf-widevine-retry.log",
+      "sha256": "4937b3b727b06f455589dd9a2ca4e546b5782e088782dfe74c2e71bc08ec9eb2",
+      "result": "COMPATIBLE"
+    },
+    "successful_droid": {
+      "path": "/tmp/a16-full-droid-9ae09dd.log",
+      "sha256": "2ae7f7f30605e72e6d7758b435e99b9131536f431285af69ab9def2b2fd40dd9",
+      "result": "passed"
+    }
+  },
+  "audit": {
+    "path": "/tmp/android16-audit-9ae09dd.json",
+    "sha256": "c2c24f704af197788471b1cbd0212bdabdb3060ee1c29916d11b96ff4fea6a23",
+    "repositories": 1026,
+    "initialized": 1026,
+    "base_branch": 975,
+    "merge_branch": 50,
+    "detached": 0,
+    "dirty": 1,
+    "gitlink_mismatches": 0,
+    "remote_mismatches": 0,
+    "nonconforming_commits": 0,
+    "publication_topology_errors": 15
+  },
+  "boot_validation": "not-run"
+}

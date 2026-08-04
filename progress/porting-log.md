@@ -2626,3 +2626,33 @@ oracle；未 push/PR，根仓既有 `.gitignore` 修改仍未提交。
 本地静态验证器同时修正为排除未跟踪的 `.tmp-*`、`.work-*` 与 `tmp-*`
 工作目录，避免把审计临时文件写入权威 validation 清单。稳定结果为
 `pass=631`、`expected-failure=1`，无新增失败。
+
+## 2026-08-05 (cont.110) — 根 gitlink 闭合、Widevine FCM 适配与全量 Layer 1 通过
+
+继续按 A13 权威和 promotion 纪律复核根仓。发现 17 个已审查、已提交的
+组件 HEAD 未被 superproject 记录；干净 checkout 会丢失这些移植。根提交
+`63eb48e49985e0a861536f3341daf4134548cb72` 精确更新 art、bionic、
+build/make、x86_64 device、libxml2、Skia、frameworks/base、Telephony、
+libcore、Launcher3、Settings、LatinIME、Bluetooth、NetworkStack、Wifi、
+DownloadProvider 和 Telephony service 的 gitlink。
+
+首次 target-only `m droid -j8` 在根 `63eb48e` 运行 2:59:20，完成到
+102504/109977 后只在 `check_vintf_compatible` 失败：A13 权威 Widevine
+HIDL 1.3 服务已正确恢复，但 Android 16 FCM 8 将该 HAL 标记为 deprecated。
+没有删除 manifest、降低全局 FCM 或关闭校验；在现有 x86_64 level-8 设备
+兼容矩阵中精确声明 `ICryptoFactory/widevine` 与
+`IDrmFactory/widevine`。组件提交 `00623898eb9b`，根提交
+`9ae09dd212ac`，性能开销为零；AIDL vendor plugin 可用后应移除此桥接。
+
+`m check-vintf-all -j8` 返回 0 并输出 `COMPATIBLE`，其 7393 个 API/ABI
+依赖也全部通过。随后 `m droid -j8` 返回 0，最终 `system.img` 大小
+2,148,761,600 bytes，SHA-256 `f9b0ef01717ff18...6683dcea`。构建身份为
+`~/android-16:aosp16-bst-merge@9ae09dd212ac`，产品
+`android_x86_64-trunk_staging-eng`，OUT_DIR=`~/android-16/out`，未使用
+`~/aosp16/out*`。
+
+当前审计：1026/1026 repo initialized，975 × `aosp16-bst`，50 ×
+`aosp16-bst-merge`，detached/gitlink mismatch/remote mismatch/不规范提交均为
+0。根仅保留既有 `.gitignore` 未提交修改；15 个 missing remote/base/fork
+属于后续 publication gate。当前只证明 Layer 1，全量尚未 stage/package、
+Windows deploy 或 boot oracle，不能沿用 cont.106 的 7/7 结论。

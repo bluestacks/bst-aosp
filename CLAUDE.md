@@ -47,16 +47,19 @@
 
 ## 当前阶段
 
-**AOSP16-to-Android-16 promotion review complete；PR #2 待主线 review/merge。**
+**AOSP16-to-Android-16 promotion 正在完成 A13 权威补齐与当前树验证。**
 
 - AOSP16 开发线最终绿基线：Root.vhd `02690d11`、system.img
   `a878d3c8`、Layer2 7/7 @161s（cont.101）。
 - 已撤回候选的历史验证：1016/1016 submodule，985 × `aosp16-bst` +
   31 × `aosp16-bst-merge`，Android-16 Layer2 7/7 @123s（cont.106）。
-- 当前 rework 已补齐产品继承链和两个 ALSA payload 根指针；同步最新
-  主线后采用其内联 `hardware/bst/camera`，不再保留重复 camera submodule。
-  当前审计基线为 1022 个 submodule：987 × `aosp16-bst` + 35 ×
-  `aosp16-bst-merge`，根提交 `298403a`。
+- 当前 A13 权威补齐根提交为 `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`。
+  审计覆盖 1026 个 repo：975 × `aosp16-bst` + 50 ×
+  `aosp16-bst-merge`，无 detached HEAD、gitlink mismatch、remote mismatch
+  或不规范提交标题；15 个 publication topology 问题仍待发布前处理。
+- 当前 target-only `check-vintf-all` 和 `m droid` 已通过，产品为
+  `android_x86_64-trunk_staging-eng`，只使用 `~/android-16/out`。当前根尚未
+  stage/package/deploy/boot，因此不得沿用历史候选的 7/7 启动结论。
 - 原根 PR
   [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1)
   已关闭；替代 PR

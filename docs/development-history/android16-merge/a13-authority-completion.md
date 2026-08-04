@@ -10,12 +10,12 @@ patch is required.
 - Target tree: `~/android-16`
 - Target branch: `aosp16-bst-merge`
 - Target product: `android_x86_64-trunk_staging-eng`
-- Current root: `27488f4954b2c2fc81c7715969cf1439ff05de0f`
+- Current root: `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`
 - Build output: target-local `~/android-16/out`
 - AOSP16 output use: none
 - Push or PR: none
 - Current-tree boot validation: not run
-- Current-tree full `m droid`: not run
+- Current-tree full `m droid`: passed; packaging and boot are not yet run
 
 The prior PR #2 root `298403a` and its 7/7 boot result are historical. They do
 not validate the current authority-completion commits.
@@ -238,6 +238,84 @@ Artifact hashes:
 - `system/vendor/lib64/dri/i965_drv_video.so`:
   `dd983486ba8fed3ef98713c4abc420defb5fd9d0319d98fdaa8fb5a26ce4bf34`
 
+### Widevine FCM 8 Compatibility Bridge
+
+- Authority: A13 Widevine service commit
+  `bb15209c81865750681a87e371fa645797818492`, which serves
+  `android.hardware.drm@1.3::{ICryptoFactory,IDrmFactory}/widevine`.
+- Finding: the A13 service, manifest and restricted plugin were restored by
+  A16 component commit `0edb96a328b99742a8c3583e3d1aafc501308252`, but Android
+  16 FCM level 8 rejects that HIDL 1.3 declaration as deprecated. The first
+  full `m droid` therefore failed only at `check_vintf_compatible`, after
+  102,504 of 109,977 actions.
+- A16 component: `device/generic/x86_64`
+  `00623898eb9bd0afc4374f6c79f805939f873311`.
+- Root pointer: `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`.
+- Component patch:
+  [`device-generic-x86_64-widevine-fcm-bridge.patch`](../../../patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch).
+- Root-pointer patch:
+  [`root-widevine-vintf-pointer.patch`](../../../patches/android-16/a13-completion/root-widevine-vintf-pointer.patch).
+- Adaptation: add only the two Widevine HIDL 1.3 instances to the existing
+  level-8 device framework compatibility matrix. This is the same explicit
+  compatibility mechanism already used for the validated Windows goldfish
+  HIDL graphics stack. The service and vendor manifest remain installed.
+- Necessity: deleting the manifest would make the build green while leaving a
+  binderized HIDL service that cannot reliably register. Lowering the product
+  FCM or disabling VINTF checking would weaken the whole target. An AIDL
+  Widevine service cannot be fabricated from the A13-only vendor plugin.
+- Performance: XML-only build/runtime metadata; no steady-state code path or
+  extra process is introduced.
+- Security and maintenance: the bridge preserves the restricted A13 DRM
+  implementation and its existing attack surface. It is explicit technical
+  debt and must be removed when an authorized Android 16 AIDL Widevine plugin
+  is available.
+- Validation: `m check-vintf-all -j8` returned zero and printed `COMPATIBLE`;
+  its dependent API/ABI checks also completed. The subsequent `m droid -j8`
+  returned zero and regenerated `system.img`.
+
+Artifact hashes:
+
+- Widevine service:
+  `d325b5c14a93fefdce4a4f928c9097313114f07e58ab23f6a3878ffc8978525b`
+- Restricted plugin:
+  `3ce02cd40b4daf0eea672917ec3e8a7611a2245437b346106fa970f7154552e4`
+
+### Promotion Closure And Layer 1 Build
+
+The root gitlink audit found 17 reviewed component heads that had not been
+recorded by the superproject. Root commit
+`63eb48e49985e0a861536f3341daf4134548cb72` records exactly those component
+SHAs; its reviewable export is
+[`root-completed-a13-authority-gitlinks.patch`](../../../patches/android-16/a13-completion/root-completed-a13-authority-gitlinks.patch).
+A fresh audit at `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`
+reports 1,026 initialized repositories, 975 on `aosp16-bst`, 50 on
+`aosp16-bst-merge`, no detached HEADs, no gitlink or remote mismatches and no
+nonconforming commit subjects. The only dirty repository is the root because
+of the pre-existing unstaged Houdini `.gitignore` change. Fifteen publication
+topology errors remain for missing base branches/remotes/forks; they do not
+change the local source or build result.
+
+Target-only Layer 1 evidence:
+
+- Tree/branch/commit: `~/android-16`, `aosp16-bst-merge`,
+  `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`.
+- Product/output: `android_x86_64-trunk_staging-eng`, `~/android-16/out`.
+- `m droid -j8`: passed; final incremental completion took 1 minute 57
+  seconds after the three-hour first run and VINTF correction.
+- `system.img`: 2,148,761,600 bytes, SHA-256
+  `f9b0ef01717ff18b5c134603fde4c4ad5408819801fe0c18b7a27afa6683dcea`.
+- Initial failed log SHA-256:
+  `8096b6f9c09e809e8ca7e3f65d88708d433eea6305352c1bf40890359b45c9ac`.
+- VINTF validation log SHA-256:
+  `4937b3b727b06f455589dd9a2ca4e546b5782e088782dfe74c2e71bc08ec9eb2`.
+- Successful final log SHA-256:
+  `2ae7f7f30605e72e6d7758b435e99b9131536f431285af69ab9def2b2fd40dd9`.
+- Audit JSON SHA-256:
+  `c2c24f704af197788471b1cbd0212bdabdb3060ee1c29916d11b96ff4fea6a23`.
+
+This is build evidence only. It does not prove init, system_server, host
+state-machine, graphics, IME, shared-folder, network or launcher behavior.
+
 ### Restricted Widevine Payload Evidence
 
 The A13 Widevine commit `bb15209c81865750681a87e371fa645797818492`
@@ -307,14 +385,14 @@ a reviewed replacement provides the behavior.
 
 ## Required Next Gates
 
-1. Continue code-level review of every remaining A13 product-signal commit,
-   prioritizing projects without independent patch evidence.
-2. Regenerate the A13 coverage and Android-16 delta reports at root
-   `27488f4954b2c2fc81c7715969cf1439ff05de0f`.
-3. Run target-only full `m droid`, stage and package with identity-bound hashes.
-4. Run Windows boot, FPS, network-presentation, captive-portal, SELinux and
+1. Stage and package only the successful root
+   `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`, with identity-bound hashes.
+2. Run Windows boot, FPS, network-presentation, captive-portal, SELinux and
    entropy readback oracles.
-5. Audit all component branches/gitlinks and remote SHA reachability before any
+3. Run focused IME, shared-folder, camera, audio, fake-Wi-Fi and Widevine
+   runtime oracles that are not covered by a 7/7 boot result.
+4. Resolve the 15 publication-topology errors and verify remote SHA
+   reachability before any
    push or replacement PR.
 
 No current commit is eligible for publication or completion claims until these

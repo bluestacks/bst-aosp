@@ -10,13 +10,22 @@ The audit found two direct runtime contract breaks, several real but
 design-sensitive A13 feature gaps, and a large amount of version, test,
 prebuilt and inactive source noise. No AOSP source tree was changed or built.
 
+> **Current status (2026-08-05):** this document preserves the initial
+> read-only finding snapshot. The two P0 contracts and the accepted P1/P2
+> groups were subsequently ported or explicitly superseded. The current
+> disposition, component/root SHAs and validation evidence are authoritative
+> in
+> [`../android16-merge/a13-authority-completion.md`](../android16-merge/a13-authority-completion.md).
+> Do not use the historical "absent" table below as current source state.
+
 ### Frozen identities
 
 | Tree | Identity |
 |---|---|
 | A13 | `~/app-player/android-13`, branch `bst-v5.22.210`, HEAD `be7d9511db9c9045f346a8212eb1f41e6b36d354`, tree `b5fc5adb3b33c8f71252affb01e7188c7dddffab` |
 | AOSP16 | `~/aosp16`, repo manifest HEAD `15128c9e27cfa599c48d294babd39286ee8f1426`, 1011-project list SHA-256 `33880a26e376eac0d69ec546e435412c3bff56c18074ac4453ba672cd2ad2bf5` |
-| Android-16 | `~/android-16`, branch `aosp16-bst-merge`, HEAD `298403aba7234f2f120170f49e6afe7dcde16be9`, tree `09b2de0e8254036963aad188a18e28e7ac509ab0` |
+| Android-16 audit baseline | `~/android-16`, branch `aosp16-bst-merge`, HEAD `298403aba7234f2f120170f49e6afe7dcde16be9`, tree `09b2de0e8254036963aad188a18e28e7ac509ab0` |
+| Android-16 current completion | `~/android-16`, branch `aosp16-bst-merge`, HEAD `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`; target-only `m droid` passed |
 
 ### Scale
 
@@ -177,11 +186,8 @@ matrix and this semantic review are the durable repository evidence.
 
 ## Validation Status
 
-This audit performed no build, package, deployment or boot run. The prior
-Android-16 7/7 boot evidence remains valid only for its recorded identity and
-does not cover HAL functionality, shared folders, IME, fake Wi-Fi, camera app
-compatibility, subscription APIs or Skia crash reproduction.
-
-Before a new promotion completion claim, the two P0 contracts must be fixed or
-explicitly waived, and every accepted P1 item must have a feature-specific
-oracle bound to the new Android-16 source and artifact identity.
+The initial audit itself performed no build, package, deployment or boot run.
+The later completion root `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`
+passes target-only `check-vintf-all` and `m droid`; it is not yet packaged or
+boot-validated. Feature-specific oracles remain required for HAL behavior,
+shared folders, IME, fake Wi-Fi, camera, subscriptions, Skia and Widevine.

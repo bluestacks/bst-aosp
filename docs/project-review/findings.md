@@ -24,6 +24,12 @@ Findings: **1**.
 
 Findings: **16**.
 
+### `patches/android-16/a13-authority/frameworks-base/0161-A13-Pie-Android11-code-sync-change-includes-106.patch`: Exact duplicate content
+
+- Status: `preserve-pending-semantic-review`
+- Evidence: 17 paths share SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; 0 duplicate bytes. Related: `patches/android-16/patches/aosp16__art.status`, `patches/android-16/patches/aosp16__build_make.status`, `patches/android-16/patches/aosp16__build_soong.status`, `patches/android-16/patches/aosp16__device_generic_common.status`, `patches/android-16/patches/aosp16__device_generic_goldfish.status`, `patches/android-16/patches/aosp16__device_generic_x86_64.status`, `patches/android-16/patches/aosp16__external_boringssl.status`, `patches/android-16/patches/aosp16__frameworks_base.status`, `patches/android-16/patches/aosp16__frameworks_native.status`, `patches/android-16/patches/aosp16__hardware_google_aemu.status`, `patches/android-16/patches/aosp16__hardware_interfaces.status`, `patches/android-16/patches/aosp16__hardware_libhardware.status`, `patches/android-16/patches/aosp16__packages_apps_Launcher3.status`, `patches/android-16/patches/aosp16__system_core.status`, `patches/android-16/patches/aosp16__system_hwservicemanager.status`, `patches/android-16/patches/aosp16__system_security.status`
+- Action: Preserve layout-significant aliases; otherwise identify a canonical source before consolidation.
+
 ### `patches/android-16/bootimage/hd/guest/BootImage/bstsetconf.sh`: Exact duplicate content
 
 - Status: `preserve-pending-semantic-review`
@@ -34,12 +40,6 @@ Findings: **16**.
 
 - Status: `preserve-pending-semantic-review`
 - Evidence: 2 paths share SHA-256 6dc3f5e29a8d60cd880f96927a6734ba05496481bfa23d68600b1d82b5c582b9; 288 duplicate bytes. Related: `references/henry-hd-guest/Makefile`
-- Action: Preserve layout-significant aliases; otherwise identify a canonical source before consolidation.
-
-### `patches/android-16/patches/aosp16__art.status`: Exact duplicate content
-
-- Status: `preserve-pending-semantic-review`
-- Evidence: 16 paths share SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; 0 duplicate bytes. Related: `patches/android-16/patches/aosp16__build_make.status`, `patches/android-16/patches/aosp16__build_soong.status`, `patches/android-16/patches/aosp16__device_generic_common.status`, `patches/android-16/patches/aosp16__device_generic_goldfish.status`, `patches/android-16/patches/aosp16__device_generic_x86_64.status`, `patches/android-16/patches/aosp16__external_boringssl.status`, `patches/android-16/patches/aosp16__frameworks_base.status`, `patches/android-16/patches/aosp16__frameworks_native.status`, `patches/android-16/patches/aosp16__hardware_google_aemu.status`, `patches/android-16/patches/aosp16__hardware_interfaces.status`, `patches/android-16/patches/aosp16__hardware_libhardware.status`, `patches/android-16/patches/aosp16__packages_apps_Launcher3.status`, `patches/android-16/patches/aosp16__system_core.status`, `patches/android-16/patches/aosp16__system_hwservicemanager.status`, `patches/android-16/patches/aosp16__system_security.status`
 - Action: Preserve layout-significant aliases; otherwise identify a canonical source before consolidation.
 
 ### `patches/android-16/patches/aosp16__frameworks_base.base`: Exact duplicate content

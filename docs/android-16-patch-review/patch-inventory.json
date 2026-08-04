@@ -17270,6 +17270,26 @@
       ]
     },
     {
+      "artifact": "patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch",
+      "name": "device-generic-x86_64-widevine-fcm-bridge.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "f856a112a50706856a4ab87cf6d16ebf6c378ca8f383ee738117b1978c7d5806",
+      "bytes": 1385,
+      "lines": 36,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 15,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "framework_compatibility_matrix.xml"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
       "artifact": "patches/android-16/a13-completion/device-x86_64-houdini16.patch",
       "name": "device-x86_64-houdini16.patch",
       "category": "Host/build/graphics companion patches",
@@ -22670,6 +22690,49 @@
       ]
     },
     {
+      "artifact": "patches/android-16/a13-completion/root-completed-a13-authority-gitlinks.patch",
+      "name": "root-completed-a13-authority-gitlinks.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "41102ce29b4d81948516b698e38fa2368890bc0c1c8f795cd36b5be066fd9688",
+      "bytes": 5622,
+      "lines": 147,
+      "files_changed": 17,
+      "hunks": 17,
+      "additions": 17,
+      "deletions": 18,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "art",
+        "bionic",
+        "build/make",
+        "device/generic/x86_64",
+        "external/libxml2",
+        "external/skia",
+        "frameworks/base",
+        "frameworks/opt/telephony",
+        "libcore",
+        "packages/apps/Launcher3",
+        "packages/apps/Settings",
+        "packages/inputmethods/LatinIME",
+        "packages/modules/Bluetooth",
+        "packages/modules/NetworkStack",
+        "packages/modules/Wifi",
+        "packages/providers/DownloadProvider",
+        "packages/services/Telephony"
+      ],
+      "registry": [],
+      "overlaps": {
+        "device/generic/x86_64": [
+          "patches/android-16/a13-completion/root-completed-a13-authority-gitlinks.patch",
+          "patches/android-16/a13-completion/root-widevine-vintf-pointer.patch"
+        ]
+      },
+      "overlap_groups": [
+        "device/generic/x86_64"
+      ]
+    },
+    {
       "artifact": "patches/android-16/a13-completion/root-connectivity-captive-portal-pointer.patch",
       "name": "root-connectivity-captive-portal-pointer.patch",
       "category": "Host/build/graphics companion patches",
@@ -23302,6 +23365,33 @@
       "registry": [],
       "overlaps": {},
       "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/a13-completion/root-widevine-vintf-pointer.patch",
+      "name": "root-widevine-vintf-pointer.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "ae3f253c6a42cae023514bbc6c263ae80c09624406c571cce048725b64b3ae93",
+      "bytes": 581,
+      "lines": 19,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 1,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "device/generic/x86_64"
+      ],
+      "registry": [],
+      "overlaps": {
+        "device/generic/x86_64": [
+          "patches/android-16/a13-completion/root-completed-a13-authority-gitlinks.patch",
+          "patches/android-16/a13-completion/root-widevine-vintf-pointer.patch"
+        ]
+      },
+      "overlap_groups": [
+        "device/generic/x86_64"
+      ]
     },
     {
       "artifact": "patches/android-16/a13-completion/settings-accessibility-hearing-aid.patch",

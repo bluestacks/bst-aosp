@@ -6745,6 +6745,42 @@
       "date": "2026-07-29",
       "cont": 106,
       "rounds": []
+    },
+    {
+      "source": "progress/porting-log.md",
+      "line": 2532,
+      "level": 2,
+      "title": "2026-08-05 (cont.107) — A13 权威逐提交补漏；当前仅 Layer 1",
+      "date": "2026-08-05",
+      "cont": 107,
+      "rounds": []
+    },
+    {
+      "source": "progress/porting-log.md",
+      "line": 2575,
+      "level": 2,
+      "title": "2026-08-05 (cont.108) — system/vold quota 补漏与受限二进制证据收敛",
+      "date": "2026-08-05",
+      "cont": 108,
+      "rounds": []
+    },
+    {
+      "source": "progress/porting-log.md",
+      "line": 2600,
+      "level": 2,
+      "title": "2026-08-05 (cont.109) — bstime 与 VA-API 根 payload 语义补漏",
+      "date": "2026-08-05",
+      "cont": 109,
+      "rounds": []
+    },
+    {
+      "source": "progress/porting-log.md",
+      "line": 2630,
+      "level": 2,
+      "title": "2026-08-05 (cont.110) — 根 gitlink 闭合、Widevine FCM 适配与全量 Layer 1 通过",
+      "date": "2026-08-05",
+      "cont": 110,
+      "rounds": []
     }
   ]
 }

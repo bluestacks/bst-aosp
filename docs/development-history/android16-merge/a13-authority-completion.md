@@ -10,7 +10,7 @@ patch is required.
 - Target tree: `~/android-16`
 - Target branch: `aosp16-bst-merge`
 - Target product: `android_x86_64-trunk_staging-eng`
-- Current root: `f0947d915915e45d69a683679895553780161a61`
+- Current root: `27488f4954b2c2fc81c7715969cf1439ff05de0f`
 - Build output: target-local `~/android-16/out`
 - AOSP16 output use: none
 - Push or PR: none
@@ -180,6 +180,64 @@ Artifact hashes:
 - 32-bit test:
   `3c6a0873a0a54a8fcc3046f916e7870060906e64281796f57382bf2c450e3d9a`
 
+### Host IME Bridge Client
+
+- Authority: root-owned A13 `system/bstime/Main.cpp`, SHA-256
+  `fef2e02131d7912d467b354c80e71993749ab78d001864dcf3d9ddfe1284d0a2`.
+- Finding: both AOSP16 and the initial Android-16 promotion selected `bstime`
+  in `device/generic/common/packages.mk` and declared the `imeservice` init
+  service, but neither tree contained the module source. The service therefore
+  referenced a missing `/system/bin/bstime` client while `BstImeBridge` still
+  provided the loopback socket endpoint.
+- A16 root commit: `643b1d9a8a8bd69b3ce335a099f0927b15e343d2`.
+- Adaptation: retain the A13 C++ source byte-for-byte and replace only the
+  blocked legacy `Android.mk` with an eight-line `cc_binary` definition.
+- Necessity: restores the guest `/dev/bst_ime` to framework IME bridge required
+  by the already active init and Java-side protocol.
+- Performance: one existing oneshot daemon and its blocking device/socket loop;
+  no new polling path or protocol work was added.
+- Security: the authority source trusts the `/dev/bst_ime` message length and
+  loopback peer. Its fixed 256-byte buffer, retry accounting and signal-handler
+  behavior remain review debt; changing them here would diverge from the
+  authority protocol without runtime evidence.
+- Validation: `m bstime -j8` completed 80 actions. The installed x86_64 PIE is
+  `out/target/product/x86_64/system/bin/bstime`, SHA-256
+  `438d978a682546fbaa68ea5a2d816d53ce2c1c41e87754c4491ee97d1bafe448`.
+  It was compiled but not exercised against a guest or host IME bridge.
+
+### VA-API Driver Discovery
+
+- Authority: A13 root commit `c71e618e0c99d17ff903fce579b7e12ef46f9ec1`
+  installs `i965_drv_video` under `vendor/lib64/dri` and compiles libva with
+  `VA_DRIVERS_PATH=/vendor/lib64/dri`.
+- Finding: Android-16 correctly replaces the old root-vendored libva source
+  with current `external/libva`, and already carries the i965 driver and product
+  package. Its x86_64 libva variant instead embedded `/vendor/lib64`, so runtime
+  discovery did not match the installed driver directory.
+- A16 component: `external/libva`
+  `313d3c0dbf612914d17cd1a02927c72a78e87d81`.
+- Root pointer: `27488f4954b2c2fc81c7715969cf1439ff05de0f`.
+- Adaptation: change only the modern Soong `VA_DRIVERS_PATH` constant; do not
+  import A13's obsolete libva copy or change the i965 source/install layout.
+- Necessity: permits libva's default loader to find the product-selected i965
+  backend without an environment override.
+- Performance: no steady-state cost; it removes a failed directory probe and
+  allows the existing hardware decode path to load.
+- Security: narrows discovery to the vendor DRI directory containing the
+  packaged driver. No writable or host-controlled search path is added.
+- Validation: `m i965_drv_video -j8` completed successfully. The installed
+  `libva.so` contains `/vendor/lib64/dri`; `i965_drv_video.so` remains under that
+  directory and links to `libva.so` and `libva-android.so`.
+
+Artifact hashes:
+
+- `system/vendor/lib64/libva.so`:
+  `c02c9eb1160779b5911160d242265829f9114412d52050e6e4d89dce629bd7ec`
+- `system/vendor/lib64/libva-android.so`:
+  `98482769c0ac3645a1d1604eb6870c695b048973ca75b41ceb1eaf7a822e738b`
+- `system/vendor/lib64/dri/i965_drv_video.so`:
+  `dd983486ba8fed3ef98713c4abc420defb5fd9d0319d98fdaa8fb5a26ce4bf34`
+
 ### Restricted Widevine Payload Evidence
 
 The A13 Widevine commit `bb15209c81865750681a87e371fa645797818492`
@@ -195,6 +253,30 @@ provenance and redistribution authorization.
 
 ## Reviewed Equivalent Or Superseded Areas
 
+### Root Payload Closure
+
+A fresh root-owned file check at Android-16 root
+`27488f4954b2c2fc81c7715969cf1439ff05de0f` found 290 A13 paths without the
+same filesystem path in the target. Every path is assigned below; there is no
+unclassified remainder.
+
+| Paths | A13 area | Disposition |
+| ---: | --- | --- |
+| 155 | `external/arm-runtime` | Explicitly obsolete reference source; superseded by Houdini/native bridge |
+| 104 | `hardware/intel/common/libva` | Replaced by current `external/libva`; driver path compatibility fixed and built |
+| 15 | `packages/apps/BstFolder` | Build disabled in final A13; successor daemon later deleted |
+| 10 | `hardware/qcom/{sdm845,sm7150,sm7250,sm8150,sm8150p}` | QCOM-only Android.bp/Android.mk selector symlinks; target board is `android-x86` |
+| 2 | `hardware/intel/audio_media/hdmi` | Inactive `BOARD_USES_ALSA_AUDIO` module; product uses `audio.primary.bst` |
+| 1 | `system/bstime/Android.mk` | Functionally replaced by tracked `Android.bp`; source and active module restored |
+| 1 | root `Makefile` | Legacy `build/core/root.mk` convenience symlink; current `m` flow does not use it |
+| 1 | `tools/bazel` | Legacy `build/bazel/bazel.sh` convenience symlink, not guest/product payload |
+| 1 | empty root `README` | Zero-byte metadata only |
+
+The check compares root-owned A13 paths against target filesystem presence, so
+submodule content already present at the same path is not falsely counted.
+Path absence is not treated as semantic absence when current build metadata or
+a reviewed replacement provides the behavior.
+
 - `external/boringssl`: A13 RSA-PSS Widevine wrappers are present in the A16
   decrepit RSA implementation. Vendor self-test rc registration is already
   absent; no code change is required.
@@ -206,6 +288,20 @@ provenance and redistribution authorization.
 - `hardware/bst/{audio,camera,lights,memtrack,power}`: product C/C++ sources are
   exact or high-coverage A16 adaptations; build metadata differs only where
   Soong/header migration requires it.
+- `packages/apps/BstFolder`: not an active A13 product module. Authority commit
+  `389d5dbd065a9ef3cb20b7ffaafffd0e76419438` renamed its build file to
+  `Android.mk.orig` while moving behavior to `bstfolderd`; commit `f619dd04`
+  later removed that daemon. The final A13 and A16 trees instead carry
+  byte-identical `external/bluestacks/bstfolder` native helpers. Restoring the
+  disabled APK would reintroduce superseded property polling and Binder code.
+- `hardware/intel/audio_media/hdmi`: gated by `BOARD_USES_ALSA_AUDIO=true`,
+  which neither the A13 nor A16 `device/generic` product sets. Both products
+  inherit `hardware/bst/audio/alsa.mk` and build `audio.primary.bst`; the unused
+  Intel HDMI HAL is not promoted.
+- `external/arm-runtime`: its only build file is `Android.mk.bak`, introduced by
+  A13 commit `6864ee09` as an explicitly obsolete reference. Android-16 uses the
+  reviewed Houdini/native-bridge integration instead of reviving this QEMU-era
+  translator.
 - `.github` deletion, deinitialized third-party links and bulk external sync
   commits are repository hygiene, not guest runtime patches.
 
@@ -214,7 +310,7 @@ provenance and redistribution authorization.
 1. Continue code-level review of every remaining A13 product-signal commit,
    prioritizing projects without independent patch evidence.
 2. Regenerate the A13 coverage and Android-16 delta reports at root
-   `f0947d915915e45d69a683679895553780161a61`.
+   `27488f4954b2c2fc81c7715969cf1439ff05de0f`.
 3. Run target-only full `m droid`, stage and package with identity-bound hashes.
 4. Run Windows boot, FPS, network-presentation, captive-portal, SELinux and
    entropy readback oracles.

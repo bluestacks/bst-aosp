@@ -4,16 +4,16 @@
 
 ## Summary
 
-- Patch artifacts: **571**
-- Total size: **21.54 MiB**
+- Patch artifacts: **574**
+- Total size: **21.55 MiB**
 - Artifacts containing binary patch data: **4**
 - Payload-free artifacts referencing binary differences: **2**
-- Unique changed paths: **772**
+- Unique changed paths: **775**
 
 | Category | Count |
 |---|---:|
 | AOSP16 project snapshots | 21 |
-| Host/build/graphics companion patches | 492 |
+| Host/build/graphics companion patches | 495 |
 | P2 aggregate/candidate snapshots | 5 |
 | P2 bionic/art source overlays | 2 |
 | P2 cross-project mechanical patches | 18 |
@@ -343,6 +343,7 @@
 | [`external-efivar-installer.patch`](../../patches/android-16/a13-completion/external-efivar-installer.patch) | Host/build/graphics companion patches | 2 | 5 | 135 | 3 | 5.0 | no | 0 |
 | [`external-ffmpeg-a16-media.patch`](../../patches/android-16/a13-completion/external-ffmpeg-a16-media.patch) | Host/build/graphics companion patches | 7 | 11 | 17 | 4 | 4.0 | no | 0 |
 | [`external-libva-core-vendor.patch`](../../patches/android-16/a13-completion/external-libva-core-vendor.patch) | Host/build/graphics companion patches | 1 | 3 | 3 | 4 | 0.9 | no | 0 |
+| [`external-libva-driver-discovery.patch`](../../patches/android-16/a13-completion/external-libva-driver-discovery.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.6 | no | 0 |
 | [`external-libxml2-device-xmllint.patch`](../../patches/android-16/a13-completion/external-libxml2-device-xmllint.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 0.6 | no | 0 |
 | [`external-selinux-userspace-disabled.patch`](../../patches/android-16/a13-completion/external-selinux-userspace-disabled.patch) | Host/build/graphics companion patches | 1 | 2 | 9 | 6 | 2.2 | no | 0 |
 | [`external-skia-atlas-padding.patch`](../../patches/android-16/a13-completion/external-skia-atlas-padding.patch) | Host/build/graphics companion patches | 1 | 2 | 7 | 4 | 1.1 | no | 0 |
@@ -481,6 +482,7 @@
 | [`root-atrace-permissions-pointer.patch`](../../patches/android-16/a13-completion/root-atrace-permissions-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-badblocks-gitlinks.patch`](../../patches/android-16/a13-completion/root-badblocks-gitlinks.patch) | Host/build/graphics companion patches | 2 | 2 | 2 | 3 | 0.9 | no | 0 |
 | [`root-bst-hal-pointer.patch`](../../patches/android-16/a13-completion/root-bst-hal-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.6 | no | 0 |
+| [`root-bstime-ime-bridge.patch`](../../patches/android-16/a13-completion/root-bstime-ime-bridge.patch) | Host/build/graphics companion patches | 2 | 2 | 147 | 1 | 5.4 | no | 0 |
 | [`root-bstsettings-app.patch`](../../patches/android-16/a13-completion/root-bstsettings-app.patch) | Host/build/graphics companion patches | 85 | 77 | 4412 | 1 | 358.6 | embedded | 0 |
 | [`root-camera-hal-framerate-pointer.patch`](../../patches/android-16/a13-completion/root-camera-hal-framerate-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-connectivity-captive-portal-pointer.patch`](../../patches/android-16/a13-completion/root-connectivity-captive-portal-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 1.0 | no | 0 |
@@ -496,6 +498,7 @@
 | [`root-h263-16cif-pointer.patch`](../../patches/android-16/a13-completion/root-h263-16cif-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-hardware-interfaces-fps-pointer.patch`](../../patches/android-16/a13-completion/root-hardware-interfaces-fps-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.6 | no | 0 |
 | [`root-ignore-houdini-payload.patch`](../../patches/android-16/a13-completion/root-ignore-houdini-payload.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 0 | 0.2 | no | 0 |
+| [`root-libva-driver-discovery-pointer.patch`](../../patches/android-16/a13-completion/root-libva-driver-discovery-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-managed-su-pointer.patch`](../../patches/android-16/a13-completion/root-managed-su-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-media-compat-pointer.patch`](../../patches/android-16/a13-completion/root-media-compat-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-readiness-runtime-pointer.patch`](../../patches/android-16/a13-completion/root-readiness-runtime-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
@@ -4740,6 +4743,18 @@
 - Changed paths:
   - `Android.bp`
 
+### `external-libva-driver-discovery.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-libva-driver-discovery.patch`](../../patches/android-16/a13-completion/external-libva-driver-discovery.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `2513babd285f47d60b4c3158588f53cb5a1bc02d38dde8b1f54127afc8e2f100`
+- Size/stat: 648 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `Android.bp`
+
 ### `external-libxml2-device-xmllint.patch`
 
 - Artifact: [`patches/android-16/a13-completion/external-libxml2-device-xmllint.patch`](../../patches/android-16/a13-completion/external-libxml2-device-xmllint.patch)
@@ -6511,6 +6526,19 @@
 - Changed paths:
   - `hardware/libhardware`
 
+### `root-bstime-ime-bridge.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-bstime-ime-bridge.patch`](../../patches/android-16/a13-completion/root-bstime-ime-bridge.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `b903651a15432b984fe74ef2fe1889904ca9f5954d5232a5d1d11ca2f33f99c1`
+- Size/stat: 5536 bytes, 2 files, 2 hunks, +147/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `system/bstime/Android.bp`
+  - `system/bstime/Main.cpp`
+
 ### `root-bstsettings-app.patch`
 
 - Artifact: [`patches/android-16/a13-completion/root-bstsettings-app.patch`](../../patches/android-16/a13-completion/root-bstsettings-app.patch)
@@ -6775,6 +6803,18 @@
 - Overlap: none detected by changed path
 - Changed paths:
   - `.gitignore`
+
+### `root-libva-driver-discovery-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-libva-driver-discovery-pointer.patch`](../../patches/android-16/a13-completion/root-libva-driver-discovery-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `4c7d7444b759e3b335991086a36c7728fc08af0c48f9320172d6a1d3b9a88f41`
+- Size/stat: 541 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: none detected by changed path
+- Changed paths:
+  - `external/libva`
 
 ### `root-managed-su-pointer.patch`
 

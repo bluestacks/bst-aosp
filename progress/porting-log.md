@@ -2596,3 +2596,33 @@ Widevine A13 authority patch 同时包含源码与 1,250,188-byte prebuilt。审
 target commit、Git blob、size、SHA-256 和 publication gate；两份 stable
 patch-id 相同的内嵌二进制导出不进入 Git。目标 `frameworks/av` 仍保留 A13
 权威 blob，本次只减少审查证据重复，不撤销产品移植。
+
+## 2026-08-05 (cont.109) — bstime 与 VA-API 根 payload 语义补漏
+
+重新按 A13 根仓 tracked payload 与 Android-16 当前文件系统核对，发现
+`system/bstime` 是真实缺口：AOSP16/Android-16 均在 product packages 中选择
+`bstime`，init 也声明 `/system/bin/logwrapper /system/bin/bstime`，但源码目录
+缺失。将 A13 `Main.cpp` 按 SHA-256 `fef2e021...` 逐字恢复，仅把被 A16 禁止的
+`Android.mk` 转为 `Android.bp`。`m bstime -j8` 成功，安装二进制 SHA-256
+`438d978a...`；根提交 `643b1d9a8a8b`。
+
+同轮核对 A13 `[A13] Add libva and vaapi`：A16 已正确使用现代
+`external/libva` 并保留 product-selected `i965_drv_video`，不应复制旧 libva
+源码；但当前 libva 内置搜索目录为 `/vendor/lib64`，驱动实际安装在
+`/vendor/lib64/dri`，与 A13 权威不一致。组件提交 `313d3c0dbf61` 只修正
+`VA_DRIVERS_PATH`，根提交 `27488f4954b2`。`m i965_drv_video -j8` 成功，产物
+字符串、安装目录和 DT_NEEDED 已回读一致。
+
+排除项也完成代码级证明：A13 `BstFolder` APK 已由 `389d5dbd` 将 build 文件
+改名为 `.orig`，其后继 `bstfolderd` 又由 `f619dd04` 删除；A13/A16 的 native
+helper 源码与构建文件哈希完全相同。旧 Intel HDMI HAL 受未设置的
+`BOARD_USES_ALSA_AUDIO` gate 控制，实际两树均使用 `audio.primary.bst`；
+`external/arm-runtime/Android.mk.bak` 的引入提交明确标注 obsolete。
+
+当前根 HEAD `27488f4954b2c2fc81c7715969cf1439ff05de0f`。本轮只有定向模块
+构建，没有 full `m droid`、打包、Windows 部署、guest/host 协议测试或 boot
+oracle；未 push/PR，根仓既有 `.gitignore` 修改仍未提交。
+
+本地静态验证器同时修正为排除未跟踪的 `.tmp-*`、`.work-*` 与 `tmp-*`
+工作目录，避免把审计临时文件写入权威 validation 清单。稳定结果为
+`pass=631`、`expected-failure=1`，无新增失败。

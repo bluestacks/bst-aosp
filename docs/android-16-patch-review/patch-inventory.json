@@ -1704,6 +1704,7 @@
         "Android.bp": [
           "patches/android-16/a13-authority/frameworks-base/0002-A13-Adding-BlueStacks-basic-services.patch",
           "patches/android-16/a13-completion/external-libva-core-vendor.patch",
+          "patches/android-16/a13-completion/external-libva-driver-discovery.patch",
           "patches/android-16/a13-completion/external-libxml2-device-xmllint.patch",
           "patches/android-16/a13-completion/external-v86d-soong.patch",
           "patches/android-16/patches/aosp16__system_hwservicemanager.patch"
@@ -17511,6 +17512,38 @@
         "Android.bp": [
           "patches/android-16/a13-authority/frameworks-base/0002-A13-Adding-BlueStacks-basic-services.patch",
           "patches/android-16/a13-completion/external-libva-core-vendor.patch",
+          "patches/android-16/a13-completion/external-libva-driver-discovery.patch",
+          "patches/android-16/a13-completion/external-libxml2-device-xmllint.patch",
+          "patches/android-16/a13-completion/external-v86d-soong.patch",
+          "patches/android-16/patches/aosp16__system_hwservicemanager.patch"
+        ]
+      },
+      "overlap_groups": [
+        "Android.bp"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/a13-completion/external-libva-driver-discovery.patch",
+      "name": "external-libva-driver-discovery.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "2513babd285f47d60b4c3158588f53cb5a1bc02d38dde8b1f54127afc8e2f100",
+      "bytes": 648,
+      "lines": 25,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 1,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "Android.bp"
+      ],
+      "registry": [],
+      "overlaps": {
+        "Android.bp": [
+          "patches/android-16/a13-authority/frameworks-base/0002-A13-Adding-BlueStacks-basic-services.patch",
+          "patches/android-16/a13-completion/external-libva-core-vendor.patch",
+          "patches/android-16/a13-completion/external-libva-driver-discovery.patch",
           "patches/android-16/a13-completion/external-libxml2-device-xmllint.patch",
           "patches/android-16/a13-completion/external-v86d-soong.patch",
           "patches/android-16/patches/aosp16__system_hwservicemanager.patch"
@@ -17541,6 +17574,7 @@
         "Android.bp": [
           "patches/android-16/a13-authority/frameworks-base/0002-A13-Adding-BlueStacks-basic-services.patch",
           "patches/android-16/a13-completion/external-libva-core-vendor.patch",
+          "patches/android-16/a13-completion/external-libva-driver-discovery.patch",
           "patches/android-16/a13-completion/external-libxml2-device-xmllint.patch",
           "patches/android-16/a13-completion/external-v86d-soong.patch",
           "patches/android-16/patches/aosp16__system_hwservicemanager.patch"
@@ -17635,6 +17669,7 @@
         "Android.bp": [
           "patches/android-16/a13-authority/frameworks-base/0002-A13-Adding-BlueStacks-basic-services.patch",
           "patches/android-16/a13-completion/external-libva-core-vendor.patch",
+          "patches/android-16/a13-completion/external-libva-driver-discovery.patch",
           "patches/android-16/a13-completion/external-libxml2-device-xmllint.patch",
           "patches/android-16/a13-completion/external-v86d-soong.patch",
           "patches/android-16/patches/aosp16__system_hwservicemanager.patch"
@@ -22478,6 +22513,27 @@
       "overlap_groups": []
     },
     {
+      "artifact": "patches/android-16/a13-completion/root-bstime-ime-bridge.patch",
+      "name": "root-bstime-ime-bridge.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "b903651a15432b984fe74ef2fe1889904ca9f5954d5232a5d1d11ca2f33f99c1",
+      "bytes": 5536,
+      "lines": 174,
+      "files_changed": 2,
+      "hunks": 2,
+      "additions": 147,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "system/bstime/Android.bp",
+        "system/bstime/Main.cpp"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
       "artifact": "patches/android-16/a13-completion/root-bstsettings-app.patch",
       "name": "root-bstsettings-app.patch",
       "category": "Host/build/graphics companion patches",
@@ -22982,6 +23038,26 @@
       "references_binary_difference": false,
       "files": [
         ".gitignore"
+      ],
+      "registry": [],
+      "overlaps": {},
+      "overlap_groups": []
+    },
+    {
+      "artifact": "patches/android-16/a13-completion/root-libva-driver-discovery-pointer.patch",
+      "name": "root-libva-driver-discovery-pointer.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "4c7d7444b759e3b335991086a36c7728fc08af0c48f9320172d6a1d3b9a88f41",
+      "bytes": 541,
+      "lines": 19,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 1,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "external/libva"
       ],
       "registry": [],
       "overlaps": {},
@@ -25496,6 +25572,7 @@
         "Android.bp": [
           "patches/android-16/a13-authority/frameworks-base/0002-A13-Adding-BlueStacks-basic-services.patch",
           "patches/android-16/a13-completion/external-libva-core-vendor.patch",
+          "patches/android-16/a13-completion/external-libva-driver-discovery.patch",
           "patches/android-16/a13-completion/external-libxml2-device-xmllint.patch",
           "patches/android-16/a13-completion/external-v86d-soong.patch",
           "patches/android-16/patches/aosp16__system_hwservicemanager.patch"

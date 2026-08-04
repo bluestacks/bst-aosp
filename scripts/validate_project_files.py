@@ -20,13 +20,22 @@ ALLOWLIST_PATH = REVIEW_DIR / "validation-allowlist.json"
 JSON_PATH = REVIEW_DIR / "validation.json"
 MARKDOWN_PATH = REVIEW_DIR / "validation.md"
 EXCLUDED_PARTS = {".git", ".codex-tmp", ".triage_tmp", "__pycache__"}
+EXCLUDED_PREFIXES = (".tmp-", ".work-", "tmp-")
+
+
+def excluded(path: Path) -> bool:
+    parts = path.relative_to(ROOT).parts
+    return any(
+        part in EXCLUDED_PARTS or part.startswith(EXCLUDED_PREFIXES)
+        for part in parts
+    )
 
 
 def relevant_files(suffix: str) -> list[Path]:
     return sorted(
         path
         for path in ROOT.rglob(f"*{suffix}")
-        if not EXCLUDED_PARTS.intersection(path.relative_to(ROOT).parts)
+        if not excluded(path)
         and path not in {JSON_PATH}
     )
 

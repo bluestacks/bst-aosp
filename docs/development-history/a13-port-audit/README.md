@@ -134,15 +134,20 @@ reading the current code:
 
 The 1430 root-tracked files absent from AOSP16 are not one feature set:
 
-- 1156 files under `hardware/intel/common` are the old libva/vaapi import tied
-  to the excluded FFmpeg path.
+- 1156 files under `hardware/intel/common` are the old libva/vaapi import.
+  Android-16 retains the product-selected i965 driver and uses its current
+  `external/libva` project instead of duplicating the A13 libva source. The
+  required `/vendor/lib64/dri` discovery path is tracked in the authority
+  completion review.
 - 155 files under `external/arm-runtime` are historical translator source; its
   own A13 history marks the module obsolete and replaced by qemu.
-- 85 `BstSettings` and 15 `BstFolder` files are not selected by the reviewed
-  A13/A16 product makefiles or build scripts. `BstFolder` also has a retained
-  native replacement under `external/bluestacks/bstfolder`.
-- `system/bstime` is an old two-file IME daemon and should be evaluated with
-  the LatinIME protocol, not copied independently.
+- 85 `BstSettings` files were reviewed separately. `BstFolder` is disabled in
+  the final A13 tree by `Android.mk` to `Android.mk.orig` rename and its
+  successor daemon was later deleted; both A13 and A16 retain the byte-identical
+  native helper under `external/bluestacks/bstfolder`.
+- `system/bstime` was a real omission: active product and init declarations
+  referenced the absent executable. Android-16 now carries the byte-identical
+  A13 source with Soong-only build metadata.
 - QCOM board makefiles and root bootstrap metadata are irrelevant to the
   Windows `android_x86_64` product.
 

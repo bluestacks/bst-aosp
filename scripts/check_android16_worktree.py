@@ -53,13 +53,13 @@ def status(
             ["git", "diff", "--quiet", "HEAD", "--", *root_files],
             cwd=path,
         )
-        untracked = subprocess.run(
+        root_status = subprocess.run(
             [
                 "git",
-                "ls-files",
-                "--others",
-                "--exclude-standard",
-                "--directory",
+                "status",
+                "--porcelain=v1",
+                "--untracked-files=normal",
+                "--ignore-submodules=all",
             ],
             cwd=path,
             stdout=subprocess.PIPE,
@@ -67,6 +67,11 @@ def status(
             text=True,
             encoding="utf-8",
             errors="replace",
+        )
+        untracked = "\n".join(
+            line
+            for line in root_status.stdout.splitlines()
+            if line.startswith("?? ")
         )
         details: list[str] = []
         if tracked.returncode == 1:
@@ -89,9 +94,13 @@ def status(
             details.append(names.stdout.strip() or "tracked root changes")
         elif tracked.returncode:
             details.append("root git diff failed")
-        if untracked.stdout.strip():
-            details.append("untracked:\n" + untracked.stdout.strip())
-        return path, max(tracked.returncode - 1, 0) or untracked.returncode, "\n".join(details)
+        if untracked:
+            details.append("untracked:\n" + untracked)
+        return (
+            path,
+            max(tracked.returncode - 1, 0) or root_status.returncode,
+            "\n".join(details),
+        )
 
     command = [
         "git",

@@ -22,5 +22,6 @@ guest 变更后，host（mac `qvm` / win `app-player`+`vbox`）是否仍兼容�
 | 2026-07-21 | P2-MAC-ARM64 `bst_arm64` | 镜像/板 | lunch only | deferred | ok | 无 mac Layer2；不改 win 契约 |
 | 2026-07-23 | FW-SERVICES-1a Clipboard host sync | hd HostCall / clipboard | Layer2 7/7 Root `eeb4f714` | deferred | ok | `BstHostCallManager` lazy-init |
 | 2026-07-23 | FW-SERVICES-4a Audio volume + AppOps devicedetails | hd HostCall / volume | Layer2 7/7 Root **`a551d823`** | deferred | ok | `onVolumeChanged`；AppOps synthetic pkg |
+| 2026-08-05 | A13 authority completion + A16 SELinux adaptation | APEX labels / netbpfload / hd boot state | Layer2 7/7 @168s Root `8d8afc15` | deferred | ok | Rejected `is_selinux_enabled=0`; root `5c8f8eb`, 39 APEX activated, NetBpfLoad success |
 
 强约束：guest 升级**绝不静默破坏** host；任何 patch 集 Phase 完成前此处必有一行 ok 或显式 escalate。

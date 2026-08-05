@@ -50,10 +50,12 @@ bash scripts/g1_build_pack.sh --pack-only
 
 **流程分解**（g1_build_pack.sh 内部，每步 readback）：
 1. 远程 `g1_build_android16.sh`：身份 preflight +
-   `lunch android_x86_64-trunk_staging-eng` + `m droid -j24` + 一次
+   `lunch android_x86_64-trunk_staging-eng` + `m droid -j8` + 一次
    goldfish EGL/gralloc/hwc2 mmm，生成 `g1_android16_build.identity`。
-2. 远程 `g1_build_libs.sh`：hd guest 必需模块；可选模块失败告警，
-   hostcall/gcall/server/tool 失败则中止。
+2. 远程 `g1_build_libs.sh`：hd guest 必需模块；
+   hostcall/gcall/server/tool/sensors 任一失败则中止，并对 32/64 位 JNI、
+   BST tools 和 sensors 执行当前 target OUT 产物哈希回读。toybox 在
+   sensors 之前构建，避免为恢复 sensors 专用 Make 变量再做一次全树 Kati 解析。
 3. 远程 `g1_pack_root.sh`：从同一 Android-16 HEAD stage OUT fold、
    复核 build identity、只 stage 已编译图形、复制 APK、应用
    overlays/HAL 策略、调用 r228 pack，并生成 `Root.vhd.identity`。
@@ -62,7 +64,8 @@ bash scripts/g1_build_pack.sh --pack-only
    （launcher/gamecenter/bsxlauncher）预装 priv-app（含 unzip native lib）。
 5. win `g1_win_deploy.ps1`：同时 scp Root.vhd 和 identity，用 SHA-256
    比对后备份替换。
-7. win 干净首启：`Data_orig.vhdx → Data.vhdx`（**copy，勿删**）。
+7. win 干净首启：`scripts/g1_reset_data_wipe.ps1`从已验证的
+   `Data.vhdx.wipe20260717-141744` 恢复 `Data.vhdx`并回读 SHA-256。
 8. win `g1_boot_verify.ps1`：读部署 identity，Layer2 7 个 oracle 任一
    缺失即返回非零。
 
@@ -73,7 +76,12 @@ ssh markxu@172.16.6.191 'cd ~/app-player/hd/guest/BootImage && KDIR=~/android-16
 ```
 
 **⚠️ gotchas（必读，见 G1.md「踩坑速查」）**：
-- **Data.vhdx 勿删**：干净首启 `Data_orig.vhdx → Data.vhdx`（copy）。删了 → VBox `Could not open medium Data.vhdx` → 卡 [Initializing]。
+- **禁用 `Data_orig.vhdx`**：cont.24/31 确认其是不可用的空盘基线，可导致
+  `bstsetup` 空盘启动异常。使用 `g1_reset_data_wipe.ps1`，且勿删
+  `Data.vhdx`（VBox 需要介质文件存在）。
+- **A16 userspace SELinux 不得伪装为 disabled**：A13 `enabled.c` 的机制在 A16 会跳过
+  restorecon，导致 CAPEX 激活失败并 `reboot,netbpfload-missing`。保留 kernel
+  permissive，但 `is_selinux_enabled()` 必须使用 A16 上游语义。
 - **UUID 验 footer 不信 showhdinfo**：`showhdinfo` 显示注册表缓存值；文件实际 UUID 看 hexdump footer offset 64。r228 远程 sethduuid 曾报成功但没真改 footer。
 - **fastboot build_fastboot 须设 `KDIR=~/android-16/kernel-a16`**；Makefile
   必须在 kernel 产物和已验证 prebuilt 均不存在时硬失败。

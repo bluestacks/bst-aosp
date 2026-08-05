@@ -44,7 +44,9 @@ done
 # 5) BstCommandProcessor JNI
 echo "A16DBG:G1: mmm packages/apps/BstCommandProcessor/jni"
 mmm packages/apps/BstCommandProcessor/jni "$J" || {
-  echo "WARN: mmm BstCommandProcessor/jni FAILED — may be absent in a16" >&2; }
+  echo "ERROR: mmm BstCommandProcessor/jni FAILED" >&2
+  failed=1
+}
 
 # 6) BST server native (frameworks/base services JNI for BlueStacks)
 echo "A16DBG:G1: mmm frameworks/base/services/java/com/bluestacks/server/native"
@@ -62,26 +64,53 @@ for mod in tools/bstconf tools/bstchkdata; do
   }
 done
 
-# 9) BST sensors (external/bluestacks/sensors)
-if [ -d external/bluestacks/sensors ]; then
-  echo "A16DBG:G1: mm external/bluestacks/sensors BUILD_EXTERNAL_BLUESTACKS_SENSORS=true"
-  (cd external/bluestacks/sensors && mm "$J" BUILD_EXTERNAL_BLUESTACKS_SENSORS=true) || {
-    echo "WARN: mm BST sensors FAILED" >&2; }
-else
-  echo "A16DBG:G1: sensors dir absent — skip"
-fi
-
-# 10) toybox
+# 9) toybox. Build it before sensors so the final sensors-specific Make
+# variable does not need to be toggled back by another Make invocation.
 echo "A16DBG:G1: mma toybox"
 mma toybox "$J" || {
   echo "ERROR: mma toybox FAILED" >&2
   failed=1
 }
 
+# 10) BST sensors (external/bluestacks/sensors)
+if [ -d external/bluestacks/sensors ]; then
+  echo "A16DBG:G1: mm external/bluestacks/sensors BUILD_EXTERNAL_BLUESTACKS_SENSORS=true"
+  (cd external/bluestacks/sensors && mm "$J" BUILD_EXTERNAL_BLUESTACKS_SENSORS=true) || {
+    echo "ERROR: mm BST sensors FAILED" >&2
+    failed=1
+  }
+else
+  echo "A16DBG:G1: sensors dir absent — skip"
+fi
+
 [ "$failed" -eq 0 ] || {
   echo "A16DBG:G1: one or more required native modules failed" >&2
   exit 1
 }
 
+PRODUCT_OUT="$AOSP/$OUT_DIR_NAME/target/product/x86_64"
+required_artifacts=(
+  system/lib64/libhostcall_jni.so
+  system/lib64/libgcall_jni.so
+  system/lib/libhostcall_jni.so
+  system/lib/libgcall_jni.so
+  system/out_bstconf/bstconf
+  system/out_bstchkdata/bstchkdata
+)
+if [ -d external/bluestacks/sensors ]; then
+  required_artifacts+=(
+    system/lib64/hw/sensors.default.so
+    system/lib/hw/sensors.default.so
+  )
+fi
+echo "A16DBG:G1: required artifact readback"
+for artifact in "${required_artifacts[@]}"; do
+  [ -f "$PRODUCT_OUT/$artifact" ] || {
+    echo "ERROR: required target artifact is missing: $PRODUCT_OUT/$artifact" >&2
+    exit 1
+  }
+  sha256sum "$PRODUCT_OUT/$artifact"
+done
+
 echo "A16DBG:G1: build-libs DONE $(date -Is)"
-echo "=== required modules built; optional-module warnings are recorded above ==="
+echo "=== all required HD guest modules built and read back from target OUT ==="

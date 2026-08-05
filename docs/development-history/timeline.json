@@ -6781,6 +6781,15 @@
       "date": "2026-08-05",
       "cont": 110,
       "rounds": []
+    },
+    {
+      "source": "progress/porting-log.md",
+      "line": 2660,
+      "level": 2,
+      "title": "2026-08-05 (cont.111) — A13 SELinux 机械移植回归修正；当前树 Layer 2 7/7",
+      "date": "2026-08-05",
+      "cont": 111,
+      "rounds": []
     }
   ]
 }

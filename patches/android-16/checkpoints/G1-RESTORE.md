@@ -116,7 +116,11 @@ powershell -File scripts\g1_boot_verify.ps1 -TimeoutSec 600
 
 **实测（2026-07-17 porting-log cont.4，Root.vhd `2a7a497a` + 干净 Data_orig 首启）**：boot 到 launcher，host oracle 全绿 —— `Player state: ready` + `fUiHideBootProgressBar` + `plrOnActivityDisplayedHcall`；`GlueStartVM failed=0`；`hwcomposer SIGSEGV=0`。adb `topResumedActivity=com.uncube.launcher3/...HomeActivity`。（旧「期望 245s」是误记，见 porting-log cont.1 订正；fresh 首启因 ART/odsign/package scan 较慢，~600s+，迭代 boot 更快。）
 
-> **gotcha（必读）**：① 部署后用 **干净 data** —— `Data_orig.vhdx → Data.vhdx`（copy 一份），**勿删 Data.vhdx**（VBox 需文件存在，否则 `Could not open medium Data.vhdx` → GlueStartVM fail → 卡 [Initializing]）。② 验 Root.vhd UUID 看 VHD **footer**（hexdump offset 64），**不信 `VBoxManage showhdinfo`**（显示注册表缓存值，非文件实际；r228 远程 sethduuid 也曾报成功但没真改 footer）。
+> **历史证据说明**：上述 cont.4 的 `Data_orig` 成功记录保留不改，但已被
+> cont.24/31 的环境结论替代。当前验证必须运行 `scripts/g1_reset_data_wipe.ps1`，
+> 使用 `Data.vhdx.wipe20260717-141744`；禁止复制 `Data_orig.vhdx`。`Data.vhdx`
+> 介质文件仍不得删除。验 Root.vhd UUID 应读 VHD **footer**，不依赖
+> `VBoxManage showhdinfo` 的注册表缓存值。
 
 ## 7. 产物身份
 

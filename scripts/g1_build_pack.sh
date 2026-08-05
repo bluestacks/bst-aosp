@@ -13,7 +13,6 @@
 set -uo pipefail
 HOST="${BST_REMOTE_HOST:-markxu@172.16.6.191}"
 ARC=~/bst-aosp
-ENG='C:\ProgramData\BlueStacks_nxt\Engine\Tiramisu64'
 
 DO_BUILD=1; DO_VERIFY=1; DO_DEPLOY=1; DO_PACK=1; CHECK_ONLY=0
 for a in "$@"; do
@@ -68,9 +67,9 @@ fi
 if [ "$DO_DEPLOY" = 1 ]; then
   step "win: g1_win_deploy.ps1 (scp Root.vhd + md5 校验 + 备份替换)"
   powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$ARC/scripts/g1_win_deploy.ps1" || { echo "DEPLOY FAILED"; exit 1; }
-  # 干净首启：Data_orig → Data.vhdx（勿删！VBox 需文件存在）
-  step "win: fresh data (Data_orig.vhdx -> Data.vhdx)"
-  powershell.exe -NoProfile -Command "Get-Process -Name 'HD-Player','BstkSVC','BstkVMMgr' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep 2; Copy-Item '$ENG\Data_orig.vhdx' '$ENG\Data.vhdx' -Force; Write-Host 'fresh Data.vhdx'" ||
+  # cont.31 之后的权威干净盘；Data_orig 是已禁用的空盘基线。
+  step "win: reset data to verified wipe snapshot"
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$ARC/scripts/g1_reset_data_wipe.ps1" ||
     { echo "FRESH DATA RESET FAILED"; exit 1; }
 fi
 

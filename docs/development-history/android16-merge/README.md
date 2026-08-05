@@ -35,9 +35,13 @@ features from scratch.
   [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2),
   historical root `298403a`. Its build and boot evidence remains historical
   evidence only.
-- Current local review root: `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`.
-  Target-only `m droid` and `check-vintf-all` pass. It has not been pushed,
-  submitted as a replacement PR, packaged, deployed, or boot-validated.
+- Current local review root: `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8`.
+  Target-only `m droid`, supplemental guest libraries, `systemimage`, package,
+  Windows deployment and Layer 2 boot validation pass; boot reached 7/7 at
+  168 seconds. It has not been pushed or submitted as a replacement PR.
+- [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
+  rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes
+  and current 7/7 boot evidence.
 
 The promotion gate requires every submodule initialized, no detached projects,
 the root gitlink matching the reviewed component SHA, and every referenced SHA

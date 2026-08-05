@@ -25,7 +25,7 @@ prebuilt and inactive source noise. No AOSP source tree was changed or built.
 | A13 | `~/app-player/android-13`, branch `bst-v5.22.210`, HEAD `be7d9511db9c9045f346a8212eb1f41e6b36d354`, tree `b5fc5adb3b33c8f71252affb01e7188c7dddffab` |
 | AOSP16 | `~/aosp16`, repo manifest HEAD `15128c9e27cfa599c48d294babd39286ee8f1426`, 1011-project list SHA-256 `33880a26e376eac0d69ec546e435412c3bff56c18074ac4453ba672cd2ad2bf5` |
 | Android-16 audit baseline | `~/android-16`, branch `aosp16-bst-merge`, HEAD `298403aba7234f2f120170f49e6afe7dcde16be9`, tree `09b2de0e8254036963aad188a18e28e7ac509ab0` |
-| Android-16 current completion | `~/android-16`, branch `aosp16-bst-merge`, HEAD `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`; target-only `m droid` passed |
+| Android-16 current completion | `~/android-16`, branch `aosp16-bst-merge`, HEAD `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8`; target-only build/package and Windows Layer 2 7/7 passed |
 
 ### Scale
 
@@ -187,7 +187,7 @@ matrix and this semantic review are the durable repository evidence.
 ## Validation Status
 
 The initial audit itself performed no build, package, deployment or boot run.
-The later completion root `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`
-passes target-only `check-vintf-all` and `m droid`; it is not yet packaged or
-boot-validated. Feature-specific oracles remain required for HAL behavior,
-shared folders, IME, fake Wi-Fi, camera, subscriptions, Skia and Widevine.
+The later completion root `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8`
+passes target-only build and package gates plus Windows Layer 2 7/7 at 168
+seconds. Feature-specific oracles remain required for HAL behavior, shared
+folders, IME, fake Wi-Fi, camera, subscriptions, Skia and Widevine.

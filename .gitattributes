@@ -30,6 +30,7 @@
 /scripts/rewrite_a16_commit_messages.sh text eol=lf
 /scripts/validate_project_files.py text eol=lf
 /scripts/g1_boot_verify.ps1 text eol=crlf
+/scripts/g1_reset_data_wipe.ps1 text eol=crlf
 /scripts/g1_win_deploy.ps1 text eol=crlf
 
 # Historical evidence and replay payloads retain their archived bytes.

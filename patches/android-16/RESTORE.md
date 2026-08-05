@@ -132,9 +132,13 @@ fastboot.vdi（kernel-a16 bzImage + initrd）：`bash scripts/r245-rebuild-fastb
 # scp Root.vhd + fastboot.vdi 到 Engine\Tiramisu64\
 # 每次换盘都要回写 UUID（见上），否则 GlueStartVM failed
 scripts\win-replace-tiramisu64.ps1
-# 洁净首启：Data_orig.vhdx → Data.vhdx
+# 洁净首启：从 cont.31 已验证 wipe snapshot 恢复 Data.vhdx
+scripts\g1_reset_data_wipe.ps1
 HD-Player.exe --instance Tiramisu64
 ```
+
+`Data_orig.vhdx` 已在 cont.24/31 被禁用；它是不可用的空盘基线，不得用于
+当前 Android-16 Layer2 验证。
 
 ---
 

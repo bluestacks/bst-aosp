@@ -10,12 +10,13 @@ patch is required.
 - Target tree: `~/android-16`
 - Target branch: `aosp16-bst-merge`
 - Target product: `android_x86_64-trunk_staging-eng`
-- Current root: `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`
+- Current root: `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8`
 - Build output: target-local `~/android-16/out`
 - AOSP16 output use: none
 - Push or PR: none
-- Current-tree boot validation: not run
-- Current-tree full `m droid`: passed; packaging and boot are not yet run
+- Current-tree boot validation: 7/7 at 168 seconds
+- Current-tree full `m droid`, supplemental libraries, system image and package:
+  passed
 
 The prior PR #2 root `298403a` and its 7/7 boot result are historical. They do
 not validate the current authority-completion commits.
@@ -26,27 +27,39 @@ not validate the current authority-completion commits.
 
 - Authority: `external/selinux`
   `d42add96533decac77101c314e5abceae20070d7`.
-- Finding: AOSP16 and the initial Android-16 promotion kept upstream
-  `is_selinux_enabled()`, despite already forcing init permissive and relaxing
-  domain-transition/property checks.
-- A16 component: `62b46b73374cc636e3e0aeb0d492ee077cc2210b`.
-- Root pointer: `8dc66a08a561d746c8a26c39435eb52827104793`.
-- Adaptation: Android builds report disabled; host libselinux keeps upstream
-  detection.
-- Necessity: restores the A13 paths used by `installd`, `cmd`, restorecon and
-  Android libselinux helpers.
-- Performance: skips context and restorecon work; no new cost.
-- Security: broad defense-in-depth reduction. Android userspace suppresses
-  SELinux handling even though the kernel remains permissive.
-- Validation: `libselinux`, `init`, `installd` and host tests built; host tests
-  passed 12/12 for both host variants; 32/64 target disassembly returns zero.
+- Finding: the first authority-completion pass mechanically ported A13 commit
+  `d42add96` as component `62b46b73374cc636e3e0aeb0d492ee077cc2210b`.
+  This preserved the A13 implementation but violated the already documented
+  cont.21 Android 16 constraint: `is_selinux_enabled() == 0` suppresses label
+  handling needed by decompressed APEX activation.
+- Rejected root pointer: `8dc66a08a561d746c8a26c39435eb52827104793`;
+  the later built root `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`
+  still contained that component and failed Layer 2 at 3/7 with
+  `reboot,netbpfload-missing`.
+- A16 component: `2de70bcb678ae554a9c1e770f0a1f848c144cda6`.
+- Current root pointer: `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8`.
+- Adaptation: preserve the A13 **intent** (guest enforcement remains
+  permissive) while retaining A16 upstream `is_selinux_enabled()` detection.
+  Android userspace therefore still runs restorecon and keeps decompressed
+  APEX files under `staging_data_file`.
+- Necessity: required for tethering APEX activation and successful boot. A
+  read-only inspection confirmed that the wipe snapshot had correct on-disk
+  labels, excluding Data as the cause.
+- Performance: restores normal A16 label work during setup/activation; adds no
+  polling and no steady-state hot-path work.
+- Security: avoids the broad userspace SELinux blindness of the rejected port;
+  this is strictly narrower while retaining the established permissive policy.
+- Validation: full `m droid`, 32/64 libselinux artifact disassembly,
+  supplemental guest libraries, `systemimage`, package/deploy and Layer 2 7/7
+  all passed. Runtime logged 39 activated APEX packages and
+  `NetBpfLoad: success.`
 
-Artifact hashes:
+Current artifact hashes:
 
 - `system/lib64/libselinux.so`:
-  `2c4cb4e5f7e1dac4420c91dbd034fd71f0e037b126535d2687d6a44eb7f0aa51`
+  `22a573b291a296c8a8dc813446eafb0b1ba08c64c9a66c4ca7cbcee7488cb21a`
 - `system/lib/libselinux.so`:
-  `924cc4ca2f8401ddf3533dcfd5bbb44e61842ffd7dd049c61881c49d0fce36a0`
+  `35491ad182cdea3565afa3cd55a8c257814d2ab8ce5ce2a77208eee7e695a0f1`
 
 ### PRNG Seeder Startup
 
@@ -313,8 +326,19 @@ Target-only Layer 1 evidence:
 - Audit JSON SHA-256:
   `c2c24f704af197788471b1cbd0212bdabdb3060ee1c29916d11b96ff4fea6a23`.
 
-This is build evidence only. It does not prove init, system_server, host
-state-machine, graphics, IME, shared-folder, network or launcher behavior.
+This `9ae09dd` record is Layer 1 evidence for the pre-fix tree. Its later
+package reproduced the A16 SELinux/APEX regression described above and is not
+the current promotion candidate.
+
+Current closure at `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8` rebuilt the
+full target, supplemental guest libraries and `systemimage`, then packaged and
+deployed Root.vhd SHA-256
+`8d8afc15d0f8a183bcd1259e30e56c007c2eafbdb32d5aafdf6ad4bb78752cd7`.
+Windows Layer 2 passed 7/7 at 168 seconds. Full identities, log hashes, failure
+causality and artifact hashes are recorded in
+[`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json).
+This proves init, system_server, launcher and host Ready state, but not the
+remaining feature-specific runtime oracles.
 
 ### Restricted Widevine Payload Evidence
 
@@ -385,10 +409,11 @@ a reviewed replacement provides the behavior.
 
 ## Required Next Gates
 
-1. Stage and package only the successful root
-   `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`, with identity-bound hashes.
-2. Run Windows boot, FPS, network-presentation, captive-portal, SELinux and
-   entropy readback oracles.
+1. Preserve the successful root
+   `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8` and its identity-bound
+   Layer 1/package/Layer 2 evidence.
+2. Run FPS, network-presentation, captive-portal, SELinux and entropy readback
+   oracles that are not covered by the 7/7 boot result.
 3. Run focused IME, shared-folder, camera, audio, fake-Wi-Fi and Widevine
    runtime oracles that are not covered by a 7/7 boot result.
 4. Resolve the 15 publication-topology errors and verify remote SHA

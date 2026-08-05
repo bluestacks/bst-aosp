@@ -19,6 +19,7 @@ These are the maintained promotion/mainline entry points. They reject an
 | Entry | Role | Side effects |
 |---|---|---|
 | `g1_build_android16.sh` | Layer 1 Android-16 build and graphics stage | Builds under the validated Android-16 root |
+| `g1_build_libs.sh` | Builds and hashes required HD guest native libraries | Builds under the validated Android-16 root |
 | `g1_build_pack.sh` | Orchestrates build, Root packaging, deploy, and Layer 2 verification | Remote build plus Windows deployment |
 | `g1_pack_root.sh` | Authoritative target-tree Root packaging | Recreates staged system and Root artifacts |
 | `g1_stage_system.sh` | Folds target `OUT_DIR` into the release staging tree | Replaces staged system content |
@@ -27,6 +28,7 @@ These are the maintained promotion/mainline entry points. They reject an
 | `g1_copy_bst_apks.sh` | Injects required BlueStacks APK payloads | Copies three required APKs |
 | `g8_disable_vendor_hal_rc.sh` | Applies the recorded vendor HAL startup policy | Moves selected RC files to a backup directory |
 | `g1_win_deploy.ps1` | Deploys Root with SHA-256 readback | Replaces the Windows engine Root |
+| `g1_reset_data_wipe.ps1` | Restores the verified clean Data snapshot with SHA-256 readback | Stops the local instance and replaces `Data.vhdx` |
 | `g1_boot_verify.ps1` | Evaluates the Layer 2 boot oracle | Starts/stops the local instance and reads logs |
 | `lib/android16_env.sh` | Shared tree and artifact identity gate | None when sourced; writes identity only on request |
 

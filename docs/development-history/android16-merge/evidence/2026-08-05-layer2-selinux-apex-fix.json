@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "stage": "android16-promotion",
+  "result": "layer2-boot-passed",
+  "tree": "/home/clouddev/bst/workspace/markxu/android-16",
+  "branch": "aosp16-bst-merge",
+  "commit": "5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8",
+  "product": "android_x86_64-trunk_staging-eng",
+  "out_dir": "out",
+  "aosp16_output_used": false,
+  "authority": {
+    "tree": "/home/clouddev/bst/workspace/markxu/app-player/android-13",
+    "branch": "bst-v5.22.210",
+    "commit": "d42add96533decac77101c314e5abceae20070d7",
+    "intent": "Keep the guest SELinux policy permissive",
+    "android16_adaptation": "Keep is_selinux_enabled() tied to the mounted SELinux filesystem so restorecon and CAPEX activation still run; enforcement remains permissive in the kernel/init policy"
+  },
+  "regression": {
+    "component": "external/selinux",
+    "incompatible_commit": "62b46b73374cc636e3e0aeb0d492ee077cc2210b",
+    "root_commit": "9ae09dd212ac1ecedfa7e41782e92d8f7a640d24",
+    "artifact": {
+      "path": "/home/clouddev/bst/workspace/markxu/releases/Baklava64/bst-v5.22.210_Baklava64-local/Root.vhd",
+      "size": 1174710272,
+      "sha256": "e2b0cf645b8b0b1247f5bf2d15c236d9662a18298bea54ecfb9731c3ade24b4f"
+    },
+    "observed_oracles": "3/7",
+    "failure": "reboot,netbpfload-missing",
+    "cause": "Forcing is_selinux_enabled() to zero skipped Android 16 restorecon behavior. Decompressed APEX files were observed as apex_data_file instead of staging_data_file, the tethering APEX did not activate, and the fallback netbpfload service rebooted the guest.",
+    "historical_match": "progress/porting-log.md cont.21 and scripts/p2_cont21c_revert_selinux.sh",
+    "data_snapshot_exonerated": {
+      "path": "C:/ProgramData/BlueStacks_nxt/Engine/Tiramisu64/Data.vhdx.wipe20260717-141744",
+      "sha256": "d9baa0f42ee4636b21b9549849ae90fc4bd315e75cf28946c7b765d04ab02e9a",
+      "finding": "Read-only NBD inspection found staging_data_file labels on decompressed APEX files; the snapshot was not the CAPEX-labeling cause."
+    }
+  },
+  "fix": {
+    "component": "external/selinux",
+    "component_commit": "2de70bcb678ae554a9c1e770f0a1f848c144cda6",
+    "component_subject": "[A16] Keep SELinux userspace enabled for APEX labeling",
+    "root_commit": "5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8",
+    "root_subject": "[A16] Update SELinux pointer for APEX labeling",
+    "necessity": "required-for-boot",
+    "performance": "Restores normal Android 16 label checks and restorecon work; no polling or steady-state hot-path work is added.",
+    "security": "More correct than the rejected port because userspace continues to observe SELinux state and labels while the established guest enforcement policy remains permissive."
+  },
+  "build": {
+    "commands": [
+      "m droid -j8",
+      "BST_BUILD_JOBS=8 bash scripts/g1_build_libs.sh",
+      "m systemimage -j8"
+    ],
+    "logs": {
+      "droid": {
+        "path": "/tmp/a16-full-droid-5c8f8eb.log",
+        "sha256": "5b3278be61a1f21dea3248e2f40a4ddf66af2d79351652956051b99a120f4cf0",
+        "result": "passed"
+      },
+      "supplemental_libraries": {
+        "path": "/tmp/a16-build-libs-5c8f8eb.log",
+        "sha256": "7fdb5e2610e1f29476e71bc0a4e8b48d400bc37444e130e4d25dfb0b9d7c66bf",
+        "result": "passed"
+      },
+      "systemimage": {
+        "path": "/tmp/a16-systemimage-5c8f8eb.log",
+        "sha256": "cebf09294e5c242bb52ff0bbd8bf624d17060ec0aa69546f9ee431f94db1b629",
+        "result": "passed"
+      },
+      "package": {
+        "path": "/tmp/a16-pack-5c8f8eb.log",
+        "sha256": "89bb074e0d0ed3d3f97a4c56aa65983ec15cc368ae394d715df1affdcbfc3ec8",
+        "result": "passed"
+      }
+    },
+    "identity": {
+      "path": "/home/clouddev/bst/workspace/markxu/g1_android16_build-5c8f8eb.identity",
+      "sha256": "c4defc1a539c8fb83e29b30e42b037e4d6d0103f6f3e5e8afd4cd6468dd5215b"
+    },
+    "artifacts": {
+      "system.img": {
+        "size": 2149720064,
+        "sha256": "3c12951b2f95078c2484e6be67fe04253600710b14d72b2a5fb160e6bac2af51"
+      },
+      "system/lib64/libselinux.so": {
+        "sha256": "22a573b291a296c8a8dc813446eafb0b1ba08c64c9a66c4ca7cbcee7488cb21a"
+      },
+      "system/lib/libselinux.so": {
+        "sha256": "35491ad182cdea3565afa3cd55a8c257814d2ab8ce5ce2a77208eee7e695a0f1"
+      },
+      "Root.vhd": {
+        "size": 1174710272,
+        "sha256": "8d8afc15d0f8a183bcd1259e30e56c007c2eafbdb32d5aafdf6ad4bb78752cd7"
+      },
+      "system.sfs": {
+        "sha256": "39d4e4f8c06da0ad84b46f1c82f1ca6f569375e88609f396b559c9bc7c0c3ea8"
+      },
+      "Root.fs": {
+        "sha256": "0abf4c63a18091a9b77373dc0169c6361aca60e7f57febe43e072fef717a398a"
+      },
+      "ramdisk": {
+        "sha256": "a7da210a7cdc26d8a375c74b503144c35d9ef77ac6130965db29259eb7b7ef2e"
+      },
+      "Root.vhd.identity": {
+        "sha256": "f88edd6b82e86ad7b9fea9cc7e4b0ed548675b43e9aa48cafc42c6af907f9469"
+      }
+    }
+  },
+  "boot": {
+    "host_instance": "Tiramisu64",
+    "board": "android_x86_64",
+    "started_at": "2026-08-05T09:50:31+08:00",
+    "elapsed_seconds": 168,
+    "result": "7/7",
+    "oracles": {
+      "system_mounted": "pass",
+      "init_second": "pass",
+      "odsign": "pass",
+      "boot_completed": "pass",
+      "activity": "pass",
+      "ready": "pass",
+      "hide_boot": "pass"
+    },
+    "additional_readback": {
+      "apexd": "Activated 39 packages",
+      "netbpfload": "NetBpfLoad: success.",
+      "launcher": "com.uncube.launcher3/com.bluestacks.launcher.activity.HomeActivity",
+      "player_ready_at": "2026-08-05T09:53:07+08:00"
+    },
+    "source_log": {
+      "path": "C:/ProgramData/BlueStacks_nxt/Logs/Player.log",
+      "sha256_after_player_stop": "5e665f03d3bec53c6e2bcea94636a2aa8c433dda36575cd4764fb71e9bb5a272"
+    }
+  },
+  "remaining_validation": [
+    "FPS property and frame pacing",
+    "network presentation and captive portal",
+    "entropy and SELinux runtime state",
+    "IME and shared folder",
+    "camera and audio",
+    "fake Wi-Fi",
+    "Widevine runtime"
+  ],
+  "publication": {
+    "pushed": false,
+    "pull_request_created": false,
+    "publication_topology_errors": 15
+  }
+}

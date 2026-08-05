@@ -2656,3 +2656,40 @@ HIDL 1.3 服务已正确恢复，但 Android 16 FCM 8 将该 HAL 标记为 depre
 0。根仅保留既有 `.gitignore` 未提交修改；15 个 missing remote/base/fork
 属于后续 publication gate。当前只证明 Layer 1，全量尚未 stage/package、
 Windows deploy 或 boot oracle，不能沿用 cont.106 的 7/7 结论。
+
+## 2026-08-05 (cont.111) — A13 SELinux 机械移植回归修正；当前树 Layer 2 7/7
+
+对根 `9ae09dd212ac` 完成 supplemental guest libraries 与 `systemimage` 后，
+首次正式打包、部署和 boot 验证只达到 3/7，并在约 24 秒以
+`reboot,netbpfload-missing` 重启。更换为 cont.31 已验证 wipe snapshot 后症状
+完全相同，排除了 `Data_orig` 之外的数据盘差异猜测。进一步只读检查发现
+`/data/apex/decompressed` 文件的磁盘标签本来是 `staging_data_file`，但启动时
+被观察为 `apex_data_file`；tethering APEX 未激活，init 因而执行 system fallback
+的 netbpfload 失败路径。
+
+根因是 cont.107 机械恢复的 A13 `external/selinux:d42add96`：目标组件
+`62b46b73374c` 令 Android 侧 `is_selinux_enabled()` 恒为 0。这个实现与 A13
+的 permissive 功能意图一致，却与 A16 CAPEX/restorecon 生命周期不兼容，而且
+早在 cont.21 已有同一 `netbpfload-missing` 回归及禁止移植记录。本轮没有复制
+AOSP16 的临时 apexd context-check bypass，也没有转向 enforcing；组件
+`2de70bcb678a` 恢复 A16 upstream mounted-selinuxfs 判定，继续由既有 init/kernel
+策略保持 permissive。根 gitlink 提交为 `5c8f8eb90d60`，标题均符合 `[A16]`。
+
+新根 target-only 验证：`m droid -j8`、严格 supplemental libraries、
+`m systemimage -j8` 和 pack 均通过。`system.img` SHA-256
+`3c12951b2f95...bac2af51`，Root.vhd SHA-256
+`8d8afc15d0f8...78752cd7`。实际 system image 中 32/64 位 libselinux 反汇编
+均读取 `selinux_mnt`，并读回 32/64 hostcall/gcall、BST tools 和 sensors。
+
+Windows 使用 `Data.vhdx.wipe20260717-141744`（SHA-256
+`d9baa0f42ee4...ab02e9a`）重置后，`g1_boot_verify.ps1` 在 168 秒达到
+**7/7**：system mounted、init second stage、odsign、boot completed、activity、
+ready、hide boot 全部 PASS。运行时另见 `apexd: Activated 39 packages`、
+`NetBpfLoad: success.`、launcher activity displayed 和 Player Ready。机器可读
+证据、构建日志及产物哈希见
+`docs/development-history/android16-merge/evidence/2026-08-05-layer2-selinux-apex-fix.json`。
+
+当前结论只证明 promotion 根 `5c8f8eb` 的构建、打包和最小启动闭环。FPS、
+network presentation/captive portal、SELinux/entropy、IME、shared folder、camera、
+audio、fake Wi-Fi 与 Widevine 仍需定向 runtime oracle；15 个 publication
+topology error 也仍未解决，因此没有 push 或新 PR。

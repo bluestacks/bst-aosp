@@ -1,0 +1,52 @@
+From 2de70bcb678ae554a9c1e770f0a1f848c144cda6 Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Wed, 5 Aug 2026 08:52:35 +0800
+Subject: [PATCH] [A16] Keep SELinux userspace enabled for APEX labeling
+
+Source: restore the Android 16 upstream libselinux behavior from parent 085c131a; A13 d42add96 remains the authority record but its userspace-disabled mechanism is not API-compatible with Android 16 CAPEX activation.
+
+Purpose: let restorecon and other Android userspace callers observe the mounted SELinux filesystem so /data/apex/decompressed retains staging_data_file labels and the tethering APEX can override the netbpfload fallback service.
+
+Necessity: boot evidence at Root e2b0cf64 reproduced reboot,netbpfload-missing with is_selinux_enabled() forced to zero, matching the documented cont.21 regression. Kernel permissive mode remains the App Player enforcement policy.
+
+Performance: restores normal Android 16 labeling work during boot; this has bounded first-boot I/O cost and prevents the fatal APEX retry/reboot path.
+
+Security: improves userspace labeling consistency without enabling kernel enforcement.
+---
+ libselinux/src/enabled.c | 14 +++++---------
+ 1 file changed, 5 insertions(+), 9 deletions(-)
+
+diff --git a/libselinux/src/enabled.c b/libselinux/src/enabled.c
+index 168f604a..fefb0bd9 100644
+--- a/libselinux/src/enabled.c
++++ b/libselinux/src/enabled.c
+@@ -10,17 +10,12 @@
+ 
+ int is_selinux_enabled(void)
+ {
+-	/*
+-	 * BlueStacks App Player intentionally exposes SELinux as disabled to
+-	 * Android userspace. The kernel remains permissive, while callers such as
+-	 * installd and restorecon follow the A13 compatibility path.
+-	 */
++	/* init_selinuxmnt() gets called before this function. We
++ 	 * will assume that if a selinux file system is mounted, then
++ 	 * selinux is enabled. */
+ #ifdef ANDROID
+-	return 0;
++	return (selinux_mnt ? 1 : 0);
+ #else
+-	/* init_selinuxmnt() gets called before this function. We
+-	 * will assume that if a selinux file system is mounted, then
+-	 * selinux is enabled. */
+ 	return (selinux_mnt && has_selinux_config);
+ #endif
+ }
+@@ -58,3 +53,4 @@ int is_selinux_mls_enabled(void)
+ 
+ 	return enabled;
+ }
++
+-- 
+2.34.1
+

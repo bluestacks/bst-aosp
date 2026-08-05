@@ -42,6 +42,9 @@ features from scratch.
 - [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
   rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes
   and current 7/7 boot evidence.
+- [`evidence/2026-08-05-runtime-followup.json`](evidence/2026-08-05-runtime-followup.json):
+  SELinux runtime pass, Widevine/audio partial results, ADB limitation and the
+  remaining feature-oracle boundary.
 
 The promotion gate requires every submodule initialized, no detached projects,
 the root gitlink matching the reviewed component SHA, and every referenced SHA

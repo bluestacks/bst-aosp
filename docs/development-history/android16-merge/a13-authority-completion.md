@@ -412,10 +412,14 @@ a reviewed replacement provides the behavior.
 1. Preserve the successful root
    `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8` and its identity-bound
    Layer 1/package/Layer 2 evidence.
-2. Run FPS, network-presentation, captive-portal, SELinux and entropy readback
-   oracles that are not covered by the 7/7 boot result.
+2. Run FPS, network-presentation, captive-portal and entropy readback oracles
+   that are not covered by the 7/7 boot result. SELinux runtime state passed:
+   policy loading remained active and current-run audit lines reported
+   `permissive=1`.
 3. Run focused IME, shared-folder, camera, audio, fake-Wi-Fi and Widevine
-   runtime oracles that are not covered by a 7/7 boot result.
+   runtime oracles that are not covered by a 7/7 boot result. Widevine factory
+   startup and the audio volume hostcall are partial evidence only; neither
+   proves playback.
 4. Resolve the 15 publication-topology errors and verify remote SHA
    reachability before any
    push or replacement PR.

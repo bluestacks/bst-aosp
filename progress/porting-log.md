@@ -2693,3 +2693,28 @@ ready、hide boot 全部 PASS。运行时另见 `apexd: Activated 39 packages`�
 network presentation/captive portal、SELinux/entropy、IME、shared folder、camera、
 audio、fake Wi-Fi 与 Widevine 仍需定向 runtime oracle；15 个 publication
 topology error 也仍未解决，因此没有 push 或新 PR。
+
+## 2026-08-05 (cont.112) — 当前 Root runtime 定向读回；Widevine/audio 仅部分证明
+
+在同一 Root `8d8afc15...` 上执行第二次启动，约 83 秒再次达到 launcher
+displayed、Player Ready 和 hide boot，当前窗口没有 reboot、fatal signal 或
+`updatable_crashing`。串口记录显示 init 正常打开并加载 SELinux policy，81 条
+current-run AVC 明确带 `permissive=1`，因此“userspace 标签处理有效 + enforcement
+permissive”的 A16 适配目标通过 runtime readback。
+
+Widevine 不能宣称完整通过。`vendor.drm-widevine-hal-1-3` 以 pid 2795 启动并
+持续运行，MediaDrm 找到 `android.hardware.drm@1.3::IDrmFactory/widevine`；但旧
+A13 blob 不认识 A16 RKP 查询的 `provisioningModel` 属性。代码对照确认 A13 与
+目标都以 V1_2 plugin 实现挂在 V1_3 factory 下，属性原样下传 legacy blob；A16
+RKP 仅在值为 `BootCertificateChain` 时执行 Provisioning 4.0，并捕获属性失败后
+返回无需 provisioning。日志中的 V1_0→V1_4 cast warning 来自诊断日志收集，
+不是 plugin create 失败。按移植纪律不伪造属性值、不凭空扩展 V1_4；仍需实际
+Widevine playback/decryption oracle。
+
+Audio 只读回 `hcallInitVolumeClbk/plrInitVolumeHcall` 的 15/15 volume contract，
+未做播放/录音。ADB 方面，即使临时把宿主 `bst.enable_adb_access` 设为 1，5555
+仍无 listener、HD-Adb 仍 offline；测试后已恢复为 0 并停止本轮启动进程。因此
+entropy、FPS、完整 network/captive portal、IME/shared-folder、camera、audio、
+fake Wi-Fi 和 Widevine 功能测试继续保持 blocked/pending，而不是失败或通过。
+机器可读记录见
+`docs/development-history/android16-merge/evidence/2026-08-05-runtime-followup.json`。

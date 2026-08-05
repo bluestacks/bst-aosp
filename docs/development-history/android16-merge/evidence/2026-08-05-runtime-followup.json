@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "stage": "android16-promotion",
+  "result": "runtime-followup-partial",
+  "tree": "/home/clouddev/bst/workspace/markxu/android-16",
+  "branch": "aosp16-bst-merge",
+  "commit": "5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8",
+  "artifact_sha256": "8d8afc15d0f8a183bcd1259e30e56c007c2eafbdb32d5aafdf6ad4bb78752cd7",
+  "host_instance": "Tiramisu64",
+  "started_at": "2026-08-05T10:29:58+08:00",
+  "ready_at": "2026-08-05T10:31:21+08:00",
+  "source_log": {
+    "path": "C:/ProgramData/BlueStacks_nxt/Logs/Player.log",
+    "sha256_after_player_stop": "1b7a10034bbe22f521e2ebe251d95f6e0c77379ecfc6f9bead0f98fbc79f5c44"
+  },
+  "oracles": {
+    "boot_repeat": {
+      "result": "pass",
+      "evidence": [
+        "launcher activity displayed",
+        "Player state: ready",
+        "fUiHideBootProgressBar",
+        "no reboot, fatal signal, or updatable_crashing line in the run window"
+      ]
+    },
+    "selinux_runtime": {
+      "result": "pass",
+      "evidence": [
+        "init opened and loaded the SELinux policy",
+        "81 current-run audit lines reported permissive=1",
+        "the guest reached Ready with userspace SELinux detection restored"
+      ],
+      "assessment": "Confirms the intended split: userspace labeling remains active while enforcement is permissive."
+    },
+    "widevine": {
+      "result": "partial",
+      "evidence": [
+        "vendor.drm-widevine-hal-1-3 started as pid 2795 and remained running",
+        "MediaDrm found instance=widevine version=android.hardware.drm@1.3::IDrmFactory",
+        "the legacy plugin reported ERROR_DRM_CANNOT_HANDLE for the Android 16 provisioningModel property"
+      ],
+      "code_review": {
+        "a13_authority": "/home/clouddev/bst/workspace/markxu/app-player/android-13/frameworks/av@90ee78b4bd301ecadb3711e375bc2754156ac0fd",
+        "android16_component": "/home/clouddev/bst/workspace/markxu/android-16/frameworks/av@2f98cd4347f9f0e542c3eeda5967c0daa62c17b1",
+        "rkp_component": "/home/clouddev/bst/workspace/markxu/android-16/packages/modules/RemoteKeyProvisioning@2f638cbf046e0eaf58a82a62e2ec8367fe7e81e7",
+        "finding": "A13 and the current target use the same V1_2 plugin behind a V1_3 factory and pass string properties to the legacy blob. Android 16 RKP treats only BootCertificateChain as Provisioning 4.0 and catches all other property failures as no provisioning work. The V1_0-to-V1_4 cast warning is emitted by diagnostic log collection, not plugin creation.",
+        "decision": "Do not invent a V1_4 plugin or synthesize provisioningModel. Playback/decryption remains a separate functional oracle."
+      }
+    },
+    "audio_host_contract": {
+      "result": "partial",
+      "evidence": "hcallInitVolumeClbk and plrInitVolumeHcall reported mute=0, volume=15, maxVolume=15",
+      "limitation": "No playback, capture, or route-change test was run."
+    },
+    "netbpf": {
+      "result": "pass",
+      "evidence": "NetBpfLoad initialized the netd BPF maps and the boot remained Ready."
+    },
+    "adb_guest_shell": {
+      "result": "blocked",
+      "evidence": "127.0.0.1:5555 remained without a listener and HD-Adb reported offline even during a temporary host-only bst.enable_adb_access=1 trial.",
+      "cleanup": "bst.enable_adb_access was restored to 0 and all processes started for the trial were stopped."
+    }
+  },
+  "remaining_validation": [
+    "entropy pool and source readback",
+    "FPS property and frame pacing",
+    "network presentation, Internet validation, and captive portal",
+    "IME and shared folder",
+    "camera",
+    "audio playback and capture",
+    "fake Wi-Fi",
+    "Widevine playback and decryption"
+  ],
+  "source_changes_made": false,
+  "publication": {
+    "pushed": false,
+    "pull_request_created": false
+  }
+}

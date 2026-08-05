@@ -6790,6 +6790,15 @@
       "date": "2026-08-05",
       "cont": 111,
       "rounds": []
+    },
+    {
+      "source": "progress/porting-log.md",
+      "line": 2697,
+      "level": 2,
+      "title": "2026-08-05 (cont.112) — 当前 Root runtime 定向读回；Widevine/audio 仅部分证明",
+      "date": "2026-08-05",
+      "cont": 112,
+      "rounds": []
     }
   ]
 }

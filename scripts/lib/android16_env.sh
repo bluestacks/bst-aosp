@@ -6,7 +6,7 @@ BST_AOSP16_REFERENCE_ROOT="${BST_AOSP16_REFERENCE_ROOT:-}"
 BST_APP_PLAYER_ROOT="${BST_APP_PLAYER_ROOT:-$HOME/app-player}"
 BST_HD_SOURCE_TOP="${BST_HD_SOURCE_TOP:-$BST_APP_PLAYER_ROOT/hd}"
 BST_RELEASE_ROOT="${BST_RELEASE_ROOT:-$HOME/releases/Baklava64}"
-BST_OUT_DIR_NAME="${BST_OUT_DIR_NAME:-out_nxt_Baklava64}"
+BST_OUT_DIR_NAME="${BST_OUT_DIR_NAME:-out}"
 BST_PRODUCT="${BST_PRODUCT:-android_x86_64}"
 BST_LUNCH_TARGET="${BST_LUNCH_TARGET:-android_x86_64-trunk_staging-eng}"
 BST_GOLDFISH_OPENGL_ROOT="${BST_GOLDFISH_OPENGL_ROOT:-$HOME/ggl/goldfish-opengl-pie}"
@@ -16,6 +16,7 @@ BST_ALLOWED_GOLDFISH_BRANCHES="${BST_ALLOWED_GOLDFISH_BRANCHES:-aosp16-bst-merge
 BST_BUILD_IDENTITY_FILE="${BST_BUILD_IDENTITY_FILE:-$HOME/g1_android16_build.identity}"
 BST_CLEAN_AUDIT_JOBS="${BST_CLEAN_AUDIT_JOBS:-16}"
 BST_CLEAN_AUDIT_TOOL="${BST_CLEAN_AUDIT_TOOL:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/check_android16_worktree.py}"
+BST_ALLOWED_ROOT_DIRTY_PATHS="${BST_ALLOWED_ROOT_DIRTY_PATHS:-}"
 
 bst_realpath() {
   if command -v realpath >/dev/null 2>&1; then
@@ -114,12 +115,17 @@ bst_require_android16_branch() {
 }
 
 bst_require_android16_clean() {
+  local path
+  local audit_args=()
   [ -f "$BST_CLEAN_AUDIT_TOOL" ] || {
     echo "A16DBG:IDENTITY: missing clean audit tool: $BST_CLEAN_AUDIT_TOOL" >&2
     return 1
   }
+  for path in $BST_ALLOWED_ROOT_DIRTY_PATHS; do
+    audit_args+=(--allow-root-dirty "$path")
+  done
   python3 "$BST_CLEAN_AUDIT_TOOL" "$BST_ANDROID16_ROOT" \
-    --jobs "$BST_CLEAN_AUDIT_JOBS"
+    --jobs "$BST_CLEAN_AUDIT_JOBS" "${audit_args[@]}"
 }
 
 bst_print_android16_identity() {
@@ -160,7 +166,13 @@ bst_write_identity_file() {
     printf 'head=%s\n' "$head"
     printf 'out_dir=%s\n' "$root/$BST_OUT_DIR_NAME"
     printf 'product=%s\n' "$BST_PRODUCT"
-    printf 'dirty=0\n'
+    if [ -n "$BST_ALLOWED_ROOT_DIRTY_PATHS" ]; then
+      printf 'dirty=allowed\n'
+      printf 'dirty_paths=%s\n' "$BST_ALLOWED_ROOT_DIRTY_PATHS"
+    else
+      printf 'dirty=0\n'
+      printf 'dirty_paths=\n'
+    fi
     printf 'graphics_tree=%s\n' "$graphics_root"
     printf 'graphics_branch=%s\n' "$graphics_branch"
     printf 'graphics_head=%s\n' "$graphics_head"

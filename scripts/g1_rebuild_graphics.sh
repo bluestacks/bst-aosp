@@ -10,6 +10,7 @@ bst_android16_graphics_preflight
 AOSP="$BST_ANDROID16_ROOT"
 OD="$BST_RELEASE_ROOT"
 OUT_DIR_NAME="$BST_OUT_DIR_NAME"
+JOBS="${BST_BUILD_JOBS:-8}"
 PROD="$AOSP/$OUT_DIR_NAME/target/product/x86_64"
 SYS="$OD/system"
 LOG=~/g1_rebuild_graphics.log
@@ -78,9 +79,9 @@ if [ "$MODE" = "build" ]; then
   done
 
   echo "A16DBG:G1: mmm $GOLDFISH_MODULE_PATH"
-  mmm "$GOLDFISH_MODULE_PATH" -j"$(nproc)"
+  mmm "$GOLDFISH_MODULE_PATH" -j"$JOBS"
   echo "A16DBG:G1: mmm $GOLDFISH_MODULE_PATH/system/hwc2"
-  mmm "$GOLDFISH_MODULE_PATH/system/hwc2" -j"$(nproc)"
+  mmm "$GOLDFISH_MODULE_PATH/system/hwc2" -j"$JOBS"
 else
   echo "A16DBG:G1: stage-only; reusing graphics from verified build output"
   bst_verify_identity_file \

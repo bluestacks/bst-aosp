@@ -24,7 +24,13 @@ bash "$SCRIPT_DIR/g1_stage_system.sh"
 bash "$SCRIPT_DIR/g1_copy_bst_apks.sh"
 bash "$SCRIPT_DIR/g1_apply_boot_overlays.sh"
 bash "$SCRIPT_DIR/g8_disable_vendor_hal_rc.sh"
-bash "$ROOT_PACK_SCRIPT"
+PACK_HOST_TOOLS="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/host/linux-x86/bin"
+MKUSERIMG="$PACK_HOST_TOOLS/mkuserimg_mke2fs"
+SIMG2IMG="$PACK_HOST_TOOLS/simg2img"
+[ -x "$MKUSERIMG" ] || { echo "missing target-built pack tool: $MKUSERIMG" >&2; exit 1; }
+[ -x "$SIMG2IMG" ] || { echo "missing target-built pack tool: $SIMG2IMG" >&2; exit 1; }
+AOSP="$BST_ANDROID16_ROOT" MKUSERIMG="$MKUSERIMG" SIMG2IMG="$SIMG2IMG" \
+  bash "$ROOT_PACK_SCRIPT"
 VHD="$BST_RELEASE_ROOT/bst-v5.22.210_Baklava64-local/Root.vhd"
 SYSTEM_IMG="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/x86_64/system.img"
 [ -f "$VHD" ] || { echo "missing packed Root.vhd: $VHD" >&2; exit 1; }

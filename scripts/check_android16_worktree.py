@@ -120,14 +120,37 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("root", type=Path)
     parser.add_argument("--jobs", type=int, default=16)
+    parser.add_argument(
+        "--allow-root-dirty",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="Allow an exact tracked superproject path to differ from HEAD.",
+    )
     args = parser.parse_args()
 
     root = args.root.expanduser().resolve()
     paths = submodule_paths(root)
     root_files, gitlinks = root_tree(root)
+    allowed_root_dirty = set(args.allow_root_dirty)
+    invalid_allowed = sorted(
+        path
+        for path in allowed_root_dirty
+        if Path(path).is_absolute()
+        or ".." in Path(path).parts
+        or path not in root_files
+    )
+    if invalid_allowed:
+        print("invalid allowed root paths: " + ", ".join(invalid_allowed))
+        return 2
+    audited_root_files = [
+        path for path in root_files if path not in allowed_root_dirty
+    ]
     failures: list[str] = []
 
-    root_path, root_rc, root_output = status(root, root=True, root_files=root_files)
+    root_path, root_rc, root_output = status(
+        root, root=True, root_files=audited_root_files
+    )
     if root_rc or root_output:
         failures.append(f"{root_path}:\n{root_output or 'git status failed'}")
 
@@ -187,6 +210,11 @@ def main() -> int:
             print(f"... {len(failures) - 40} additional repositories omitted")
         return 1
 
+    if allowed_root_dirty:
+        print(
+            "A16DBG:IDENTITY: allowed root dirty paths="
+            + ",".join(sorted(allowed_root_dirty))
+        )
     print(f"A16DBG:IDENTITY: clean root + {len(paths)} submodules")
     return 0
 

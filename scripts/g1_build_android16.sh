@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/android16_env.sh"
 
 CHECK_ONLY=0
-JOBS="${BST_BUILD_JOBS:-24}"
+JOBS="${BST_BUILD_JOBS:-8}"
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --check) CHECK_ONLY=1 ;;

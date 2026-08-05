@@ -13,7 +13,7 @@ bst_android16_preflight
 AOSP="$BST_ANDROID16_ROOT"
 OD="$BST_RELEASE_ROOT"
 SYS="$OD/system"
-OUT_ROOT="$AOSP/out_nxt_Baklava64"
+OUT_ROOT="$AOSP/$BST_OUT_DIR_NAME"
 LOG=~/g1_apply_boot_overlays.log
 exec > >(tee "$LOG") 2>&1
 echo "A16DBG:G1: apply-boot-overlays start $(date -Is)"

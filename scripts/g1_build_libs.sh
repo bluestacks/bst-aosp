@@ -28,7 +28,7 @@ source build/envsetup.sh
 lunch "$BST_LUNCH_TARGET"
 set -u
 
-J="-j$(nproc)"
+J="-j${BST_BUILD_JOBS:-8}"
 echo "A16DBG:G1: libs — hostcall_gcall_libs (10 hd guest modules via mmm)"
 failed=0
 

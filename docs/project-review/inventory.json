@@ -2,12 +2,12 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 1501,
-    "existing_files": 1500,
-    "bytes": 45244317,
-    "text_lines": 721803,
+    "files": 1502,
+    "existing_files": 1501,
+    "bytes": 45249589,
+    "text_lines": 721885,
     "by_stage": {
-      "android16-promotion": 549,
+      "android16-promotion": 550,
       "aosp16-development": 843,
       "generated": 15,
       "reference": 45,
@@ -16,10 +16,12 @@
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 1485
+      "tracked": 1485,
+      "untracked": 1
     },
     "by_availability": {
       "generated": 15,
+      "local-only": 1,
       "removed-tombstone": 1,
       "repository": 1485
     },
@@ -2330,6 +2332,47 @@
         "scripts/g1_build_libs.sh",
         "scripts/p2_cont21c_revert_selinux.sh"
       ],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "json-parse"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "docs/development-history/android16-merge/evidence/2026-08-05-publication-closure.json",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 5272,
+      "sha256": "30cec24e95d942ab10a56ed5a2dfb68945bee06c38666464af04692fcdd21580",
+      "media_type": "application/json",
+      "encoding": "utf-8-sig",
+      "line_count": 82,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [
+        "2026-08-05"
+      ],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Project documentation and review output.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
       "validation_evidence": {
         "status": "pass",
         "checks": [

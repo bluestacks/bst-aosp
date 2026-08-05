@@ -420,9 +420,13 @@ a reviewed replacement provides the behavior.
    runtime oracles that are not covered by a 7/7 boot result. Widevine factory
    startup and the audio volume hostcall are partial evidence only; neither
    proves playback.
-4. Resolve the 15 publication-topology errors and verify remote SHA
-   reachability before any
-   push or replacement PR.
+4. Publication topology is closed: the 15 missing forks were created, all
+   modified branches were fast-forwarded, and the final 1026-repository remote
+   audit reports zero mismatches. PR #2 now points at root `5c8f8eb` and is
+   conflict-free. See
+   [`evidence/2026-08-05-publication-closure.json`](evidence/2026-08-05-publication-closure.json).
 
-No current commit is eligible for publication or completion claims until these
-gates pass.
+The current commit is published for mainline review and has complete Layer 1,
+package and minimum Layer 2 evidence. The feature-specific runtime oracles in
+items 2 and 3 remain explicitly pending and must not be converted into pass
+claims. This workflow does not merge PR #2.

@@ -6799,6 +6799,15 @@
       "date": "2026-08-05",
       "cont": 112,
       "rounds": []
+    },
+    {
+      "source": "progress/porting-log.md",
+      "line": 2722,
+      "level": 2,
+      "title": "2026-08-05 (cont.113) — publication topology 闭合、全树远端审计与 PR #2 更新",
+      "date": "2026-08-05",
+      "cont": 113,
+      "rounds": []
     }
   ]
 }

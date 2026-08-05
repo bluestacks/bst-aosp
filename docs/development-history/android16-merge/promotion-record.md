@@ -110,3 +110,40 @@ SHA-256 identities are:
 Every root-referenced modified component SHA was pushed to and read back from
 its `mark-bst` fork. PR #2 reports no conflict with the current base and is
 ready for mainline review; it has not been merged by this workflow.
+
+## A13 Authority Completion Publication
+
+The preceding rework record remains the evidence for root `298403a`; it is not
+the current PR tip. The code-level A13 authority review expanded the final tree
+to 1025 submodules and restored omitted runtime areas rather than treating the
+earlier PR as complete.
+
+Current publication identity:
+
+- Root: `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8`.
+- Branch distribution: 975 `aosp16-bst`, 50 `aosp16-bst-merge`.
+- Full target build, supplemental libraries, system image and package: pass.
+- Root.vhd SHA-256:
+  `8d8afc15d0f8a183bcd1259e30e56c007c2eafbdb32d5aafdf6ad4bb78752cd7`.
+- Windows Layer 2: 7/7 at 168 seconds.
+- Final `--check-remotes` audit: 1026/1026 initialized, zero detached,
+  gitlink mismatches, remote mismatches, structural errors and nonconforming
+  commit subjects.
+
+Fifteen missing `mark-bst` forks were created. The FFmpeg and stagefright
+plugin A16-named forks retain their A13 upstream fork relationship; v86d keeps
+the existing A13 repository name. Both `aosp16-bst` and
+`aosp16-bst-merge` tips were pushed and read back for every new fork. Existing
+modified forks were advanced only after proving that every update was a fast
+forward.
+
+The root path `.` was unintentionally included in the final component push
+batch, so the root remote moved before the intended final component readback.
+No content diverged: the subsequent complete 1026-repository audit reports
+zero remote mismatches. Exact repositories, branch tips, audit identity and
+the process deviation are recorded in
+[`evidence/2026-08-05-publication-closure.json`](evidence/2026-08-05-publication-closure.json).
+
+PR #2 remains open and conflict-free. Its description was updated to the
+current topology, artifact hashes, 7/7 boot result, runtime limitations and
+publication evidence. This workflow did not merge the PR.

@@ -33,6 +33,10 @@
 /scripts/g1_reset_data_wipe.ps1 text eol=crlf
 /scripts/g1_win_deploy.ps1 text eol=crlf
 
+# Machine-readable publication evidence retains its audited byte identity.
+/docs/development-history/android16-merge/promotion-audit.json text eol=lf
+/docs/development-history/android16-merge/evidence/2026-08-05-publication-closure.json text eol=lf
+
 # Historical evidence and replay payloads retain their archived bytes.
 /scripts/archive/** -text
 /patches/** -text

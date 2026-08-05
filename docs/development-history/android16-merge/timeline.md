@@ -2,7 +2,7 @@
 
 > Generated index for cont.103 and later promotion/mainline validation records.
 
-Indexed records: **10**.
+Indexed records: **11**.
 
 | Source | Line | Date | Cont | Rounds | Record |
 |---|---:|---|---:|---|---|
@@ -16,3 +16,4 @@ Indexed records: **10**.
 | [`progress/porting-log.md`](../../../progress/porting-log.md#L2630) | 2630 | 2026-08-05 | 110 |  | 2026-08-05 (cont.110) — 根 gitlink 闭合、Widevine FCM 适配与全量 Layer 1 通过 |
 | [`progress/porting-log.md`](../../../progress/porting-log.md#L2660) | 2660 | 2026-08-05 | 111 |  | 2026-08-05 (cont.111) — A13 SELinux 机械移植回归修正；当前树 Layer 2 7/7 |
 | [`progress/porting-log.md`](../../../progress/porting-log.md#L2697) | 2697 | 2026-08-05 | 112 |  | 2026-08-05 (cont.112) — 当前 Root runtime 定向读回；Widevine/audio 仅部分证明 |
+| [`progress/porting-log.md`](../../../progress/porting-log.md#L2722) | 2722 | 2026-08-05 | 113 |  | 2026-08-05 (cont.113) — publication topology 闭合、全树远端审计与 PR #2 更新 |

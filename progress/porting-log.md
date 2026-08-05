@@ -2718,3 +2718,31 @@ entropy、FPS、完整 network/captive portal、IME/shared-folder、camera、aud
 fake Wi-Fi 和 Widevine 功能测试继续保持 blocked/pending，而不是失败或通过。
 机器可读记录见
 `docs/development-history/android16-merge/evidence/2026-08-05-runtime-followup.json`。
+
+## 2026-08-05 (cont.113) — publication topology 闭合、全树远端审计与 PR #2 更新
+
+先修复 cont.112 后仍存在的 15 个 publication topology 缺口。在 GitHub
+`mark-bst` 下为 bootable/newinstaller、e2fsprogs、libva、libxml2、SELinux、
+Skia、v86d、libcore、Bluetooth、NetworkStack、DownloadProvider、Telephony 和
+vold 建立对应 upstream fork。FFmpeg 与 stagefright-plugins 的目标仓此前只有
+不存在的 A16 URL；本轮从各自 A13 authority upstream 建立 fork，并保留现有
+A16 仓名。所有新 fork 均推送 `aosp16-bst` 与 `aosp16-bst-merge`，两条远端
+tip 逐 SHA 回读一致。
+
+首次全树 `--check-remotes --jobs 8` 审计识别出根仓及 23 个旧 fork 的远端
+merge 分支落后。逐仓证明旧 tip 全是当前 tip 的祖先后，只做 fast-forward
+push。批处理过滤未排除根路径 `.`，导致根分支在预期的最终组件 readback 前
+被一并更新；这是发布顺序偏差，不是内容分叉。随后重新执行完整远端审计，
+结果为 1026 repo/1025 submodule 全部 initialized，975 base + 50 merge，
+detached=0、gitlink mismatch=0、remote mismatch=0、structural error=0、
+nonconforming commit=0。唯一 dirty 是根仓既有、未进入 HEAD/远端的
+`.gitignore` Houdini ignore 修改。
+
+GitHub 比较页显示原 PR #2 实际仍为 Open，且同一 head/base 已自动包含当前
+60 个根提交，因此没有创建重复 PR。已将 #2 描述更新为根
+`5c8f8eb90d60`、当前拓扑、最新 artifact SHA、168 秒 7/7 boot、runtime
+未验证边界和发布顺序偏差；页面回读为 Ready to merge、无 base conflict。
+本流程没有点击 Merge。完整审计保存在
+`docs/development-history/android16-merge/promotion-audit.json`，精简机器可读
+发布证据见
+`docs/development-history/android16-merge/evidence/2026-08-05-publication-closure.json`。

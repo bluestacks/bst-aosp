@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "stage": "android16-promotion",
+  "result": "published-for-review",
+  "recorded_at": "2026-08-05T11:44:29.0527552+08:00",
+  "tree": "/home/clouddev/bst/workspace/markxu/android-16",
+  "branch": "aosp16-bst-merge",
+  "commit": "5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8",
+  "target": "bluestacks/android-16:aosp16-bst",
+  "pull_request": {
+    "number": 2,
+    "url": "https://github.com/bluestacks/android-16/pull/2",
+    "state": "open",
+    "mergeability_readback": "ready-to-merge-no-conflicts",
+    "head": "mark-bst/android-16:aosp16-bst-merge",
+    "base": "bluestacks/android-16:aosp16-bst",
+    "description_updated": true
+  },
+  "audit": {
+    "canonical_file": "../promotion-audit.json",
+    "remote_source": "/tmp/android16-audit-5c8f8eb-final.json",
+    "size": 1339335,
+    "sha256": "75a98a8b1aef08c5edc6a6119b09228a67f7a7eb54475af95adab70bbd59332e",
+    "summary": {
+      "repositories": 1026,
+      "submodules": 1025,
+      "initialized": 1026,
+      "aosp16-bst": 975,
+      "aosp16-bst-merge": 50,
+      "detached": 0,
+      "gitlink_mismatches": 0,
+      "remote_mismatches": 0,
+      "repositories_with_errors": 0,
+      "nonconforming_commits": 0,
+      "dirty": 1
+    },
+    "dirty_exception": {
+      "path": ".gitignore",
+      "state": "pre-existing-uncommitted",
+      "purpose": "Houdini payload ignore entry",
+      "included_in_head_or_remote": false
+    }
+  },
+  "new_forks": [
+    {"path": "bootable/newinstaller", "repository": "mark-bst/bootable-newinstaller-a16", "base": "dbdcad74329b9a8beea426849f5a3d8894b73f98", "merge": "87fd724fae85f521d5822485e6c9128cf9128323"},
+    {"path": "external/e2fsprogs", "repository": "mark-bst/external-e2fsprogs-a16", "base": "3016036da669bb54ea591e00cfd22a56e3b22a83", "merge": "d1bad9cd14446d8b131b8de59a6e8655a4b4f6d4"},
+    {"path": "external/ffmpeg", "repository": "mark-bst/external-ffmpeg-a16", "upstream": "bluestacks/external-ffmpeg-a13", "base": "5caa26d67340b43aebef124bcb7e968ba37f6cb6", "merge": "b58396a9a465ec3875e01d1719bd0beea971b359"},
+    {"path": "external/libva", "repository": "mark-bst/external-libva-a16", "base": "f1e604b4411f092fec6574af04a1830a491e2fa8", "merge": "313d3c0dbf612914d17cd1a02927c72a78e87d81"},
+    {"path": "external/libxml2", "repository": "mark-bst/external-libxml2-a16", "base": "70aef28f676300c9c49c11a6922bb6a8d7701383", "merge": "c724771c911ee8730f829e2d6bcb513bf0038945"},
+    {"path": "external/selinux", "repository": "mark-bst/external-selinux-a16", "base": "085c131ad1b984bfa8ffdafee7a976e9d89f403c", "merge": "2de70bcb678ae554a9c1e770f0a1f848c144cda6"},
+    {"path": "external/skia", "repository": "mark-bst/external-skia-a16", "base": "22f5edb6c1bf350d1d9d67bb429db1a5539f3c05", "merge": "0b9c6137b24954b6a3452adeb2f305c77f50e0dc"},
+    {"path": "external/stagefright-plugins", "repository": "mark-bst/external-stagefright-plugins-a16", "upstream": "bluestacks/external-stagefright-plugins-a13", "base": "0b53a655eef7a8be53bfbcaefaca06d1a52a6add", "merge": "6462e1ed74e9c91b4bf336713c8f928afeb3a4fc"},
+    {"path": "external/v86d", "repository": "mark-bst/external-v86d-a13", "base": "bf5f11a175a6740dd29cd224c804e03b2ac80558", "merge": "49e046362296556bc38b45bb4d971965eab21dfe"},
+    {"path": "libcore", "repository": "mark-bst/libcore-a16", "base": "1c599b67bcd3de5c50c79d0622e40b6de99b4cb4", "merge": "02a54f0a80975d89248b6514e180dca09cb7477a"},
+    {"path": "packages/modules/Bluetooth", "repository": "mark-bst/packages-modules-Bluetooth-a16", "base": "5323f31677c7dfa04de2e6e9fce1012ef4edaff2", "merge": "7f96b596a749046fefd1fe87c683ecc2cdb48bc7"},
+    {"path": "packages/modules/NetworkStack", "repository": "mark-bst/packages-modules-NetworkStack-a16", "base": "853cb402bf02cd935d06d42c1155b0023eabd3e6", "merge": "da967b74218a71de2409433653032f690f1f45af"},
+    {"path": "packages/providers/DownloadProvider", "repository": "mark-bst/packages-providers-DownloadProvider-a16", "base": "a1f6f64f40b78cfe4db4ac2763609c470f487cd4", "merge": "db61a3d4e87ab1312486fdb481573b990f22de53"},
+    {"path": "packages/services/Telephony", "repository": "mark-bst/packages-services-Telephony-a16", "base": "f83c1261e23243ef1fd0dc3de6bf16f19b0b024d", "merge": "5d2c366658ee6222d1d7d1fc8d71f17937e78e06"},
+    {"path": "system/vold", "repository": "mark-bst/system-vold-a16", "base": "8f86f494ba75a2e37be55429018e9844de324461", "merge": "bf57a99ee447bc089e29ff52ac3624fae61a5fde"}
+  ],
+  "publication_order_deviation": {
+    "observed": true,
+    "cause": "The root audit path is '.', and the fast-forward batch filter treated it as a component path.",
+    "effect": "The root branch was updated before the intended final component readback.",
+    "content_divergence": false,
+    "closure": "All pushes were fast-forward-only. A subsequent full 1026-repository remote audit verified zero remote mismatches and zero unreachable root-referenced component SHAs."
+  },
+  "validation_refs": [
+    "2026-08-05-layer2-selinux-apex-fix.json",
+    "2026-08-05-runtime-followup.json"
+  ],
+  "remaining_runtime_oracles": [
+    "fps",
+    "network-presentation-and-captive-portal",
+    "entropy",
+    "ime-and-shared-folder",
+    "camera",
+    "audio-playback-and-capture",
+    "fake-wifi",
+    "widevine-playback-and-decryption"
+  ]
+}

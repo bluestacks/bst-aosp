@@ -91,7 +91,7 @@ diff --git a/manifest_bst_legacy_hal.xml b/manifest_bst_legacy_hal.xml
 new file mode 100644
 --- /dev/null
 +++ b/manifest_bst_legacy_hal.xml
-@@ -0,0 +1,94 @@
+@@ -0,0 +1,92 @@
 +<manifest version="1.0" type="device">
 +    <!-- A13 camera.bst is loaded through the retained HIDL provider wrapper. -->
 +    <hal format="hidl">
@@ -124,8 +124,6 @@ new file mode 100644
 +            <name>IDrmFactory</name>
 +            <instance>default</instance>
 +        </interface>
-+        <fqname>@1.3::ICryptoFactory/widevine</fqname>
-+        <fqname>@1.3::IDrmFactory/widevine</fqname>
 +    </hal>
 +    <hal format="hidl">
 +        <name>android.hardware.light</name>

@@ -143,9 +143,11 @@ This is a code-level omission rather than a binary or packaging-input issue:
   SoundTrigger 2.3 registrations. These counts are diagnostic evidence from
   the old Tiramisu64 deployment, not current-image boot credit.
 - The existing review decisions incorrectly said that Light, Power, ConfigStore,
-  and the retained HIDL DRM services owned their declarations, and incorrectly
-  treated Sensors as unselected. Source, generated-output, and canonical
-  app-player build readback disprove those statements.
+  and the retained HIDL DRM default service owned their declarations, and
+  incorrectly treated Sensors as unselected. Source, generated-output, and
+  canonical app-player build readback disprove those statements. The Widevine
+  1.3 service is different: its generated module-owned fragment already
+  declares both Widevine factories and must not be duplicated by the board.
 
 The minimal adaptation is prepared as
 [`device-generic-x86_64-legacy-hal-vintf.patch`](../../../patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch).
@@ -158,7 +160,8 @@ their exact HIDL versions.
 Bluetooth, Dumpstate, GNSS, Memtrack, USB, and KeyMint are deliberately not
 redeclared as A13 HIDL HALs: current AIDL services or APEXes provide their own
 verified fragments. ClearKey similarly stays on the Android-16 AIDL service;
-the retained Widevine 1.3 service remains the only HIDL plugin bridge. Sensors
+the retained Widevine 1.3 service keeps its module-owned HIDL fragment and
+existing framework bridge. Sensors
 1.0 is retained as a passthrough HAL: the app-player build selects and installs
 both `sensors.default` variants and both `android.hardware.sensors@1.0-impl`
 variants. It therefore needs the A13 device declaration and an FCM 8 bridge,

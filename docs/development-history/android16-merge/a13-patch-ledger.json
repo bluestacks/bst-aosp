@@ -73,10 +73,10 @@
       "textually-complete": 278
     },
     "review_statuses": {
-      "reviewed-correction-prepared": 6,
+      "reviewed-correction-prepared": 5,
       "reviewed-integration": 548,
       "reviewed-not-ported": 260,
-      "reviewed-ported": 528
+      "reviewed-ported": 529
     },
     "explicit_target_candidates": 98
   },
@@ -6078,17 +6078,17 @@
         "low-line-evidence": 1,
         "partial-line-evidence": 1
       },
-      "review_status": "reviewed-correction-prepared",
+      "review_status": "reviewed-ported",
       "target_commits": [
         "7b5e4e1522c36f84359ca1496258a85621c72151",
         "0edb96a328b99742a8c3583e3d1aafc501308252",
         "00623898eb9bd0afc4374f6c79f805939f873311"
       ],
       "validation_evidence": [
-        "The prior check-vintf result did not include a Widevine device declaration. The correction passes patch and XML checks; target check-vintf and runtime factory validation remain pending."
+        "The frozen Android-16 build installs the Widevine service and generated module-owned fragment with both @1.3 factory fqnames. Source Android.bp binds that fragment through vintf_fragments; runtime playback validation remains pending."
       ],
-      "manual_disposition": "drm-vintf-correction-prepared",
-      "rationale": "ClearKey uses the Android 16 AIDL service. The Widevine 1.3 FCM bridge is present, but source readback proved that the retained HIDL service has no device declaration; the x86_64-only correction is prepared and awaits target validation.",
+      "manual_disposition": "widevine-service-owned-vintf-preserved",
+      "rationale": "ClearKey uses the Android 16 AIDL service. The retained Widevine 1.3 service owns manifest_android.hardware.drm@1.3-service.widevine.xml, which declares both Widevine factories, and the required FCM bridge is already present. No board-level duplicate is needed.",
       "necessity": "Required for Widevine and ClearKey DRM registration.",
       "performance": "VINTF metadata adds no steady-state work; service cost is unchanged.",
       "security": "The restricted Widevine binary remains provenance-gated and the legacy HIDL bridge is explicit technical debt."
@@ -7565,10 +7565,10 @@
         "0edb96a328b99742a8c3583e3d1aafc501308252"
       ],
       "validation_evidence": [
-        "The previous compatibility pass lacked the retained HIDL device entries. Static correction checks pass; target check-vintf, factory registration and playback validation remain pending."
+        "Installed-files and generated VINTF output prove the default 1.0 service lacks a fragment and Widevine 1.3 owns one. Static correction checks pass; target check-vintf, default-factory registration and playback validation remain pending."
       ],
       "manual_disposition": "a16-drm-services-with-device-vintf-correction-prepared",
-      "rationale": "The obsolete broad common DRM declaration remains removed and ClearKey uses AIDL. Source and generated-output readback show that the retained HIDL 1.0 default and 1.3 Widevine services do not own device fragments, so exact x86_64 declarations are prepared.",
+      "rationale": "The obsolete broad common DRM declaration remains removed and ClearKey uses AIDL. Generated output proves Widevine 1.3 owns its exact module fragment, while the retained HIDL 1.0 default service has no fragment. The x86_64 correction therefore declares only the default 1.0 factories.",
       "necessity": "Required for stable DRM factory registration.",
       "performance": "No additional service beyond the selected DRM implementations.",
       "security": "Avoids broad or mismatched interface claims."

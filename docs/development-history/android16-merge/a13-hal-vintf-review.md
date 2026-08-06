@@ -51,7 +51,7 @@ Target source identity at discovery:
 | SoundTrigger 2.3 | Retained impl loaded by the HIDL audio service; no fragment | Add x86_64 declaration | Frozen FCM 8 accepts 2.3; 34 old-log registration failures independently prove the missing device declaration. |
 | DRM default 1.0 | Retained generic HIDL service; no fragment | Add x86_64 declaration and FCM bridge | The service registers both default factories and exits fatally if either registration fails. FCM 8 otherwise allows only AIDL DRM. |
 | DRM ClearKey 1.4 | Android-16 AIDL ClearKey service | Replaced by AIDL | Do not recreate the obsolete HIDL 1.4 declaration. |
-| DRM Widevine 1.3 | Retained HIDL vendor service; no device fragment | Add x86_64 declaration; keep existing FCM bridge | Android-16 source already documents the HIDL bridge but the generated device manifest did not declare either Widevine factory. |
+| DRM Widevine 1.3 | Retained HIDL vendor service; module-owned device fragment | Keep existing service fragment and FCM bridge | The built `manifest_android.hardware.drm@1.3-service.widevine.xml` declares both Widevine factories. Repeating them in the board fragment would create duplicate ownership. |
 | Keymaster 4.0/4.1 | Android-16 KeyMint, SecureClock, and SharedSecret AIDL services with module-owned fragments | Replaced by AIDL | Replaying Keymaster would expose retired credential interfaces and conflict with the current security service graph. |
 
 The earlier `47816eea` baseline also contained a Gatekeeper 1.0 declaration

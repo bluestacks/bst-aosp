@@ -43,15 +43,19 @@ def resolve_baseline(repo: Path) -> tuple[str | None, str | None]:
     return None, None
 
 
-def target_commits(repo: Path, baseline: str) -> list[dict[str, Any]]:
+def target_commits(
+    repo: Path, baseline: str, path_filter: str | None = None
+) -> list[dict[str, Any]]:
     marker = "@@A16COMMIT@@"
-    output = git(
-        repo,
+    log_args = [
         "log",
         "--reverse",
         "--format=" + marker + "%n%H%n%P%n%s%n%b",
         f"{baseline}..HEAD",
-    )
+    ]
+    if path_filter:
+        log_args.extend(["--", path_filter])
+    output = git(repo, *log_args)
     commits: list[dict[str, Any]] = []
     for block in output.split(marker + "\n"):
         if not block.strip():
@@ -62,19 +66,19 @@ def target_commits(repo: Path, baseline: str) -> list[dict[str, Any]]:
         commit = lines[0]
         parents = lines[1].split()
         if parents:
-            changed_files = git(
-                repo, "diff", "--name-only", parents[0], commit
-            ).splitlines()
+            diff_args = ["diff", "--name-only", parents[0], commit]
         else:
-            changed_files = git(
-                repo,
+            diff_args = [
                 "diff-tree",
                 "--root",
                 "--no-commit-id",
                 "--name-only",
                 "-r",
                 commit,
-            ).splitlines()
+            ]
+        if path_filter:
+            diff_args.extend(["--", path_filter])
+        changed_files = git(repo, *diff_args).splitlines()
         commits.append(
             {
                 "commit": commit,
@@ -121,15 +125,33 @@ def main() -> int:
         source_path = source_project["path"]
         target_path = TARGET_PATH_MAP.get(source_path, source_path)
         repo = args.android16_root / target_path
+        path_filter: str | None = None
         record: dict[str, Any] = {
             "source_path": source_path,
             "target_path": target_path,
             "source_commits": len(source_commits),
         }
         if not (repo / ".git").exists():
-            record["error"] = "target-project-missing"
-            projects.append(record)
-            continue
+            tracked_entries = git(
+                args.android16_root,
+                "ls-files",
+                "--stage",
+                "--",
+                target_path,
+                check=False,
+            ).splitlines()
+            if not tracked_entries:
+                record["error"] = "target-project-missing"
+                projects.append(record)
+                continue
+            if any(entry.startswith("160000 ") for entry in tracked_entries):
+                record["error"] = "target-project-uninitialized"
+                projects.append(record)
+                continue
+            repo = args.android16_root
+            path_filter = target_path
+            record["target_repository"] = "."
+            record["target_repository_ownership"] = "root-owned-path"
 
         baseline, baseline_ref = resolve_baseline(repo)
         record.update(
@@ -145,7 +167,7 @@ def main() -> int:
             projects.append(record)
             continue
 
-        commits = target_commits(repo, baseline)
+        commits = target_commits(repo, baseline, path_filter)
         record["target_commits"] = commits
         record["explicit_source_refs"] = explicit_refs(commits, source_commits)
         projects.append(record)

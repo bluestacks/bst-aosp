@@ -13,7 +13,7 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-before-current-sim-locale-fallback",
       "target_commits": [
-        "f9e3cb10ec7ff7c323ca3ab1c607643de53b843f"
+        "f9e3cb10e72ed2bca0bb9c6e082cab44e8ec64dd"
       ],
       "rationale": "Android 16 first returns persist.sys.locale, then bst.locale, and only then runs the current upstream SIM-country locale resolution. This preserves the A13 no-SIM result while retaining current permission and telephony-feature checks and a functional platform fallback.",
       "necessity": "Required because the virtual guest may not have modem-backed SIM records when locale is queried.",

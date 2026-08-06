@@ -18,7 +18,7 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-to-a16-media-layout",
       "target_commits": [
-        "cb1157fed64d3b42c37c798973bff49c578be989"
+        "cb1157fed64dec379205c4fd738309ff1c8aa163"
       ],
       "rationale": "Android 16 retains the four final A13 compatibility behaviors at current paths: software rendering avoids the unavailable Mesa YV12 path, RGB565 conversion uses libyuv dithering, NuPlayer ignores frame-dimension values misreported as sample aspect ratio, and the modular FLAC extractor accepts legacy sample rates down to 100 Hz.",
       "necessity": "Required for legacy video rendering, malformed media metadata and low-rate FLAC compatibility in App Player.",
@@ -43,7 +43,7 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-final-omx-plugin-policy",
       "target_commits": [
-        "baf511039a83325be49f6c208488b66666b5cacf"
+        "baf511039a8385af9f599e70076f0731dd4b7682"
       ],
       "rationale": "A16 loads the property-selected custom OMX plugin through the SP-HAL namespace, preserves SoftOMX dlerror diagnostics, and keeps Google audio/video OMX components enabled for App Player. The final A13 policy deliberately makes the App Player condition unconditional.",
       "necessity": "Required for BlueStacks FFmpeg/custom OMX codecs and for legacy codecs otherwise filtered by the platform first-API policy.",
@@ -123,7 +123,7 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-to-codec2-h263-decoder",
       "target_commits": [
-        "42610340d7fe1c2b1673198b9ec2925463465493"
+        "42610340d7fec9f2939d7628531710cef8ac15e5"
       ],
       "rationale": "The removed OMX SoftMPEG4 H.263 decoder was replaced by Codec2 in A16. The current C2SoftMpeg4Dec H.263 variant exposes and initializes the same 1408x1152 16CIF limit.",
       "necessity": "Required for legacy H.263 streams above the old CIF default size.",
@@ -144,8 +144,8 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-to-soong-and-installed-runtime",
       "target_commits": [
-        "865747995b45d4b28e06e32b95affd0a12a6ac0d",
-        "6828b1c43d5eb54ff2f21e70b46cb3575ef71e41"
+        "865747995b45b51ee815e33e984b928790910099",
+        "6828b1c43d5ea63d739bc4a0051fbae23499997d"
       ],
       "rationale": "The Make-based A13 bstsvcmgrtest was converted to an A16 Soong binary and explicitly installed for the startup readiness workflow; the probe source retains the service wait contract.",
       "necessity": "Required by the guest startup readiness gate used before dependent services proceed.",
@@ -166,7 +166,7 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-without-mode-only-churn",
       "target_commits": [
-        "e17c8beca45534741091aac8191ab60a2baf2171"
+        "e17c8beca4558fcb7ad331bae75a9532203e91a3"
       ],
       "rationale": "A16 ignores unsupported legacy auto-exposure and auto-white-balance locks instead of returning BAD_VALUE, preserving the Tinder/Reddit compatibility behavior without the accidental executable file mode.",
       "necessity": "Required for camera1 clients that submit lock keys unsupported by the virtual camera.",
@@ -187,7 +187,7 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-to-current-media-source-proxy",
       "target_commits": [
-        "026d21bec7b1f861a35f912ece6f16c6d47b0f20"
+        "026d21bec7b15a172cdaa330b99eb32da4a584ea"
       ],
       "rationale": "A16 disables Binder media readMultiple for com.papegames.lysk.en through BstUtilsManager at the current proxy decision point, preserving the crash workaround without storing stale package state.",
       "necessity": "Required for the documented Love and Deepspace freeze/crash case.",
@@ -227,7 +227,7 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-with-a16-boringssl-compatibility",
       "target_commits": [
-        "0edb96a328b93fa1d58d25d0f24ee52034187c5d"
+        "0edb96a328b99742a8c3583e3d1aafc501308252"
       ],
       "rationale": "The A13 Widevine HIDL service, manifest, init service and exact legacy engine binary are present in A16, with a narrowly scoped BoringSSL compatibility source added for the newer platform ABI.",
       "necessity": "Required for Widevine DRM playback with the supplied legacy engine.",
@@ -251,8 +251,8 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-to-split-a16-media-contract-and-runtime",
       "target_commits": [
-        "150806ec0f95ad77ee5cbace3ec8c25d2b9eafdc",
-        "baf511039a83325be49f6c208488b66666b5cacf"
+        "150806ec0f95a55a059f81528f9c5695847787b2",
+        "baf511039a8385af9f599e70076f0731dd4b7682"
       ],
       "rationale": "The monolithic A13 FFmpeg patch is adapted to A16's split media/module and libstagefright layout. Media MIME/metadata contracts, FileSource probing, extractor/decoder integration, OMX wiring and the MPEG-L2 Google-codec guard are all retained.",
       "necessity": "Required for the extended media formats and BlueStacks custom OMX FFmpeg implementation.",
@@ -273,8 +273,8 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-to-a16-recorder-and-camera-source",
       "target_commits": [
-        "0cbd76021f29b8bcb96ad6beb586c2b649810847",
-        "52932704dcc7c240463cd1f42f32f36d05bf909a"
+        "0cbd76021f2969956b0662515f4fc8a31fc54565",
+        "52932704dcc721eacdc692bfe8990115ab8041d2"
       ],
       "rationale": "A16 tracks whether the application explicitly set recorder frame rate and falls back to a HAL-supported preview rate when necessary, preserving both halves of the A13 camera recording fix.",
       "necessity": "Required to avoid recording setup failures and incorrect metadata when the virtual camera cannot provide the requested rate.",
@@ -316,8 +316,8 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-to-a16-camera2-and-legacy-info-paths",
       "target_commits": [
-        "026d21bec7b1f861a35f912ece6f16c6d47b0f20",
-        "0cbd76021f29b8bcb96ad6beb586c2b649810847"
+        "026d21bec7b15a172cdaa330b99eb32da4a584ea",
+        "0cbd76021f2969956b0662515f4fc8a31fc54565"
       ],
       "rationale": "A16 queries the per-package sensor rotation through Bst managers, updates camera characteristics and legacy orientation, and preserves the diagnostic bst camera properties at current camera service call sites.",
       "necessity": "Required for per-application camera orientation in the virtual camera stack.",

@@ -73,11 +73,13 @@
       "textually-complete": 278
     },
     "review_statuses": {
+      "reviewed-equivalent": 10,
       "reviewed-integration": 548,
       "reviewed-not-ported": 260,
-      "reviewed-ported": 534
+      "reviewed-ported": 524
     },
-    "explicit_target_candidates": 98
+    "explicit_target_candidates": 98,
+    "cross_project_mappings": 6
   },
   "entries": [
     {
@@ -3147,6 +3149,12 @@
         "Built installed-files.txt records /system/vendor/lib/libwvdrmengine.so and the output file exists at 1,250,188 bytes. Runtime DRM playback remains in the final boot gate."
       ],
       "manual_disposition": "ported-through-current-houdini-widevine-product-integration",
+      "target_mappings": [
+        {
+          "project": "frameworks/av",
+          "commit": "0edb96a328b99742a8c3583e3d1aafc501308252"
+        }
+      ],
       "rationale": "A13 added libwvdrmengine to the global vendor package list. The Android 16 Windows product obtains the current Houdini/Widevine module through its product integration rather than changing the platform-wide base_vendor list.",
       "necessity": "Required for guest Widevine DRM compatibility.",
       "performance": "Adds one shared library to the image; no cost until a DRM client loads it.",
@@ -7878,12 +7886,17 @@
         "low-line-evidence": 1,
         "target-file-missing": 2
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "android_x86_64-trunk_staging-eng lunch and multiple target module builds succeeded from Android-16; the product resolves to TARGET_PRODUCT=android_x86_64 and x86_64/x86 architectures."
       ],
       "manual_disposition": "ported-through-current-android-x86-64-product-layout",
+      "target_state": {
+        "project": "device/generic/x86_64",
+        "assertion": "android_x86_64 product definitions are present in the current target layout",
+        "evidence": "Lunch resolves android_x86_64 with x86_64/x86 architectures and current BoardConfig/product files."
+      },
       "rationale": "The A13 initialization created the standalone android_x86_64 product. Android 16 retains the current AndroidProducts.mk, BoardConfig.mk and android_x86_64.mk definitions; obsolete local Android.bp/license files are no longer required by the current device layout.",
       "necessity": "Required because Windows App Player builds and regression use android_x86_64 rather than a unified remote/local board.",
       "performance": "Product-definition-only change; selected board flags determine the final image but add no runtime code.",
@@ -8188,12 +8201,17 @@
       "android16_evidence": {
         "complete-removal-evidence": 29
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "Git index checks across A13 final, AOSP16 and Android-16 found zero 160000 entries for the reviewed ANGLE paths."
       ],
       "manual_disposition": "ported-final-gitlink-absence",
+      "target_state": {
+        "project": "external/angle",
+        "assertion": "the 29 obsolete nested third-party gitlinks remain absent",
+        "evidence": "Git index inspection reports no 160000 entries for the reviewed ANGLE paths."
+      },
       "rationale": "All 29 nested third-party gitlinks removed by A13 are also absent from final AOSP16 and Android-16 ANGLE repositories. Current dependencies are supplied by the platform checkout/build integration rather than independently initialized nested repositories.",
       "necessity": "Required to keep repository initialization deterministic and avoid duplicate dependency revisions.",
       "performance": "Reduces checkout and submodule initialization size; runtime graphics performance is unaffected.",
@@ -9460,12 +9478,17 @@
       "android16_evidence": {
         "complete-removal-evidence": 2
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "Git index checks report no 160000 subprojects/dlg entry in all three final trees."
       ],
       "manual_disposition": "ported-final-gitlink-and-gitmodules-absence",
+      "target_state": {
+        "project": "external/freetype",
+        "assertion": "subprojects/dlg and its stale gitmodule declaration remain absent",
+        "evidence": "Git index and .gitmodules inspection report no current dlg submodule."
+      },
       "rationale": "The subprojects/dlg gitlink removed by A13 is absent from A13 final, AOSP16 and Android-16; no stale nested checkout is required by the current Freetype build.",
       "necessity": "Required for deterministic source initialization.",
       "performance": "Reduces checkout metadata only; no runtime effect.",
@@ -14614,12 +14637,17 @@
       "android16_evidence": {
         "complete-removal-evidence": 1
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "git ls-files -s third_party/llvm-project returns no entry in A13 final, AOSP16 or Android-16."
       ],
       "manual_disposition": "ported-final-submodule-absence",
+      "target_state": {
+        "project": "external/swiftshader",
+        "assertion": "the obsolete third_party/llvm-project gitlink remains absent",
+        "evidence": "git ls-files -s reports no third_party/llvm-project entry."
+      },
       "rationale": "A13 removed the third_party/llvm-project gitlink. Neither AOSP16 nor Android-16 tracks that submodule in the final SwiftShader repository, so the desired absence is preserved without a target-only commit.",
       "necessity": "Required to avoid an unused nested repository and ambiguous LLVM source selection.",
       "performance": "Reduces checkout size and submodule initialization work; no runtime impact.",
@@ -14655,12 +14683,17 @@
         "binary-large-or-metadata-review": 1,
         "target-file-missing": 1
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "Android-16 .gitattributes marks current Vulkan master lists for LFS and git lfs ls-files reports vk-master-NOT_SUPPORTED.txt; AOSP16 has the same current layout."
       ],
       "manual_disposition": "ported-through-current-upstream-lfs-layout",
+      "target_state": {
+        "project": "external/swiftshader",
+        "assertion": "the current Vulkan master list uses the release-matched LFS layout",
+        "evidence": ".gitattributes and git lfs ls-files identify the current vk-master-NOT_SUPPORTED.txt object."
+      },
       "rationale": "The final A13 intent is to keep oversized regression lists as LFS data. Android 16 retains LFS attributes and an LFS object for the current vk-master-NOT_SUPPORTED.txt. The old pipeline.txt no longer exists in the newer test-list layout and must not be restored from a different SwiftShader revision.",
       "necessity": "Necessary only as repository storage metadata for current large test lists, not as a request to preserve obsolete A13 file names.",
       "performance": "Reduces Git clone/object pressure for large generated lists; no guest runtime cost.",
@@ -39336,12 +39369,17 @@
       "android16_evidence": {
         "complete-line-evidence": 1
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "A13 crash trace and one-line workaround were compared with the final Android-16 service startup sequence; no late ABinderProcess thread-count mutation remains. Audio runtime regression is pending."
       ],
       "manual_disposition": "ported-through-current-single-rpc-threadpool-configuration",
+      "target_state": {
+        "project": "hardware/interfaces",
+        "assertion": "audio service startup contains no late Binder thread-pool shrink operation",
+        "evidence": "Current service configures its RPC pool before join and has no conflicting ABinderProcess_setThreadPoolMaxThreadCount call."
+      },
       "rationale": "A13 stopped calling ABinderProcess_setThreadPoolMaxThreadCount(1) after the vndbinder pool had already started, preventing the fatal 'threadpool cannot be shrunk' assertion. The Android 16 service no longer has that conflicting NDK Binder call and configures a single 16-thread RPC pool before joining it, preserving the crash fix through the current service architecture.",
       "necessity": "Required semantically: the audio HAL service must not shrink a running Binder pool. No A13 line should be copied because the obsolete API sequence no longer exists.",
       "performance": "The current 16-thread pool can consume more stack memory than the old one-thread request but supports concurrent HAL traffic and is the Android 16 service design.",
@@ -39491,12 +39529,17 @@
       "android16_evidence": {
         "target-file-missing": 1
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "git ls-files in Android-16 modules/gralloc contains source files only and no build definition; the external goldfish-opengl-pie integration is retained by the target build configuration."
       ],
       "manual_disposition": "ported-through-current-build-file-absence",
+      "target_state": {
+        "project": "hardware/libhardware",
+        "assertion": "modules/gralloc has no active Android build definition",
+        "evidence": "Tracked modules/gralloc sources contain neither Android.mk nor Android.bp, so default gralloc remains disabled."
+      },
       "rationale": "A13 disabled the default gralloc by renaming its Android.mk because App Player uses goldfish-opengl-pie/system/gralloc. Android 16 tracks the legacy gralloc sources but no Android.mk or Android.bp in modules/gralloc, so the module remains disabled without carrying an obsolete .orig file.",
       "necessity": "Required to avoid building or selecting a second generic gralloc implementation alongside the external goldfish driver.",
       "performance": "Avoids duplicate build output and prevents accidental runtime selection of the non-accelerated/default gralloc.",
@@ -42694,12 +42737,17 @@
       "android16_evidence": {
         "complete-line-evidence": 1
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "Final source inspection confirms the reverted hook is absent in A13, AOSP16 and Android-16."
       ],
       "manual_disposition": "ported-final-revert-state",
+      "target_state": {
+        "project": "libcore",
+        "assertion": "String formatting contains no reverted BlueStacks GMS diagnostic hook",
+        "evidence": "Final source inspection finds no process, property or shell side effect in the reviewed String.format path."
+      },
       "rationale": "Android 16 preserves the final A13 full-revert state: String formatting has no BlueStacks GMS diagnostic hook or side effect.",
       "necessity": "Necessary to prevent an intermediate, later-withdrawn diagnostic experiment from entering the promoted mainline.",
       "performance": "Restores the normal String.format cost and behavior.",
@@ -69238,12 +69286,17 @@
       "android16_evidence": {
         "complete-line-evidence": 1
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "Final properties.cpp in all three trees was inspected and contains the same immediate null return."
       ],
       "manual_disposition": "ported-final-revert-state",
+      "target_state": {
+        "project": "system/libbase",
+        "assertion": "missing property lookup returns the caller default without a null descriptor read",
+        "evidence": "Current properties.cpp retains the immediate pi-null return used by the final A13 revert state."
+      },
       "rationale": "The complete A13 revert is preserved by the unchanged Android-16 implementation: an absent prop_info returns the caller-provided default and never enters the read callback path.",
       "necessity": "Necessary to represent the final A13 decision and prevent resurrection of the unsafe intermediate hook.",
       "performance": "Restores the constant-time missing-property fast path.",
@@ -69557,12 +69610,17 @@
         "exact-file": 16,
         "low-line-evidence": 1
       },
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "target_commits": [],
       "validation_evidence": [
         "Android-16 .gitattributes and git lfs ls-files agree on exactly two current files; ledger comparison finds the A13 expected fixture contents retained or superseded in the current tree."
       ],
       "manual_disposition": "ported-through-current-size-based-lfs-selection",
+      "target_state": {
+        "project": "tools/dexter",
+        "assertion": "current large generated fixtures use the current selective LFS policy",
+        "evidence": ".gitattributes and git lfs ls-files agree on the two currently large fixtures."
+      },
       "rationale": "A13 moved 16 then-large generated test artifacts to LFS. Android 16 retains the reviewed test artifacts and applies LFS only to the two outputs that remain large in the current upstream snapshot: large.code_coverage and large.verbose_cfg. Restoring old LFS attributes for now-small or regenerated files would add storage indirection without preserving behavior.",
       "necessity": "Necessary as repository storage policy only for current large objects.",
       "performance": "Keeps large clone objects out of normal Git while avoiding unnecessary LFS fetches for smaller fixtures; no guest runtime effect.",

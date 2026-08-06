@@ -48,9 +48,14 @@
         "source_commit": "9545e8ab19cca1c6caccdbd4051f2e97f4979270"
       },
       "expected_matches": 1,
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "manual_disposition": "ported-through-current-upstream-lfs-layout",
       "target_commits": [],
+      "target_state": {
+        "project": "external/swiftshader",
+        "assertion": "the current Vulkan master list uses the release-matched LFS layout",
+        "evidence": ".gitattributes and git lfs ls-files identify the current vk-master-NOT_SUPPORTED.txt object."
+      },
       "rationale": "The final A13 intent is to keep oversized regression lists as LFS data. Android 16 retains LFS attributes and an LFS object for the current vk-master-NOT_SUPPORTED.txt. The old pipeline.txt no longer exists in the newer test-list layout and must not be restored from a different SwiftShader revision.",
       "necessity": "Necessary only as repository storage metadata for current large test lists, not as a request to preserve obsolete A13 file names.",
       "performance": "Reduces Git clone/object pressure for large generated lists; no guest runtime cost.",
@@ -67,9 +72,14 @@
         "source_commit": "347d4ce1e9309028a693e8171beb68e2397055a4"
       },
       "expected_matches": 1,
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "manual_disposition": "ported-final-submodule-absence",
       "target_commits": [],
+      "target_state": {
+        "project": "external/swiftshader",
+        "assertion": "the obsolete third_party/llvm-project gitlink remains absent",
+        "evidence": "git ls-files -s reports no third_party/llvm-project entry."
+      },
       "rationale": "A13 removed the third_party/llvm-project gitlink. Neither AOSP16 nor Android-16 tracks that submodule in the final SwiftShader repository, so the desired absence is preserved without a target-only commit.",
       "necessity": "Required to avoid an unused nested repository and ambiguous LLVM source selection.",
       "performance": "Reduces checkout size and submodule initialization work; no runtime impact.",

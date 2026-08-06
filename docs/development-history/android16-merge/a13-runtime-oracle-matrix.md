@@ -4,8 +4,9 @@
 
 This matrix is generated conceptually from the current 1,342-entry A13 patch
 ledger, then reviewed at source-commit level. A runtime-pending entry is a
-`reviewed-ported` patch whose validation evidence explicitly leaves runtime or
-feature-startup regression pending. There are **37 such patch entries**,
+`reviewed-ported` or `reviewed-equivalent` patch whose validation evidence
+explicitly leaves runtime or feature-startup regression pending. There are
+**37 such patch entries**,
 collapsed below into **22 behavior groups** without dropping any source commit.
 
 The former count of 40 was not authoritative. It searched serialized entries

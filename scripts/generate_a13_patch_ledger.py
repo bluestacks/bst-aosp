@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,15 @@ COMPLETE_CLASSES = {
     "complete-removal-evidence",
     "exact-file",
 }
+SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+FINAL_REVIEW_FIELDS = (
+    "manual_disposition",
+    "rationale",
+    "necessity",
+    "performance",
+    "security",
+    "validation_evidence",
+)
 
 
 def classify(commit: dict[str, Any], project: dict[str, Any]) -> str:
@@ -54,6 +64,7 @@ def apply_review_decisions(
         "manual_disposition",
         "target_commits",
         "target_mappings",
+        "target_state",
         "rationale",
         "necessity",
         "performance",
@@ -163,6 +174,42 @@ def apply_target_candidates(
     return mapped
 
 
+def validate_final_entries(entries: list[dict[str, Any]]) -> int:
+    cross_project_mapping_count = 0
+    for entry in entries:
+        identity = f"{entry['project']} {entry.get('source_commit')}"
+        status = entry.get("review_status", "")
+        if not status or status.startswith("pending-"):
+            raise RuntimeError(f"ledger entry is not finally reviewed: {identity}")
+        for field in FINAL_REVIEW_FIELDS:
+            value = entry.get(field)
+            if value is None or value == "" or value == []:
+                raise RuntimeError(
+                    f"ledger entry is missing {field}: {identity}"
+                )
+        mappings = entry.get("target_mappings", [])
+        for mapping in mappings:
+            if not isinstance(mapping, dict):
+                raise RuntimeError(f"invalid target mapping: {identity}")
+            project = mapping.get("project")
+            commit = mapping.get("commit", "")
+            if not isinstance(project, str) or not project or not SHA_PATTERN.fullmatch(commit):
+                raise RuntimeError(f"invalid target mapping: {identity}")
+            cross_project_mapping_count += 1
+        if status == "reviewed-ported" and not entry.get("target_commits") and not mappings:
+            raise RuntimeError(f"ported entry has no target mapping: {identity}")
+        if status == "reviewed-equivalent":
+            state = entry.get("target_state")
+            if not isinstance(state, dict) or any(
+                not isinstance(state.get(field), str) or not state[field]
+                for field in ("project", "assertion", "evidence")
+            ):
+                raise RuntimeError(
+                    f"equivalent entry has no structured target state: {identity}"
+                )
+    return cross_project_mapping_count
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--coverage", type=Path, required=True)
@@ -248,6 +295,7 @@ def main() -> int:
     unique_decision_paths = list(dict.fromkeys(path.resolve() for path in decision_paths))
     for decision_path in unique_decision_paths:
         apply_review_decisions(entries, decision_path)
+    cross_project_mapping_count = validate_final_entries(entries)
     patch_count = sum(entry["kind"] == "patch" for entry in entries)
     merge_count = sum(entry["kind"] == "merge" for entry in entries)
     boundary_count = sum(entry["kind"] == "baseline-boundary" for entry in entries)
@@ -286,6 +334,7 @@ def main() -> int:
             "automated_dispositions": dict(sorted(dispositions.items())),
             "review_statuses": dict(sorted(review_statuses.items())),
             "explicit_target_candidates": explicit_candidate_count,
+            "cross_project_mappings": cross_project_mapping_count,
         },
         "entries": entries,
     }
@@ -302,6 +351,10 @@ def main() -> int:
         "This ledger contains one entry for every non-merge and merge commit found on the",
         "A13 `bst-v5.22.210` component branches relative to their selected A13 baselines.",
         "Automated dispositions are triage evidence, not final port or validation claims.",
+        "`reviewed-ported` requires a same-project commit or explicit cross-project mapping;",
+        "`reviewed-equivalent` requires structured target-state evidence where Android 16",
+        "already has the final behavior without a promotion commit. `reviewed-not-ported`",
+        "records an intentional, fully assessed exclusion rather than an unmapped omission.",
         "",
         "## Counts",
         "",
@@ -310,6 +363,7 @@ def main() -> int:
         f"- Merge commits: {merge_count}",
         f"- Unresolved baseline boundaries: {boundary_count}",
         f"- Explicit A13-to-A16 commit candidates: {explicit_candidate_count}",
+        f"- Explicit cross-project target mappings: {cross_project_mapping_count}",
         f"- Source-head/root-gitlink mismatches: {expected['a13_head_root_gitlink_mismatches']}",
         "",
         "| Automated disposition | Entries |",

@@ -81,6 +81,12 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-through-current-houdini-widevine-product-integration",
       "target_commits": [],
+      "target_mappings": [
+        {
+          "project": "frameworks/av",
+          "commit": "0edb96a328b99742a8c3583e3d1aafc501308252"
+        }
+      ],
       "rationale": "A13 added libwvdrmengine to the global vendor package list. The Android 16 Windows product obtains the current Houdini/Widevine module through its product integration rather than changing the platform-wide base_vendor list.",
       "necessity": "Required for guest Widevine DRM compatibility.",
       "performance": "Adds one shared library to the image; no cost until a DRM client loads it.",

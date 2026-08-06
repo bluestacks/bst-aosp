@@ -31,9 +31,14 @@
         "source_commit": "c014c6d2e810b6b71e8a92b66b9d734f0adff1c0"
       },
       "expected_matches": 1,
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "manual_disposition": "ported-through-current-build-file-absence",
       "target_commits": [],
+      "target_state": {
+        "project": "hardware/libhardware",
+        "assertion": "modules/gralloc has no active Android build definition",
+        "evidence": "Tracked modules/gralloc sources contain neither Android.mk nor Android.bp, so default gralloc remains disabled."
+      },
       "rationale": "A13 disabled the default gralloc by renaming its Android.mk because App Player uses goldfish-opengl-pie/system/gralloc. Android 16 tracks the legacy gralloc sources but no Android.mk or Android.bp in modules/gralloc, so the module remains disabled without carrying an obsolete .orig file.",
       "necessity": "Required to avoid building or selecting a second generic gralloc implementation alongside the external goldfish driver.",
       "performance": "Avoids duplicate build output and prevents accidental runtime selection of the non-accelerated/default gralloc.",

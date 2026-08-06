@@ -3,6 +3,10 @@
 This ledger contains one entry for every non-merge and merge commit found on the
 A13 `bst-v5.22.210` component branches relative to their selected A13 baselines.
 Automated dispositions are triage evidence, not final port or validation claims.
+`reviewed-ported` requires a same-project commit or explicit cross-project mapping;
+`reviewed-equivalent` requires structured target-state evidence where Android 16
+already has the final behavior without a promotion commit. `reviewed-not-ported`
+records an intentional, fully assessed exclusion rather than an unmapped omission.
 
 ## Counts
 
@@ -11,6 +15,7 @@ Automated dispositions are triage evidence, not final port or validation claims.
 - Merge commits: 512
 - Unresolved baseline boundaries: 34
 - Explicit A13-to-A16 commit candidates: 98
+- Explicit cross-project target mappings: 6
 - Source-head/root-gitlink mismatches: 166
 
 | Automated disposition | Entries |
@@ -25,9 +30,10 @@ Automated dispositions are triage evidence, not final port or validation claims.
 
 | Review status | Entries |
 | --- | ---: |
+| `reviewed-equivalent` | 10 |
 | `reviewed-integration` | 548 |
 | `reviewed-not-ported` | 260 |
-| `reviewed-ported` | 534 |
+| `reviewed-ported` | 524 |
 
 ## Semantic Review Queue
 

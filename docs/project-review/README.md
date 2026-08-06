@@ -27,7 +27,7 @@ the AOSP16-to-Android-16 work as a promotion into the mainline integration tree.
 
 - Inventory entries: **1812**
 - Existing files: **1811**
-- Text lines: **1342782**
+- Text lines: **1342849**
 - Stages: `android16-promotion`=634, `aosp16-development`=840, `generated`=15, `reference`=45, `shared`=278
 - Availability: `generated`=15, `local-only`=238, `removed-tombstone`=1, `repository`=1558
 - Findings: P2=1, P3=239

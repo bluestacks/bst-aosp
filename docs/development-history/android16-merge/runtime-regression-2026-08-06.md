@@ -141,3 +141,47 @@ factories, and the audio, graphics, camera, connectivity, phone and subscription
 Binder services. Fake-Wi-Fi API presentation, real camera frames, media
 playback, and external network reachability remain explicit application or host
 oracles; service presence alone must not be reported as those behaviors passing.
+
+## Full Build In Progress
+
+The release-complete app-player build started after the requested 19:30 China
+Standard Time gate. Its active attempt began at remote time
+`2026-08-06T19:32:01+08:00` and remains in progress; it is not boot evidence.
+
+Frozen inputs:
+
+- Android tree: `~/android-16`, branch `aosp16-bst-merge`, root
+  `4eb695060852919cdb100617f4880c737bc9bdcf`
+- `frameworks/base`: `5acece03e566c739235304c30a81afb7e7a3256c`
+- initialized and clean target repositories: 1025, with only the root
+  `.gitignore` allowlisted
+- product/lunch: `android_x86_64` /
+  `android_x86_64-trunk_staging-eng`
+- OUT_DIR: `~/android-16/out_nxt_Baklava64`
+- graphics: `goldfish-opengl-pie` at
+  `840a3eadac139e3640a604bbd2ff1986c00b74d3`
+- app-player: branch `bst-v5.22.210`, root
+  `8ed098751ed028c30665b4ce968137d5aba34554`
+- app-player Makefile SHA-256:
+  `2abca840df831d3c9b9eabb92528d63132ae2033d3f87beebb8bfa0fde2bd0dd`
+- complete local build-flow diff SHA-256:
+  `aa441a8dde9e76f70cc5e1c73ce35d6a604e5441af2a30b9e7beaef38c109a12`
+- concurrency: app-player Make and Android Ninja both resolve to `-j8`
+
+Two pre-build packaging assumptions were found before the active attempt. The
+Makefile unconditionally copied a missing `scratch-rosen/apks/*.apk`, then
+looked for a nonexistent `scratch-gaurav/gapps_baklava64`. The local app-player
+adaptation now skips the optional Rosen APK set when empty, uses the existing
+A13-compatible `gapps_tiramisu64` payload for Baklava, and avoids overwriting
+the Android-16 native-bridge integration with nonexistent legacy
+`3bt/baklava64` libraries. Neither scratch submodule was changed, staged, or
+selected for publication, and the app-player Makefile remains an uncommitted
+build input under the explicit no-submit boundary.
+
+At remote time `19:52:16`, Ninja had reached `1227/110421` actions with no
+`FAILED:` line and an estimated eight hours remaining. The background wrapper
+is PID `3932664`; its log and completion code are respectively
+`~/android16-app-player-build-20260806.log` and
+`~/android16-app-player-build-20260806.exit`. Deployment, clean-Data boot, and
+all runtime gates remain blocked until exit code zero and artifact identity
+generation complete.

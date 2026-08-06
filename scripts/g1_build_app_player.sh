@@ -97,7 +97,7 @@ done
 BUILD_MAKEFILE="$BST_APP_PLAYER_ROOT/buildscripts/Makefile"
 SFS_SCRIPT="$BST_APP_PLAYER_ROOT/buildscripts/make-baklava-system-sfs.sh"
 MOUNTSF_PAYLOAD="$BST_APP_PLAYER_ROOT/bst/bin/mountsf"
-UNCUBE_APK="$BST_APP_PLAYER_ROOT/bst/apks_Baklava64/com.uncube.launcher3.apk"
+UNCUBE_APK="${BST_UNCUBE_APK_INPUT:-$BST_APP_PLAYER_ROOT/bst/apks_Baklava64/com.uncube.launcher3.apk}"
 for input in "$BUILD_MAKEFILE" "$SFS_SCRIPT" "$MOUNTSF_PAYLOAD" "$UNCUBE_APK"; do
   [ -f "$input" ] || { echo "missing app-player packaging input: $input" >&2; exit 1; }
 done
@@ -152,7 +152,14 @@ export USE_CCACHE="${USE_CCACHE:-1}"
 
 echo "A16DBG:ANDROID16: app-player build start $(date -Is) jobs=$JOBS factor=$JOB_FACTOR"
 BUILD_MARKER="$(mktemp)"
-trap 'rm -f "$BUILD_MARKER"' EXIT
+UNCUBE_STAGING_DIR="$(mktemp -d)"
+cleanup_build_inputs() {
+  rm -f "$BUILD_MARKER"
+  rm -rf "$UNCUBE_STAGING_DIR"
+}
+trap cleanup_build_inputs EXIT
+install -m 0644 "$UNCUBE_APK" "$UNCUBE_STAGING_DIR/com.uncube.launcher3.apk"
+export BST_UNCUBE_APK_SOURCE="$UNCUBE_STAGING_DIR/com.uncube.launcher3.apk"
 bash "$BUILD_SCRIPT"
 
 SYSTEM_IMG="$BST_RELEASE_ROOT/system.img"

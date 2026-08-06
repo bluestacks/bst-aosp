@@ -19,7 +19,7 @@ before work starts.
 
 | Entry | Role | Side effects |
 |---|---|---|
-| `g1_build_app_player.sh` | Canonical full Android-16 build and app-player package | Builds only the linked target tree; records app-player, HD, VBox, graphics and payload identity; requires newly generated Root/system/fastboot artifacts and rejects an image missing uncube, `libflutter.so`, `mountsf`, or the BlueStacks build identity |
+| `g1_build_app_player.sh` | Canonical full Android-16 build and app-player package | Builds only the linked target tree; records app-player, HD, VBox, graphics and payload identity; stages the validated uncube APK outside the generated APK folder; requires newly generated Root/system/fastboot artifacts and rejects an image missing uncube, `libflutter.so`, `mountsf`, or the BlueStacks build identity |
 | `g1_build_android16.sh` | Target-only Layer 1 Android-16 build and graphics stage | Builds under the validated Android-16 root; does not create a release-complete Root |
 | `g1_build_libs.sh` | Builds and hashes required HD guest native libraries | Builds under the validated Android-16 root |
 | `g1_build_pack.sh` | Orchestrates build, Root packaging, deploy, and Layer 2 verification | Remote build plus Windows deployment |

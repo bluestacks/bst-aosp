@@ -90,6 +90,18 @@ x86/x86_64 native libraries; app-player remains an external build input and is
 not part of the Android source submission. The active build gate records the
 APK hash and rejects an image missing either the APK or `libflutter.so`.
 
+The first full-build replay exposed an ordering bug in that temporary flow:
+preflight validated the APK inside `apks_Baklava64`, then the parallel `apks`
+target deleted and recreated that generated directory without restoring uncube.
+Two preserved release-staging copies matched the locked APK SHA-256
+`df12d5e1558faa74b2f23433d522fd9a4d3a9184ff2af04d6e320199b0cd1a3c`
+and contained `lib/x86_64/libflutter.so`; the same payload was restored after
+the `apks` and `datafs` targets completed for this build. The reusable gate now
+copies the validated input to an isolated temporary directory before invoking
+app-player, and the temporary Makefile copies that stable input into the newly
+created APK folder. This removes the generated-input race without tracking the
+APK or treating an old release image as its authority.
+
 ### Shared-folder payload missing from the old image
 
 The guest has `bst.config.mountsf=1` and the init service declaration, but

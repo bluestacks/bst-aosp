@@ -152,13 +152,43 @@ if ($logs -match '(?i)WATCHDOG KILLING SYSTEM PROCESS' -or
 }
 
 try {
+    $sharedProbeCommand =
+        'probe=/mnt/windows/BstSharedFolder/.a16_runtime_probe; ' +
+        'trap "rm -f $probe" EXIT; ' +
+        'test -x /system/bin/mountsf && mountpoint -q /mnt/windows/BstSharedFolder && ' +
+        'printf A16_RUNTIME_PROBE > $probe && ' +
+        'test "$(cat $probe)" = A16_RUNTIME_PROBE'
     [void](Invoke-AdbBounded -Arguments @(
-        "shell", "sh", "-c",
-        "test -x /system/bin/mountsf && mountpoint -q /mnt/windows/BstSharedFolder"
+        "shell", "sh", "-c", $sharedProbeCommand
     ))
 } catch {
     Write-Warning $_
     $failures += "shared_folder"
+}
+
+try {
+    $xmlProbeCommand =
+        'probe=/data/local/tmp/a16_runtime_probe.xml; ' +
+        'trap "rm -f $probe" EXIT; ' +
+        'test -x /system/bin/xmllint && ' +
+        'printf "<a16><runtime/></a16>\n" > $probe && ' +
+        '/system/bin/xmllint --noout $probe && test -s $probe'
+    [void](Invoke-AdbBounded -Arguments @("shell", "sh", "-c", $xmlProbeCommand))
+} catch {
+    Write-Warning $_
+    $failures += "device_xmllint"
+}
+
+try {
+    $lockDisabled = (Invoke-AdbBounded -Arguments @(
+        "shell", "locksettings", "get-disabled"
+    )).Trim()
+    if ($lockDisabled -notmatch '^(true|false)$') {
+        $failures += "locksettings_state:$lockDisabled"
+    }
+} catch {
+    Write-Warning $_
+    $failures += "locksettings_query"
 }
 
 $houdiniCommand =
@@ -184,6 +214,25 @@ if (-not [int]::TryParse($entropy, [ref]$entropyValue) -or $entropyValue -le 0) 
 
 $defaultRoute = Invoke-AdbBounded -Arguments @("shell", "ip", "-4", "route", "show", "default")
 if ($defaultRoute -notmatch '(?m)^default\s') { $failures += "default_ipv4_route" }
+
+try {
+    [void](Invoke-AdbBounded -Arguments @("shell", "cmd", "wifi", "status"))
+    [void](Invoke-AdbBounded -Arguments @("shell", "dumpsys", "wifi") -TimeoutSec 30)
+    $wifiMac = (Invoke-AdbBounded -Arguments @(
+        "shell", "getprop", "bst.wifi_mac_addr"
+    )).Trim().ToLowerInvariant()
+    $persistedWifiMac = (Invoke-AdbBounded -Arguments @(
+        "shell", "cat", "/data/downloads/.tmp/.ma"
+    )).Trim().ToLowerInvariant()
+    if ($wifiMac -notmatch '^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$') {
+        $failures += "wifi_mac_property:$wifiMac"
+    } elseif ($persistedWifiMac -ne $wifiMac) {
+        $failures += "wifi_mac_persistence:$persistedWifiMac"
+    }
+} catch {
+    Write-Warning $_
+    $failures += "wifi_mac_readback"
+}
 
 $operatorNumeric = (Invoke-AdbBounded -Arguments @(
     "shell", "getprop", "gsm.operator.numeric"
@@ -224,10 +273,64 @@ foreach ($interface in @(
 
 foreach ($service in @(
     "media.audio_flinger", "SurfaceFlinger", "media.camera",
-    "connectivity", "phone", "isub"
+    "connectivity", "phone", "isub", "lock_settings",
+    "android.hardware.bluetooth.IBluetoothHci/default",
+    "android.hardware.dumpstate.IDumpstateDevice/default",
+    "android.hardware.gnss.IGnss/default",
+    "android.hardware.memtrack.IMemtrack/default",
+    "android.hardware.power.IPower/default",
+    "android.hardware.usb.IUsb/default",
+    "android.hardware.security.keymint.IKeyMintDevice/default",
+    "android.hardware.security.keymint.IRemotelyProvisionedComponent/default",
+    "android.hardware.security.secureclock.ISecureClock/default",
+    "android.hardware.security.sharedsecret.ISharedSecret/default"
 )) {
     $result = Invoke-AdbBounded -Arguments @("shell", "service", "check", $service)
     if ($result -notmatch 'found') { $failures += "service:$service" }
+}
+
+[void](Invoke-AdbBounded -Arguments @("logcat", "-c"))
+$settingsChecks = @(
+    [pscustomobject]@{
+        Name = "android.settings.SETTINGS"
+        Arguments = @("shell", "am", "start", "-W", "-a", "android.settings.SETTINGS")
+    },
+    [pscustomobject]@{
+        Name = "com.bluestacks.settings/.SettingsActivity"
+        Arguments = @(
+            "shell", "am", "start", "-W", "-n",
+            "com.bluestacks.settings/.SettingsActivity"
+        )
+    }
+)
+foreach ($settingsCheck in $settingsChecks) {
+    try {
+        $startResult = Invoke-AdbBounded `
+            -Arguments $settingsCheck.Arguments -TimeoutSec 30
+        if ($startResult -notmatch '(?m)^Status:\s+ok\s*$') {
+            $failures += "settings_start:$($settingsCheck.Name)"
+        }
+    } catch {
+        Write-Warning $_
+        $failures += "settings_start:$($settingsCheck.Name)"
+    }
+}
+[void](Invoke-AdbBounded -Arguments @(
+    "shell", "am", "start", "-W", "-a", "android.intent.action.MAIN",
+    "-c", "android.intent.category.HOME"
+))
+$settingsLogs = Invoke-AdbBounded -Arguments @(
+    "logcat", "-d", "-v", "brief"
+) -TimeoutSec 30
+if ($settingsLogs -match
+    '(?is)FATAL EXCEPTION.*?Process:\s+(?:com\.android\.settings|com\.bluestacks\.settings)') {
+    $failures += "settings_crash"
+}
+$activitiesAfterSettings = Invoke-AdbBounded -Arguments @(
+    "shell", "dumpsys", "activity", "activities"
+)
+if ($activitiesAfterSettings -notmatch 'mResumedActivity:.*com\.uncube\.launcher3') {
+    $failures += "launcher_not_resumed_after_settings"
 }
 
 if ($failures.Count -gt 0) {

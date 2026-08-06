@@ -3,7 +3,7 @@
   "scope": "local repository only; Android source trees are not read",
   "counts": {
     "expected-failure": 1,
-    "pass": 692
+    "pass": 694
   },
   "checks": [
     {
@@ -2065,6 +2065,12 @@
       "detail": ""
     },
     {
+      "path": "scripts/g1_app_runtime_oracle.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
       "path": "scripts/g1_apply_boot_overlays.sh",
       "check": "bash-n",
       "status": "pass",
@@ -4109,6 +4115,12 @@
     {
       "path": "scripts/win-replace-tiramisu64.ps1",
       "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tests/android16-runtime-oracle/build.sh",
+      "check": "bash-n",
       "status": "pass",
       "detail": ""
     },

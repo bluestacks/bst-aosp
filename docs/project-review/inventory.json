@@ -2,12 +2,12 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 1793,
-    "existing_files": 1792,
-    "bytes": 77274001,
-    "text_lines": 1340216,
+    "files": 1798,
+    "existing_files": 1797,
+    "bytes": 77312747,
+    "text_lines": 1341143,
     "by_stage": {
-      "android16-promotion": 610,
+      "android16-promotion": 615,
       "aosp16-development": 845,
       "generated": 15,
       "reference": 45,
@@ -16,14 +16,14 @@
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 1539,
+      "tracked": 1544,
       "untracked": 238
     },
     "by_availability": {
       "generated": 15,
       "local-only": 238,
       "removed-tombstone": 1,
-      "repository": 1539
+      "repository": 1544
     },
     "findings_by_severity": {
       "P2": 1,
@@ -1087,11 +1087,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 2177,
-      "sha256": "cc36ed401c56ad0d9d11e2af74d08aecf115c7946a174ee53a3e59ed4995ca94",
+      "bytes": 2401,
+      "sha256": "a7a4ead6af41cd8fff75f514303fc423d9a39008b82367929135764a99a81820",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 47,
+      "line_count": 51,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [
@@ -1117,6 +1117,7 @@
         "scripts/audit_a16_merge.sh",
         "scripts/audit_android16_promotion.py",
         "scripts/check_android16_worktree.py",
+        "scripts/g1_app_runtime_oracle.ps1",
         "scripts/g1_apply_boot_overlays.sh",
         "scripts/g1_boot_verify.ps1",
         "scripts/g1_build_android16.sh",
@@ -10725,11 +10726,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 11528,
-      "sha256": "aa0dcc7d443231d76f868f9375ed95b30e8d3e42cf4f6364130a988e65173239",
+      "bytes": 12067,
+      "sha256": "e714a1d1908d2cf448e8e62d7ce2d25d2059203b4b7440b88d3e6408ef8942bd",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 165,
+      "line_count": 171,
       "line_endings": "lf",
       "stage": "aosp16-development",
       "timeline_refs": [
@@ -10755,6 +10756,7 @@
       "result": "recorded",
       "replacement": null,
       "dependencies": [
+        "scripts/g1_app_runtime_oracle.ps1",
         "scripts/g1_boot_verify.ps1",
         "scripts/g1_build_android16.sh",
         "scripts/g1_build_libs.sh",
@@ -13211,11 +13213,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 16921,
-      "sha256": "2663e1323456a0abd051d336dccbf1e87008a5af87036f375ce523eb09e43291",
+      "bytes": 19224,
+      "sha256": "692564fc6ecb29344e2db1467ca669074242e885490fcd47bff7bcdd073fd539",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 316,
+      "line_count": 344,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -13236,6 +13238,7 @@
       "result": "current",
       "replacement": null,
       "dependencies": [
+        "scripts/g1_app_runtime_oracle.ps1",
         "scripts/g1_stage_system.sh",
         "scripts/prepare_android16_package_inputs.sh"
       ],
@@ -47077,11 +47080,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 5974,
-      "sha256": "d2e32ee605d3b8ea01e130785a9b9cb4dfe539856ed7064783b867b9bada3514",
+      "bytes": 6288,
+      "sha256": "b356d2e23ee9f76d67f3c8245f120052d105999427e980faf2a325d31d39d355",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 86,
+      "line_count": 87,
       "line_endings": "lf",
       "stage": "aosp16-development",
       "timeline_refs": [
@@ -47112,6 +47115,7 @@
       "dependencies": [
         "scripts/audit_a16_merge.sh",
         "scripts/audit_android16_promotion.py",
+        "scripts/g1_app_runtime_oracle.ps1",
         "scripts/g1_apply_boot_overlays.sh",
         "scripts/g1_boot_verify.ps1",
         "scripts/g1_build_android16.sh",
@@ -58398,6 +58402,47 @@
       "missing_links": []
     },
     {
+      "path": "scripts/g1_app_runtime_oracle.ps1",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 6395,
+      "sha256": "206cb60edfeff02aa5ed5b0ba117e31ef76c2f67706754a85505726fc9724530",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 167,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [
+        "G1"
+      ],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "App-UID Android-16 behavior oracle for the promoted BlueStacks guest.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pending",
+        "checks": [
+          "powershell-parser"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
       "path": "scripts/g1_apply_boot_overlays.sh",
       "exists": true,
       "git_state": "tracked",
@@ -59107,11 +59152,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 9533,
-      "sha256": "a231b8dfc8d6a0d778358c6b303eb201bdeafa29a6340bb27835f5f01b4b740d",
+      "bytes": 13404,
+      "sha256": "08b715882e1bfd7cfa577284c7043b6ea84bbb809ac98c1684be3945b9e8be49",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 237,
+      "line_count": 340,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -59487,11 +59532,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 57734,
-      "sha256": "cde06036f2a5cd59cb113954589273d7690ead442e5a51b3364ed69b0c87b10c",
+      "bytes": 58018,
+      "sha256": "3ddbb174e5b37f520b1e634dc9de35273fd4219225435431e946837c14b2bc23",
       "media_type": "text/x-python",
       "encoding": "utf-8-sig",
-      "line_count": 1559,
+      "line_count": 1564,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [
@@ -59516,6 +59561,7 @@
       "dependencies": [
         "scripts/audit_a16_merge.sh",
         "scripts/audit_android16_promotion.py",
+        "scripts/g1_app_runtime_oracle.ps1",
         "scripts/g1_apply_boot_overlays.sh",
         "scripts/g1_boot_verify.ps1",
         "scripts/g1_build_android16.sh",
@@ -72648,6 +72694,164 @@
         ]
       },
       "preservation": "historical-first-class",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-runtime-oracle/AndroidManifest.xml",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 1201,
+      "sha256": "1953236a45e9d85d8aa24f640aa53c4ced909484deffbc5128408e2ce3b44399",
+      "media_type": "text/xml",
+      "encoding": "utf-8-sig",
+      "line_count": 28,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Temporary app-UID runtime oracle for Android-16 promotion validation.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-runtime-oracle/README.md",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 1525,
+      "sha256": "a3d36ce2243d886c199106c1b41d97bbefb7dbedad5abad3536652c50bb4b42c",
+      "media_type": "text/markdown",
+      "encoding": "utf-8-sig",
+      "line_count": 34,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Android-16 App Runtime Oracle",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-runtime-oracle/build.sh",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 3824,
+      "sha256": "b0d6e541c89816e76f855d7ab3f15d68b92215bc3a99cf1988d3360ecff0fd9a",
+      "media_type": "application/x-sh",
+      "encoding": "utf-8-sig",
+      "line_count": 103,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [
+        "R8"
+      ],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Temporary app-UID runtime oracle for Android-16 promotion validation.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pending",
+        "checks": [
+          "bash-n"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-runtime-oracle/src/com/bluestacks/a16oracle/OracleActivity.java",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 18266,
+      "sha256": "bd3ba92f54de8b99e93b373312c379f24f905dd313d2334177971b1470f0c03c",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 448,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Temporary app-UID runtime oracle for Android-16 promotion validation.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
       "missing_links": []
     },
     {

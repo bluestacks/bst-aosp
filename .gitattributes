@@ -32,10 +32,14 @@
 /scripts/rewrite_a16_commit_messages.sh text eol=lf
 /scripts/validate_project_files.py text eol=lf
 /scripts/g1_boot_verify.ps1 text eol=crlf
+/scripts/g1_app_runtime_oracle.ps1 text eol=crlf
 /scripts/g1_property_verify.ps1 text eol=crlf
 /scripts/g1_reset_data_wipe.ps1 text eol=crlf
 /scripts/g1_runtime_regression.ps1 text eol=crlf
 /scripts/g1_win_deploy.ps1 text eol=crlf
+/tests/android16-runtime-oracle/build.sh text eol=lf
+/tests/android16-runtime-oracle/AndroidManifest.xml text eol=lf
+/tests/android16-runtime-oracle/src/**/*.java text eol=lf
 
 # Machine-readable publication evidence retains its audited byte identity.
 /docs/development-history/android16-merge/promotion-audit.json text eol=lf

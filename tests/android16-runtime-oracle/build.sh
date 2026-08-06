@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "usage: $0 [--android-root PATH] --output APK" >&2
+}
+
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+ANDROID_ROOT=${ANDROID16_ROOT:-"$HOME/android-16"}
+OUTPUT=
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --android-root)
+      ANDROID_ROOT=$2
+      shift 2
+      ;;
+    --output)
+      OUTPUT=$2
+      shift 2
+      ;;
+    *)
+      usage
+      exit 2
+      ;;
+  esac
+done
+[[ -n "$OUTPUT" ]] || { usage; exit 2; }
+
+ANDROID_ROOT=$(realpath "$ANDROID_ROOT")
+case "$ANDROID_ROOT" in
+  *aosp16*) echo "refusing AOSP16 tree: $ANDROID_ROOT" >&2; exit 2 ;;
+esac
+GIT_ROOT=$(git -C "$ANDROID_ROOT" rev-parse --show-toplevel)
+[[ "$(realpath "$GIT_ROOT")" == "$ANDROID_ROOT" ]] || {
+  echo "Android root identity mismatch: $GIT_ROOT" >&2
+  exit 2
+}
+[[ "$ANDROID_ROOT" == */android-16 ]] || {
+  echo "expected Android-16 target root, got $ANDROID_ROOT" >&2
+  exit 2
+}
+BRANCH=$(git -C "$ANDROID_ROOT" branch --show-current)
+[[ "$BRANCH" == "aosp16-bst-merge" ]] || {
+  echo "expected Android-16 promotion branch aosp16-bst-merge, got ${BRANCH:-detached}" >&2
+  exit 2
+}
+
+ANDROID_JAR="$ANDROID_ROOT/prebuilts/sdk/current/public/android.jar"
+AAPT2="$ANDROID_ROOT/prebuilts/sdk/tools/linux/bin/aapt2"
+D8="$ANDROID_ROOT/prebuilts/r8/d8"
+ZIPALIGN="$ANDROID_ROOT/prebuilts/sdk/tools/linux/bin/zipalign"
+APKSIGNER="$ANDROID_ROOT/prebuilts/sdk/tools/linux/bin/apksigner"
+for input in "$ANDROID_JAR" "$AAPT2" "$D8" "$ZIPALIGN" "$APKSIGNER"; do
+  [[ -e "$input" ]] || { echo "missing Android-16 prebuilt: $input" >&2; exit 2; }
+done
+for tool in javac keytool zip sha256sum; do
+  command -v "$tool" >/dev/null || { echo "missing host tool: $tool" >&2; exit 2; }
+done
+
+OUTPUT=$(realpath -m "$OUTPUT")
+case "$OUTPUT" in
+  *aosp16*) echo "refusing AOSP16 output path: $OUTPUT" >&2; exit 2 ;;
+  "$ANDROID_ROOT"/*) echo "refusing output inside Android source tree: $OUTPUT" >&2; exit 2 ;;
+esac
+mkdir -p "$(dirname "$OUTPUT")"
+rm -f "$OUTPUT" "$OUTPUT.identity"
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/a16-runtime-oracle.XXXXXX")
+trap 'rm -rf "$WORK"' EXIT
+mkdir -p "$WORK/classes" "$WORK/dex"
+
+mapfile -t SOURCES < <(find "$SCRIPT_DIR/src" -type f -name '*.java' -print | sort)
+[[ ${#SOURCES[@]} -gt 0 ]] || { echo "oracle Java sources missing" >&2; exit 2; }
+javac -g:none -encoding UTF-8 -source 8 -target 8 -bootclasspath "$ANDROID_JAR" \
+  -d "$WORK/classes" "${SOURCES[@]}"
+mapfile -t CLASSES < <(find "$WORK/classes" -type f -name '*.class' -print | sort)
+"$D8" --lib "$ANDROID_JAR" --min-api 30 --output "$WORK/dex" "${CLASSES[@]}"
+"$AAPT2" link -I "$ANDROID_JAR" --manifest "$SCRIPT_DIR/AndroidManifest.xml" \
+  --min-sdk-version 30 --target-sdk-version 35 --version-code 1 --version-name 1 \
+  -o "$WORK/unsigned.apk"
+cp "$WORK/unsigned.apk" "$WORK/unaligned.apk"
+(cd "$WORK/dex" && zip -q "$WORK/unaligned.apk" classes.dex)
+"$ZIPALIGN" -f 4 "$WORK/unaligned.apk" "$WORK/aligned.apk"
+keytool -genkeypair -keystore "$WORK/oracle.keystore" -storepass android \
+  -keypass android -alias androiddebugkey -dname "CN=A16 Runtime Oracle" \
+  -keyalg RSA -validity 10000 -noprompt >/dev/null 2>&1
+"$APKSIGNER" sign --ks "$WORK/oracle.keystore" --ks-pass pass:android \
+  --key-pass pass:android --out "$OUTPUT" "$WORK/aligned.apk"
+"$APKSIGNER" verify "$OUTPUT"
+
+APK_SHA=$(sha256sum "$OUTPUT" | awk '{print $1}')
+SOURCE_SHA=$(
+  find "$SCRIPT_DIR" -type f \( -name '*.java' -o -name 'AndroidManifest.xml' \) \
+    -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}'
+)
+{
+  echo "stage=android16-promotion"
+  echo "tree=$ANDROID_ROOT"
+  echo "branch=$BRANCH"
+  echo "head=$(git -C "$ANDROID_ROOT" rev-parse HEAD)"
+  echo "oracle_source_sha256=$SOURCE_SHA"
+  echo "apk_sha256=$APK_SHA"
+} >"$OUTPUT.identity"
+echo "A16DBG:ANDROID16: runtime oracle APK=$OUTPUT sha256=$APK_SHA"

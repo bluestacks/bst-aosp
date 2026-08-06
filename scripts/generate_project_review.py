@@ -110,6 +110,7 @@ ANDROID16_ACTIVE_SCRIPTS = {
     "scripts/audit_a16_merge.sh",
     "scripts/audit_android16_promotion.py",
     "scripts/g1_apply_boot_overlays.sh",
+    "scripts/g1_app_runtime_oracle.ps1",
     "scripts/g1_boot_verify.ps1",
     "scripts/g1_build_app_player.sh",
     "scripts/g1_build_android16.sh",
@@ -313,6 +314,8 @@ def purpose_from_path(path: str) -> str:
         return "Historical executable record from an AOSP16 bring-up iteration."
     if path.startswith("scripts/"):
         return "Build, migration, audit, packaging, or diagnostic helper."
+    if path.startswith("tests/android16-runtime-oracle/"):
+        return "Temporary app-UID runtime oracle for Android-16 promotion validation."
     if path.startswith("docs/"):
         return "Project documentation and review output."
     return "Repository configuration or project entry document."
@@ -325,6 +328,8 @@ def classify_stage(path: str, text: str | None) -> str:
     if path in SHARED_REPOSITORY_TOOLS:
         return "shared"
     if path in ANDROID16_ACTIVE_SCRIPTS:
+        return "android16-promotion"
+    if lower.startswith("tests/android16-runtime-oracle/"):
         return "android16-promotion"
     if lower.startswith("references/"):
         return "reference"

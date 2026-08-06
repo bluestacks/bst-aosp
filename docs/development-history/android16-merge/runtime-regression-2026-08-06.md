@@ -185,14 +185,42 @@ the new Root, `system.img`, and `system.sfs`. Boot, property, Launcher, shared
 folder, network, telephony, DRM, audio, graphics, and Houdini checks must then be
 rerun on clean Data.
 
-The automated runtime gate now covers the stable readback subset of that list:
-uncube HOME and crash stability, shared-folder mount, Houdini/native bridge,
-kernel entropy availability, an IPv4 default route, virtual-SIM operator
-format, the `bstime` payload and running `imeservice`, both Widevine HIDL 1.3
-factories, and the audio, graphics, camera, connectivity, phone and subscription
-Binder services. Fake-Wi-Fi API presentation, real camera frames, media
-playback, and external network reachability remain explicit application or host
-oracles; service presence alone must not be reported as those behaviors passing.
+The automated runtime gate now covers the stable shell-readable subset of that
+list: uncube HOME and crash stability, shared-folder mount plus a real write and
+read, device-side `xmllint`, non-mutating lock-settings readback,
+Houdini/native-bridge payloads, kernel entropy availability, an IPv4 default
+route, Wi-Fi MAC property/file consistency, virtual-SIM operator format,
+`bstime`, `imeservice`, retained HIDL registrations, current AIDL HAL services,
+and Settings/BlueStacks Settings launch and return-to-HOME smoke tests.
+
+| Oracle | Automated evidence | Remaining acceptance evidence |
+| --- | --- | --- |
+| Launcher/SystemUI | 95-second boot-ID and `system_server` stability, uncube HOME, crash/watchdog scan, return from Settings | Host navigation, taskbar and recents policy |
+| Shared folder/storage | Mounted path and exact probe-file write/read/cleanup; valid XML parsed under `/data/local/tmp` | Host-to-guest transfer and configured screenshot path |
+| Wi-Fi/network | Route, valid `bst.wifi_mac_addr`, `.ma` equality, service health | Unprivileged app `WifiInfo`/`DhcpInfo`, captive-portal behavior, external reachability |
+| HAL/media | Exact HIDL/AIDL service registration, audio/camera Binder presence | Real camera frames, audio playback/capture, Widevine playback, Skia rendering |
+| Houdini | Native-bridge properties, payloads and binfmt entries | Known ARM64 APK install and translated execution |
+| Settings/lock state | `locksettings get-disabled`, platform Settings and BlueStacks Settings launch without fatal crash | Interactive page navigation and user-visible policy checks |
+| Download retry | None from shell because shell is an authorized caller | Unprivileged app must be denied; authorized provider path must retry |
+
+Service presence or shell readback must not be promoted into a pass claim for
+the remaining application and host behaviors. The test-app/manual column is a
+required gate, not optional follow-up.
+
+The temporary app-UID oracle is now implemented under
+[`tests/android16-runtime-oracle`](../../../tests/android16-runtime-oracle/README.md),
+with the bounded Windows runner
+[`g1_app_runtime_oracle.ps1`](../../../scripts/g1_app_runtime_oracle.ps1). It is
+not runtime evidence yet. Local API-34 `android.jar` compilation, D8 conversion,
+AAPT2 packaging, zip alignment, manifest XML, Bash syntax, PowerShell parsing,
+and `-CheckOnly` pass. The lightweight build omits javac debug metadata because
+build-tools 34 D8 rejects JDK 21 anonymous-class debug metadata; this does not
+change executable code or oracle coverage. Target Android-16 APK assembly and
+guest execution remain blocked on the active full build. The
+runner requires independent DownloadProvider rejection for the installed app
+UID and uninstalls the APK in `finally`. Camera acceptance requires a non-empty
+YUV frame, while AudioTrack acceptance proves the guest playback pipeline only,
+not audible host output.
 
 The stability gate is 95 seconds by default because the old deployed guest can
 remain superficially ready for about 82 seconds between watchdog resets. During

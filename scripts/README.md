@@ -32,7 +32,8 @@ These are the maintained promotion/mainline entry points. They reject an
 | `g1_reset_data_wipe.ps1` | Restores the verified clean Data snapshot with SHA-256 readback | Stops the local instance and replaces `Data.vhdx` |
 | `g1_boot_verify.ps1` | Evaluates the Layer 2 boot oracle | Starts/stops the local instance and reads logs |
 | `g1_property_verify.ps1` | Compares property payloads with guest runtime values | Temporarily enables the BlueStacks getprop diagnostic switch |
-| `g1_runtime_regression.ps1` | Checks Launcher stability, shared folders, Houdini, audio, and graphics | Starts HOME and reads bounded ADB diagnostics |
+| `g1_runtime_regression.ps1` | Checks Launcher/Settings stability, shared-folder I/O, Houdini, network identity, and HAL registration | Starts activities, writes two fixed temporary probe files, removes them, and reads bounded ADB diagnostics |
+| `g1_app_runtime_oracle.ps1` | Runs the temporary app-UID Wi-Fi, graphics, audio, camera, and DownloadProvider oracle | Installs a hash-bound test APK, grants declared runtime permissions, reads logs, and uninstalls it |
 | `prepare_android16_package_inputs.sh` | Assembles or verifies the fixed Baklava APK input bundle | Reads immutable Git/LFS inputs and a hash-pinned external Root; optionally installs ignored app-player staging links |
 | `lib/android16_env.sh` | Shared tree and artifact identity gate | None when sourced; writes identity only on request |
 

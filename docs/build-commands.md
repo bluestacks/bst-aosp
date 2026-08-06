@@ -72,8 +72,14 @@ bash scripts/g1_build_pack.sh --pack-only
 9. win `g1_property_verify.ps1`：逐文件比较 post-data 属性和运行时值，
    `bst.max_fps`、缺失属性或只读覆盖不一致均阻断。
 10. win `g1_runtime_regression.ps1`：启动 uncube HOME，并在 95 秒窗口内
-   轮询 ADB、boot ID 和 `system_server` PID，再验证 shared folder、Houdini、
-   网络、telephony、Widevine 和核心 Binder 服务。
+   轮询 ADB、boot ID 和 `system_server` PID，再验证 shared folder 真实读写、
+   设备端 xmllint、Houdini、Wi-Fi MAC、telephony、HIDL/AIDL HAL、Settings
+   启动和核心 Binder 服务。真实相机帧、音频/Widevine 播放、ARM64 APK
+   翻译执行、app 可见 Wi-Fi 及未授权下载重试仍需独立 app/host oracle。
+11. 从 `tests/android16-runtime-oracle/build.sh` 构建临时测试 APK，再运行
+   `g1_app_runtime_oracle.ps1 -ApkPath <path>`；必须读回 app UID 下 Wi-Fi、
+   DHCP、`wlan0`、Skia、AudioTrack、Camera2 实帧及 DownloadProvider 拒绝日志，
+   runner 最后卸载 APK。该 APK 不进入产品、app-player 或 PR。
 
 Baklava 外部 APK 输入在打包前由
 `scripts/prepare_android16_package_inputs.sh --install` 组装或复核。脚本只

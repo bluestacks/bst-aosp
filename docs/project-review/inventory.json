@@ -2,13 +2,13 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 1807,
-    "existing_files": 1806,
-    "bytes": 77344209,
-    "text_lines": 1341815,
+    "files": 1809,
+    "existing_files": 1808,
+    "bytes": 77358987,
+    "text_lines": 1342178,
     "by_stage": {
       "android16-promotion": 618,
-      "aosp16-development": 845,
+      "aosp16-development": 847,
       "generated": 15,
       "reference": 45,
       "shared": 284
@@ -16,14 +16,14 @@
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 1553,
+      "tracked": 1555,
       "untracked": 238
     },
     "by_availability": {
       "generated": 15,
       "local-only": 238,
       "removed-tombstone": 1,
-      "repository": 1553
+      "repository": 1555
     },
     "findings_by_severity": {
       "P2": 1,
@@ -12753,8 +12753,8 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 7912,
-      "sha256": "4499494c03daffe5a5bc0357f167e453e7d820c5f16cb87a05cc32eeb5290f3b",
+      "bytes": 8030,
+      "sha256": "04a3f15e32094a90f7fb82f393250e30a5aace8bf1fc94ed2b22910cb559f1f9",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
       "line_count": 60,
@@ -12776,7 +12776,9 @@
       "result": "current",
       "replacement": null,
       "dependencies": [
+        "scripts/g1_adb_policy_regression.ps1",
         "scripts/g1_app_runtime_oracle.ps1",
+        "scripts/g1_fps_regression.ps1",
         "scripts/g1_property_verify.ps1",
         "scripts/g1_runtime_regression.ps1"
       ],
@@ -58446,6 +58448,47 @@
       "missing_links": []
     },
     {
+      "path": "scripts/g1_adb_policy_regression.ps1",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 6058,
+      "sha256": "9c088de8ebec2ea2c01573a5f1728222d67c2771e52fdbff3abf2cafbc3a9ae7",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 146,
+      "line_endings": "lf",
+      "stage": "aosp16-development",
+      "timeline_refs": [
+        "G1"
+      ],
+      "origin_tree": "android-13/AOSP16 bring-up inputs",
+      "target_tree": "aosp16",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Fail-closed ADB allowlist oracle for the promoted Android-16 guest.",
+      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "recorded",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pending",
+        "checks": [
+          "powershell-parser"
+        ]
+      },
+      "preservation": "historical-first-class",
+      "missing_links": []
+    },
+    {
       "path": "scripts/g1_app_runtime_oracle.ps1",
       "exists": true,
       "git_state": "tracked",
@@ -58956,6 +58999,47 @@
         "status": "pending",
         "checks": [
           "bash-n"
+        ]
+      },
+      "preservation": "historical-first-class",
+      "missing_links": []
+    },
+    {
+      "path": "scripts/g1_fps_regression.ps1",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 8602,
+      "sha256": "183440ed867a404851f66faf98f6641a3ec4aaec1c0a30c7ed21327eac0204e0",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 217,
+      "line_endings": "lf",
+      "stage": "aosp16-development",
+      "timeline_refs": [
+        "G1"
+      ],
+      "origin_tree": "android-13/AOSP16 bring-up inputs",
+      "target_tree": "aosp16",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Frame-pacing and bounded CPU oracle for the promoted Android-16 guest.",
+      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "recorded",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pending",
+        "checks": [
+          "powershell-parser"
         ]
       },
       "preservation": "historical-first-class",

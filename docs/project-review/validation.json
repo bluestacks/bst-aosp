@@ -3,7 +3,7 @@
   "scope": "local repository only; Android source trees are not read",
   "counts": {
     "expected-failure": 1,
-    "pass": 694
+    "pass": 696
   },
   "checks": [
     {
@@ -2137,6 +2137,12 @@
       "detail": ""
     },
     {
+      "path": "scripts/g1_nativebridge_runtime_oracle.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
       "path": "scripts/g1_pack_root.sh",
       "check": "bash-n",
       "status": "pass",
@@ -4115,6 +4121,12 @@
     {
       "path": "scripts/win-replace-tiramisu64.ps1",
       "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tests/android16-nativebridge-oracle/build.sh",
+      "check": "bash-n",
       "status": "pass",
       "detail": ""
     },

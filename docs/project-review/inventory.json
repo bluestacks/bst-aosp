@@ -2,28 +2,28 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 1799,
-    "existing_files": 1798,
-    "bytes": 77324904,
-    "text_lines": 1341306,
+    "files": 1807,
+    "existing_files": 1806,
+    "bytes": 77344209,
+    "text_lines": 1341815,
     "by_stage": {
-      "android16-promotion": 616,
+      "android16-promotion": 618,
       "aosp16-development": 845,
       "generated": 15,
       "reference": 45,
-      "shared": 278
+      "shared": 284
     },
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 1545,
+      "tracked": 1553,
       "untracked": 238
     },
     "by_availability": {
       "generated": 15,
       "local-only": 238,
       "removed-tombstone": 1,
-      "repository": 1545
+      "repository": 1553
     },
     "findings_by_severity": {
       "P2": 1,
@@ -12753,11 +12753,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 7725,
-      "sha256": "d9960ff7d4767522aaf9e49cc167d30507ce90be674a7dd3bd1a0d358a89c8bc",
+      "bytes": 7912,
+      "sha256": "4499494c03daffe5a5bc0357f167e453e7d820c5f16cb87a05cc32eeb5290f3b",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 59,
+      "line_count": 60,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [],
@@ -13048,8 +13048,8 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 6890,
-      "sha256": "c911cf41a2371ce2d3a2c6c083be4f0be1aede109ea2f6551e2d0b95d939ee94",
+      "bytes": 6990,
+      "sha256": "1fa31323e9a192e172ffbf57094cc4582e3d3d985b3cb5c3f99738c853bff47b",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
       "line_count": 102,
@@ -58962,6 +58962,47 @@
       "missing_links": []
     },
     {
+      "path": "scripts/g1_nativebridge_runtime_oracle.ps1",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 6722,
+      "sha256": "868a94c9e0263ccfca0682d03c53b82d53abcea5759142f96dbe9505f5d06904",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 167,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [
+        "G1"
+      ],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "ARM64 translated-execution oracle for the promoted Android-16 guest.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "recorded",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pending",
+        "checks": [
+          "powershell-parser"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
       "path": "scripts/g1_pack_root.sh",
       "exists": true,
       "git_state": "tracked",
@@ -72738,6 +72779,283 @@
         ]
       },
       "preservation": "historical-first-class",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-nativebridge-oracle/AndroidManifest.xml",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 754,
+      "sha256": "ee1bc82aaa1ecc98da5f1bfcef4dcb4a9a171121e04ae38ce7ad9a118377836c",
+      "media_type": "text/xml",
+      "encoding": "utf-8-sig",
+      "line_count": 20,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Repository configuration or project entry document.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-nativebridge-oracle/README.md",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 1666,
+      "sha256": "a4afd0d5e83c53285c048826905cffaa357f2244b8b0dfb9ab55db012d27b5fe",
+      "media_type": "text/markdown",
+      "encoding": "utf-8-sig",
+      "line_count": 39,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Android-16 Native-Bridge Oracle",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [
+        "scripts/g1_nativebridge_runtime_oracle.ps1"
+      ],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-nativebridge-oracle/build.sh",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 5057,
+      "sha256": "29b40d67f9fb178f04f5820d7883a5112a157688f32ec6817d15409adb6c7d43",
+      "media_type": "application/x-sh",
+      "encoding": "utf-8-sig",
+      "line_count": 136,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [
+        "R8"
+      ],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Repository configuration or project entry document.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pending",
+        "checks": [
+          "bash-n"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-nativebridge-oracle/native/oracle.c",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 766,
+      "sha256": "1dff568b994dd7924737418f935b371eda11c9022fae47c9d1ad595248184596",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 32,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "if !defined(__aarch64__)",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-nativebridge-oracle/src/com/bluestacks/a16nativeoracle/OracleActivity.java",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 3455,
+      "sha256": "e3843859ad69baae69cbe5975e78c6b9ee10f1150de7667e6c8349a8f9b66df2",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 94,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Repository configuration or project entry document.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-nativebridge-oracle/src/dalvik/annotation/optimization/CriticalNative.java",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 301,
+      "sha256": "4096cca0be659c24e5c4ab9c4fee983f83681329154ba290ee56ac84950f6dc9",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 10,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Repository configuration or project entry document.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-nativebridge-oracle/src/dalvik/annotation/optimization/FastNative.java",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 297,
+      "sha256": "988a569fd6b5aaeeca1d55adfde73aeb29aaffd076008cb500c671db886bc5a3",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 10,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Repository configuration or project entry document.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
       "missing_links": []
     },
     {

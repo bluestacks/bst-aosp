@@ -95,7 +95,7 @@ offsets are derived for Houdini 16.
 | Product image presence and properties | pending | Verify all package files, ABI properties and ignored-input hash after image build. |
 | SELinux | pending | Compile policy, boot enforcing, and check for Houdini/binfmt denials. |
 | Binfmt registration | pending | Verify `arm64_dyn` and `arm64_exe` with `P` flag after boot. |
-| Native arm64 application | pending | Load JNI, execute a native binary, and exercise regular/fast/critical native callbacks. |
+| Native arm64 application | prepared | Hash-bound arm64-only JNI oracle now covers regular, FastNative and CriticalNative callbacks, Houdini/test-library maps and translated cpuinfo; execution awaits the clean promoted image. |
 | A13 compatibility oracles | pending | Verify package selection, AMD behavior, package-specific hooks and `/proc/<pid>/maps`. |
 
 The integration is not boot-verified until every pending gate has bound tree,

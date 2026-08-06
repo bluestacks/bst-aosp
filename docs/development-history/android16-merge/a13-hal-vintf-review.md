@@ -92,7 +92,17 @@ The patch does not alter HAL implementation code, service startup order,
 SELinux policy, binder transport, product selection, or common/arm products.
 It also does not restore qvirt. Patch application, XML parsing, whitespace
 validation, and commit readback pass. `check-vintf-all` and generated-manifest
-uniqueness validation remain in progress and are not yet counted as passed.
+uniqueness validation passed on 2026-08-07 from `~/android-16`, branch
+`aosp16-bst-merge`, root `c4d2b530567706a7250b77e9db9a0cbafb18f903`,
+with `OUT_DIR=out_nxt_Baklava64` and
+`android_x86_64-trunk_staging-eng`. The `m -j8 check-vintf-all` exit code was
+zero after 28,166 actions. The generated product path is
+`target/product/x86_64`; the audit parsed its base vendor manifest, every
+vendor manifest fragment, and every APEX VINTF fragment. No duplicate HAL
+instance was found. Each added legacy instance occurs exactly once, while
+Widevine 1.3 remains owned exactly once by its module fragment. The successful
+build log is `~/android16-check-vintf-20260807.nohup.log`; this remote path is
+evidence metadata and is not treated as a repository artifact.
 
 ### Performance
 
@@ -111,10 +121,12 @@ security and hardware services remain authoritative where replacements exist.
 
 ## Acceptance Gates
 
-- active full build completes or fails without source-tree mutation;
-- patch is applied on `aosp16-bst-merge` and committed as `[A16] ...`;
-- `check-vintf-all` and the affected image targets pass from `~/android-16`;
-- generated vendor manifest contains each retained declaration exactly once;
+- [ ] active full build completes or fails without source-tree mutation;
+- [x] patch is applied on `aosp16-bst-merge` and committed as `[A16] ...`;
+- [x] `check-vintf-all` passes from `~/android-16`;
+- [ ] the affected complete image targets pass from `~/android-16`;
+- [x] generated vendor and APEX manifests contain each retained declaration
+  exactly once;
 - clean-Data boot keeps `system_server`, Launcher, and SystemUI stable;
 - Light, Power, Sensors, SoundTrigger, Camera, ConfigStore, OMX, and DRM registrations
   show no undeclared-HAL or fatal registration errors;

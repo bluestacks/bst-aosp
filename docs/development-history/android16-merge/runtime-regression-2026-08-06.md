@@ -200,9 +200,13 @@ Patch structure, XML parsing, and `git apply --check` pass. It is committed in
 `773ab33851c67d54c6f9b6912f23baf208d8c11b`, with root gitlink commit
 `0337c0c02bd1082aad6067b79bd70b2a52b626fb`. The current `check-vintf-all`
 run is bound to later root commit `c4d2b530567706a7250b77e9db9a0cbafb18f903`
-and remains pending. Acceptance still requires a successful generated-manifest
-uniqueness check, a complete image build, and clean-Data runtime registration
-checks.
+and passed on 2026-08-07 with `OUT_DIR=out_nxt_Baklava64`, product output
+`target/product/x86_64`, and exit code zero after 28,166 actions. Parsing the
+generated base vendor manifest, all vendor fragments, and all APEX VINTF
+fragments found zero duplicate instances. Every retained legacy declaration is
+present exactly once; Widevine 1.3 is present only in its module-owned fragment.
+Acceptance still requires a complete image build and clean-Data runtime
+registration checks. Build-time VINTF success is not runtime boot credit.
 
 ## Baseline Passes
 

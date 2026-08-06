@@ -26,11 +26,15 @@ function Invoke-AdbBounded {
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
     $startInfo.CreateNoWindow = $true
+    $processArguments = @()
     if (-not $WithoutSerial) {
-        [void]$startInfo.ArgumentList.Add("-s")
-        [void]$startInfo.ArgumentList.Add($Serial)
+        $processArguments += "-s", $Serial
     }
-    foreach ($argument in $Arguments) { [void]$startInfo.ArgumentList.Add($argument) }
+    $processArguments += $Arguments
+    $startInfo.Arguments = ($processArguments | ForEach-Object {
+        if ($_ -notmatch '[\s"]') { $_ }
+        else { '"' + $_.Replace('"', '\"') + '"' }
+    }) -join ' '
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $startInfo
@@ -104,8 +108,8 @@ try {
 }
 
 $houdiniCommand =
-    'test "$(getprop ro.dalvik.vm.native.bridge)" = libnb.so && ' +
-    'test "$(getprop ro.dalvik.vm.isa.arm64)" = x86_64 && ' +
+    'test x$(getprop ro.dalvik.vm.native.bridge) = xlibnb.so && ' +
+    'test x$(getprop ro.dalvik.vm.isa.arm64) = xx86_64 && ' +
     'test -x /system/bin/houdini64 && test -f /system/lib64/libhoudini.so && ' +
     'test -f /system/lib64/libtcb.so && test -e /proc/sys/fs/binfmt_misc/arm64_dyn && ' +
     'test -e /proc/sys/fs/binfmt_misc/arm64_exe'

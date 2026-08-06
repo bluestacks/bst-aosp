@@ -4,11 +4,11 @@
   "summary": {
     "files": 1789,
     "existing_files": 1788,
-    "bytes": 77214719,
-    "text_lines": 1338998,
+    "bytes": 77219416,
+    "text_lines": 1339087,
     "by_stage": {
-      "android16-promotion": 602,
-      "aosp16-development": 849,
+      "android16-promotion": 606,
+      "aosp16-development": 845,
       "generated": 15,
       "reference": 45,
       "shared": 278
@@ -16,14 +16,14 @@
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 1532,
-      "untracked": 241
+      "tracked": 1535,
+      "untracked": 238
     },
     "by_availability": {
       "generated": 15,
-      "local-only": 241,
+      "local-only": 238,
       "removed-tombstone": 1,
-      "repository": 1532
+      "repository": 1535
     },
     "findings_by_severity": {
       "P2": 1,
@@ -177,11 +177,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 1679,
-      "sha256": "b769b8e7a7b160eb20977ad00f18ca34b52ad5e11499c59462189ae3388a1dde",
+      "bytes": 1748,
+      "sha256": "f397e8d8ddf5feab85f2d90579fdaa1949660484a15bee76b01f20a49d742c3d",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 40,
+      "line_count": 41,
       "line_endings": "lf",
       "stage": "aosp16-development",
       "timeline_refs": [
@@ -910,11 +910,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 4293,
-      "sha256": "d3c343fb0aae66a7d6c782f46e1f6c8616308fd84abac9a6511620b9b65b5dc0",
+      "bytes": 4668,
+      "sha256": "d78dd3558324142ff7c2550283cefe01e210bab5d7fe19dc78a47138bbc9fdb1",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 56,
+      "line_count": 60,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -938,7 +938,9 @@
       "replacement": null,
       "dependencies": [
         "scripts/g1_boot_verify.ps1",
-        "scripts/g1_build_android16.sh"
+        "scripts/g1_build_app_player.sh",
+        "scripts/g1_property_verify.ps1",
+        "scripts/g1_runtime_regression.ps1"
       ],
       "validation_evidence": {
         "status": "pass",
@@ -1085,11 +1087,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 1981,
-      "sha256": "b0133bdce642cba2baf4af0fbe2a00ed2e733aff911a228c214d3ff61923cb4a",
+      "bytes": 2120,
+      "sha256": "0855b9d489ef92d0c0b84c6e97c109d2dbed72815d8fd3b884a3710f93c459f9",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 43,
+      "line_count": 46,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [
@@ -1118,12 +1120,15 @@
         "scripts/g1_apply_boot_overlays.sh",
         "scripts/g1_boot_verify.ps1",
         "scripts/g1_build_android16.sh",
+        "scripts/g1_build_app_player.sh",
         "scripts/g1_build_libs.sh",
         "scripts/g1_build_pack.sh",
         "scripts/g1_copy_bst_apks.sh",
         "scripts/g1_pack_root.sh",
+        "scripts/g1_property_verify.ps1",
         "scripts/g1_rebuild_graphics.sh",
         "scripts/g1_reset_data_wipe.ps1",
+        "scripts/g1_runtime_regression.ps1",
         "scripts/g1_stage_system.sh",
         "scripts/g1_start_pack_remote.sh",
         "scripts/g1_win_deploy.ps1",
@@ -13159,10 +13164,10 @@
     {
       "path": "docs/development-history/android16-merge/runtime-regression-2026-08-06.md",
       "exists": true,
-      "git_state": "untracked",
-      "availability": "local-only",
-      "authority": "local-observation",
-      "content_source": "working-tree",
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
       "bytes": 4777,
       "sha256": "32f706cab1bbfc60fc445bd0a7fd557e16ce15aaa869748d53a064e97f0f0146",
       "media_type": "text/markdown",
@@ -13627,11 +13632,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 3521,
-      "sha256": "c0029f2ca094e1c91072f82e94b4fb18118b44c544dd72f9883bef13158e4206",
+      "bytes": 3650,
+      "sha256": "513002e8b951f97110ac48bc949b4ba53fe2b1cf77afb80a69ede9033c6a6634",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 87,
+      "line_count": 89,
       "line_endings": "lf",
       "stage": "aosp16-development",
       "timeline_refs": [
@@ -46950,11 +46955,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 5182,
-      "sha256": "b59fe9f55582b3780aa50548305719437581fe4b9359ac7d0f9fa273fabd7fbd",
+      "bytes": 5754,
+      "sha256": "b9084a5ef9d8d60839949ce7282b64e55850f4a52d8dde4ac77df15ab3fa3250",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 82,
+      "line_count": 85,
       "line_endings": "lf",
       "stage": "aosp16-development",
       "timeline_refs": [
@@ -46988,12 +46993,15 @@
         "scripts/g1_apply_boot_overlays.sh",
         "scripts/g1_boot_verify.ps1",
         "scripts/g1_build_android16.sh",
+        "scripts/g1_build_app_player.sh",
         "scripts/g1_build_libs.sh",
         "scripts/g1_build_pack.sh",
         "scripts/g1_copy_bst_apks.sh",
         "scripts/g1_pack_root.sh",
+        "scripts/g1_property_verify.ps1",
         "scripts/g1_rebuild_graphics.sh",
         "scripts/g1_reset_data_wipe.ps1",
+        "scripts/g1_runtime_regression.ps1",
         "scripts/g1_stage_system.sh",
         "scripts/g1_win_deploy.ps1",
         "scripts/g8_disable_vendor_hal_rc.sh",
@@ -57681,8 +57689,8 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 20458,
-      "sha256": "1d5b913be37db5fe40b17601a2dea0441a9a28a295e10c5f6f2eeed8a533bc45",
+      "bytes": 20449,
+      "sha256": "86518a9b2aa29bf4244ad581ceaac5a38887471327a02c82204857b14e6af03e",
       "media_type": "text/x-python",
       "encoding": "utf-8-sig",
       "line_count": 600,
@@ -58317,11 +58325,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 3281,
-      "sha256": "f1b259c8ded031bf802259810120aeb06d65758b3c170c978f68edeaa61505e9",
+      "bytes": 4394,
+      "sha256": "442fe0e987190e02374f12c4f62ac4d4a151fcee962d4981bc06ba069fb7d99b",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 77,
+      "line_count": 104,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -58339,7 +58347,7 @@
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -58436,31 +58444,31 @@
     {
       "path": "scripts/g1_build_app_player.sh",
       "exists": true,
-      "git_state": "untracked",
-      "availability": "local-only",
-      "authority": "local-observation",
-      "content_source": "working-tree",
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
       "bytes": 3321,
       "sha256": "1403b203c0d9de6271d3bf490f7ea06c05aec22ce4742199d6e5a89e80f621d3",
       "media_type": "application/x-sh",
       "encoding": "utf-8-sig",
       "line_count": 96,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Run the canonical app-player Android-16 build and packaging flow.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [
         "scripts/lib/android16_env.sh"
@@ -58471,7 +58479,7 @@
           "bash-n"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -58503,7 +58511,7 @@
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [
         "scripts/lib/android16_env.sh"
@@ -58524,11 +58532,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 3460,
-      "sha256": "d5db4ef01849a7681a526f375b395cc3388aeb4b2583bea6b7b6cd6b059e8ea2",
+      "bytes": 3316,
+      "sha256": "402c9fec08b41c6226d8516ee8edc63b2cdfec73f48a0bf85f9e18a0d9137741",
       "media_type": "application/x-sh",
       "encoding": "utf-8-sig",
-      "line_count": 81,
+      "line_count": 76,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -58547,11 +58555,12 @@
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [
         "scripts/g1_boot_verify.ps1",
         "scripts/g1_build_android16.sh",
+        "scripts/g1_build_app_player.sh",
         "scripts/g1_build_libs.sh",
         "scripts/g1_pack_root.sh",
         "scripts/g1_reset_data_wipe.ps1",
@@ -58744,11 +58753,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 2123,
-      "sha256": "31458a71bd1f76df9c067c0db653ee51c4900a03fc419e46121e908409fcd6c0",
+      "bytes": 2619,
+      "sha256": "0296f29c6790cbfd46f8b0aba0f158a4d3d97cad5394cfede071fa39666bc28f",
       "media_type": "application/x-sh",
       "encoding": "utf-8-sig",
-      "line_count": 45,
+      "line_count": 56,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -58771,6 +58780,7 @@
       "replacement": null,
       "dependencies": [
         "scripts/g1_apply_boot_overlays.sh",
+        "scripts/g1_build_app_player.sh",
         "scripts/g1_copy_bst_apks.sh",
         "scripts/g1_stage_system.sh",
         "scripts/g8_disable_vendor_hal_rc.sh",
@@ -58844,29 +58854,29 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 5259,
-      "sha256": "d4ce0418e4c4ed7bfcf814e8c47e1dee3d5f8d5bb4619fcd0915f1ec4a2b36dc",
+      "bytes": 7216,
+      "sha256": "f5594dd59254d33660edd13ac0f815fdbaa18f1762be9d24f5b9a91170fad313",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 135,
+      "line_count": 178,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [
         "G1"
       ],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "G1 Layer2: verify BlueStacks data property files against the running guest.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -58875,7 +58885,7 @@
           "powershell-parser"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -58936,23 +58946,23 @@
       "encoding": "utf-8-sig",
       "line_count": 24,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [
         "G1"
       ],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Reset Data.vhdx to clean G1 snapshot (discipline: after failed boot or before Layer2 verify)",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -58961,39 +58971,39 @@
           "powershell-parser"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
       "path": "scripts/g1_runtime_regression.ps1",
       "exists": true,
-      "git_state": "untracked",
-      "availability": "local-only",
-      "authority": "local-observation",
-      "content_source": "working-tree",
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
       "bytes": 4748,
       "sha256": "c19452f222b799cbe6d8cb0a5ec8a87b4ee3bb893ac2855fb0f961ab787eb613",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
       "line_count": 128,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [
         "G1"
       ],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Android-16 post-boot regression checks for the promoted BlueStacks guest.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -59002,7 +59012,7 @@
           "powershell-parser"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -59160,7 +59170,7 @@
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {

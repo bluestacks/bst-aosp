@@ -111,12 +111,16 @@ ANDROID16_ACTIVE_SCRIPTS = {
     "scripts/audit_android16_promotion.py",
     "scripts/g1_apply_boot_overlays.sh",
     "scripts/g1_boot_verify.ps1",
+    "scripts/g1_build_app_player.sh",
     "scripts/g1_build_android16.sh",
     "scripts/g1_build_libs.sh",
     "scripts/g1_build_pack.sh",
     "scripts/g1_copy_bst_apks.sh",
     "scripts/g1_pack_root.sh",
+    "scripts/g1_property_verify.ps1",
     "scripts/g1_rebuild_graphics.sh",
+    "scripts/g1_reset_data_wipe.ps1",
+    "scripts/g1_runtime_regression.ps1",
     "scripts/g1_stage_system.sh",
     "scripts/g1_start_pack_remote.sh",
     "scripts/g1_win_deploy.ps1",
@@ -380,6 +384,8 @@ def infer_result(path: str, stage: str, text: str | None) -> str:
     lower = path.lower()
     if stage == "generated":
         return "generated"
+    if path in ANDROID16_ACTIVE_SCRIPTS:
+        return "current"
     if any(token in lower for token in ("failed", "revert", "broken")):
         return "failed"
     if lower.startswith("scripts/archive/"):

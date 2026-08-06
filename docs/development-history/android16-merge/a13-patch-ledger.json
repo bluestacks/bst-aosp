@@ -6948,10 +6948,10 @@
         "7b5e4e1522c36f84359ca1496258a85621c72151"
       ],
       "validation_evidence": [
-        "Manifest and package assembly were reviewed; lock/settings runtime regression remains pending."
+        "A13 final HEAD 48364e74 excludes Gatekeeper after source commit 7fd69d7. Android-16 installed-files contains gatekeeperd and client libraries but no Gatekeeper provider, while generated output contains the AIDL Wi-Fi Supplicant version 5 fragment. Lock/settings runtime regression remains pending."
       ],
       "manual_disposition": "final-removal-preserved",
-      "rationale": "The common device manifest has no Gatekeeper HAL declaration and the legacy Gatekeeper package block remains disabled; Android 16 framework handling does not require replaying the deleted HIDL XML.",
+      "rationale": "The final A13 common-device manifest removes Gatekeeper 1.0. Android 16 preserves that removal: the selected product contains gatekeeperd client/framework code but no Gatekeeper provider binary or device-manifest entry, and app-player LockSettings explicitly handles the provider as unavailable. The commented A13 Wi-Fi Supplicant example removed in the same hunk is replaced by the selected AIDL version 5 service and its module-owned fragment.",
       "necessity": "Required to avoid registering the unsupported guest Gatekeeper HAL.",
       "performance": "Removes service startup.",
       "security": "Removes hardware-backed credential service capability; framework fallback behavior must be regression-tested."

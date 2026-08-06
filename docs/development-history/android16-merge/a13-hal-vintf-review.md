@@ -10,7 +10,9 @@ not considered ported when hwservicemanager will reject its registration.
 
 Authoritative A13 sources:
 
+- final common-device tree and manifest: `48364e7418c68f561952e023448219996fbc7831`
 - baseline manifest and service graph: `47816eea2ce9d94f0606b631b81341bc21aaab59`
+- unsupported Gatekeeper declaration removal: `7fd69d779315e93c5e7a6d5b905b2f40d45797b0`
 - ConfigStore and GNSS: `4facbf0174fcae1c8bf9181544343c16f9e1ea9d`
 - Power: `ef2f4da5e521cf04e9d687c24c6bb46d9cc303fc`
 - Memtrack: `4498e9e02dfc54b7dfd7871e09a5c8f499d10a7e`
@@ -51,6 +53,16 @@ Target source identity at discovery:
 | DRM ClearKey 1.4 | Android-16 AIDL ClearKey service | Replaced by AIDL | Do not recreate the obsolete HIDL 1.4 declaration. |
 | DRM Widevine 1.3 | Retained HIDL vendor service; no device fragment | Add x86_64 declaration; keep existing FCM bridge | Android-16 source already documents the HIDL bridge but the generated device manifest did not declare either Widevine factory. |
 | Keymaster 4.0/4.1 | Android-16 KeyMint, SecureClock, and SharedSecret AIDL services with module-owned fragments | Replaced by AIDL | Replaying Keymaster would expose retired credential interfaces and conflict with the current security service graph. |
+
+The earlier `47816eea` baseline also contained a Gatekeeper 1.0 declaration
+and a commented Wi-Fi Supplicant 1.2 example. Commit `7fd69d7` removed both
+blocks before the final A13 state. Android-16 preserves that Gatekeeper
+removal: the selected product contains `gatekeeperd` client/framework code but
+no Gatekeeper provider binary or device-manifest entry, and app-player's
+LockSettings integration explicitly treats the provider as unavailable. Wi-Fi
+Supplicant is independently provided as AIDL version 5 with the module-owned
+`android.hardware.wifi.supplicant.xml` fragment, so the old commented HIDL
+example must not be restored.
 
 ## Patch Review
 

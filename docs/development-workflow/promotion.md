@@ -53,6 +53,12 @@ python3 scripts/validate_a13_target_commits.py \
   --output /tmp/a13-target-commit-validation.json
 ```
 
+Checked-in readback evidence for the current promotion root is stored in
+`docs/development-history/android16-merge/a13-target-commit-validation.json`.
+Commit-free upstream/current-state equivalence is independently checked by
+`validate_a13_target_states.py` and recorded beside it; neither gate may use a
+baseline HEAD as a substitute for an `[A16]` promotion commit.
+
 ### 3. Compare and Merge
 
 - Compare by project and file; do not infer coverage from a hand-maintained

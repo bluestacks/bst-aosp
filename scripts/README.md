@@ -60,6 +60,7 @@ repositories.
 | `audit_a16_merge.sh` | Compatibility wrapper for the Python audit | Read-only |
 | `generate_android16_patch_inventory.py` | Rebuilds patch and payload review documents | Repository-only |
 | `validate_a13_target_commits.py` | Verifies every mapped A13 target SHA exists, is reachable, and has an `[A16]` subject | Read-only Android-16 target inspection |
+| `validate_a13_target_states.py` | Verifies commit-free target equivalence, including file layout, regex ordering, LFS and pinned binary SHA-256 state | Read-only Android-16 target inspection |
 | `validate_a13_target_states.py` | Executes the structured checks for commit-free Android-16 equivalent states | Read-only Android-16 target inspection |
 | `generate_project_review.py` | Rebuilds inventory and history indexes | Repository-only |
 | `validate_project_files.py` | Runs Python, JSON, Bash, and PowerShell static parsers | Repository-only |

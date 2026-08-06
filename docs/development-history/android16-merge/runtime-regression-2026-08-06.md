@@ -434,3 +434,49 @@ is PID `3932664`; its log and completion code are respectively
 `~/android16-app-player-build-20260806.exit`. Deployment, clean-Data boot, and
 all runtime gates remain blocked until exit code zero and artifact identity
 generation complete.
+
+## August 7 Package Retry
+
+The current source baseline advances only the root property gitlink from the
+earlier attempt. The frozen Android tree is `c4d2b530567706a7250b77e9db9a0cbafb18f903`;
+the product, OUT_DIR, graphics, app-player, HD and VBox identities remain those
+listed above. The A13 traceability gates were rerun against that exact root:
+
+- mapped commits: 708 ledger references, 193 unique component commits across
+  38 repositories, 0 errors;
+- commit-free equivalents: 12 entries, 16 executable checks across 11
+  repositories, 0 errors;
+- every mapped commit is reachable from the current component HEAD and has an
+  `[A16] ` subject; cross-project implementations are recorded explicitly.
+
+The first August 7 package attempt exited 1 at `04:41:30 +08:00`. Android ISO,
+`system.img`, `system.sfs` and `fastboot.vdi` generation completed, but no Root
+identity was accepted. The app-player `apks` prerequisite recreated
+`bst/apks_Baklava64`; its temporary Makefile restored only uncube, so the Root
+recipe later lacked 16 configured Data/Downloads payloads and the Houdini
+helper directory `xp`. The final fatal copy was `xp`; earlier missing APK copy
+messages were part of the same incomplete-staging defect. These artifacts are
+not boot evidence and must not be deployed.
+
+The active build gate now verifies the complete deterministic bundle before
+starting. After `create_apk_folder`, the `apks` recipe invokes
+`prepare_android16_package_inputs.sh --install`, which revalidates
+`SOURCE.identity`, every `SHA256SUMS` entry and every APK before restoring the
+whole payload. Independent staging readback compared all 59 payload files and
+reported 0 mismatches. Bundle identity is now included in `Root.vhd.identity`:
+
+- `SOURCE.identity` SHA-256:
+  `44061bbd9790f96bd55f0c9f2eb83963c0794c8d6595975198259f883daab4d6`;
+- `SHA256SUMS` SHA-256:
+  `619581daf3c5609629854ed3d847d09cfa4f67701361f326d497561ea84ac79b`;
+- temporary app-player Makefile SHA-256:
+  `30f0d8b389366200119f25ca18819e8e0dc00e59ff14d2f3413192d47e7b3570`;
+- complete app-player build-flow diff SHA-256:
+  `d988b92033ec18cbe2f49579b860bc399f22c02b19c168903ed20ec2fdd9cb4a`.
+
+The incremental retry runs only as `markxu`, PID `1616258`, with log
+`~/android16-app-player-build-retry-20260807.log` and exit file
+`~/android16-app-player-build-retry-20260807.exit`. No Henry process or
+workspace is queried, waited on, stopped or used. Runtime regression remains
+blocked until this attempt exits zero and all artifact hashes and embedded
+payloads pass readback.

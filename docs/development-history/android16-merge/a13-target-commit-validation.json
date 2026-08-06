@@ -1,0 +1,2652 @@
+{
+  "schema_version": 1,
+  "mode": "a13-target-commit-validation",
+  "android16_root": "/home/clouddev/bst/workspace/markxu/android-16",
+  "android16_root_head": "c4d2b530567706a7250b77e9db9a0cbafb18f903",
+  "counts": {
+    "ledger_references": 708,
+    "unique_project_commits": 193,
+    "repositories": 38,
+    "errors": 0
+  },
+  "results": [
+    {
+      "project": "art",
+      "target_path": "art",
+      "target_repository": "art",
+      "commit": "41ace8de4b85a9b207de9b51ba7add042948e19c",
+      "source_commits": [
+        "3f6c563145b805817fa2f01e9f31fe2af9c67f54",
+        "4f8c891b39ce007b5455f1550290db1b305b3341",
+        "57905d797d859345c79fb47d8ab220655dda8b2f",
+        "7151a45339efcb58a1fda8dce0c5d87ec2feb284",
+        "8cd41668fa705dc91c04a382e13e9343ac14aee5",
+        "cfc8b82d8090786d4b5287eead1b186a54ece5ac"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks native bridge hooks"
+    },
+    {
+      "project": "art",
+      "target_path": "art",
+      "target_repository": "art",
+      "commit": "81a67a9daf668addd86d47a05ced385d52ba8c62",
+      "source_commits": [
+        "58dd9b4c83c6acf6f7f41d2ae9a6ecf5c835dcba"
+      ],
+      "errors": [],
+      "subject": "[A16] Keep invalid OAT dex PCs nonfatal"
+    },
+    {
+      "project": "art",
+      "target_path": "art",
+      "target_repository": "art",
+      "commit": "81ec3f20e1c25d5302421159cccaf7c60c18a137",
+      "source_commits": [
+        "04790f5719f844d04d982382ea62bd27156dcc09",
+        "224e3ead4eaf8f91c5230c803af1c55defeb0757",
+        "e29170951312050239b479b68ead5d81c7f6a784"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore DroidGuard JNI compatibility"
+    },
+    {
+      "project": "art",
+      "target_path": "art",
+      "target_repository": "art",
+      "commit": "ea4945df1c7e30a2bc496e53a11df58204ea1ee0",
+      "source_commits": [
+        "568cb64e32abd760f8af55938a28463289f82661",
+        "728412d8fafa0a65bd34e91e54570cbf43c4c635",
+        "d7fd0e75625d51eefb33dce73d2116953b75e76c",
+        "e90a91250beb0b112801473fb836982a730c614b"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore native loader compatibility hooks"
+    },
+    {
+      "project": "bionic",
+      "target_path": "bionic",
+      "target_repository": "bionic",
+      "commit": "2d8272e1372a23e74c6845c2eab030f3e67851ef",
+      "source_commits": [
+        "18a39d0ddb2746d554521068f0c300a31f4fde56",
+        "65628c9eb918af27f904f80537b92e62e15c5997",
+        "a23bc9079a6295ad637546a227b015a00ac4bdad",
+        "e7687413bac802b330b05da715deadbd88df9cad"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore per-app property compatibility"
+    },
+    {
+      "project": "bionic",
+      "target_path": "bionic",
+      "target_repository": "bionic",
+      "commit": "40a728dc5e7eb47a6e79b098a418cae620e977d4",
+      "source_commits": [
+        "18a39d0ddb2746d554521068f0c300a31f4fde56",
+        "65628c9eb918af27f904f80537b92e62e15c5997",
+        "730869a80ad8e5f75350b79ed081a8377c2bdb0a",
+        "79303b8a067bc830f21fee8da596614796ca108d",
+        "a23bc9079a6295ad637546a227b015a00ac4bdad",
+        "aab5aaabd675c329a83cbaccfda5b4c5b83fdce4",
+        "c7ecb7f88f5347649f723ade3b260bf616529141",
+        "d36e8582d22c654109e67b736bd5fa6e61aff435",
+        "e7687413bac802b330b05da715deadbd88df9cad"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: bionic (1 commits, base f22516cbc67e)"
+    },
+    {
+      "project": "bionic",
+      "target_path": "bionic",
+      "target_repository": "bionic",
+      "commit": "8cc6198fc57fea7ab3c802f8aee14c88f61d7c85",
+      "source_commits": [
+        "6317172608a7a7a73f7d335ccc6de63d84014ff2",
+        "a20f959e6db255e0e784872d5a3b67e0cf1ccaa0"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore x86 runtime compatibility"
+    },
+    {
+      "project": "bionic",
+      "target_path": "bionic",
+      "target_repository": "bionic",
+      "commit": "be9ebc694619e1c521efd2d5437590385e2c5a75",
+      "source_commits": [
+        "18a39d0ddb2746d554521068f0c300a31f4fde56",
+        "65628c9eb918af27f904f80537b92e62e15c5997",
+        "a23bc9079a6295ad637546a227b015a00ac4bdad",
+        "e7687413bac802b330b05da715deadbd88df9cad"
+      ],
+      "errors": [],
+      "subject": "[A16] Declare nullable property reads for BlueStacks"
+    },
+    {
+      "project": "build/make",
+      "target_path": "build/make",
+      "target_repository": "build/make",
+      "commit": "6483acb67e59f70c756df342ab7fe989dd13a8f5",
+      "source_commits": [
+        "009b98d230e5a5cc911129f8cffa6588b8c74782",
+        "4fb7ca55c56d467ef434ba6035175853b100fc24",
+        "950eafc0550111bf7e1bba0026f098ae8c37cbb2"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks product package policy"
+    },
+    {
+      "project": "build/make",
+      "target_path": "build/make",
+      "target_repository": "build/make",
+      "commit": "90781461de1d7e7fa6806e622a2a3c6b0fa39d6f",
+      "source_commits": [
+        "9535b76b56ca5adbde4c2652e51dacace7e758c9"
+      ],
+      "errors": [],
+      "subject": "[A16] Honor full BlueStacks dex preoptimization"
+    },
+    {
+      "project": "build/soong",
+      "target_path": "build/soong",
+      "target_repository": "build/soong",
+      "commit": "1507967b133907d86da1cddb0c972f85c3f4f997",
+      "source_commits": [
+        "94df06f4484c8b5bae4436ae4146896f4dbdd357",
+        "b0a6899b671a1ee41eb6ad541844e4839e19afc0"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: build/soong (1 commits, base f389fa2a2a76)"
+    },
+    {
+      "project": "build/soong",
+      "target_path": "build/soong",
+      "target_repository": "build/soong",
+      "commit": "dc02281d4deab2150dbba63833e02fd7834cb092",
+      "source_commits": [
+        "94df06f4484c8b5bae4436ae4146896f4dbdd357",
+        "b0a6899b671a1ee41eb6ad541844e4839e19afc0"
+      ],
+      "errors": [],
+      "subject": "[A16] Gate external goldfish discovery to explicit builds"
+    },
+    {
+      "project": "device/generic/common",
+      "target_path": "device/generic/common",
+      "target_repository": "device/generic/common",
+      "commit": "7b5e4e1522c36f84359ca1496258a85621c72151",
+      "source_commits": [
+        "0aae19c5f0f104aaa5b8d0982176ad506a270509",
+        "2521f4b96beca939da7ea2ebe93608156cc14dda",
+        "4498e9e02dfc54b7dfd7871e09a5c8f499d10a7e",
+        "47816eea2ce9d94f0606b631b81341bc21aaab59",
+        "4facbf0174fcae1c8bf9181544343c16f9e1ea9d",
+        "7fd69d779315e93c5e7a6d5b905b2f40d45797b0",
+        "874610a60b6e5f431c720a5d49a3206e7500d8f7",
+        "afba6c8513febb448436281d439f32cfcd479c21",
+        "ef2f4da5e521cf04e9d687c24c6bb46d9cc303fc"
+      ],
+      "errors": [],
+      "subject": "[A16] Map legacy treble services to Android 16"
+    },
+    {
+      "project": "device/generic/common",
+      "target_path": "device/generic/common",
+      "target_repository": "device/generic/common",
+      "commit": "7b6874dc74745c956af674344fda5d5fe55216e9",
+      "source_commits": [
+        "0e65a14a0f68ba40c041fa803e92c0a09ee3ef01",
+        "0f405e00d959e93aa7877e2ff8d332c54c12affc",
+        "215ef21accfdf5a87666094e671959a225691ce8",
+        "21f3d6fde6845d1cb2cb9fd20446970a1f10a05f",
+        "269906a4f4aceea57fdbcde852df27fd29fae75b",
+        "315bcb798958a5c74d7574b046e00e0b22585ec8",
+        "389314807031b78eea3a3a3d381121d775036954",
+        "3a577844158f1efe295c9e215ac286e8c78a5816",
+        "3d1a0014fa35656e7fd72539f02fcd26fac6c3ae",
+        "3f8068072f92e817bed0f9b63804d5da7876590e",
+        "4498e9e02dfc54b7dfd7871e09a5c8f499d10a7e",
+        "46357a977332ca364512c059b91123e9ffb4e588",
+        "47816eea2ce9d94f0606b631b81341bc21aaab59",
+        "7026ade8e96d75ba0c37591aeabf50e9c4c8abb8",
+        "76143e920d5496dbbbd68b47b009bceee5e45817",
+        "7fd69d779315e93c5e7a6d5b905b2f40d45797b0",
+        "805ca9a26ab5ea8912db0aee2f92116facfe77ac",
+        "812e6fbcf9605912027eee69ec836cbfbd3e6eb2",
+        "874610a60b6e5f431c720a5d49a3206e7500d8f7",
+        "881da8c5c92d38b661772eb5b3f790ab7c35c02d",
+        "8c2ae20e3cff22e5e53c5489d13f5258feea8253",
+        "8caa61da954b66792741728ae16bb8fb997f144f",
+        "9b011eb99931b7cee8e858a72417281d04d8bf37",
+        "9baff1b8c154e7d106093c7adb892071e17a28e0",
+        "a4382bfc49e525a887ffb83392dd138a26c22243",
+        "a9b7f226ea9186e0f476bbc5abb0ff71ca2ce1de",
+        "a9c336bc49c9456b97502c8086c42a1611eb5add",
+        "aa0361e5553ef0b51803c70a3abaf49f89b26c16",
+        "ad572b19fb9a62343f2ce2451edc046cff93fbed",
+        "af22f7913f2a1f64bc10bee31297ea8c46a82d81",
+        "c61fe93a26cdb3d20d6c25308a7e5b1515e09d63",
+        "e21e915b0262263455d3e07550180cd81c4e8968",
+        "e68143be89c4909e4f00bf10cd0ca99a9962dba4",
+        "ef2f4da5e521cf04e9d687c24c6bb46d9cc303fc"
+      ],
+      "errors": [],
+      "subject": "[A16] BlueStacks android-16 (aosp16) port: device/generic/common"
+    },
+    {
+      "project": "device/generic/common",
+      "target_path": "device/generic/common",
+      "target_repository": "device/generic/common",
+      "commit": "b19e17995222fb5d314be414a3e44a22102f2398",
+      "source_commits": [
+        "3901ff8b9aa4ef78b550170adb9c0a201c62c7da"
+      ],
+      "errors": [],
+      "subject": "[A16] Install xmllint for guest data recovery"
+    },
+    {
+      "project": "device/generic/common",
+      "target_path": "device/generic/common",
+      "target_repository": "device/generic/common",
+      "commit": "d180a37d930a932663df75bd82ba39c315c905c9",
+      "source_commits": [
+        "0f405e00d959e93aa7877e2ff8d332c54c12affc",
+        "3d950593dd200a2a68f8828dc31862c182ccff30",
+        "5cb77e7887322aeb20b98ceb668b24d197d0d6fa",
+        "76143e920d5496dbbbd68b47b009bceee5e45817"
+      ],
+      "errors": [],
+      "subject": "[A16] Integrate Houdini 16 through libnb"
+    },
+    {
+      "project": "device/generic/common",
+      "target_path": "device/generic/common",
+      "target_repository": "device/generic/common",
+      "commit": "ef3dc3be915dfc9733de5703941d142100899229",
+      "source_commits": [
+        "389314807031b78eea3a3a3d381121d775036954",
+        "ad572b19fb9a62343f2ce2451edc046cff93fbed"
+      ],
+      "errors": [],
+      "subject": "[A16] Remove bundled signing keystore"
+    },
+    {
+      "project": "device/generic/x86_64",
+      "target_path": "device/generic/x86_64",
+      "target_repository": "device/generic/x86_64",
+      "commit": "00623898eb9bd0afc4374f6c79f805939f873311",
+      "source_commits": [
+        "2521f4b96beca939da7ea2ebe93608156cc14dda"
+      ],
+      "errors": [],
+      "subject": "[A16] Declare Widevine HIDL FCM bridge"
+    },
+    {
+      "project": "device/generic/x86_64",
+      "target_path": "device/generic/x86_64",
+      "target_repository": "device/generic/x86_64",
+      "commit": "4a985857f52160c55bca07d4acc6766580592316",
+      "source_commits": [
+        "2d424ae9c5d580280a2695540a3bbe9ab1dcb2c3"
+      ],
+      "errors": [],
+      "subject": "[A16] Install the vendor service manager for Windows"
+    },
+    {
+      "project": "device/generic/x86_64",
+      "target_path": "device/generic/x86_64",
+      "target_repository": "device/generic/x86_64",
+      "commit": "773ab33851c67d54c6f9b6912f23baf208d8c11b",
+      "source_commits": [
+        "47816eea2ce9d94f0606b631b81341bc21aaab59",
+        "4facbf0174fcae1c8bf9181544343c16f9e1ea9d",
+        "874610a60b6e5f431c720a5d49a3206e7500d8f7",
+        "afba6c8513febb448436281d439f32cfcd479c21",
+        "ef2f4da5e521cf04e9d687c24c6bb46d9cc303fc"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore legacy x86_64 HAL declarations"
+    },
+    {
+      "project": "device/generic/x86_64",
+      "target_path": "device/generic/x86_64",
+      "target_repository": "device/generic/x86_64",
+      "commit": "fa9bb993e37ddb56d083a7ecae7a73387adf04a2",
+      "source_commits": [
+        "6cfc81f46d75dace9fe3bc52553db9e8245cfe1a"
+      ],
+      "errors": [],
+      "subject": "[A16] Use release ART on android_x86_64"
+    },
+    {
+      "project": "external/boringssl",
+      "target_path": "external/boringssl",
+      "target_repository": "external/boringssl",
+      "commit": "3408a53df9dfc88f18405e3d22a4cd5b92654282",
+      "source_commits": [
+        "1582302bebf14fc60246bd0d047041408a9459f1"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Widevine RSA PSS compatibility"
+    },
+    {
+      "project": "external/boringssl",
+      "target_path": "external/boringssl",
+      "target_repository": "external/boringssl",
+      "commit": "ae95a3c000aa6251ed918ccdbf147b055f0d01f8",
+      "source_commits": [
+        "9fd2a153dcbbb675510c621c806af84e290c0d25"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: external/boringssl (1 commits, base 1e3b72798183)"
+    },
+    {
+      "project": "external/ffmpeg",
+      "target_path": "external/ffmpeg",
+      "target_repository": "external/ffmpeg",
+      "commit": "b58396a9a465ec3875e01d1719bd0beea971b359",
+      "source_commits": [
+        "897ac9079811c3c9d833520dd48200aab8184f2c"
+      ],
+      "errors": [],
+      "subject": "[A16] Adapt FFmpeg for the Android 16 media stack"
+    },
+    {
+      "project": "external/libxml2",
+      "target_path": "external/libxml2",
+      "target_repository": "external/libxml2",
+      "commit": "c724771c911ee8730f829e2d6bcb513bf0038945",
+      "source_commits": [
+        "74cffc0e6b55ebf0913f81d8c9e76bd7bd19ee1b"
+      ],
+      "errors": [],
+      "subject": "[A16] Build xmllint for guest data recovery"
+    },
+    {
+      "project": "external/skia",
+      "target_path": "external/skia",
+      "target_repository": "external/skia",
+      "commit": "0b9c6137b24954b6a3452adeb2f305c77f50e0dc",
+      "source_commits": [
+        "90765aac329aa9b6f0166a8c88da770b6750e6c0"
+      ],
+      "errors": [],
+      "subject": "[A16] Guard Goldfish atlas uploads"
+    },
+    {
+      "project": "external/stagefright-plugins",
+      "target_path": "external/stagefright-plugins",
+      "target_repository": "external/stagefright-plugins",
+      "commit": "6462e1ed74e9c91b4bf336713c8f928afeb3a4fc",
+      "source_commits": [
+        "50387554f01d42d308f78a328d6755eaa7a1c50f",
+        "9a1729044d3a3c52d48f7cd5246355d554405a82",
+        "b5a0358d6d240e64346de31cbd06e43be334c98c",
+        "d60dd85034638cfa548cb0f0212c09c130d5addf"
+      ],
+      "errors": [],
+      "subject": "[A16] Adapt FFmpeg Stagefright plugins for Android 16"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "026d21bec7b15a172cdaa330b99eb32da4a584ea",
+      "source_commits": [
+        "9f10add70e8ed1797824f050bcc9a0938b8989e9",
+        "fb533516826a5bfadaece13a0612f7af5eb3b508"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: frameworks/av (2 commits, base 22fd1c5d895e)"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "0cbd76021f2969956b0662515f4fc8a31fc54565",
+      "source_commits": [
+        "cd719487877f32df9a881f5908d9df9e499d5fbf",
+        "fb533516826a5bfadaece13a0612f7af5eb3b508"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete camera compatibility behavior"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "0edb96a328b99742a8c3583e3d1aafc501308252",
+      "source_commits": [
+        "2521f4b96beca939da7ea2ebe93608156cc14dda",
+        "52d56647ba8b30c9469ffc4acec4a45ebd5c6fd8",
+        "afba6c8513febb448436281d439f32cfcd479c21",
+        "bb15209c81865750681a87e371fa645797818492"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Widevine DRM service"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "150806ec0f95a55a059f81528f9c5695847787b2",
+      "source_commits": [
+        "bdd2ae58e99604701426227159e5fe6a20041615",
+        "c6781bc04c1f140b8a7b9fe1752e4fda759ed344"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore FFmpeg media type contracts"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "2f98cd4347f9f0e542c3eeda5967c0daa62c17b1",
+      "source_commits": [
+        "8e7e5b841a46649afe260e50dd5d07a4fa57e4d3",
+        "f473137c561d6f9f8c5d3fe4fc529cdf3f34832d"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore swcodec SP-HAL lookup"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "42610340d7fec9f2939d7628531710cef8ac15e5",
+      "source_commits": [
+        "58f810f5a100c9df487d1d89343879bc099796fb"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore H.263 16CIF limits"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "52932704dcc721eacdc692bfe8990115ab8041d2",
+      "source_commits": [
+        "cd719487877f32df9a881f5908d9df9e499d5fbf"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore camera HAL frame rate fallback"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "6828b1c43d5ea63d739bc4a0051fbae23499997d",
+      "source_commits": [
+        "84fe45bbaeffbab0db69bb6f704baa903576b2eb"
+      ],
+      "errors": [],
+      "subject": "[A16] Install readiness probe runtime"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "865747995b45b51ee815e33e984b928790910099",
+      "source_commits": [
+        "84fe45bbaeffbab0db69bb6f704baa903576b2eb"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore servicemanager readiness probe"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "baf511039a8385af9f599e70076f0731dd4b7682",
+      "source_commits": [
+        "0bddd694da15cc377aad4ef4be40652caa258882",
+        "b9de3bd85fae8070483320759e55a75201a922c2",
+        "bdd2ae58e99604701426227159e5fe6a20041615",
+        "c6781bc04c1f140b8a7b9fe1752e4fda759ed344",
+        "c830a22dc7b4eef5e651affd3740f6470417eb61"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore FFmpeg runtime integration"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "cb1157fed64dec379205c4fd738309ff1c8aa163",
+      "source_commits": [
+        "0110779f41d0f808667dfb3f32486809ab7f1b6d",
+        "23589ce7bcd27807b0315d3fce44b74e5cb02587",
+        "3ead484dd9ddfebd73270991b9f622b88b735957",
+        "b955f8315067470cd0bc22b1015f92d22228c747"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore legacy media compatibility"
+    },
+    {
+      "project": "frameworks/av",
+      "target_path": "frameworks/av",
+      "target_repository": "frameworks/av",
+      "commit": "e17c8beca4558fcb7ad331bae75a9532203e91a3",
+      "source_commits": [
+        "90ee78b4bd301ecadb3711e375bc2754156ac0fd"
+      ],
+      "errors": [],
+      "subject": "[A16] Ignore unsupported legacy camera locks"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "002846c6b53f03d0f8747110b5d71bb7db675f39",
+      "source_commits": [
+        "e4873271093347785d45111c1bfa085aeeec5b9b"
+      ],
+      "errors": [],
+      "subject": "[A16] Skip temporary download package scans"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "018112ec4d9bb2fe4edb875d26ba6240e430bb1a",
+      "source_commits": [
+        "3fca2ee1746a4837fda3caffb2cdc28141f38ee0",
+        "423364b372b8d1b85109fd5b32f6ceca8e076cf9"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Play Store download state forwarding"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "0c7e432e4b16c85cdc2f0f508e7ac0abe4b63cdf",
+      "source_commits": [
+        "9c9d6318ef469d6dce6c1e7923e885038af04b7c"
+      ],
+      "errors": [],
+      "subject": "[A16] Refresh BlueStacks permissions on boot"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "11a7972d0796cc14b62a1c4beff0126ede8a21e7",
+      "source_commits": [
+        "495fd5b75c84bb45cbc88f2e638f2529582c066c"
+      ],
+      "errors": [],
+      "subject": "[A16] Report the BlueStacks data disk capacity"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "1423a2de1c61f694d16d58e498e238bee7efaf14",
+      "source_commits": [
+        "004eac79a86f2548bea80ca85e564118626c01c0",
+        "0f405e00d959e93aa7877e2ff8d332c54c12affc",
+        "30e19f7aba5334b2f4e60b658447447e2f7ad808",
+        "76143e920d5496dbbbd68b47b009bceee5e45817"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore per-app NDK translation libraries"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "167ba6837ac9936037c05ed4957ff3d22806625d",
+      "source_commits": [
+        "cb36d31480c2643fb231d6a7ee01d3d690b1040f"
+      ],
+      "errors": [],
+      "subject": "[A16] Clear app data on configured ABI switch"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "1906b3b2daa8c4bcd54afe0c9a29e37220973fdb",
+      "source_commits": [
+        "78ac1ee0e09d956cfec05457def56fba2b64befa"
+      ],
+      "errors": [],
+      "subject": "[A16] Scan BlueStacks data system apps at boot"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "1b50e47b9082c64b6452e404b085969ea0e0ff08",
+      "source_commits": [
+        "036a6922fa4a1413d357e88c2798947b911bf0fe",
+        "2c364040bb48604e65e0c2443c5e914e77606d86",
+        "8c63dfd40186f61f1b9e3ee070f458967629230a",
+        "8ede0aaab9ec9ab63fc62b3080e6c6605eb027d9",
+        "9fd68594cac52e33aa449c1ef447c9584ec9137b",
+        "b59e3681addcf4c17b253982d50bd56e4a5af80a",
+        "c9c9fdde981d1d62cdb24ecb2e7dc92173e84dab",
+        "e148a5bf34ad6fa2cf8c4cebc17757e54cc6093e"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore per-app orientation policy"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "2022162505304786857870ec510162ed2a74fca5",
+      "source_commits": [
+        "325cfaa730fbde5724102f3fb63cdc0fa9b02a73",
+        "5c72c1d5c29d4865cd0bf9bb8c1f2537118c50b1",
+        "936c9f22adc07a3154708074d4326f8da4a9abaa",
+        "950075f9f6de580684572bedfe303fd65ff78b54",
+        "9aa9a23e0693b60dec1734eef5dfdec7393e9c18",
+        "9f90bba2f27ed0c7d3d512b8a3462752ad3f5b40",
+        "ca629bb1f72b0a1d6a17f68588f7aa89d53ab0b2"
+      ],
+      "errors": [],
+      "subject": "[A16] Protect FilterApps list change broadcast"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "23a34823c0399fbfcbe7da6f6a0b21aa229cc31f",
+      "source_commits": [
+        "ea9b2779bfbc07734c989aac1147ba1cc09bc0a2"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete BlueStacks telephony emulation"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "23df9c8d50120c2121ba36d1101c8c579d14f886",
+      "source_commits": [
+        "42926aca562dc5622f69908258fd04cdd07201a3"
+      ],
+      "errors": [],
+      "subject": "[A16] Disable guest lockNow by default"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "25ea5086cd36420a212858e7b1c458c909b1c90c",
+      "source_commits": [
+        "32e00be272f0c2ed5fd6e471856d4bad31f5c1ef"
+      ],
+      "errors": [],
+      "subject": "[A16] Recover malformed runtime permissions state"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "2babca1198d6d9504e025511c0f5936dcde682ef",
+      "source_commits": [
+        "139d7a18d965784256ec37d1412ffaee3670e21e",
+        "9094c3134b039eed86e2f68c8c94763d384b9d4c"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore affiliate install attribution"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "2bd74445341ebf2b8e6f843b4a7c457129b73f5b",
+      "source_commits": [
+        "e337053f1991e4165c594debeecd032c53f76145"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Instagram DM audio compatibility"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "2dbd4b83c1a58943be8b87410414ad682d7a9beb",
+      "source_commits": [
+        "34babcccc01e082a930738d1a6f04032c04d5769",
+        "40d3b10507595e4db5c785e188fb4151057e738e"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore MSI default wallpaper policy"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "301b7a7f84521d2b46ccb4193b8ca41d244c36c7",
+      "source_commits": [
+        "6ded277e4530b6ae03ad5ad0c3dc6a267455717c"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks readproc process group"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "35847c26966d341195d3c30315c54323c622fc87",
+      "source_commits": [
+        "bd98e1ff2a869a944b461c98dc597a22e5b6ec67"
+      ],
+      "errors": [],
+      "subject": "[A16] Exclude now.gg services from detection stats"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "35a892f196f2cb3667fcdd4c40d70635aa91429d",
+      "source_commits": [
+        "78497893ae239c445c6ee2792518ffc4988fcb30"
+      ],
+      "errors": [],
+      "subject": "[A16] Preserve the zygote capability bounding set"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "36873742bfc85c581607b405205c0d2213a37039",
+      "source_commits": [
+        "279c7128863117fe2d0d57069ca294ff1fffb5e7",
+        "af2af26ebba1e52e355cb919b3bf326075e18c35",
+        "cd161672739a1bc726e71fd178696cdd425d53f8",
+        "d0c915247a889c7d77a6e4a4218ac0c837125ff0"
+      ],
+      "errors": [],
+      "subject": "[A16] Support global virtual memory rules"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "3ed5ebb11508ba8b9b2b98290af29eb48cc75fed",
+      "source_commits": [
+        "5f7c0b5f311086e553314dfb288d7a41d776cfd6"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore host-driven permission upgrade marker"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "422258e748a7141b6dd0afeb3e81e334760f7932",
+      "source_commits": [
+        "cae884de5d0f209a7b6f50cbe6e3c0c95900f46c"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore setBstIME support"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "4345a03914eea96a1866353e047cab088d1c55cf",
+      "source_commits": [
+        "cf7054ea61c29ca192501fe6354cec8de8cc2d9a"
+      ],
+      "errors": [],
+      "subject": "[A16] Hide guest shutdown progress dialog"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "48715625bff3fbf2fc86075df18e778a787dd43b",
+      "source_commits": [
+        "08618a2cfca4b91f211cdbbedd7fb414c8a9c274",
+        "174c3b04466cbf9ac82a2292f1009201f471804d",
+        "7fdcf1219e70b038e3ea5980b04cdb96821b2ef3",
+        "b01064d4221b61d5286fce13a40195bbcc2835b2",
+        "d8caf5f91e27ca367e3026ac241ba06160ac4524"
+      ],
+      "errors": [],
+      "subject": "[A16] Apply BlueStacks ABI overrides during package scan"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "49849371cfd919f23d7c5e4fa225696962a4d473",
+      "source_commits": [
+        "ea79024fc44f46bc856735a919bdfbc67b35c5ce",
+        "f7f8733fc19a7160669e637c0963578f2a433655"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore guest network policy"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "49e50b48aa16a213610cff4241184d3758b50416",
+      "source_commits": [
+        "0045604f8367682458af3ca915308aa62df82962",
+        "01487c02a894fa2b09ca4f2f0636e317a0368749",
+        "0306ecbc9fe9291a167a8f0a7deadebce0f5a709",
+        "05169439648c384baa1e2c5e7efa5f46cc7dd33d",
+        "05b157131a384c9c6bf70ae66122592b6776443e",
+        "096617d2ac97ff68ee76556e47e97754ed4f5171",
+        "09bf1376d3f7df82cfc85d24394d8edeb7a39013",
+        "0b2f7a5debf48fc6d1acf6e380f0ade37a048080",
+        "0e00bcbdbe7938a458ba52f9a9a4ce6e9ac2ba4a",
+        "103707a8b82796f01c9b9f8fc24ee87669453859",
+        "12eb6bd82975f70f4db2eea3e7917dc50b99ddcf",
+        "132085f7fa538e9a83e70dcb6fff7d92e6278b88",
+        "1a3b47c4765f72a6e9c70e38a4be8fafb52f76db",
+        "1c4e428b17cbc6ad818556b1d06ec712e9df8e50",
+        "2068e63a3a6bcb562a8ae9e6cc5576c92e2a97fb",
+        "209d19bd9f073810c3cc7ce1ba908166d50977ec",
+        "26ca7f568e7b9d5f07f3832615682094da047588",
+        "28301fd55f41401587708832ac7d12d3ca7d76a8",
+        "2925d4250fbd66fe413f04581dbce5d0b36586e5",
+        "2a548c0c67f4e7c4704f6883d081a637ed9f3317",
+        "2ab1cc487d78614fce65b759254df81088cda238",
+        "2b29403f59bb372fbd5b7bc24b0c00407097ee6c",
+        "2be4182090986541fd24959ec476fd2a1842f220",
+        "2d13d37b2dc06dc1fa8faa41d920cc7252f01a3f",
+        "2f5124df175d056c7fc3e6ace2fb8c877191155a",
+        "2ffa5928b5ae1db3a349e71bae55b3fe8e6e81c8",
+        "3364867a87520ac92a49471d4cc8ee0c7f32125d",
+        "35830d67f34a69b64f038b686390327e3f09c73c",
+        "371f93c93c48efa1863ce455f224b4c2861ece73",
+        "3bf8cc52c7b8280aec80d8ba8cc19251fa91e224",
+        "3e9fd572fe1a8bf03ca0fe6f0368b3cc03fd6a4e",
+        "400113645b5adbadd0096337d780c0dbe7543f2f",
+        "403f6509c8525bd01659cd76c13a848b97f5b90f",
+        "4092ba85ffafa2faa241b37725d4d93086438928",
+        "40b602220f9ae253265cdc0a908ed513c01dc857",
+        "4420559c54d20b23817103a85273d67640b828af",
+        "44b9c0be3e3b5b4886d11ca8c48ad04b77dfd977",
+        "466ffb9ee944d937c75db76c491698bfd64b1da6",
+        "4f6786867b48f53f87342d06326fa4f634c0bf61",
+        "5061e037d2777e433657ffd19ace64c0dc39fca4",
+        "507819b7d8fee50894d4e9489c1f21def3a59fc8",
+        "55b8a64376aab72044cd3cb2e73c7d0edd45e102",
+        "5639bdb142b0ec9e989595b57ea5369818690f10",
+        "5c509c6e1185ce0a5681c664337c9b501b589b3d",
+        "5e23f975cddb0cf37ab3ebd38c764215a4866148",
+        "5f4438218dfdf3bd4159caba813bf0b1df03edd2",
+        "66ca8b99f1135d013f90810b3a6a224b8f65dfc2",
+        "6778ad39dee61c9a992987bbeab18b6109f60f5c",
+        "68d541a59d2dd6ab5e822b14c34abc7b864dd0c1",
+        "6a7d3285bc650be71159859eb4ab39d56f4fdac8",
+        "6f24c854abff60161bac0fcb06afc681529348d5",
+        "6f3c41bafb3565300092b707ef43261188ad31ee",
+        "712ef3beebaa0d6f6f9c713d26423416dd05623b",
+        "71603f1540a667074eef14840e0a3a1bc96be58c",
+        "7226c38bb94a64ad64eae72fbc985260e3e47ba6",
+        "726063b56e8ebc1e4637f55cb0858b4bb77432ed",
+        "7a733b2bbbd5164523c70cf6537c246e41387212",
+        "7af0f46cc046a8064c7b49b3c0bb2df9b6546456",
+        "80e2acb1e49f9871c52c8b348fba67cc8d0b9eaa",
+        "80f7566b67ef86e05ff44b5dbbf4a3691558bc9f",
+        "81794889f614747824a57384fa19aa62b920335f",
+        "822d88c74b87e50aff8cc18dad9e4b8ae6ea953a",
+        "857af1aef557bce1cfc4ff8f1c888a77b7eb5bba",
+        "8c4cc6cd4ca7c082f018507d08adb201eb15a1eb",
+        "8d249c198b3e44662ecf78106da288016d4e6077",
+        "90d05c73fe04340d3f9655c0725a9d6caa0910d8",
+        "92ec722018afd8185874faa4c6987765a849701d",
+        "965e3d72c1abae5944ffc2303ce4e813459d2103",
+        "9b5b73f59d3a8058e9c2437db3898d3a94611c31",
+        "9f7db03352b1d1ed7987c75c6d08267556972982",
+        "a12ecb6e50c4787e7d86b8a9ccb6cea45fec246e",
+        "a5853b36b720f05de9c11906cedd8fd78f819521",
+        "a5d38f19da52267ccea14e299276674f7957a0bb",
+        "a7ddfae8cf3070ff44fc17723a29cba04b9de27d",
+        "ab353e57708b5fe0e169faa69db244a928e11aed",
+        "ab3e2902a7546fb6c87d11a08ba9234376c4cd54",
+        "acc057e84d10c8f71f474fa6d25402544d16b30e",
+        "af86d77b1c800658512bca4a8f2960341876728a",
+        "b2d22773bf1789a3e544a85aec33d73ef6671121",
+        "b2eeb72e1a2bd61ddeddcaf6e143368815098dac",
+        "b5055d9f5dc8076e980d17bc3c828dc7f27074c4",
+        "b86a23fbba1314a63dc3be582e975a7754afeea9",
+        "b905627e4541b4747abaf54ed38a8f81757577fb",
+        "bbe9209ae32d06ceb2af4e3862d7cc1a5ddcf0e1",
+        "be5549e4c7bed4e226501ab931eb0e8ee421b468",
+        "beb531373bf053e28fe9254d055da75c83781503",
+        "c404395c52787f70a43762c59e158b29eb7f2a63",
+        "c6cef2744507a5d50e1c8f3a10472a28df6d62b6",
+        "cbaef60a377306b55037e6320f728a538dc5bbec",
+        "cf14a1f5c5ba9cb07fa69df843acc4d59d83cdd2",
+        "d048b482f506a91037dfcb60c0f8a693da59b065",
+        "d6cafca43709d7df696306a8aecf7480d10ce79e",
+        "d9545d421d1689b29c8e21619638d1511dbfc22a",
+        "dad800e32e2b69fd055ecb6541c9b9b8c0f02c5c",
+        "e17d18f399fa2ca52b874dc0aa6a93192ea413a7",
+        "e5b21e2e2fa20723c5309187c47b5791d83f3fc7",
+        "e5f9eab9f72202bce9fa67abd808c6176d50467a",
+        "e8b17680656324016e163cc480edffa021837c06",
+        "eb058ebb47db4588754ac22b868258bbd147e7bc",
+        "f29e2908dd8dafbee1b6d80d6482d86b29962b36",
+        "f577c7cec551bd56566990650b5e6745a33ad2e0",
+        "f650003d0cf05b92d3ed0621b3322279a5f7c1ae",
+        "f71d7fd8e1a793856b560647024d791bfad78a55",
+        "f9faba1ec6fc383c821f8ef09335bd291ba631dd",
+        "fbbbba8770f88560f710f37da7fcdc54041c65e4",
+        "fd05886b6948b45801d838c03c20650053ed60a9",
+        "fd330f4d57c76f7be418975a9ea44cfe5fb32e70",
+        "fd50ef986e30527bded529e8c629173aef187b7b",
+        "fe09ab6b0e1c08c56bdc947dea5d689e735f6268"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: frameworks/base (40 commits, base 45034f0663f9)"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "4a6dc9ec6d2f315d9c8a8434365370ecc678202f",
+      "source_commits": [
+        "325cfaa730fbde5724102f3fb63cdc0fa9b02a73",
+        "5c72c1d5c29d4865cd0bf9bb8c1f2537118c50b1",
+        "936c9f22adc07a3154708074d4326f8da4a9abaa",
+        "950075f9f6de580684572bedfe303fd65ff78b54",
+        "9aa9a23e0693b60dec1734eef5dfdec7393e9c18",
+        "9f90bba2f27ed0c7d3d512b8a3462752ad3f5b40",
+        "ca629bb1f72b0a1d6a17f68588f7aa89d53ab0b2"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks package policy"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "4e8f899b53cf2bc5f1407e207ac3aa91d821d29c",
+      "source_commits": [
+        "cb562d44bb7834898275f89075cabb90e60649d8"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore xarch ABI entry tracking"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "513a551268c0a36b43de65fb70426ddd026c7840",
+      "source_commits": [
+        "48b6474b897cd9d1d810dfa77e0a15cfdcd673a7",
+        "48ddd2e05ea0e7ac6dc49369e2071a92ad7629f0",
+        "517e86f37e7e27640f39ac00e2a4f8a4a7ab4acf",
+        "7e22ff78568bb54ca8573791d59ba6b044289724",
+        "9d8c5f6c87f72f35beecf4f686aa66fe3cb337a4",
+        "bb8f77eceb39d70da9bded3d92a7c6a2dbb43a93",
+        "d803b524b1d857a17fcddc6b920089c43b25e7f8",
+        "ee63bacfaf1424f188f1f705cbc9523df9f24153",
+        "eebc5c7960b9b942080491d8d3e6f10c75bce149"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete host-call framework integration"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "5173c9c6b27ac26a46cbb1faccc857b58e6d9b81",
+      "source_commits": [
+        "cc76efe395787dee2fb54886357ef526ce55162d"
+      ],
+      "errors": [],
+      "subject": "[A16] Attach the hardware bitmap uploader to the JVM"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "59bc314bae871b6705ffc315a4f40bdd1bf4886c",
+      "source_commits": [
+        "fc8ce2f25a4abea34295d265002c7d368a81be1a"
+      ],
+      "errors": [],
+      "subject": "[A16] Allow Chrome package install app-op"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "5c75ab42d507cea1bbbe02422befcfb305dbe81b",
+      "source_commits": [
+        "e4b4292a291e149c792155dd082d0ce73176c065"
+      ],
+      "errors": [],
+      "subject": "[A16] Skip external Wi-Fi battery sync"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "5d3fdabab6b43589abc9c9f6b62a6d8430cebb06",
+      "source_commits": [
+        "a27e7747610d957ad59ef3b17c8a81aefecf4d3b",
+        "aa4684109af3a9f559b79e245dc6ee62890718d7",
+        "d5b7029546611bccbd4d9ed1e2cada5f01088bd3",
+        "f2a61c25c74082063d182704f8b4c67e1994ddf8"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Instagram reel database detection"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "617233b5634902c6ecc698b34007f265692376e0",
+      "source_commits": [
+        "7534c8982878a3914223090e5ab6c1455dc5c31e"
+      ],
+      "errors": [],
+      "subject": "[A16] Customize BlueStacks quick settings footer"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "619f7a1eab0a9f229351778e1b1153955a04d426",
+      "source_commits": [
+        "fd7032a168f1e7b14aa6d7111193ae705784c1c6"
+      ],
+      "errors": [],
+      "subject": "[A16] Report Play Store affiliate installs"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "6216c241c4b448c2009a3d6dbca311e92d44720b",
+      "source_commits": [
+        "3e9fd572fe1a8bf03ca0fe6f0368b3cc03fd6a4e",
+        "a5d38f19da52267ccea14e299276674f7957a0bb"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore location compatibility policy"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "648e475b2dbba35f1fba4fc95bf5d3d3d140fdb7",
+      "source_commits": [
+        "33b824b1578600e5f1798acb95d822f3ee39583e",
+        "73ff2c7e6cd7ec615d632054c62ce8c2c7a41fdc",
+        "75860ab8e437945dc5e0b42291e211a35e967ab2",
+        "cb0f79d5de75be74382717efa3a7b70e427135b0",
+        "f6371e7ca93b09dccac2bc460a3a8f69ee48d81f"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks navigation bar policy"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "6502086e164d045af39c38ddd11d773aa05ebf65",
+      "source_commits": [
+        "c35a667e804ae56679e29a06f6ac0c9d369551bd"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks Android ID synchronization"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "6b2d5b08763e054484090e3aefbdf962b90952bf",
+      "source_commits": [
+        "48ddd2e05ea0e7ac6dc49369e2071a92ad7629f0",
+        "517e86f37e7e27640f39ac00e2a4f8a4a7ab4acf",
+        "ee63bacfaf1424f188f1f705cbc9523df9f24153",
+        "eebc5c7960b9b942080491d8d3e6f10c75bce149"
+      ],
+      "errors": [],
+      "subject": "[A16] Reset the BlueStacks IME listener on switch"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "6de1f2bd8b40a2d9fbd4ca37a5fe7a82d03a4904",
+      "source_commits": [
+        "65c8b2b506770b68344511f3e6988e778e5b9a25"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore periodic BlueStacks NTP refresh"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "6e0617b2bc0ecf73272e92393cf984a1538a6dc7",
+      "source_commits": [
+        "279c7128863117fe2d0d57069ca294ff1fffb5e7",
+        "af2af26ebba1e52e355cb919b3bf326075e18c35",
+        "cd161672739a1bc726e71fd178696cdd425d53f8",
+        "d0c915247a889c7d77a6e4a4218ac0c837125ff0"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore per-app CPU info override"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "6eeda468c57ede6e1f5f5b220f01aa8de3ecabe0",
+      "source_commits": [
+        "3612d300ca848513b53b4c5f93fd5e02393b1774"
+      ],
+      "errors": [],
+      "subject": "[A16] Hide BlueStacks running services from apps"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "7344fdd6934a6fc8c5751b6bd14d12c05ed85b97",
+      "source_commits": [
+        "1110db4a424bb085b40cf827c3c9bc20d5740710"
+      ],
+      "errors": [],
+      "subject": "[A16] Expose now.gg accounts to all callers"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "7833020346161b74631b048b56ceba7dd7ee7b7b",
+      "source_commits": [
+        "036a6922fa4a1413d357e88c2798947b911bf0fe",
+        "2c364040bb48604e65e0c2443c5e914e77606d86",
+        "8c63dfd40186f61f1b9e3ee070f458967629230a",
+        "8ede0aaab9ec9ab63fc62b3080e6c6605eb027d9",
+        "9fd68594cac52e33aa449c1ef447c9584ec9137b",
+        "c9c9fdde981d1d62cdb24ecb2e7dc92173e84dab",
+        "e148a5bf34ad6fa2cf8c4cebc17757e54cc6093e"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore custom DPI activity lifecycle"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "7ac9438d727a7654d17357155551f49f9f116b5e",
+      "source_commits": [
+        "256a00581cc0600246a467d9844315fbb40443a4"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Facebook login orientation lock"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "7cbbe6d3944bef3007866f2a98f9e2c33d39d25c",
+      "source_commits": [
+        "580b60c099d22f0b266644c55bbe4504d824abc7"
+      ],
+      "errors": [],
+      "subject": "[A16] Disable guest safe mode by default"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "8221d29acc036e034493bc09d58a5316fac4005f",
+      "source_commits": [
+        "325cfaa730fbde5724102f3fb63cdc0fa9b02a73",
+        "4def8ddcff33e01d47fd29ed4f2aae57be6f0ed3",
+        "5c72c1d5c29d4865cd0bf9bb8c1f2537118c50b1",
+        "936c9f22adc07a3154708074d4326f8da4a9abaa",
+        "950075f9f6de580684572bedfe303fd65ff78b54",
+        "9aa9a23e0693b60dec1734eef5dfdec7393e9c18",
+        "9f90bba2f27ed0c7d3d512b8a3462752ad3f5b40",
+        "ca629bb1f72b0a1d6a17f68588f7aa89d53ab0b2"
+      ],
+      "errors": [],
+      "subject": "[A16] Hide BlueStacks packages from untrusted apps"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "83196e80ae870ed84db9c3db8ed64425913b2213",
+      "source_commits": [
+        "15f58d06e049c579812e075a3ae0685e990ecdba"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore per-app GLES and feature reporting"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "85a72f10237fb3fea48befa861eba19e7c3e0228",
+      "source_commits": [
+        "a27e7747610d957ad59ef3b17c8a81aefecf4d3b",
+        "aa4684109af3a9f559b79e245dc6ee62890718d7",
+        "d5b7029546611bccbd4d9ed1e2cada5f01088bd3",
+        "f2a61c25c74082063d182704f8b4c67e1994ddf8"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore selective guest JDWP policy"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "878fb297d991d9fce7e5f33d8636df3749f87b56",
+      "source_commits": [
+        "64e22bb49da92d0f40d63f98cc31556adfe09562"
+      ],
+      "errors": [],
+      "subject": "[A16] Publish BlueStacks boot state properties"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "8a5cc437df8b1276ddb75c14e6af0867df5d1202",
+      "source_commits": [
+        "e48800cdf0406c5299e281a4079c112c94e544cf"
+      ],
+      "errors": [],
+      "subject": "[A16] Disable the SystemUI clipboard overlay"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "8ee90d3bf3c8f27e2342340f31340aceea2b7855",
+      "source_commits": [
+        "71c92e8a88e6d8a59f02ab3c9691afcec979ac75"
+      ],
+      "errors": [],
+      "subject": "[A16] Guard app-player lock settings from GateKeeper"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "8ffc55bdca7a126d6b24b3bfc36063952e8eacee",
+      "source_commits": [
+        "28534f689069e172ca0f13b96afee3996abc6af6",
+        "fe57e2b693342bcbdef5532367aa64dbf8d82599"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore screenshot host integration"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "909ededdeaef7620d0e76eef5daccf2b992858f4",
+      "source_commits": [
+        "33b824b1578600e5f1798acb95d822f3ee39583e",
+        "73ff2c7e6cd7ec615d632054c62ce8c2c7a41fdc",
+        "75860ab8e437945dc5e0b42291e211a35e967ab2",
+        "cb0f79d5de75be74382717efa3a7b70e427135b0",
+        "f6371e7ca93b09dccac2bc460a3a8f69ee48d81f"
+      ],
+      "errors": [],
+      "subject": "[A16] Keep the BlueStacks guest unlocked longer"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "9364133ff643709056247240e56bb79903f32dc1",
+      "source_commits": [
+        "850970af8180fe9164fa2d5cd007a8d4ca056a78"
+      ],
+      "errors": [],
+      "subject": "[A16] Read the default locale from BlueStacks"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "9502decec2c972635b323ce8a5bfdc37f36d6cce",
+      "source_commits": [
+        "328b36affd6dec49064a29b71e46f064c01695af"
+      ],
+      "errors": [],
+      "subject": "[A16] Read BlueStacks values for unset properties"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "99469a0605fee0a7b50d20cf0e96f4a59b175606",
+      "source_commits": [
+        "4a948bf5fb349cec5d2a6ab7cc3bc0e470d0c315",
+        "bc7a252e589e14436c30139ede7621e4583db8b1",
+        "fc8608092e7fbdddd5a2afdc6534d214111ce168"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore unlocked clipboard compatibility"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "9bc935a532663bb04c9f48c8c0bd4f31834fe253",
+      "source_commits": [
+        "3de7d7954424c0e1b69b4224e1c3752389359f01",
+        "560cb49cbda262ee44ba708c4f52f88e564a47f6",
+        "d59dd7ba73267584e7decb35d32483f6bd05909e",
+        "d925f0dd2f406796b02b0a6a2d426554a32ec662"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete accessibility service hiding"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "9e477356edc5255ae92162c9975470ed3cf6e081",
+      "source_commits": [
+        "33b824b1578600e5f1798acb95d822f3ee39583e",
+        "73ff2c7e6cd7ec615d632054c62ce8c2c7a41fdc",
+        "75860ab8e437945dc5e0b42291e211a35e967ab2",
+        "76ca09fba31d813a0e7791cfe3c89247f65a0e77",
+        "cb0f79d5de75be74382717efa3a7b70e427135b0",
+        "f6371e7ca93b09dccac2bc460a3a8f69ee48d81f"
+      ],
+      "errors": [],
+      "subject": "[A16] Keep the BlueStacks screen awake by default"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "a00f53e9b5d618700f40cbba7f9d04d1c847de9b",
+      "source_commits": [
+        "279c7128863117fe2d0d57069ca294ff1fffb5e7",
+        "af2af26ebba1e52e355cb919b3bf326075e18c35",
+        "cd161672739a1bc726e71fd178696cdd425d53f8",
+        "d0c915247a889c7d77a6e4a4218ac0c837125ff0"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore per-app virtual memory size"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "a4434f303477f5d472a6be282abd434aa3433004",
+      "source_commits": [
+        "33b824b1578600e5f1798acb95d822f3ee39583e",
+        "73ff2c7e6cd7ec615d632054c62ce8c2c7a41fdc",
+        "75860ab8e437945dc5e0b42291e211a35e967ab2",
+        "cb0f79d5de75be74382717efa3a7b70e427135b0",
+        "f6371e7ca93b09dccac2bc460a3a8f69ee48d81f"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks SystemUI policy"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "ae4fa5ab7b7175343e5cb4b0883eea719b44b8b1",
+      "source_commits": [
+        "e7d9b8c4884e62cb6967c49211c12f62de87adb1"
+      ],
+      "errors": [],
+      "subject": "[A16] Bypass package cache after upgrade"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "b2f72405a99ed1451c7f71ed5ffbad12066414f2",
+      "source_commits": [
+        "803b0902b28ede460c9c55610556f962dbdee074"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Monster Strike runtime compatibility"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "b5e4aaae86a432de96db820130a749b0222c6bf0",
+      "source_commits": [
+        "75f9195fd51d4f6c4b103a2fa69e81169225ee70"
+      ],
+      "errors": [],
+      "subject": "[A16] Gate Google app updates on account login"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "be8ddefb37b06e67b37c15084b9a50aafb66b114",
+      "source_commits": [
+        "ea27c67acf8c013e2b343b9c5e4f573cda5a4819"
+      ],
+      "errors": [],
+      "subject": "[A16] Reject blacklisted package installs"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "bea26a3a0b93c4e78799aa6eef7152d475374cb9",
+      "source_commits": [
+        "a27e7747610d957ad59ef3b17c8a81aefecf4d3b",
+        "aa4684109af3a9f559b79e245dc6ee62890718d7",
+        "d5b7029546611bccbd4d9ed1e2cada5f01088bd3",
+        "f2a61c25c74082063d182704f8b4c67e1994ddf8"
+      ],
+      "errors": [],
+      "subject": "[A16] Namespace the Instagram reel property"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "bf736b95e5dbba74d0621e393f85b488e9341fbc",
+      "source_commits": [
+        "14d0be7a9d3ca06b4481c9c475edee83a7cb67fa"
+      ],
+      "errors": [],
+      "subject": "[A16] Support host StopApp task removal"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "c0af154c7c5fb1958251193da9016ba3f117de1c",
+      "source_commits": [
+        "78298c72dab40702d5af0c79eb7fc05ff8f61be6",
+        "c6b0ba64ca690e1aa2889060ffb76e5b4a83c55b"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete BlueStacks displayed-package handling"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "cb141933695d9afa9109867e8041b4b914139fa7",
+      "source_commits": [
+        "7e22ff78568bb54ca8573791d59ba6b044289724",
+        "9d8c5f6c87f72f35beecf4f686aa66fe3cb337a4",
+        "bb8f77eceb39d70da9bded3d92a7c6a2dbb43a93",
+        "d803b524b1d857a17fcddc6b920089c43b25e7f8"
+      ],
+      "errors": [],
+      "subject": "[A16] Preserve OneStore in-app purchase handling"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "ced626d294f0adc87a56fe1f7377cef6fd2e7748",
+      "source_commits": [
+        "a27e7747610d957ad59ef3b17c8a81aefecf4d3b",
+        "aa4684109af3a9f559b79e245dc6ee62890718d7",
+        "d5b7029546611bccbd4d9ed1e2cada5f01088bd3",
+        "f2a61c25c74082063d182704f8b4c67e1994ddf8"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Play Store ABI reporting"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "d094604e10e92aab5ec6c35f2b93b1c2cb276255",
+      "source_commits": [
+        "6a7d3285bc650be71159859eb4ab39d56f4fdac8",
+        "78298c72dab40702d5af0c79eb7fc05ff8f61be6",
+        "bbe9209ae32d06ceb2af4e3862d7cc1a5ddcf0e1",
+        "cd9029897887e984a325a2c456732113578ecddd",
+        "f577c7cec551bd56566990650b5e6745a33ad2e0"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore per-focus BlueStacks mouse actions"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "d50b9292abf8c023b46ed45f667816b979fac2c6",
+      "source_commits": [
+        "ad6b3830ebacfd3d72d7fc6ab5908ff4b0fdb486"
+      ],
+      "errors": [],
+      "subject": "[A16] Apply configured blacklist actions"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "d7a99628fff0644fd7dbf42345f60c11b8d158fa",
+      "source_commits": [
+        "5b6ab0fcd46e2a508369b09f28d2d3c4604b72ae",
+        "6a7d3285bc650be71159859eb4ab39d56f4fdac8",
+        "bbe9209ae32d06ceb2af4e3862d7cc1a5ddcf0e1",
+        "f577c7cec551bd56566990650b5e6745a33ad2e0"
+      ],
+      "errors": [],
+      "subject": "[A16] Support BlueStacks native mouse pointer"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "d875979700baed6c4792db3036066bf4e2c8c975",
+      "source_commits": [
+        "036a6922fa4a1413d357e88c2798947b911bf0fe",
+        "2c364040bb48604e65e0c2443c5e914e77606d86",
+        "8c63dfd40186f61f1b9e3ee070f458967629230a",
+        "8ede0aaab9ec9ab63fc62b3080e6c6605eb027d9",
+        "9fd68594cac52e33aa449c1ef447c9584ec9137b",
+        "c9c9fdde981d1d62cdb24ecb2e7dc92173e84dab",
+        "e148a5bf34ad6fa2cf8c4cebc17757e54cc6093e"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore recents orientation synchronization"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "da022df456abce95b8c4e3017c50b39fee70a2e5",
+      "source_commits": [
+        "911bfe7d7a3c03ac7c76651a2d7081837d6122dd"
+      ],
+      "errors": [],
+      "subject": "[A16] Stop pending sign-in popup on app display"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "e192afc1d33dc473506d075507e608681a0656be",
+      "source_commits": [
+        "279c7128863117fe2d0d57069ca294ff1fffb5e7",
+        "af2af26ebba1e52e355cb919b3bf326075e18c35",
+        "cd161672739a1bc726e71fd178696cdd425d53f8",
+        "d0c915247a889c7d77a6e4a4218ac0c837125ff0"
+      ],
+      "errors": [],
+      "subject": "[A16] Refresh per-process device profile constants"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "e2b8a5a1c8c48d8349ed85522908cf98c5f7abdb",
+      "source_commits": [
+        "48ddd2e05ea0e7ac6dc49369e2071a92ad7629f0",
+        "517e86f37e7e27640f39ac00e2a4f8a4a7ab4acf",
+        "ee63bacfaf1424f188f1f705cbc9523df9f24153",
+        "eebc5c7960b9b942080491d8d3e6f10c75bce149"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore secure input recording notification"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "ec24b0a37f36643040b3180626ce1b5b93dda636",
+      "source_commits": [
+        "174c3b04466cbf9ac82a2292f1009201f471804d",
+        "7fdcf1219e70b038e3ea5980b04cdb96821b2ef3",
+        "b01064d4221b61d5286fce13a40195bbcc2835b2",
+        "d8caf5f91e27ca367e3026ac241ba06160ac4524"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore uncube launcher native library extraction"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "f6513291f43ec81adbd6abdf05d332900c557d81",
+      "source_commits": [
+        "77340fd11be44794f06cfd3f1bdbee4bca1b3e39"
+      ],
+      "errors": [],
+      "subject": "[A16] Apply dxflag to ART install dexopt"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "f97857cfee46d4837e2e116b998bf6e3815a3db2",
+      "source_commits": [
+        "5e23f975cddb0cf37ab3ebd38c764215a4866148"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Binder transaction order check"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "fb4c6cdbb744908fe77c55b75ae808cb0e1b955e",
+      "source_commits": [
+        "7e22ff78568bb54ca8573791d59ba6b044289724",
+        "9d8c5f6c87f72f35beecf4f686aa66fe3cb337a4",
+        "bb8f77eceb39d70da9bded3d92a7c6a2dbb43a93",
+        "d803b524b1d857a17fcddc6b920089c43b25e7f8"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete host intent forwarding"
+    },
+    {
+      "project": "frameworks/base",
+      "target_path": "frameworks/base",
+      "target_repository": "frameworks/base",
+      "commit": "fcb82022f83b2dbae46ccf84994be71bcd4c210a",
+      "source_commits": [
+        "aa46797b4f245390eafa0067f6036f9dc9b119ac"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks default audio volume"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "1025aa3a15899e31274c82f00794e6bbbe243a64",
+      "source_commits": [
+        "3b8d0a3e99d89124fb20cb1c12ca7c0f4ff6309d",
+        "ee59a4b38fd0290483aefa5e00547f6a4c38eaff"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore default Vulkan driver fallback"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "13fa9b698bcf3026a3bfc0e9ab1581eb91d3e919",
+      "source_commits": [
+        "3b8d0a3e99d89124fb20cb1c12ca7c0f4ff6309d",
+        "777e772cc2284363ddaac1e308a77d7288e8f1b3",
+        "89b9e997f3cc73d386ade93a4e1110c171c62fbf",
+        "ee59a4b38fd0290483aefa5e00547f6a4c38eaff"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: frameworks/native (2 commits, base fcbde2bcff56)"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "1c8fde2ee05bef21309b4e8061e89729249474f7",
+      "source_commits": [
+        "02be203f086f72dc3cf9acc6fbddbe93fdfa7fe9",
+        "3fa54846d20adb0b159c5ecb29838b88a665b374"
+      ],
+      "errors": [],
+      "subject": "[A16] Propagate BlueStacks display FPS changes"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "2449c48789d020360dca1363e88a476cf9638e4a",
+      "source_commits": [
+        "02be203f086f72dc3cf9acc6fbddbe93fdfa7fe9",
+        "3fa54846d20adb0b159c5ecb29838b88a665b374"
+      ],
+      "errors": [],
+      "subject": "[A16] Avoid recursive locking in the FPS override"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "2ee235d5ec3a055713a9d48f40d43de001a4fcb9",
+      "source_commits": [
+        "c0767b13d53191ddeec0ed3100af656adfab7dfc"
+      ],
+      "errors": [],
+      "subject": "[A16] Use managed su for dumpstate"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "6698b43b159e031a206279e8c406bb61dc50b9b8",
+      "source_commits": [
+        "02be203f086f72dc3cf9acc6fbddbe93fdfa7fe9",
+        "3fa54846d20adb0b159c5ecb29838b88a665b374"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore the validated scheduler FPS override"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "a98023c677684dda5ffe2733ff0aaaafd12facef",
+      "source_commits": [
+        "08e777b8c12009a829e8b2a889a5f536ba54e8d9",
+        "272f0b8deb7b3de6152178eb04c173e15f6f9516",
+        "31e7cb19aeb50b00b38a89a510309c1d843a4192",
+        "3441d139607f4219bed2149f37fac058e0e6d143",
+        "356eb15af210c227a828375b8e810da9fa878e5c",
+        "3876d826dbc70fab94dd6b3e8b65bbb4df4db543",
+        "3b0042dc33bfbdd253627743f21b546b8c39655a",
+        "3dddae4b6592909a36e23944554134db9d2fc850",
+        "40a205339773d121d719a67f86edb66813edb686",
+        "4867ad3b519ef21ea52db04d2f63fd77dd026675",
+        "4ecbaed21f658e72f309ba76fdac50a4c230f513",
+        "5e2e25b9ee3036e22c45488a082b4f0a614d0e26",
+        "5e9f23c728f5d8494e10ad0323e018f8be37179c",
+        "6401bc78f523a4e9a6014054e01b2da92c148b91",
+        "643841af8f98d95a0c4c0d5424d167a5d17f2375",
+        "73b828bbaf9938af2d83364afbb2ae2bd7bb3487",
+        "7f53a256f1b35198020eb3024914c82e57712b69",
+        "7f844d685bed06a154e7b9a31a5c24a3617e433f",
+        "84c8763a344fc826ef14b6fe9ecc954232488f06",
+        "875a04ba27c8290157594d13674d3d799cbaaca6",
+        "93fcd0712221b8c8898e7a32603420442ead98ee",
+        "94b067c9b165ac91005ae8145d7ca1b379436672",
+        "98eec32948696f03a67d2cd2918eb88c25be7c76",
+        "9e13cbdd2384845c9e96303143ec558fd2a40cc7",
+        "ab09d7d6622c2cad19c51291992fb9f933927b94",
+        "b0d8c9709c335e6d7e91b996f5086fff93cea45d",
+        "b429bc96b6131d46ddb358ea874d02947c13f826",
+        "bc14e95a1f7426f876300cabe9233005af4a1f97",
+        "c0767b13d53191ddeec0ed3100af656adfab7dfc",
+        "c26eb6cff32e24dbaf2a5b2f74830ff85dc5e3ab",
+        "c49561c467c10d85fb2fa57c31e0ce5f3c048aff",
+        "c8a93cdb9a27cf4af426c6fce60405eb0a048e00",
+        "d333b7ff8f34617ab0eb2cdbaef5cad8c4d9cb74",
+        "d57e1af18b7297c4f5062839b5c824af705e2df3",
+        "d5d72c2486d766a421c1f8d9b7a969b47c177dff",
+        "d7e69d366ecf54eb94fa12aaa74a43ab4d1b0029",
+        "d89915d0bae4d0c4fafc9cb95f636a40a2e67448",
+        "dc91d18ddad9171baf070dc80d2fb2384634d901",
+        "e196b437f3f8d70d50e765f1d2ea138b94015657",
+        "f2dd272b9b8557e691b096375417c1cb9df2ae9e",
+        "f6e2d4745803a597bc64e31d73102b57bfd74487",
+        "fa35bd62ceb3f60bb28a852352816087e15b466b",
+        "fcaa372b2f8ce7d0a44c160156f4dca6cdd92b05",
+        "fda7a2a512fae09144601b41dee3f8a7ef90529a",
+        "ff24fdca26e6be2770052f830cbcdee2a51e7058"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete App Player dumpstate diagnostics"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "d150d24b57af14d0d41d4d4cb2737d171caa215a",
+      "source_commits": [
+        "02be203f086f72dc3cf9acc6fbddbe93fdfa7fe9",
+        "3fa54846d20adb0b159c5ecb29838b88a665b374"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore FPS refresh propagation"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "dad15bbbd29371ef74f714bdcd89eef51c632611",
+      "source_commits": [
+        "767f4107a5bfce659069e3949ff061a32aa323ce"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore absolute mouse coordinates"
+    },
+    {
+      "project": "frameworks/native",
+      "target_path": "frameworks/native",
+      "target_repository": "frameworks/native",
+      "commit": "e1460f0fc5bdc943d5e88367fccce4c70582c235",
+      "source_commits": [
+        "02be203f086f72dc3cf9acc6fbddbe93fdfa7fe9",
+        "3fa54846d20adb0b159c5ecb29838b88a665b374"
+      ],
+      "errors": [],
+      "subject": "[A16] Keep FPS handling on the validated scheduler path"
+    },
+    {
+      "project": "frameworks/opt/telephony",
+      "target_path": "frameworks/opt/telephony",
+      "target_repository": "frameworks/opt/telephony",
+      "commit": "2e929cdce086df0cf42ad3e99ce030bb15ae12d1",
+      "source_commits": [
+        "0a28c7cf6737a26ac346fa47c834a29dfcddeeff"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks virtual SIM subscription"
+    },
+    {
+      "project": "frameworks/opt/telephony",
+      "target_path": "frameworks/opt/telephony",
+      "target_repository": "frameworks/opt/telephony",
+      "commit": "3240a0be5948fd6f9bc3e73815d035d5a28cc230",
+      "source_commits": [
+        "0a28c7cf6737a26ac346fa47c834a29dfcddeeff"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: frameworks/opt/telephony (2 commits, base 864b2fe3e2f7)"
+    },
+    {
+      "project": "frameworks/opt/telephony",
+      "target_path": "frameworks/opt/telephony",
+      "target_repository": "frameworks/opt/telephony",
+      "commit": "b06a887a526981cbc0b23fd2bf469334df9b9f9d",
+      "source_commits": [
+        "0a28c7cf6737a26ac346fa47c834a29dfcddeeff"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete virtual SIM identities"
+    },
+    {
+      "project": "hardware/bst/audio",
+      "target_path": "hardware/bst/audio",
+      "target_repository": "hardware/bst/audio",
+      "commit": "ac13f7b60680f60a3b0efc031aaa42019be254be",
+      "source_commits": [
+        "01114219537e61b01d7526aa1a9654f5b7e5a812",
+        "168c9310f7a26591adbdae01aa347d22b776f3ab",
+        "1c2c376341d016f7d7da43aa9909043a6738bd5d",
+        "27100e9a7ba03744c4796a5ae2d6a562ce14e6db",
+        "293bd2c92f145997f04048bbc0b15f6b9f742534",
+        "2bd5215c57c0f6ccba8af36d050618f52153e3b3",
+        "3ac75230e3ea49f9c8bbae5f1f48a2442ad907cd",
+        "43bc5b5a9e09086e4a323293959e187d3f92e2a7",
+        "4b6b612ed474ad48d331ac49e338ba79cca00119",
+        "4f5006abcb66e923cabc4644b613db8d2c93a2bb",
+        "6e6086e49991f5f9840390181c10cc9bc04eaf2f",
+        "7a7fa62195e51b151a52de1ea9d24800883680f9",
+        "7b7bf0207ad99efc5d287d64bc7aac6dd3402640",
+        "898f53cdc904c5413f9b7a3cf37dff475e21f9a5",
+        "96fdbee5d7753ced4fde9ba3a1915977ef2ea9c4",
+        "a0dc7a5d2137f806f12a31c7db91efe2f2cabbbe",
+        "a5bc8ec212b9f366d7f9da972a81caf153e8ff89",
+        "af4a279dc2427f8b5be64f9d34f55a56b1ae0291",
+        "bc6c8bfd9a5f7dbb7a6e53756a5d377559d2347e",
+        "be031164f36a1368220e1e566d16a2b4ee2ecaa0",
+        "cdbc332ddb87cbf5f02cf5a4d2754f0cec18680c",
+        "ce9a1b1c6983dbb91c592643d1d90d64786bbcbe",
+        "cea954f274111f7b63a6d79f3dc697a24297b0c3",
+        "cec8aca80e41c264813c9f206c5749575e3810c4",
+        "cfde6b1213e204bb8eca55ce16b1a26d4d0eef0b",
+        "dbfefd061488092592c10f9c325a12a419e0b228",
+        "f1d06d6a40b8c33b36cc8d389c43ff8a0048ae71",
+        "f2ca20dae03c006a15c74f96f2709d2a99d40f7d",
+        "f8ac0ee7e2edf5885a1901ea242b6d0957c17a2a",
+        "fc4aceec5137d1658bedc97e257896e81bad625f"
+      ],
+      "errors": [],
+      "subject": "[A16] Add legacy audio HAL include path"
+    },
+    {
+      "project": "hardware/bst/camera",
+      "target_path": "hardware/bst/camera",
+      "target_repository": ".",
+      "commit": "33cdca5464ea1a50e98058a40c36bf3121dbe2b7",
+      "source_commits": [
+        "62b0613d8fa30f5690acf2f711013a09f6e032d3",
+        "68b5e0b2297b2908f8f63d936af3d66a9020712f"
+      ],
+      "errors": [],
+      "subject": "[A16] camera.bst: fix 64-bit pointer truncation in MessageQueue arg0"
+    },
+    {
+      "project": "hardware/bst/camera",
+      "target_path": "hardware/bst/camera",
+      "target_repository": ".",
+      "commit": "ccb6e510172f5da98b70841a9873824d1658ad88",
+      "source_commits": [
+        "62b0613d8fa30f5690acf2f711013a09f6e032d3",
+        "68b5e0b2297b2908f8f63d936af3d66a9020712f"
+      ],
+      "errors": [],
+      "subject": "[A16] hardware/bst/camera: BST camera HAL source (camera.bst)"
+    },
+    {
+      "project": "hardware/bst/lights",
+      "target_path": "hardware/bst/lights",
+      "target_repository": "hardware/bst/lights",
+      "commit": "d7fb147bdaf6c5675ba98c308c0411c8f6762bdd",
+      "source_commits": [
+        "1b56f57da510b43bd2c9c9f77e88e793b672186b",
+        "2d132222d7333b7fa1e89b6bf03f4a1d7a626a2f",
+        "44cee4150d7d5b3e7bf6099aafb1db95b795f8b1",
+        "8d4c15a9a0de601ea92bd5e8929904231472802b",
+        "92d5cacab1e7bef9f5973db51e1399034974e9cc",
+        "b1bb36be9c6e7d0eadad8d71c3263c8e7259df11",
+        "b2caaa392952dcb5489844a8fe9ddaaeca235d84",
+        "b6fd8ba5885ae683175c347f26fac9e5ee12c5ea",
+        "bb71f100912c5f3bfcdcb059812ad29b4be8fd19",
+        "e0078cc218a965ec72c34742633c1e93496a64e4",
+        "fd2e518ce7f63e699f560460bf65923e25e166a8"
+      ],
+      "errors": [],
+      "subject": "[A16] Add vendor libhardware include path"
+    },
+    {
+      "project": "hardware/bst/memtrack",
+      "target_path": "hardware/bst/memtrack",
+      "target_repository": "hardware/bst/memtrack",
+      "commit": "d3596f32d4f042ccbb17653ab84132cfa07080d0",
+      "source_commits": [
+        "b2aa1fc432d7cb1e37cd977161fb033643c65b9c"
+      ],
+      "errors": [],
+      "subject": "[A16] Add legacy memtrack HAL include paths"
+    },
+    {
+      "project": "hardware/bst/power",
+      "target_path": "hardware/bst/power",
+      "target_repository": "hardware/bst/power",
+      "commit": "2b2e3e1dd69985937d122b400dded54532e8519f",
+      "source_commits": [
+        "ff0cda46a0cf102e4da2388cc9efb05f79906184"
+      ],
+      "errors": [],
+      "subject": "[A16] Add legacy power HAL include paths"
+    },
+    {
+      "project": "hardware/interfaces",
+      "target_path": "hardware/interfaces",
+      "target_repository": "hardware/interfaces",
+      "commit": "bf800caa090008c2fbbc1723c6fe814ece6f7eb9",
+      "source_commits": [
+        "7b5efb33e999c7acb912ee749f09b28a7ab388fc"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore framebuffer FPS synchronization"
+    },
+    {
+      "project": "hardware/interfaces",
+      "target_path": "hardware/interfaces",
+      "target_repository": "hardware/interfaces",
+      "commit": "ea0df662b9130b01dee2d26635d5cc14e9a87ec9",
+      "source_commits": [
+        "7b5efb33e999c7acb912ee749f09b28a7ab388fc"
+      ],
+      "errors": [],
+      "subject": "[A16] Apply BlueStacks FPS to the framebuffer HWC"
+    },
+    {
+      "project": "hardware/interfaces",
+      "target_path": "hardware/interfaces",
+      "target_repository": "hardware/interfaces",
+      "commit": "fc6ad60000d63de650ed1cfec1e1184a341c7293",
+      "source_commits": [
+        "7b5efb33e999c7acb912ee749f09b28a7ab388fc"
+      ],
+      "errors": [],
+      "subject": "[A16] Remove the unvalidated framebuffer FPS callback"
+    },
+    {
+      "project": "hardware/libhardware",
+      "target_path": "hardware/libhardware",
+      "target_repository": "hardware/libhardware",
+      "commit": "e2305d5c825f9d9a54059607c503951c233b0fab",
+      "source_commits": [
+        "98d36f865b801daa8ea9432d0442ce3c87647d31"
+      ],
+      "errors": [],
+      "subject": "[A16] Prefer BlueStacks legacy HAL modules"
+    },
+    {
+      "project": "kernel",
+      "target_path": "kernel-a16",
+      "target_repository": "kernel-a16",
+      "commit": "10d61b7393ec37012e27530bf344c559da766590",
+      "source_commits": [
+        "06ed013c7419cf0a2bf23935cd02eef1fe38c944",
+        "165e5db472b71a1fbacdfaff56fde55554456fa1",
+        "52d257768b73e4d3f2e9ebd157a81ea5f424577c",
+        "789629edabc6251ff6f85b03908f4cfca211dc5c",
+        "8289a136f9e1150aad9286a009b56b55799d0113",
+        "9344ead449b0dbfe85b50c3fc08fb3ee70f1eac5",
+        "b901c42e4f8c6dff657e5b05bdb6f5d1c9692016",
+        "d9ae0f3a41d6b488973e754e4a8e60fb0f536348",
+        "e8368878a34523d52e11af0016138fd262381910",
+        "ea03043ec57c5965d6c426f4431093ac910ba277"
+      ],
+      "errors": [],
+      "subject": "[A16] x86: enable SquashFS for BlueStacks system.sfs"
+    },
+    {
+      "project": "kernel",
+      "target_path": "kernel-a16",
+      "target_repository": "kernel-a16",
+      "commit": "eee2a2da325ff8f7901cdbd1cdf2bfcd6ea8e61e",
+      "source_commits": [
+        "001ee35e0027888d7d7115336161acf65198cfcb",
+        "06ed013c7419cf0a2bf23935cd02eef1fe38c944",
+        "089b043ea02ccca310a43d2d2a34f3cf2ac45049",
+        "092fb989671145a9795101e4da785e5d1d2311d8",
+        "165e5db472b71a1fbacdfaff56fde55554456fa1",
+        "22405de18120843f7f5e9b158e4c8e53a4314339",
+        "2f636076816aece71253bf4ee8ce9161bee80161",
+        "34f092c5497cac7854ccb6cbefd2e42eadd23106",
+        "399c89ffc434db1273c5aff51dbe3c4fe180c9be",
+        "417caffce5fb56c017f4d2167b35d86bde71b259",
+        "47c2a2688255e09c2fb0c374be380d528da19710",
+        "510a93ecf371e60a89dee165fb1db90f41f26dc4",
+        "52c775684dd41102fe323566c2c93739e2b190b7",
+        "52d257768b73e4d3f2e9ebd157a81ea5f424577c",
+        "687c8ee890dde9048db463ab861127c8902d5228",
+        "6c310f7819b4b77e9b9d33b1628de56c9ac52a9d",
+        "6d2abc85babd11c3ce98d5c56fff9a127b710838",
+        "789629edabc6251ff6f85b03908f4cfca211dc5c",
+        "8289a136f9e1150aad9286a009b56b55799d0113",
+        "848b12dc47ea4ce956b159845215d3626ec21aee",
+        "8d5b6308090e339d617b066f0ece8551fc2f3a5c",
+        "91478d873857cf209fe154c502e7071c51d03ba1",
+        "9344ead449b0dbfe85b50c3fc08fb3ee70f1eac5",
+        "a2d4f4d144b115a3863ce5bb2bbb43f2b2a04f45",
+        "a64ed171e844383116d458b8ec851d6797302485",
+        "b901c42e4f8c6dff657e5b05bdb6f5d1c9692016",
+        "bad1244b6fb0da7693e9024225248ff2d2e832e0",
+        "d04adeab91d28cd7f25227532656eace46ce2581",
+        "d4605abb5cc08e41ce4efd922715c6ccfe3fca6c",
+        "d5576bc2890a664b37f61114958ce091a202ce63",
+        "d9ae0f3a41d6b488973e754e4a8e60fb0f536348",
+        "e205e974d19e532a376624bfdcc074ad93c71d9d",
+        "e8368878a34523d52e11af0016138fd262381910",
+        "ea03043ec57c5965d6c426f4431093ac910ba277",
+        "ec3320cd8e7007383b59c3ffd318d208da81b543",
+        "eed8fdeb2ee898255e467411b8426bf72ccdd2dd",
+        "f4443c667c27f1cf358adb18ccef3cab1a9e306e",
+        "f59f9e3607bd77ad600194d7d42d26567664e273",
+        "fb04cfb6e4c2a3d6c193cfb764f2415c645b6570",
+        "fd3f61e0b1d82a69badfcdefce8608f39e96f664"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: kernel-a16 (2 commits; resolved 2 conflicts: setup.c bstandroid=tiramisu64 [Tiramisu64 instance], bst_hooks.h (void) [modern C style])"
+    },
+    {
+      "project": "libcore",
+      "target_path": "libcore",
+      "target_repository": "libcore",
+      "commit": "02a54f0a80975d89248b6514e180dca09cb7477a",
+      "source_commits": [
+        "ba89be4af05129e72dbd39779755c4f9c2392a0c"
+      ],
+      "errors": [],
+      "subject": "[A16] Gate the legacy DroidGuard fallback"
+    },
+    {
+      "project": "libcore",
+      "target_path": "libcore",
+      "target_repository": "libcore",
+      "commit": "3ff2bb739c048758662fd4203563291362d3f722",
+      "source_commits": [
+        "1a94ca7a309f17398b9466214fd0560990926be5"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore legacy app runtime compatibility"
+    },
+    {
+      "project": "libcore",
+      "target_path": "libcore",
+      "target_repository": "libcore",
+      "commit": "a11d197a9cf7771a80d9b8a8cd7d477bab1f5889",
+      "source_commits": [
+        "c6d764996cdd6817e29307cb536b2eb46cff7cd0"
+      ],
+      "errors": [],
+      "subject": "[A16] Preserve virtual Wi-Fi MAC fallback"
+    },
+    {
+      "project": "libcore",
+      "target_path": "libcore",
+      "target_repository": "libcore",
+      "commit": "e98191e0c6fee02332c3968f721692c09ffcfe0c",
+      "source_commits": [
+        "c6d764996cdd6817e29307cb536b2eb46cff7cd0"
+      ],
+      "errors": [],
+      "subject": "[A16] Expose the virtual network as Wi-Fi to apps"
+    },
+    {
+      "project": "packages/apps/Launcher3",
+      "target_path": "packages/apps/Launcher3",
+      "target_repository": "packages/apps/Launcher3",
+      "commit": "bc15ad50ea5a68408133a1d6c4f83ff32656831e",
+      "source_commits": [
+        "8993045592eaca0b8edbb42e101c2d2f47f8fd2c",
+        "8b9f433e56725266329a5aeff87dbeb1e0977029",
+        "d091215d140d20eafc234d999654a4fd7ffefbcc"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks Launcher integration"
+    },
+    {
+      "project": "packages/apps/Launcher3",
+      "target_path": "packages/apps/Launcher3",
+      "target_repository": "packages/apps/Launcher3",
+      "commit": "c3d3c1832387e1fa10d316496721e7aace0d21f3",
+      "source_commits": [
+        "b4f85d9ff4b21e9a4b7ec4dd32e3f7c8470f8775"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: packages/apps/Launcher3 (2 commits, base bbd0e27be08c)"
+    },
+    {
+      "project": "packages/apps/Settings",
+      "target_path": "packages/apps/Settings",
+      "target_repository": "packages/apps/Settings",
+      "commit": "19f10ccc7503d8e4724962ebd7129ae2d784b4fc",
+      "source_commits": [
+        "e4d840f84defdccd4ba8c4187062c9f92ec2ef88",
+        "fec4ae830324142dada3b7585772f606d764e517"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks Settings entry points"
+    },
+    {
+      "project": "packages/apps/Settings",
+      "target_path": "packages/apps/Settings",
+      "target_repository": "packages/apps/Settings",
+      "commit": "21109720f5a2747feb7b51ccac6c944219f3c322",
+      "source_commits": [
+        "d47b592300b3a129c7eb4860fe1eb385b743f0fe"
+      ],
+      "errors": [],
+      "subject": "[A16] Guard missing hearing aid event manager"
+    },
+    {
+      "project": "packages/apps/Settings",
+      "target_path": "packages/apps/Settings",
+      "target_repository": "packages/apps/Settings",
+      "commit": "4011bdb53de5b9a96a965b98004d8a03672596c4",
+      "source_commits": [
+        "e4d840f84defdccd4ba8c4187062c9f92ec2ef88"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks Settings product policy"
+    },
+    {
+      "project": "packages/apps/Settings",
+      "target_path": "packages/apps/Settings",
+      "target_repository": "packages/apps/Settings",
+      "commit": "4912d1eeb906ab225068bbdbef2c14e826ad3f62",
+      "source_commits": [
+        "478ec390a177c8be4b88d515ad081ae95c8252d3",
+        "54ea6b317ca5bb815d2f6d612794e79b7b83acf0",
+        "87afcb0c6acffd1a44f81eddfa4c568eb610a1d4",
+        "e4d840f84defdccd4ba8c4187062c9f92ec2ef88"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks default home selection"
+    },
+    {
+      "project": "packages/apps/Settings",
+      "target_path": "packages/apps/Settings",
+      "target_repository": "packages/apps/Settings",
+      "commit": "ead6734925e6a6ef7b058f909e969ea74728595e",
+      "source_commits": [
+        "9e9cc3048e4f91589e945f26cf5a8faf3572f3c1"
+      ],
+      "errors": [],
+      "subject": "[A16] Use IEC units for storage summaries"
+    },
+    {
+      "project": "packages/inputmethods/LatinIME",
+      "target_path": "packages/inputmethods/LatinIME",
+      "target_repository": "packages/inputmethods/LatinIME",
+      "commit": "30cede3a4b41fabeb621af09301882d9750e8d05",
+      "source_commits": [
+        "a0a80622973cee7750241a15164b18cdcf502abb"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks host input integration"
+    },
+    {
+      "project": "packages/modules/Bluetooth",
+      "target_path": "packages/modules/Bluetooth",
+      "target_repository": "packages/modules/Bluetooth",
+      "commit": "7f96b596a749046fefd1fe87c683ecc2cdb48bc7",
+      "source_commits": [
+        "4853f5160e4d7689f30bf7ef0deac7379b4f7c0c"
+      ],
+      "errors": [],
+      "subject": "[A16] Tolerate delayed Bluetooth keystore startup"
+    },
+    {
+      "project": "packages/modules/Connectivity",
+      "target_path": "packages/modules/Connectivity",
+      "target_repository": "packages/modules/Connectivity",
+      "commit": "204b126ff740dfa008a2b05023cce520a8052e6d",
+      "source_commits": [
+        "d86f187aea77c164213462d377884fa3473d1e47"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: packages/modules/Connectivity (1 commits, base f930245ec39a)"
+    },
+    {
+      "project": "packages/modules/Connectivity",
+      "target_path": "packages/modules/Connectivity",
+      "target_repository": "packages/modules/Connectivity",
+      "commit": "2f0481f305cadd2280cee75506be803219ad6629",
+      "source_commits": [
+        "d86f187aea77c164213462d377884fa3473d1e47",
+        "eb7ce30646385250ec05e673aafedee4c33363b5"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore App Player network presentation"
+    },
+    {
+      "project": "packages/modules/Connectivity",
+      "target_path": "packages/modules/Connectivity",
+      "target_repository": "packages/modules/Connectivity",
+      "commit": "7f941fffef7bd70fc661f0a1b8248a146fe37a60",
+      "source_commits": [
+        "33b855c9022604cec5944afbbffad06ff85eb50e",
+        "a2da91635decd85935bcb268e81f612d93129306",
+        "f082bfff816777d3b0133e249038aac079dcbd43"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete China captive portal policy"
+    },
+    {
+      "project": "packages/modules/Connectivity",
+      "target_path": "packages/modules/Connectivity",
+      "target_repository": "packages/modules/Connectivity",
+      "commit": "b3f8ca2c95e4c5f4211b8e6bccb0a0a7d9e92ed6",
+      "source_commits": [
+        "33b855c9022604cec5944afbbffad06ff85eb50e",
+        "a2da91635decd85935bcb268e81f612d93129306",
+        "f082bfff816777d3b0133e249038aac079dcbd43"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore China captive portal policy"
+    },
+    {
+      "project": "packages/modules/Connectivity",
+      "target_path": "packages/modules/Connectivity",
+      "target_repository": "packages/modules/Connectivity",
+      "commit": "ce5d67fa66f1f56450a22f274ccc39a6207108a6",
+      "source_commits": [
+        "56a3aff5be6304f88eba2fcdee09cde8ad42fd5c"
+      ],
+      "errors": [],
+      "subject": "[A16] Unroll DSCP policy matching"
+    },
+    {
+      "project": "packages/modules/NetworkStack",
+      "target_path": "packages/modules/NetworkStack",
+      "target_repository": "packages/modules/NetworkStack",
+      "commit": "6d7e4d175654da4b8155da5916cf63d99c6cdf0c",
+      "source_commits": [
+        "36f17f9da91003020cc9ac1c166930ef590a8ec9",
+        "7843886c36eb2f360366781fce9b2ed7957253b8"
+      ],
+      "errors": [],
+      "subject": "[A16] Preserve captive portal setting override"
+    },
+    {
+      "project": "packages/modules/NetworkStack",
+      "target_path": "packages/modules/NetworkStack",
+      "target_repository": "packages/modules/NetworkStack",
+      "commit": "da967b74218a71de2409433653032f690f1f45af",
+      "source_commits": [
+        "36f17f9da91003020cc9ac1c166930ef590a8ec9",
+        "7843886c36eb2f360366781fce9b2ed7957253b8"
+      ],
+      "errors": [],
+      "subject": "[A16] Preserve China network validation policy"
+    },
+    {
+      "project": "packages/modules/Wifi",
+      "target_path": "packages/modules/Wifi",
+      "target_repository": "packages/modules/Wifi",
+      "commit": "025929cf5db85fea57847db7b6e29b5f224c035d",
+      "source_commits": [
+        "162ac08516e1d8bb0b1b4dff592b346ae4b67f02",
+        "2f632f2240117521f4fa929e9674a3e8ff0bf927"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks virtual Wi-Fi identity"
+    },
+    {
+      "project": "packages/modules/adb",
+      "target_path": "packages/modules/adb",
+      "target_repository": "packages/modules/adb",
+      "commit": "361c29e743452cf1a6d944aa2d836de5fa776c1f",
+      "source_commits": [
+        "1d0b4472c01532d14d6939ebe2daa6db295c6e8d",
+        "6f4cd55e077314d86efd21632bbb5f80bf53c7b7"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete ADB access policy"
+    },
+    {
+      "project": "packages/providers/DownloadProvider",
+      "target_path": "packages/providers/DownloadProvider",
+      "target_repository": "packages/providers/DownloadProvider",
+      "commit": "db61a3d4e87ab1312486fdb481573b990f22de53",
+      "source_commits": [
+        "6be0a145972d85db66d05e19403de3a11711983e"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore immediate download retry requests"
+    },
+    {
+      "project": "packages/services/Telephony",
+      "target_path": "packages/services/Telephony",
+      "target_repository": "packages/services/Telephony",
+      "commit": "f9e3cb10e72ed2bca0bb9c6e082cab44e8ec64dd",
+      "source_commits": [
+        "c64fce29ac5856d05f7c7a7e03530d3b23f4f48e"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore locale fallback without a SIM"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "03321b2b968815f7911539e8ce826dafc0810163",
+      "source_commits": [
+        "e385ab8879b2103b260865bfc6f9756387782af0"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore managed su filesystem metadata"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "048e9d8e6473c6b16cd45880e3e71e48bbc6f069",
+      "source_commits": [
+        "3a19a39863aacd9d8cac22a40d63571ae302395c"
+      ],
+      "errors": [],
+      "subject": "[A16] Gate init service timing properties"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "130da841435e1ee25f8b770a2622536884a54db0",
+      "source_commits": [
+        "3674046c4fc21fe5b819c191032d4656c92dd7d7",
+        "3a19a39863aacd9d8cac22a40d63571ae302395c",
+        "8e346d02d2076567c40b1d191a934cc864706b0f",
+        "bcde7cf2cb5afd241fbe194b160cc3da83e9c8d3",
+        "c61fe93a26cdb3d20d6c25308a7e5b1515e09d63",
+        "dfc6650bacc425672d093565c92db48a4961e0d6"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete A13 init policy"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "3744251dc959a1c3c4bb062366967d34cf4412a0",
+      "source_commits": [
+        "4a8ac9167043fbc97a390306123ce2384398bbba"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks hosts policy"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "475ab3838709bb0f7683feb2e2ebbeb676192531",
+      "source_commits": [
+        "133a180f818218a9056c58cc83aac0be7a579d4d"
+      ],
+      "errors": [],
+      "subject": "[A16] Preserve BlueStacks property precedence"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "7c8d1833f16bc911e49b8d2bad16d885c5f40987",
+      "source_commits": [
+        "3674046c4fc21fe5b819c191032d4656c92dd7d7",
+        "bcde7cf2cb5afd241fbe194b160cc3da83e9c8d3",
+        "c61fe93a26cdb3d20d6c25308a7e5b1515e09d63",
+        "cada1aeb3414661fdc6f0e13d2a3685799807805"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore Baklava root configuration"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "82fb4cad6c26a8ac0ff2c97e11755780f630adb4",
+      "source_commits": [
+        "0258531ff45982cb428c481c338202fd4bfb08d2",
+        "3a19a39863aacd9d8cac22a40d63571ae302395c",
+        "84da7a18b466a478e178cf03df6cf41b1c3a970d"
+      ],
+      "errors": [],
+      "subject": "[A16] Normalize permissive init handling"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "8975a5dbe08685e1950e9876f125901a8770357d",
+      "source_commits": [
+        "0f6c0a077862114bba034d2a298bd0b43e509bed",
+        "452bca8b71c79f6e36d895e6cae55f82bc2cbbf3",
+        "8e346d02d2076567c40b1d191a934cc864706b0f",
+        "af0d285905fd767acafc905ec3c7af84ab14e5e3",
+        "b03a8bf869de06e4c88d5c55a1272225b86a82a1",
+        "bcde7cf2cb5afd241fbe194b160cc3da83e9c8d3",
+        "f76bac3926d61aa9e17afd8fa4832d90b6f51342"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: system/core (7 commits, base e9d1fa3705d7)"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "8fd298a149e403a101e2f1815963882833492fb8",
+      "source_commits": [
+        "8e346d02d2076567c40b1d191a934cc864706b0f",
+        "dfc6650bacc425672d093565c92db48a4961e0d6"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks root init behavior"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "972712d4450d99ec2ccd1760972159f5a89e6436",
+      "source_commits": [
+        "76d675c9da3a0c73bd54123bba80106ed5655626"
+      ],
+      "errors": [],
+      "subject": "[A16] Fix UTF-8 leading-byte decoding"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "ab102bbed8be2041886a511890359684bc3e08c2",
+      "source_commits": [
+        "133a180f818218a9056c58cc83aac0be7a579d4d",
+        "1d4b539c12e928ee6adfadfb530c23a38829db90",
+        "bcde7cf2cb5afd241fbe194b160cc3da83e9c8d3"
+      ],
+      "errors": [],
+      "subject": "[A16] Complete BlueStacks property loading"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "b935c0010aef4c5f7d5aba93bfc30a5a019e24df",
+      "source_commits": [
+        "133a180f818218a9056c58cc83aac0be7a579d4d"
+      ],
+      "errors": [],
+      "subject": "[A16] Label BlueStacks property files"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "b9e2de4775bc48df040d8dd8d936afcc1f87fc50",
+      "source_commits": [
+        "133a180f818218a9056c58cc83aac0be7a579d4d"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore post-data BlueStacks properties"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "bbbdfb60d537f304b783f34e5500eeadc9ee62ea",
+      "source_commits": [
+        "133a180f818218a9056c58cc83aac0be7a579d4d"
+      ],
+      "errors": [],
+      "subject": "[A16] Reload additional system properties post-data"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "bd6b5a606091bcf5c02b53b61dbc5e25553067aa",
+      "source_commits": [
+        "426f8f8ceb16719bbf2e9f7d0fbb959eb7685fad"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks getevent filtering"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "c3b8e85911979493a8f7dff1c494aeca2fdf8e05",
+      "source_commits": [
+        "9aeb166a8c42fa673dd85142fdc75fb4a6069532"
+      ],
+      "errors": [],
+      "subject": "[A16] Expand init mount paths"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "d727e7ddeaf83c8d9b8cae2e2b13711051c20af9",
+      "source_commits": [
+        "8e346d02d2076567c40b1d191a934cc864706b0f",
+        "a0a417c2d410e89cd4e79c3cf737fefaa6e36964"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore valid BlueStacks init service syntax"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "d97fcbb24c758ec6b911580a7e25bea557d7cc29",
+      "source_commits": [
+        "1a9fded278031b282a58f6535851fe4cf55ef137",
+        "4aae59e4c545939a32cae6ebefd21092234f2e39",
+        "7f0791b8a84afb12de5299d1e789ddc1db6e8ba8"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore BlueStacks device permissions"
+    },
+    {
+      "project": "system/core",
+      "target_path": "system/core",
+      "target_repository": "system/core",
+      "commit": "f114ce7221e6388f10318109b1c894947e301776",
+      "source_commits": [
+        "bcde7cf2cb5afd241fbe194b160cc3da83e9c8d3"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore battery logging policy"
+    },
+    {
+      "project": "system/extras",
+      "target_path": "system/extras",
+      "target_repository": "system/extras",
+      "commit": "2e0a75a42df3f785c500711ddada805d70e07ff2",
+      "source_commits": [
+        "5028b2853428122f2a241eb3bfa39f5521d23212",
+        "6263dfadd71dc00bbf9ad00ff4276b1f38a4d9e9",
+        "70a1bd5690bc156db15297d967f05c98373f6f8e",
+        "98daa86aa8a087f16397503fbac8f094ad93241f",
+        "eb78e76e12476f6a86884c726b50b5e1bf4b1e8a",
+        "eca6211470f74cad69b06668cdf70161f5eb4fd2"
+      ],
+      "errors": [],
+      "subject": "[A16] Restore managed su policy"
+    },
+    {
+      "project": "system/extras",
+      "target_path": "system/extras",
+      "target_repository": "system/extras",
+      "commit": "99ab133eca8c26838fe92022070dd5ba8964f3b2",
+      "source_commits": [
+        "98daa86aa8a087f16397503fbac8f094ad93241f"
+      ],
+      "errors": [],
+      "subject": "[A16] merge aosp16 BST: system/extras (1 commits, base 3f52a5ab49ba)"
+    },
+    {
+      "project": "system/security",
+      "target_path": "system/security",
+      "target_repository": "system/security",
+      "commit": "6443d21a351b50b343ea7f037cb045585c4d0f26",
+      "source_commits": [
+        "ef05d6c885bc1a74ff8bf37d322b0b9c1d86d31a"
+      ],
+      "errors": [],
+      "subject": "[A16] Stop the PRNG seeder early-init service"
+    },
+    {
+      "project": "system/vold",
+      "target_path": "system/vold",
+      "target_repository": "system/vold",
+      "commit": "a19a66f962e8d682b71053dc9738194788ca5038",
+      "source_commits": [
+        "19949f84b376efc8a5c71ead6133945f3f4ac050"
+      ],
+      "errors": [],
+      "subject": "[A16] Signal shared-folder mounting from vold"
+    },
+    {
+      "project": "system/vold",
+      "target_path": "system/vold",
+      "target_repository": "system/vold",
+      "commit": "bf57a99ee447bc089e29ff52ac3624fae61a5fde",
+      "source_commits": [
+        "fb129833c9b27047bd529da67ce56fe248969075"
+      ],
+      "errors": [],
+      "subject": "[A16] Disable unsupported project quota ioctls"
+    }
+  ]
+}

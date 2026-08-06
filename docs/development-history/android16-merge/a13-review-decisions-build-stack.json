@@ -59,8 +59,12 @@
       "expected_matches": 1,
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-at-android-x86-64-product-boundary",
-      "target_commits": [
-        "4a985857f52160c55bca07d4acc6766580592316"
+      "target_commits": [],
+      "target_mappings": [
+        {
+          "project": "device/generic/x86_64",
+          "commit": "4a985857f52160c55bca07d4acc6766580592316"
+        }
       ],
       "rationale": "A13 made vndservice and vndservicemanager unconditional globally. Android 16 keeps upstream shipping-API policy and selects vndservicemanager only for the Windows android_x86_64 product; its dependency installs vndservice. This preserves the required guest behavior without changing every A16 product.",
       "necessity": "Required by legacy vendor Binder services used by the BlueStacks Windows guest.",
@@ -105,8 +109,12 @@
       "expected_matches": 1,
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-to-android-x86-64-product-variable",
-      "target_commits": [
-        "fa9bb993e37ddb56d083a7ecae7a73387adf04a2"
+      "target_commits": [],
+      "target_mappings": [
+        {
+          "project": "device/generic/x86_64",
+          "commit": "fa9bb993e37ddb56d083a7ecae7a73387adf04a2"
+        }
       ],
       "rationale": "Android 16 sets PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD=false in android_x86_64.mk, preserving A13 release ART behavior for eng images while leaving other products at upstream defaults.",
       "necessity": "Required for application compatibility and production-equivalent ART behavior in the Windows image pipeline.",
@@ -147,8 +155,12 @@
       "expected_matches": 1,
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-as-host-driven-runtime-density",
-      "target_commits": [
-        "7b6874dc74745c956af674344fda5d5fe55216e9"
+      "target_commits": [],
+      "target_mappings": [
+        {
+          "project": "device/generic/common",
+          "commit": "7b6874dc74745c956af674344fda5d5fe55216e9"
+        }
       ],
       "rationale": "A13 hard-coded 240 into every generated partition build.prop. Android 16 applies the host-provided DPI in device/generic/common init.sh, preserving the Windows product contract without globally mutating all partitions/products.",
       "necessity": "Required for host-controlled display density and launcher/layout compatibility.",

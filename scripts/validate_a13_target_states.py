@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -104,6 +105,27 @@ def run_check(repo: Path, entry: dict[str, Any], check: dict[str, Any]) -> list[
                 errors.append(f"lfs-filter-missing:{path}")
             if path not in lfs_paths:
                 errors.append(f"lfs-object-missing:{path}")
+    elif check_type == "file-sha256":
+        path = check.get("path")
+        expected = check.get("sha256")
+        if not isinstance(path, str) or not path:
+            raise ValueError("file-sha256 check has no path")
+        if not isinstance(expected, str) or not re.fullmatch(
+            r"[0-9a-fA-F]{64}", expected
+        ):
+            raise ValueError("file-sha256 check has no valid digest")
+        source = repo / path
+        if not source.is_file() or git(
+            repo, "ls-files", "--error-unmatch", "--", path
+        ).returncode:
+            errors.append(f"sha256-source-missing:{path}")
+        else:
+            digest = hashlib.sha256()
+            with source.open("rb") as stream:
+                for block in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(block)
+            if digest.hexdigest() != expected.lower():
+                errors.append(f"sha256-mismatch:{path}")
     elif check_type in {"regex-present", "regex-absent", "regex-ordered"}:
         path = check.get("path")
         patterns = check.get("patterns")

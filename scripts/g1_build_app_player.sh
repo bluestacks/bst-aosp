@@ -97,15 +97,24 @@ done
 BUILD_MAKEFILE="$BST_APP_PLAYER_ROOT/buildscripts/Makefile"
 SFS_SCRIPT="$BST_APP_PLAYER_ROOT/buildscripts/make-baklava-system-sfs.sh"
 MOUNTSF_PAYLOAD="$BST_APP_PLAYER_ROOT/bst/bin/mountsf"
-UNCUBE_APK="${BST_UNCUBE_APK_INPUT:-$BST_APP_PLAYER_ROOT/bst/apks_Baklava64/com.uncube.launcher3.apk}"
-for input in "$BUILD_MAKEFILE" "$SFS_SCRIPT" "$MOUNTSF_PAYLOAD" "$UNCUBE_APK"; do
+PACKAGE_INPUT_INSTALLER="$SCRIPT_DIR/prepare_android16_package_inputs.sh"
+PACKAGE_INPUT_BUNDLE="${BST_A16_PACKAGE_BUNDLE:-$HOME/a16-package-inputs/bst-v5.22.210-A16-e7a61686}"
+for input in "$BUILD_MAKEFILE" "$SFS_SCRIPT" "$MOUNTSF_PAYLOAD" \
+    "$PACKAGE_INPUT_INSTALLER" "$PACKAGE_INPUT_BUNDLE/SOURCE.identity" \
+    "$PACKAGE_INPUT_BUNDLE/SHA256SUMS"; do
   [ -f "$input" ] || { echo "missing app-player packaging input: $input" >&2; exit 1; }
 done
+APP_PLAYER_DIR="$BST_APP_PLAYER_ROOT" BST_A16_PACKAGE_BUNDLE="$PACKAGE_INPUT_BUNDLE" \
+  bash "$PACKAGE_INPUT_INSTALLER" --verify-only
+UNCUBE_APK="$PACKAGE_INPUT_BUNDLE/payload/com.uncube.launcher3.apk"
+[ -f "$UNCUBE_APK" ] || { echo "verified bundle is missing uncube: $UNCUBE_APK" >&2; exit 1; }
 BUILD_SCRIPT_SHA256="$(sha256sum "$BUILD_SCRIPT" | awk '{print $1}')"
 BUILD_MAKEFILE_SHA256="$(sha256sum "$BUILD_MAKEFILE" | awk '{print $1}')"
 SFS_SCRIPT_SHA256="$(sha256sum "$SFS_SCRIPT" | awk '{print $1}')"
 MOUNTSF_SHA256="$(sha256sum "$MOUNTSF_PAYLOAD" | awk '{print $1}')"
 UNCUBE_APK_SHA256="$(sha256sum "$UNCUBE_APK" | awk '{print $1}')"
+PACKAGE_SOURCE_IDENTITY_SHA256="$(sha256sum "$PACKAGE_INPUT_BUNDLE/SOURCE.identity" | awk '{print $1}')"
+PACKAGE_SUMS_SHA256="$(sha256sum "$PACKAGE_INPUT_BUNDLE/SHA256SUMS" | awk '{print $1}')"
 BUILD_FLOW_DIFF_SHA256="$(
   git -C "$BST_APP_PLAYER_ROOT" diff --binary HEAD -- \
     buildscripts/build.sh buildscripts/Makefile buildscripts/make-baklava-system-sfs.sh |
@@ -124,6 +133,8 @@ echo "A16DBG:IDENTITY: sfs_script_sha256=$SFS_SCRIPT_SHA256"
 echo "A16DBG:IDENTITY: build_flow_diff_sha256=$BUILD_FLOW_DIFF_SHA256"
 echo "A16DBG:IDENTITY: mountsf_sha256=$MOUNTSF_SHA256"
 echo "A16DBG:IDENTITY: uncube_apk_sha256=$UNCUBE_APK_SHA256"
+echo "A16DBG:IDENTITY: package_source_identity_sha256=$PACKAGE_SOURCE_IDENTITY_SHA256"
+echo "A16DBG:IDENTITY: package_sums_sha256=$PACKAGE_SUMS_SHA256"
 
 if [ "$CHECK_ONLY" -eq 1 ]; then
   echo "A16DBG:ANDROID16: app-player build CHECK OK; no build started"
@@ -149,17 +160,15 @@ export BUILD_EMULATOR_OPENGL=true
 export BUILD_EMULATOR_OPENGL_DRIVER=true
 export BST_BUILD_EXTERNAL_GOLDFISH=true
 export USE_CCACHE="${USE_CCACHE:-1}"
+export BST_A16_PACKAGE_INSTALLER="$PACKAGE_INPUT_INSTALLER"
+export BST_A16_PACKAGE_BUNDLE="$PACKAGE_INPUT_BUNDLE"
 
 echo "A16DBG:ANDROID16: app-player build start $(date -Is) jobs=$JOBS factor=$JOB_FACTOR"
 BUILD_MARKER="$(mktemp)"
-UNCUBE_STAGING_DIR="$(mktemp -d)"
 cleanup_build_inputs() {
   rm -f "$BUILD_MARKER"
-  rm -rf "$UNCUBE_STAGING_DIR"
 }
 trap cleanup_build_inputs EXIT
-install -m 0644 "$UNCUBE_APK" "$UNCUBE_STAGING_DIR/com.uncube.launcher3.apk"
-export BST_UNCUBE_APK_SOURCE="$UNCUBE_STAGING_DIR/com.uncube.launcher3.apk"
 bash "$BUILD_SCRIPT"
 
 SYSTEM_IMG="$BST_RELEASE_ROOT/system.img"
@@ -214,6 +223,8 @@ bst_write_identity_file "$VHD.identity" "$VHD"
   printf 'build_flow_diff_sha256=%s\n' "$BUILD_FLOW_DIFF_SHA256"
   printf 'mountsf_sha256=%s\n' "$MOUNTSF_SHA256"
   printf 'uncube_apk_sha256=%s\n' "$UNCUBE_APK_SHA256"
+  printf 'package_source_identity_sha256=%s\n' "$PACKAGE_SOURCE_IDENTITY_SHA256"
+  printf 'package_sums_sha256=%s\n' "$PACKAGE_SUMS_SHA256"
 } >> "$VHD.identity"
 cat "$VHD.identity"
 echo "A16DBG:ANDROID16: app-player build DONE $(date -Is)"

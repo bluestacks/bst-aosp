@@ -963,11 +963,30 @@
         "source_commit": "f0aa8c92b54e2d911fa544176b9d8be9358c5922"
       },
       "expected_matches": 1,
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "manual_disposition": "upstream-a16-semantic-equivalent",
-      "target_commits": [
-        "90b014897eebc5b70d293104b86bcec924136a93"
-      ],
+      "target_commits": [],
+      "target_state": {
+        "project": "frameworks/base",
+        "assertion": "unknown backup schedule versions are rejected inside the recovery try/catch",
+        "evidence": "UserBackupManagerService throws for a mismatched schedule version, deletes the unreadable file in the enclosing catch, and rebuilds a null schedule.",
+        "checks": [
+          {
+            "type": "regex-ordered",
+            "path": "services/backup/java/com/android/server/backup/UserBackupManagerService.java",
+            "patterns": [
+              "int version = in\\.readInt\\(\\);",
+              "if \\(version != SCHEDULE_FILE_VERSION\\)",
+              "throw new IllegalArgumentException\\(",
+              "Unknown backup schedule version",
+              "catch \\(Exception e\\)",
+              "mFullBackupScheduleFile\\.delete\\(\\);",
+              "schedule = null;",
+              "if \\(schedule == null\\)"
+            ]
+          }
+        ]
+      },
       "rationale": "Stock Android 16 already throws IllegalArgumentException for an unknown backup schedule version inside the same recovery try/catch, causing corrupt schedule cleanup and queue reconstruction exactly as required by A13.",
       "necessity": "Required behavior, but no custom target delta is necessary because the target baseline implements it.",
       "performance": "Only affects corrupt-file recovery; normal schedule parsing is unchanged.",

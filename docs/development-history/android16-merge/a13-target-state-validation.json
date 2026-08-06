@@ -5,9 +5,9 @@
   "android16_root_branch": "aosp16-bst-merge",
   "android16_root_head": "c4d2b530567706a7250b77e9db9a0cbafb18f903",
   "counts": {
-    "equivalent_entries": 10,
-    "checks": 13,
-    "repositories": 9,
+    "equivalent_entries": 12,
+    "checks": 16,
+    "repositories": 11,
     "errors": 0
   },
   "results": [
@@ -47,6 +47,13 @@
       "errors": []
     },
     {
+      "source_project": "frameworks/base",
+      "source_commit": "f0aa8c92b54e2d911fa544176b9d8be9358c5922",
+      "target_project": "frameworks/base",
+      "assertion": "unknown backup schedule versions are rejected inside the recovery try/catch",
+      "errors": []
+    },
+    {
       "source_project": "hardware/interfaces",
       "source_commit": "451dd10409f43a4446d092380d9c5f778b9ee96c",
       "target_project": "hardware/interfaces",
@@ -79,6 +86,13 @@
       "source_commit": "4cd18ae4c129b632e8c2d4270c24342713ab3ded",
       "target_project": "tools/dexter",
       "assertion": "current large generated fixtures use the current selective LFS policy",
+      "errors": []
+    },
+    {
+      "source_project": "tools/tradefederation/prebuilts",
+      "source_commit": "da715fa6c6e05ba034cbc841d2aedd62d197315e",
+      "target_project": "tools/tradefederation/prebuilts",
+      "assertion": "the current Android 16 Tradefed snapshot provides both source-aligned executable JARs",
       "errors": []
     }
   ]

@@ -73,13 +73,13 @@
       "textually-complete": 278
     },
     "review_statuses": {
-      "reviewed-equivalent": 10,
+      "reviewed-equivalent": 12,
       "reviewed-integration": 548,
       "reviewed-not-ported": 260,
-      "reviewed-ported": 524
+      "reviewed-ported": 522
     },
     "explicit_target_candidates": 98,
-    "cross_project_mappings": 6
+    "cross_project_mappings": 16
   },
   "entries": [
     {
@@ -3025,13 +3025,17 @@
         "complete-line-evidence": 1
       },
       "review_status": "reviewed-ported",
-      "target_commits": [
-        "4a985857f52160c55bca07d4acc6766580592316"
-      ],
+      "target_commits": [],
       "validation_evidence": [
         "Built installed-files.txt contains /system/vendor/bin/vndservice, /system/vendor/bin/vndservicemanager and its init rc."
       ],
       "manual_disposition": "ported-at-android-x86-64-product-boundary",
+      "target_mappings": [
+        {
+          "project": "device/generic/x86_64",
+          "commit": "4a985857f52160c55bca07d4acc6766580592316"
+        }
+      ],
       "rationale": "A13 made vndservice and vndservicemanager unconditional globally. Android 16 keeps upstream shipping-API policy and selects vndservicemanager only for the Windows android_x86_64 product; its dependency installs vndservice. This preserves the required guest behavior without changing every A16 product.",
       "necessity": "Required by legacy vendor Binder services used by the BlueStacks Windows guest.",
       "performance": "Starts one required service-manager process only on the target product.",
@@ -3227,13 +3231,17 @@
         "low-line-evidence": 1
       },
       "review_status": "reviewed-ported",
-      "target_commits": [
-        "fa9bb993e37ddb56d083a7ecae7a73387adf04a2"
-      ],
+      "target_commits": [],
       "validation_evidence": [
         "The target product assignment and current runtime_libart selection path were inspected together."
       ],
       "manual_disposition": "ported-to-android-x86-64-product-variable",
+      "target_mappings": [
+        {
+          "project": "device/generic/x86_64",
+          "commit": "fa9bb993e37ddb56d083a7ecae7a73387adf04a2"
+        }
+      ],
       "rationale": "Android 16 sets PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD=false in android_x86_64.mk, preserving A13 release ART behavior for eng images while leaving other products at upstream defaults.",
       "necessity": "Required for application compatibility and production-equivalent ART behavior in the Windows image pipeline.",
       "performance": "Uses the release ART APEX, avoiding debug overhead and reducing image/runtime cost.",
@@ -3352,13 +3360,17 @@
         "low-line-evidence": 1
       },
       "review_status": "reviewed-ported",
-      "target_commits": [
-        "7b6874dc74745c956af674344fda5d5fe55216e9"
-      ],
+      "target_commits": [],
       "validation_evidence": [
         "Target init.sh calls set_property ro.sf.lcd_density with the resolved DPI."
       ],
       "manual_disposition": "ported-as-host-driven-runtime-density",
+      "target_mappings": [
+        {
+          "project": "device/generic/common",
+          "commit": "7b6874dc74745c956af674344fda5d5fe55216e9"
+        }
+      ],
       "rationale": "A13 hard-coded 240 into every generated partition build.prop. Android 16 applies the host-provided DPI in device/generic/common init.sh, preserving the Windows product contract without globally mutating all partitions/products.",
       "necessity": "Required for host-controlled display density and launcher/layout compatibility.",
       "performance": "One boot-time property assignment; no rendering-loop overhead.",
@@ -5962,13 +5974,18 @@
       "review_status": "reviewed-ported",
       "target_commits": [
         "7b6874dc74745c956af674344fda5d5fe55216e9",
-        "d180a37d930a932663df75bd82ba39c315c905c9",
-        "1423a2de1c61f694d16d58e498e238bee7efaf14"
+        "d180a37d930a932663df75bd82ba39c315c905c9"
       ],
       "validation_evidence": [
         "Payload files are exact; libnb, Houdini and app_process builds passed; translated-app runtime remains pending."
       ],
       "manual_disposition": "ported-with-baklava-and-houdini16-adaptation",
+      "target_mappings": [
+        {
+          "project": "frameworks/base",
+          "commit": "1423a2de1c61f694d16d58e498e238bee7efaf14"
+        }
+      ],
       "rationale": "The exact NDK translation payload is retained under libndk_baklava64, libnb still selects it per app, and Android 16 mounts the selected arm64 libraries before dropping app privileges. Houdini 16 remains the alternate backend.",
       "necessity": "Required for per-app ARM64 translation selection.",
       "performance": "Backend selection is per translated process; bind mounts occur once in the app namespace.",
@@ -6087,14 +6104,22 @@
       },
       "review_status": "reviewed-ported",
       "target_commits": [
-        "7b5e4e1522c36f84359ca1496258a85621c72151",
-        "0edb96a328b99742a8c3583e3d1aafc501308252",
-        "00623898eb9bd0afc4374f6c79f805939f873311"
+        "7b5e4e1522c36f84359ca1496258a85621c72151"
       ],
       "validation_evidence": [
         "The frozen Android-16 build installs the Widevine service and generated module-owned fragment with both @1.3 factory fqnames. Source Android.bp binds that fragment through vintf_fragments; runtime playback validation remains pending."
       ],
       "manual_disposition": "widevine-service-owned-vintf-preserved",
+      "target_mappings": [
+        {
+          "project": "frameworks/av",
+          "commit": "0edb96a328b99742a8c3583e3d1aafc501308252"
+        },
+        {
+          "project": "device/generic/x86_64",
+          "commit": "00623898eb9bd0afc4374f6c79f805939f873311"
+        }
+      ],
       "rationale": "ClearKey uses the Android 16 AIDL service. The retained Widevine 1.3 service owns manifest_android.hardware.drm@1.3-service.widevine.xml, which declares both Widevine factories, and the required FCM bridge is already present. No board-level duplicate is needed.",
       "necessity": "Required for Widevine and ClearKey DRM registration.",
       "performance": "VINTF metadata adds no steady-state work; service cost is unchanged.",
@@ -6923,13 +6948,18 @@
       "review_status": "reviewed-ported",
       "target_commits": [
         "7b6874dc74745c956af674344fda5d5fe55216e9",
-        "d180a37d930a932663df75bd82ba39c315c905c9",
-        "1423a2de1c61f694d16d58e498e238bee7efaf14"
+        "d180a37d930a932663df75bd82ba39c315c905c9"
       ],
       "validation_evidence": [
         "All translation payload files are exact after the Tiramisu-to-Baklava path rewrite."
       ],
       "manual_disposition": "ported-with-baklava-and-houdini16-adaptation",
+      "target_mappings": [
+        {
+          "project": "frameworks/base",
+          "commit": "1423a2de1c61f694d16d58e498e238bee7efaf14"
+        }
+      ],
       "rationale": "This duplicate/follow-up authority change reaches the same final NDK translation payload and per-app libnb selection as 0f405e00; both source SHAs map to the retained final implementation.",
       "necessity": "Required as part of the final NDK translation history and payload identity.",
       "performance": "No duplicate runtime path is introduced.",
@@ -7586,14 +7616,17 @@
       },
       "review_status": "reviewed-ported",
       "target_commits": [
-        "7b5e4e1522c36f84359ca1496258a85621c72151",
-        "0edb96a328b99742a8c3583e3d1aafc501308252"
+        "7b5e4e1522c36f84359ca1496258a85621c72151"
       ],
       "validation_evidence": [
         "Installed-files and generated VINTF output prove the default 1.0 service lacked a fragment and Widevine 1.3 owns one. Commit 773ab33851c67d54c6f9b6912f23baf208d8c11b passes check-vintf-all and generated-manifest uniqueness; default-factory runtime registration and playback validation remain pending."
       ],
       "manual_disposition": "a16-drm-services-with-device-vintf-corrected",
       "target_mappings": [
+        {
+          "project": "frameworks/av",
+          "commit": "0edb96a328b99742a8c3583e3d1aafc501308252"
+        },
         {
           "project": "device/generic/x86_64",
           "commit": "773ab33851c67d54c6f9b6912f23baf208d8c11b"
@@ -7671,14 +7704,22 @@
       },
       "review_status": "reviewed-ported",
       "target_commits": [
-        "7b6874dc74745c956af674344fda5d5fe55216e9",
-        "7c8d1833f16bc911e49b8d2bad16d885c5f40987",
-        "130da841435e1ee25f8b770a2622536884a54db0"
+        "7b6874dc74745c956af674344fda5d5fe55216e9"
       ],
       "validation_evidence": [
         "Baklava files were read back from ramdisk and init.rc verifier passed; clean-Data boot remains pending."
       ],
       "manual_disposition": "ported-with-baklava-board-fallbacks",
+      "target_mappings": [
+        {
+          "project": "system/core",
+          "commit": "7c8d1833f16bc911e49b8d2bad16d885c5f40987"
+        },
+        {
+          "project": "system/core",
+          "commit": "130da841435e1ee25f8b770a2622536884a54db0"
+        }
+      ],
       "rationale": "Device packaging uses fixed fstab.baklava and init.baklava paths, init.x86.rc mounts that fstab, and system/core supplies the x86 hardware fallback without requiring a Player ro.hardware boot argument.",
       "necessity": "Required because the current Player reports an unknown boot hardware value.",
       "performance": "Boot-only path selection.",
@@ -32007,14 +32048,33 @@
       "android16_evidence": {
         "low-line-evidence": 1
       },
-      "review_status": "reviewed-ported",
-      "target_commits": [
-        "90b014897eebc5b70d293104b86bcec924136a93"
-      ],
+      "review_status": "reviewed-equivalent",
+      "target_commits": [],
       "validation_evidence": [
         "Reviewed A16 UserBackupManagerService lines 925-950 and confirmed exception-based recovery before custom commits."
       ],
       "manual_disposition": "upstream-a16-semantic-equivalent",
+      "target_state": {
+        "project": "frameworks/base",
+        "assertion": "unknown backup schedule versions are rejected inside the recovery try/catch",
+        "evidence": "UserBackupManagerService throws for a mismatched schedule version, deletes the unreadable file in the enclosing catch, and rebuilds a null schedule.",
+        "checks": [
+          {
+            "type": "regex-ordered",
+            "path": "services/backup/java/com/android/server/backup/UserBackupManagerService.java",
+            "patterns": [
+              "int version = in\\.readInt\\(\\);",
+              "if \\(version != SCHEDULE_FILE_VERSION\\)",
+              "throw new IllegalArgumentException\\(",
+              "Unknown backup schedule version",
+              "catch \\(Exception e\\)",
+              "mFullBackupScheduleFile\\.delete\\(\\);",
+              "schedule = null;",
+              "if \\(schedule == null\\)"
+            ]
+          }
+        ]
+      },
       "rationale": "Stock Android 16 already throws IllegalArgumentException for an unknown backup schedule version inside the same recovery try/catch, causing corrupt schedule cleanup and queue reconstruction exactly as required by A13.",
       "necessity": "Required behavior, but no custom target delta is necessary because the target baseline implements it.",
       "performance": "Only affects corrupt-file recovery; normal schedule parsing is unchanged.",
@@ -69801,14 +69861,29 @@
       "android16_evidence": {
         "binary-large-or-metadata-review": 2
       },
-      "review_status": "reviewed-ported",
-      "target_commits": [
-        "8627001032acd161189aac50c83178c797f39f32"
-      ],
+      "review_status": "reviewed-equivalent",
+      "target_commits": [],
       "validation_evidence": [
         "Current tradefed.jar SHA-256 is 55f4f5e8f60ad7045ff0a6bb93e47d48c4638941d94d9249af5b58601bcf9a03; tradefed-tests.jar is 9c447dabd05c13e02ebf2f3b98817f5de3be1021d435afcfd724eaed913cc9b9."
       ],
       "manual_disposition": "superseded-by-current-a16-prebuilt-snapshot",
+      "target_state": {
+        "project": "tools/tradefederation/prebuilts",
+        "assertion": "the current Android 16 Tradefed snapshot provides both source-aligned executable JARs",
+        "evidence": "Both tracked 25Q4 JARs are identity-pinned; the old A13 byte identities are intentionally not restored.",
+        "checks": [
+          {
+            "type": "file-sha256",
+            "path": "filegroups/tradefed/tradefed.jar",
+            "sha256": "55f4f5e8f60ad7045ff0a6bb93e47d48c4638941d94d9249af5b58601bcf9a03"
+          },
+          {
+            "type": "file-sha256",
+            "path": "filegroups/tradefed/tradefed-tests.jar",
+            "sha256": "9c447dabd05c13e02ebf2f3b98817f5de3be1021d435afcfd724eaed913cc9b9"
+          }
+        ]
+      },
       "rationale": "The A13 commit introduced tradefed.jar and tradefed-tests.jar for its release snapshot. Android 16 contains current 25Q4 versions and references both from the current Tradefed prebuilt/dist definitions; copying the A13 binaries would downgrade host test infrastructure.",
       "necessity": "Current Tradefed artifacts are required for host tests, but the A13 byte identities are not.",
       "performance": "No target runtime cost. Retaining only the current snapshot avoids duplicate large JAR storage.",

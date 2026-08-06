@@ -42,8 +42,13 @@
       "manual_disposition": "ported-with-baklava-and-houdini16-adaptation",
       "target_commits": [
         "7b6874dc74745c956af674344fda5d5fe55216e9",
-        "d180a37d930a932663df75bd82ba39c315c905c9",
-        "1423a2de1c61f694d16d58e498e238bee7efaf14"
+        "d180a37d930a932663df75bd82ba39c315c905c9"
+      ],
+      "target_mappings": [
+        {
+          "project": "frameworks/base",
+          "commit": "1423a2de1c61f694d16d58e498e238bee7efaf14"
+        }
       ],
       "rationale": "The exact NDK translation payload is retained under libndk_baklava64, libnb still selects it per app, and Android 16 mounts the selected arm64 libraries before dropping app privileges. Houdini 16 remains the alternate backend.",
       "necessity": "Required for per-app ARM64 translation selection.",
@@ -71,9 +76,17 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "widevine-service-owned-vintf-preserved",
       "target_commits": [
-        "7b5e4e1522c36f84359ca1496258a85621c72151",
-        "0edb96a328b99742a8c3583e3d1aafc501308252",
-        "00623898eb9bd0afc4374f6c79f805939f873311"
+        "7b5e4e1522c36f84359ca1496258a85621c72151"
+      ],
+      "target_mappings": [
+        {
+          "project": "frameworks/av",
+          "commit": "0edb96a328b99742a8c3583e3d1aafc501308252"
+        },
+        {
+          "project": "device/generic/x86_64",
+          "commit": "00623898eb9bd0afc4374f6c79f805939f873311"
+        }
       ],
       "rationale": "ClearKey uses the Android 16 AIDL service. The retained Widevine 1.3 service owns manifest_android.hardware.drm@1.3-service.widevine.xml, which declares both Widevine factories, and the required FCM bridge is already present. No board-level duplicate is needed.",
       "necessity": "Required for Widevine and ClearKey DRM registration.",
@@ -216,8 +229,13 @@
       "manual_disposition": "ported-with-baklava-and-houdini16-adaptation",
       "target_commits": [
         "7b6874dc74745c956af674344fda5d5fe55216e9",
-        "d180a37d930a932663df75bd82ba39c315c905c9",
-        "1423a2de1c61f694d16d58e498e238bee7efaf14"
+        "d180a37d930a932663df75bd82ba39c315c905c9"
+      ],
+      "target_mappings": [
+        {
+          "project": "frameworks/base",
+          "commit": "1423a2de1c61f694d16d58e498e238bee7efaf14"
+        }
       ],
       "rationale": "This duplicate/follow-up authority change reaches the same final NDK translation payload and per-app libnb selection as 0f405e00; both source SHAs map to the retained final implementation.",
       "necessity": "Required as part of the final NDK translation history and payload identity.",
@@ -299,10 +317,13 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "a16-drm-services-with-device-vintf-corrected",
       "target_commits": [
-        "7b5e4e1522c36f84359ca1496258a85621c72151",
-        "0edb96a328b99742a8c3583e3d1aafc501308252"
+        "7b5e4e1522c36f84359ca1496258a85621c72151"
       ],
       "target_mappings": [
+        {
+          "project": "frameworks/av",
+          "commit": "0edb96a328b99742a8c3583e3d1aafc501308252"
+        },
         {
           "project": "device/generic/x86_64",
           "commit": "773ab33851c67d54c6f9b6912f23baf208d8c11b"
@@ -321,9 +342,17 @@
       "review_status": "reviewed-ported",
       "manual_disposition": "ported-with-baklava-board-fallbacks",
       "target_commits": [
-        "7b6874dc74745c956af674344fda5d5fe55216e9",
-        "7c8d1833f16bc911e49b8d2bad16d885c5f40987",
-        "130da841435e1ee25f8b770a2622536884a54db0"
+        "7b6874dc74745c956af674344fda5d5fe55216e9"
+      ],
+      "target_mappings": [
+        {
+          "project": "system/core",
+          "commit": "7c8d1833f16bc911e49b8d2bad16d885c5f40987"
+        },
+        {
+          "project": "system/core",
+          "commit": "130da841435e1ee25f8b770a2622536884a54db0"
+        }
       ],
       "rationale": "Device packaging uses fixed fstab.baklava and init.baklava paths, init.x86.rc mounts that fstab, and system/core supplies the x86 hardware fallback without requiring a Player ro.hardware boot argument.",
       "necessity": "Required because the current Player reports an unknown boot hardware value.",

@@ -7,7 +7,9 @@ Automated dispositions are triage evidence, not final port or validation claims.
 `reviewed-equivalent` requires structured target-state evidence where Android 16
 already has the final behavior without a promotion commit. `reviewed-not-ported`
 records an intentional, fully assessed exclusion rather than an unmapped omission.
-Executable validation of commit-free states is recorded in
+Executable validation of mapped commits is recorded in
+[`a13-target-commit-validation.json`](a13-target-commit-validation.json);
+validation of commit-free states is recorded in
 [`a13-target-state-validation.json`](a13-target-state-validation.json).
 
 ## Counts
@@ -17,7 +19,7 @@ Executable validation of commit-free states is recorded in
 - Merge commits: 512
 - Unresolved baseline boundaries: 34
 - Explicit A13-to-A16 commit candidates: 98
-- Explicit cross-project target mappings: 6
+- Explicit cross-project target mappings: 16
 - Source-head/root-gitlink mismatches: 166
 
 | Automated disposition | Entries |
@@ -32,10 +34,10 @@ Executable validation of commit-free states is recorded in
 
 | Review status | Entries |
 | --- | ---: |
-| `reviewed-equivalent` | 10 |
+| `reviewed-equivalent` | 12 |
 | `reviewed-integration` | 548 |
 | `reviewed-not-ported` | 260 |
-| `reviewed-ported` | 524 |
+| `reviewed-ported` | 522 |
 
 ## Semantic Review Queue
 

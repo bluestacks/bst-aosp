@@ -10,11 +10,26 @@
         "source_commit": "da715fa6c6e05ba034cbc841d2aedd62d197315e"
       },
       "expected_matches": 1,
-      "review_status": "reviewed-ported",
+      "review_status": "reviewed-equivalent",
       "manual_disposition": "superseded-by-current-a16-prebuilt-snapshot",
-      "target_commits": [
-        "8627001032acd161189aac50c83178c797f39f32"
-      ],
+      "target_commits": [],
+      "target_state": {
+        "project": "tools/tradefederation/prebuilts",
+        "assertion": "the current Android 16 Tradefed snapshot provides both source-aligned executable JARs",
+        "evidence": "Both tracked 25Q4 JARs are identity-pinned; the old A13 byte identities are intentionally not restored.",
+        "checks": [
+          {
+            "type": "file-sha256",
+            "path": "filegroups/tradefed/tradefed.jar",
+            "sha256": "55f4f5e8f60ad7045ff0a6bb93e47d48c4638941d94d9249af5b58601bcf9a03"
+          },
+          {
+            "type": "file-sha256",
+            "path": "filegroups/tradefed/tradefed-tests.jar",
+            "sha256": "9c447dabd05c13e02ebf2f3b98817f5de3be1021d435afcfd724eaed913cc9b9"
+          }
+        ]
+      },
       "rationale": "The A13 commit introduced tradefed.jar and tradefed-tests.jar for its release snapshot. Android 16 contains current 25Q4 versions and references both from the current Tradefed prebuilt/dist definitions; copying the A13 binaries would downgrade host test infrastructure.",
       "necessity": "Current Tradefed artifacts are required for host tests, but the A13 byte identities are not.",
       "performance": "No target runtime cost. Retaining only the current snapshot avoids duplicate large JAR storage.",

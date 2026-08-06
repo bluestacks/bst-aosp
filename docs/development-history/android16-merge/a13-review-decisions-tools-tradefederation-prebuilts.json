@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "tradefed-current-prebuilt-jars",
+      "match": {
+        "project": "tools/tradefederation/prebuilts",
+        "kind": "patch",
+        "source_commit": "da715fa6c6e05ba034cbc841d2aedd62d197315e"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "superseded-by-current-a16-prebuilt-snapshot",
+      "target_commits": [
+        "8627001032acd161189aac50c83178c797f39f32"
+      ],
+      "rationale": "The A13 commit introduced tradefed.jar and tradefed-tests.jar for its release snapshot. Android 16 contains current 25Q4 versions and references both from the current Tradefed prebuilt/dist definitions; copying the A13 binaries would downgrade host test infrastructure.",
+      "necessity": "Current Tradefed artifacts are required for host tests, but the A13 byte identities are not.",
+      "performance": "No target runtime cost. Retaining only the current snapshot avoids duplicate large JAR storage.",
+      "security": "Keeps test execution on the current source-aligned binaries rather than old opaque executables.",
+      "validation_evidence": [
+        "Current tradefed.jar SHA-256 is 55f4f5e8f60ad7045ff0a6bb93e47d48c4638941d94d9249af5b58601bcf9a03; tradefed-tests.jar is 9c447dabd05c13e02ebf2f3b98817f5de3be1021d435afcfd724eaed913cc9b9."
+      ]
+    },
+    {
+      "id": "tradefed-test-framework-jar-removed",
+      "match": {
+        "project": "tools/tradefederation/prebuilts",
+        "kind": "patch",
+        "source_commit": "49b6fdf09553871cf6cfad5ef82f9408f923377f"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "removed-by-current-tradefed-prebuilt-architecture",
+      "target_commits": [],
+      "rationale": "A13 added a 34 MB tradefed-test-framework.jar and a matching filegroup. The Android 16 prebuilt snapshot has removed both the file and filegroup; current test_harness consumes the consolidated current artifacts. Reintroducing the orphaned A13 JAR would not restore a live feature.",
+      "necessity": "Not necessary because no current module declares or consumes tradefed-test-framework-prebuilt.",
+      "performance": "Avoids 34 MB of duplicate repository and checkout storage.",
+      "security": "Avoids retaining an unreferenced old executable JAR with no current update path.",
+      "validation_evidence": [
+        "A13 and Android-16 ls-tree plus filegroups/tradefed/Android.bp were compared directly; the current module is absent by design."
+      ]
+    }
+  ],
+  "decisions": []
+}

@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "connectivity-china-captive-portal-policy",
+      "match": {
+        "project": "packages/modules/Connectivity",
+        "kind": "patch",
+        "source_commit": [
+          "33b855c9022604cec5944afbbffad06ff85eb50e",
+          "a2da91635decd85935bcb268e81f612d93129306",
+          "f082bfff816777d3b0133e249038aac079dcbd43"
+        ]
+      },
+      "expected_matches": 3,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-oem-and-country-policy",
+      "target_commits": [
+        "b3f8ca2c95e4c5f4211b8e6bccb0a0a7d9e92ed6",
+        "7f941fffef7bd70fc661f0a1b8248a146fe37a60"
+      ],
+      "rationale": "A16 preserves the initial nxt_cn default, the ConnectivitySettingsManager API correction and the final A13 bst.country=CN expansion. The implementation keeps the A16 NetworkAgentInfo signature, Wear Bluetooth prompt exception and explicit global setting precedence.",
+      "necessity": "Required for China game network strategy on both OEM-labelled and country-labelled configurations.",
+      "performance": "Two system-property reads only when captive portal mode is evaluated, equal to the pre-fix A16 count because values are reused for logging.",
+      "security": "China configurations intentionally default to ignoring captive portal prompts, which can hide interception. A user/admin global setting still overrides the default.",
+      "validation_evidence": [
+        "android_x86_64-trunk_staging-eng service-connectivity.com.android.tethering and FrameworksNetTests built with -j8; built dex contains bst.country and aligned jar SHA-256 3a2def1bc54eb15638986b929e8699d3d1906683f3374e787c37620aeda32a02."
+      ]
+    },
+    {
+      "id": "connectivity-dscp-policy-unroll",
+      "match": {
+        "project": "packages/modules/Connectivity",
+        "kind": "patch",
+        "source_commit": "56a3aff5be6304f88eba2fcdee09cde8ad42fd5c"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-bpf-path",
+      "target_commits": [
+        "ce5d67fa66f1f56450a22f274ccc39a6207108a6"
+      ],
+      "rationale": "The A13 pragma is retained at the renamed A16 bpf/progs/dscpPolicy.c path so the bounded MAX_POLICIES loop is unrolled for verifier/load-time behavior.",
+      "necessity": "Required to avoid excessive or failed DSCP BPF program loading on the App Player kernel/verifier combination.",
+      "performance": "Improves load/verifier time at the cost of a larger BPF instruction sequence; packet-path matching semantics remain unchanged.",
+      "security": "No policy broadening, but unrolled instruction count must remain within verifier limits after future MAX_POLICIES changes.",
+      "validation_evidence": [
+        "Target commit changes only the current DSCP policy loop with pragma unroll."
+      ]
+    },
+    {
+      "id": "connectivity-fixed-wifi-intermediate-superseded",
+      "match": {
+        "project": "packages/modules/Connectivity",
+        "kind": "patch",
+        "source_commit": "6bbe6af294c67c9af56f4d3e7c8a4553f2b6483f"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-final-a13-switchable-transport",
+      "target_commits": [],
+      "rationale": "This intermediate A13 patch hard-coded Ethernet to TRANSPORT_WIFI. The later authoritative eb7ce3064638 patch replaced it with BstFilterAppsService-controlled Ethernet/Wi-Fi presentation, defaulting to Wi-Fi on failure. A16 implements that final policy.",
+      "necessity": "The hard-coded intermediate form is not necessary and would remove the final configuration switch.",
+      "performance": "Avoids permanently forcing a single transport and preserves one bounded service query during capability construction.",
+      "security": "The final policy centralizes transport exposure in a privileged service instead of an unconditional module constant.",
+      "validation_evidence": [
+        "A13 commit order and final A16 parseTransportType/shouldExposeEthernetTransport implementation were reviewed."
+      ]
+    },
+    {
+      "id": "connectivity-app-player-network-presentation",
+      "match": {
+        "project": "packages/modules/Connectivity",
+        "kind": "patch",
+        "source_commit": "d86f187aea77c164213462d377884fa3473d1e47"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-ethernet-module-layout",
+      "target_commits": [
+        "204b126ff740dfa008a2b05023cce520a8052e6d",
+        "2f0481f305cadd2280cee75506be803219ad6629"
+      ],
+      "rationale": "A16 preserves both halves of the A13 patch: property-driven static IP/gateway/DNS configuration in EthernetConfigStore and Wi-Fi legacy presentation in EthernetNetworkFactory when bst.config.modify_network is enabled. Current dependencies and tests replace static property caching and old factory APIs.",
+      "necessity": "Required for host-managed guest addressing and applications that expect Wi-Fi rather than Ethernet APIs.",
+      "performance": "Property parsing occurs during config load/agent creation, not packet processing. Static addressing avoids DHCP but malformed values can delay or fail network bring-up.",
+      "security": "Properties control IP, gateway, DNS and network identity. They must remain privileged; invalid or malicious DNS values can redirect all guest traffic.",
+      "validation_evidence": [
+        "Final A16 EthernetConfigStore contains the gated static configuration and EthernetNetworkFactory tests cover legacy Wi-Fi presentation."
+      ]
+    },
+    {
+      "id": "connectivity-switchable-ethernet-transport",
+      "match": {
+        "project": "packages/modules/Connectivity",
+        "kind": "patch",
+        "source_commit": "eb7ce30646385250ec05e673aafedee4c33363b5"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-service-null-check-and-tests",
+      "target_commits": [
+        "2f0481f305cadd2280cee75506be803219ad6629"
+      ],
+      "rationale": "A16 queries BstFilterAppsService through the hidden ServiceManager reflection boundary and selects Ethernet only when isEtherNetType(system_server) is true; failures and null service default to Wi-Fi. Transport parsing is factored for the current tracker and covered by tests.",
+      "necessity": "Required to switch guest-visible transport between compatibility Wi-Fi and real Ethernet semantics without rebuilding.",
+      "performance": "One synchronous Binder query during network capability construction; no packet-path overhead. Service readiness can affect startup latency but failure is bounded and defaults safely.",
+      "security": "A privileged service controls system network presentation. Reflection does not widen Binder access, but service spoofing/readiness and fail-open Wi-Fi behavior require boot regression.",
+      "validation_evidence": [
+        "Final A16 EthernetTracker has service null checks, exact service name and current transport validation; added unit tests cover default behavior."
+      ]
+    }
+  ],
+  "decisions": []
+}

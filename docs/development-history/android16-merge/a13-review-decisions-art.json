@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "art-droidguard-jni-compatibility",
+      "match": {
+        "project": "art",
+        "kind": "patch",
+        "source_commit": [
+          "04790f5719f844d04d982382ea62bd27156dcc09",
+          "224e3ead4eaf8f91c5230c803af1c55defeb0757",
+          "e29170951312050239b479b68ead5d81c7f6a784"
+        ]
+      },
+      "expected_matches": 3,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-droidguard-signature-set",
+      "target_commits": [
+        "81ec3f20e1c25d5302421159cccaf7c60c18a137"
+      ],
+      "rationale": "A16 recognizes both authoritative A13 DroidGuard ssNative signatures and substitutes the matching empty-byte-array JNI function only for application UIDs when BstFilterAppsManager does not disable the hook. Source commits 224e3ead and e2917095 have the same parent and identical diff, so both historical patch identities map to the same final implementation without duplicating code.",
+      "necessity": "Required for the documented DroidGuard device-incompatible workaround while preserving the per-UID disable policy.",
+      "performance": "Adds string comparison and one policy lookup only when matching native methods are registered. The static decision is process-local and does not affect ordinary JNI calls beyond the name guard.",
+      "security": "Intentionally changes integrity-attestation behavior and is high-risk compatibility debt. Exact class/method signatures, application UID gating and privileged policy control must remain narrow.",
+      "validation_evidence": [
+        "A13 base hook and both identical bundle-signature patches were compared with A16 runtime/jni/jni_internal.cc; A16 also clears JNI exceptions and scopes local references."
+      ]
+    },
+    {
+      "id": "art-native-bridge-compatibility-hooks",
+      "match": {
+        "project": "art",
+        "kind": "patch",
+        "source_commit": [
+          "3f6c563145b805817fa2f01e9f31fe2af9c67f54",
+          "4f8c891b39ce007b5455f1550290db1b305b3341",
+          "57905d797d859345c79fb47d8ab220655dda8b2f",
+          "7151a45339efcb58a1fda8dce0c5d87ec2feb284",
+          "8cd41668fa705dc91c04a382e13e9343ac14aee5",
+          "cfc8b82d8090786d4b5287eead1b186a54ece5ac"
+        ]
+      },
+      "expected_matches": 6,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-native-bridge-api-and-houdini-layout",
+      "target_commits": [
+        "41ace8de4b85a9b207de9b51ba7add042948e19c"
+      ],
+      "rationale": "A16 preserves the final A13 package-name export, abilist and xarch UID policy, Houdini CPU-info bind mounts, PMF preload and per-package before/after library hotfix hooks. It adapts the implementation to ART_TARGET_ANDROID, current linker namespaces and the Houdini 16 canonical cpuinfo path, and forwards bst_nbpname through the lazy native-bridge facade.",
+      "necessity": "Required for translated-app ABI reporting, emulator-detection compatibility, package-aware Houdini behavior and configured runtime hotfixes.",
+      "performance": "UID marker files are parsed during bridged environment setup, and PMF/hotfix libraries are initialized once per process. Library hooks wrap translated loads only for configured packages; translated-app startup latency remains a regression target.",
+      "security": "Loads privileged libraries from fixed /data/downloads paths and alters ABI/cpuinfo visibility. Marker ownership, SELinux labels, library integrity and Binder policy exports are security-critical. A16 fixes A13's partial pointer-sized file-buffer clearing by using bounded std::string reads.",
+      "validation_evidence": [
+        "All six A13 diffs and final A13 SetupEnvironment were compared with A16 native_bridge.cc, native_bridge_lazy.cc and export map. A16 commit message records x86/x86_64 module build success; boot and translated-app runtime validation remain pending."
+      ]
+    },
+    {
+      "id": "art-native-loader-compatibility-hooks",
+      "match": {
+        "project": "art",
+        "kind": "patch",
+        "source_commit": [
+          "568cb64e32abd760f8af55938a28463289f82661",
+          "728412d8fafa0a65bd34e91e54570cbf43c4c635",
+          "d7fd0e75625d51eefb33dce73d2116953b75e76c",
+          "e90a91250beb0b112801473fb836982a730c614b"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-native-loader-namespaces",
+      "target_commits": [
+        "ea4945df1c7e30a2bc496e53a11df58204ea1ee0"
+      ],
+      "rationale": "A16 retains the final A13 high-FPS hook selection, including extended performance mode 2 bypassing the global FPS property, bridged ARM and native x86 library paths, and the configured non-bridged hotfix hook used for simulator-detection compatibility. The current namespace APIs are used without replacing A16 linker setup.",
+      "necessity": "Required for configured high-FPS/Unity workloads and per-UID native hotfix injection in translated and native applications.",
+      "performance": "Each process performs bounded property/Binder checks and at most one static library initialization per namespace path. Injected libraries can materially affect startup and frame performance and require workload-specific measurement.",
+      "security": "Dynamically loads fixed libraries from writable data storage into application processes. UID policy, file integrity, ownership and namespace confinement are release-critical; chrome_zygote remains explicitly excluded where A13 required it.",
+      "validation_evidence": [
+        "The four A13 loader diffs were compared with A16 GetExtendedPerformanceMode, HighFpsHookLibrary and HotFixHookLibrary; mode 1 and mode 2 semantics and all architecture-specific paths match."
+      ]
+    },
+    {
+      "id": "art-invalid-oat-dex-pc-nonfatal",
+      "match": {
+        "project": "art",
+        "kind": "patch",
+        "source_commit": "58dd9b4c83c6acf6f7f41d2ae9a6ecf5c835dcba"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-oat-header-path",
+      "target_commits": [
+        "81a67a9daf668addd86d47a05ced385d52ba8c62"
+      ],
+      "rationale": "A16 changes the same failed native-PC-to-dex-PC lookup from fatal to error severity at the relocated runtime/oat implementation and returns kDexNoIndex, preserving the A13 boot recovery behavior.",
+      "necessity": "Required to prevent translated or malformed 64-bit stack metadata from aborting the guest during boot or unwinding.",
+      "performance": "No steady-state cost; only the already-failing lookup path changes log severity.",
+      "security": "Continuing after corrupt metadata can mask ART/compiler defects and weakens fail-fast behavior. Error telemetry and crash/unwind regression must ensure execution does not continue with unsafe state.",
+      "validation_evidence": [
+        "A13 runtime/oat_quick_method_header.cc and A16 runtime/oat/oat_quick_method_header.cc diffs were compared line by line; both return dex::kDexNoIndex after logging."
+      ]
+    }
+  ],
+  "decisions": []
+}

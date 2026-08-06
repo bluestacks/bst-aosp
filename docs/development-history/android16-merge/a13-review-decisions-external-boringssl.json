@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "boringssl-widevine-rsa-pss-compatibility",
+      "match": {
+        "project": "external/boringssl",
+        "kind": "patch",
+        "source_commit": "1582302bebf14fc60246bd0d047041408a9459f1"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-as-thin-current-boringssl-wrappers",
+      "target_commits": [
+        "3408a53df9dfc88f18405e3d22a4cd5b92654282"
+      ],
+      "rationale": "Android 16 headers retained the legacy RSA_padding_add_PKCS1_PSS and RSA_verify_PKCS1_PSS declarations but the main libcrypto binaries exported only the mgf1 forms. The port restores both entry points as eleven lines of thin wrappers that pass a null MGF1 digest to the existing implementations, matching the A13 Widevine ABI without duplicating cryptography.",
+      "necessity": "Required for Widevine or other legacy guest binaries that resolve the non-mgf1 RSA-PSS symbols from the platform libcrypto ABI.",
+      "performance": "One extra function call on the two legacy entry points. Compiler-generated wrappers are 11-56 bytes and delegate immediately; cryptographic cost and algorithm selection are unchanged.",
+      "security": "No new algorithm or validation path is introduced. The wrappers use the established BoringSSL default MGF1 digest behavior; future BoringSSL API removals must trigger symbol-level revalidation.",
+      "validation_evidence": [
+        "android_x86_64-trunk_staging-eng libcrypto built successfully with -j8.",
+        "readelf confirmed both legacy wrappers and both mgf1 implementations in 32-bit and 64-bit libcrypto.so.",
+        "64-bit libcrypto.so SHA-256 7f11cd19aec160bb2d9a1bddaf6303b164db234aa742f92d8d13c8a21b699a31; 32-bit SHA-256 d19038344bd55f4e3a38e7a789e653cb0cf42346f0e3aac5667a6bff4a13bb6d.",
+        "Component commit 3408a53df9dfc88f18405e3d22a4cd5b92654282 and root commit 53333c898c30bad7455c3192329846d8ec209af9 record the port. Runtime DRM playback remains in the final boot gate."
+      ]
+    },
+    {
+      "id": "boringssl-remove-boot-selftest-services",
+      "match": {
+        "project": "external/boringssl",
+        "kind": "patch",
+        "source_commit": "9fd2a153dcbbb675510c621c806af84e290c0d25"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "already-present-in-a16-boringssl-integration",
+      "target_commits": [
+        "ae95a3c000aa6251ed918ccdbf147b055f0d01f8"
+      ],
+      "rationale": "The promoted Android 16 BoringSSL integration already excludes the two vendor self-test init services removed by final A13. No additional source change is required.",
+      "necessity": "Necessary to preserve the verified guest boot-time policy and avoid launching unused SSL test services.",
+      "performance": "Avoids two test-service startups during boot and their process and I/O overhead.",
+      "security": "Removes test-only boot services from the production guest surface while leaving production BoringSSL self-test behavior unchanged.",
+      "validation_evidence": [
+        "A13 init service removal and Android-16 vendor init_rc integration were compared directly; the services are not enabled in the target."
+      ]
+    }
+  ],
+  "decisions": []
+}

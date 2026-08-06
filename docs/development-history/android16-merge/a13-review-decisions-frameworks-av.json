@@ -1,0 +1,332 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "frameworks-av-legacy-media-rendering",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": [
+          "0110779f41d0f808667dfb3f32486809ab7f1b6d",
+          "23589ce7bcd27807b0315d3fce44b74e5cb02587",
+          "3ead484dd9ddfebd73270991b9f622b88b735957",
+          "b955f8315067470cd0bc22b1015f92d22228c747"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-media-layout",
+      "target_commits": [
+        "cb1157fed64d3b42c37c798973bff49c578be989"
+      ],
+      "rationale": "Android 16 retains the four final A13 compatibility behaviors at current paths: software rendering avoids the unavailable Mesa YV12 path, RGB565 conversion uses libyuv dithering, NuPlayer ignores frame-dimension values misreported as sample aspect ratio, and the modular FLAC extractor accepts legacy sample rates down to 100 Hz.",
+      "necessity": "Required for legacy video rendering, malformed media metadata and low-rate FLAC compatibility in App Player.",
+      "performance": "RGB565 conversion uses the existing libyuv conversion path; the remaining checks are bounded conditionals during format setup or extractor initialization.",
+      "security": "No new authority or IPC surface. Relaxing FLAC rate validation can expose more unusual streams to the decoder and remains part of media fuzz/regression scope.",
+      "validation_evidence": [
+        "Final A16 SoftwareRenderer, ColorConverter, NuPlayer and module FLACExtractor implementations were compared to each A13 patch semantic."
+      ]
+    },
+    {
+      "id": "frameworks-av-omx-final-policy",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": [
+          "0bddd694da15cc377aad4ef4be40652caa258882",
+          "b9de3bd85fae8070483320759e55a75201a922c2",
+          "c830a22dc7b4eef5e651affd3740f6470417eb61"
+        ]
+      },
+      "expected_matches": 3,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-omx-plugin-policy",
+      "target_commits": [
+        "baf511039a83325be49f6c208488b66666b5cacf"
+      ],
+      "rationale": "A16 loads the property-selected custom OMX plugin through the SP-HAL namespace, preserves SoftOMX dlerror diagnostics, and keeps Google audio/video OMX components enabled for App Player. The final A13 policy deliberately makes the App Player condition unconditional.",
+      "necessity": "Required for BlueStacks FFmpeg/custom OMX codecs and for legacy codecs otherwise filtered by the platform first-API policy.",
+      "performance": "One additional plugin load and component enumeration occur during OMX store initialization; no per-frame overhead is introduced.",
+      "security": "The property supplies a library name, but loading remains constrained to the SP-HAL namespace. The property must remain privileged and untrusted path values must not be accepted.",
+      "validation_evidence": [
+        "Final A16 OMXStore and SoftOMXPlugin code contains addUserPlugin, SP-HAL loading, unconditional App Player component retention and corrected dlsym diagnostics."
+      ]
+    },
+    {
+      "id": "frameworks-av-omx-instance-check-superseded",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "fb5c43d6d3c0c7b89ab3e6a8c71779610ee89e76"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-later-a13-unconditional-policy",
+      "target_commits": [],
+      "rationale": "This intermediate A13 patch changed the OMX App Player check from boot completion to bst.instance. A later authoritative A13 patch, 0bddd694da15, removed that function and always enabled OMX plugins. A16 implements the later final policy.",
+      "necessity": "The intermediate property check is not necessary and would incorrectly narrow the final A13 behavior.",
+      "performance": "Avoids a redundant property read during OMX component enumeration.",
+      "security": "Avoids making codec availability depend on a spoofable or stale instance string.",
+      "validation_evidence": [
+        "A13 commit order and final A16 OMXStore were reviewed; appPlayer is intentionally unconditional."
+      ]
+    },
+    {
+      "id": "frameworks-av-software-encoder-fix-reverted",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "1bede7f6a837cc2d7ff1bbb86d9af096d688a3e6"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-explicit-a13-revert",
+      "target_commits": [],
+      "rationale": "A13 commit 8e7e5b841a46 explicitly reverts this output-buffer override. Reintroducing it would violate the final A13 source state and duplicate current encoder port sizing logic.",
+      "necessity": "Not necessary because the authority branch removed it.",
+      "performance": "Avoids forcing oversized output buffers for every software-encoded frame.",
+      "security": "Avoids the reverted CHECK-based color-format assumption on a codec parameter path.",
+      "validation_evidence": [
+        "The add and revert diffs are exact inverses; A16 has no matching internalGetParameter override."
+      ]
+    },
+    {
+      "id": "frameworks-av-software-encoder-revert-preserved",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "8e7e5b841a46649afe260e50dd5d07a4fa57e4d3"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "revert-preserved-as-final-absence",
+      "target_commits": [
+        "2f98cd4347f9f0e542c3eeda5967c0daa62c17b1"
+      ],
+      "rationale": "The revert's intended final state is preserved: A16 does not carry the A13 internalGetParameter output-buffer override. The existing OMX_IndexParamPortDefinition code is the separate current internalSetParameter path.",
+      "necessity": "Required to preserve the authoritative A13 final decision not to force both encoder ports to width*height*3/2.",
+      "performance": "Prevents unnecessary buffer growth and allocation pressure.",
+      "security": "Removes the reverted CHECK path and leaves validation to current codec code.",
+      "validation_evidence": [
+        "Final A16 SoftVideoEncoderOMXComponent was inspected at both parameter handlers; the reverted block is absent."
+      ]
+    },
+    {
+      "id": "frameworks-av-h263-16cif",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "58f810f5a100c9df487d1d89343879bc099796fb"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-codec2-h263-decoder",
+      "target_commits": [
+        "42610340d7fe1c2b1673198b9ec2925463465493"
+      ],
+      "rationale": "The removed OMX SoftMPEG4 H.263 decoder was replaced by Codec2 in A16. The current C2SoftMpeg4Dec H.263 variant exposes and initializes the same 1408x1152 16CIF limit.",
+      "necessity": "Required for legacy H.263 streams above the old CIF default size.",
+      "performance": "Only expands advertised/configured decoder limits; memory use grows only when decoding larger H.263 content.",
+      "security": "Larger dimensions increase decoder attack surface and allocation size but remain bounded to 16CIF.",
+      "validation_evidence": [
+        "A16 C2SoftMpeg4Dec defines H.263 max dimensions and initialization as 1408x1152."
+      ]
+    },
+    {
+      "id": "frameworks-av-servicemanager-readiness-probe",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "84fe45bbaeffbab0db69bb6f704baa903576b2eb"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-soong-and-installed-runtime",
+      "target_commits": [
+        "865747995b45d4b28e06e32b95affd0a12a6ac0d",
+        "6828b1c43d5eb54ff2f21e70b46cb3575ef71e41"
+      ],
+      "rationale": "The Make-based A13 bstsvcmgrtest was converted to an A16 Soong binary and explicitly installed for the startup readiness workflow; the probe source retains the service wait contract.",
+      "necessity": "Required by the guest startup readiness gate used before dependent services proceed.",
+      "performance": "A short-lived startup probe waits on servicemanager; no steady-state cost.",
+      "security": "Read-only service discovery utility with no new Binder authority.",
+      "validation_evidence": [
+        "A16 contains bstsvcmsgrtest/Android.bp and the adapted source; the installation follow-up is a separate target commit."
+      ]
+    },
+    {
+      "id": "frameworks-av-legacy-camera-locks",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "90ee78b4bd301ecadb3711e375bc2754156ac0fd"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-without-mode-only-churn",
+      "target_commits": [
+        "e17c8beca45534741091aac8191ab60a2baf2171"
+      ],
+      "rationale": "A16 ignores unsupported legacy auto-exposure and auto-white-balance locks instead of returning BAD_VALUE, preserving the Tinder/Reddit compatibility behavior without the accidental executable file mode.",
+      "necessity": "Required for camera1 clients that submit lock keys unsupported by the virtual camera.",
+      "performance": "Two setup-time condition branches only.",
+      "security": "Relaxed parameter rejection is limited to unsupported lock controls and does not grant camera access.",
+      "validation_evidence": [
+        "Target commit changes only Parameters.cpp semantics and intentionally omits the A13 mode-bit churn."
+      ]
+    },
+    {
+      "id": "frameworks-av-papegames-media-read",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "9f10add70e8ed1797824f050bcc9a0938b8989e9"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-media-source-proxy",
+      "target_commits": [
+        "026d21bec7b1f861a35f912ece6f16c6d47b0f20"
+      ],
+      "rationale": "A16 disables Binder media readMultiple for com.papegames.lysk.en through BstUtilsManager at the current proxy decision point, preserving the crash workaround without storing stale package state.",
+      "necessity": "Required for the documented Love and Deepspace freeze/crash case.",
+      "performance": "Adds one synchronous package lookup when supportReadMultiple is queried, not per media buffer. This remains a Binder latency risk and should be exercised in media startup regression.",
+      "security": "Package identity comes from the privileged native manager; fail-open behavior leaves normal clients unchanged.",
+      "validation_evidence": [
+        "Final A16 IMediaSource returns false only for com.papegames.lysk.en and true otherwise."
+      ]
+    },
+    {
+      "id": "frameworks-av-cfi-a13-workaround-retired",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "a0ad22d84cfa051c7777cab19c4f4f154edab826"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "obsolete-after-a16-swcodec-restructure",
+      "target_commits": [],
+      "rationale": "The A13 workaround removed CFI because old x86 swcodec APEX packaging omitted sanitized libraries. The known-good AOSP16 reference and Android-16 target both retain the current CFI defaults; three of the five old module paths no longer exist and Codec2 now centralizes CFI-capable soft-codec defaults. Copying the deletions would reduce hardening and diverge from the verified A16 architecture.",
+      "necessity": "Not necessary at source level. The target-only build gate must still verify that com.android.media.swcodec contains its required x86 libraries.",
+      "performance": "Keeping CFI has a small indirect-call/check overhead but preserves platform hardening; removing it would trade security for an obsolete packaging workaround.",
+      "security": "CFI is an exploit-mitigation control. It must remain enabled unless a reproducible A16 packaging failure proves a narrowly scoped exception is required.",
+      "validation_evidence": [
+        "A13 commit rationale and all five old Android.bp paths were reviewed. AOSP16 head 07c99ac1840f and A16 head 2f98cd4347f9 both retain current CFI defaults, while the three old libstagefright paths are absent."
+      ]
+    },
+    {
+      "id": "frameworks-av-widevine-service",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "bb15209c81865750681a87e371fa645797818492"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-boringssl-compatibility",
+      "target_commits": [
+        "0edb96a328b93fa1d58d25d0f24ee52034187c5d"
+      ],
+      "rationale": "The A13 Widevine HIDL service, manifest, init service and exact legacy engine binary are present in A16, with a narrowly scoped BoringSSL compatibility source added for the newer platform ABI.",
+      "necessity": "Required for Widevine DRM playback with the supplied legacy engine.",
+      "performance": "DRM service and compatibility wrapper are loaded only for protected playback; cryptographic operations remain in the proprietary engine.",
+      "security": "Includes a proprietary prebuilt and privileged DRM service. Binary hash/provenance and service confinement must remain release-gated; the wrapper must not weaken certificate or crypto validation.",
+      "validation_evidence": [
+        "A16 target commit adds the complete service tree, exact libwvdrmengine.so payload and BoringSslCompat.cpp."
+      ]
+    },
+    {
+      "id": "frameworks-av-ffmpeg-media-integration",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": [
+          "bdd2ae58e99604701426227159e5fe6a20041615",
+          "c6781bc04c1f140b8a7b9fe1752e4fda759ed344"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-split-a16-media-contract-and-runtime",
+      "target_commits": [
+        "150806ec0f95ad77ee5cbace3ec8c25d2b9eafdc",
+        "baf511039a83325be49f6c208488b66666b5cacf"
+      ],
+      "rationale": "The monolithic A13 FFmpeg patch is adapted to A16's split media/module and libstagefright layout. Media MIME/metadata contracts, FileSource probing, extractor/decoder integration, OMX wiring and the MPEG-L2 Google-codec guard are all retained.",
+      "necessity": "Required for the extended media formats and BlueStacks custom OMX FFmpeg implementation.",
+      "performance": "Adds FFmpeg probing and codec selection during media setup; care is required to avoid expensive probing of ordinary files. Decode cost is format-dependent and should be compared to the platform codecs.",
+      "security": "Substantially expands parser/decoder attack surface. FFmpeg libraries and extractors require fuzzing, malformed-input regression and prompt security updates.",
+      "validation_evidence": [
+        "Target commits split contract declarations from runtime integration and touch the corresponding current A16 paths."
+      ]
+    },
+    {
+      "id": "frameworks-av-camera-frame-rate",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "cd719487877f32df9a881f5908d9df9e499d5fbf"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-recorder-and-camera-source",
+      "target_commits": [
+        "0cbd76021f29b8bcb96ad6beb586c2b649810847",
+        "52932704dcc7c240463cd1f42f32f36d05bf909a"
+      ],
+      "rationale": "A16 tracks whether the application explicitly set recorder frame rate and falls back to a HAL-supported preview rate when necessary, preserving both halves of the A13 camera recording fix.",
+      "necessity": "Required to avoid recording setup failures and incorrect metadata when the virtual camera cannot provide the requested rate.",
+      "performance": "String parsing occurs only during camera source initialization; no per-frame overhead.",
+      "security": "HAL-provided rate strings are bounded before formatting, but the legacy substring/atoi fallback remains input-validation debt.",
+      "validation_evidence": [
+        "Final A16 StagefrightRecorder contains mUserSetupFrameRate and CameraSource contains the supported-rate fallback."
+      ]
+    },
+    {
+      "id": "frameworks-av-swcodec-sphal-lookup",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "f473137c561d6f9f8c5d3fe4fc529cdf3f34832d"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-apex-linker-config",
+      "target_commits": [
+        "2f98cd4347f9f0e542c3eeda5967c0daa62c17b1"
+      ],
+      "rationale": "The current swcodec APEX linker config preserves the A13 requirement through the A16 SP-HAL namespace lookup instead of copying obsolete path and system-library lists.",
+      "necessity": "Required so custom media HAL/plugin libraries remain discoverable inside swcodec isolation.",
+      "performance": "Linker namespace setup only; no steady-state decode cost.",
+      "security": "The lookup remains namespace-scoped. Search paths and permitted libraries must stay minimal to preserve APEX isolation.",
+      "validation_evidence": [
+        "A16 apex/ld.config.txt target diff was reviewed against the A13 path/library intent."
+      ]
+    },
+    {
+      "id": "frameworks-av-camera-sensor-policy",
+      "match": {
+        "project": "frameworks/av",
+        "kind": "patch",
+        "source_commit": "fb533516826a5bfadaece13a0612f7af5eb3b508"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-camera2-and-legacy-info-paths",
+      "target_commits": [
+        "026d21bec7b1f861a35f912ece6f16c6d47b0f20",
+        "0cbd76021f29b8bcb96ad6beb586c2b649810847"
+      ],
+      "rationale": "A16 queries the per-package sensor rotation through Bst managers, updates camera characteristics and legacy orientation, and preserves the diagnostic bst camera properties at current camera service call sites.",
+      "necessity": "Required for per-application camera orientation in the virtual camera stack.",
+      "performance": "Adds synchronous Binder lookups during camera information/characteristics queries. Results should be cached or measured if camera startup latency regresses.",
+      "security": "Package identity and orientation policy come from privileged services; fail-open behavior must not allow untrusted callers to rewrite another package's camera policy.",
+      "validation_evidence": [
+        "Final A16 CameraService and CameraProviderManager contain the adapted package lookup, orientation update and compatibility properties."
+      ]
+    }
+  ],
+  "decisions": []
+}

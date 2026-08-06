@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "settings-default-home-selection",
+      "match": {
+        "project": "packages/apps/Settings",
+        "kind": "patch",
+        "source_commit": [
+          "478ec390a177c8be4b88d515ad081ae95c8252d3",
+          "54ea6b317ca5bb815d2f6d612794e79b7b83acf0",
+          "87afcb0c6acffd1a44f81eddfa4c568eb610a1d4"
+        ]
+      },
+      "expected_matches": 3,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-launcher-package-and-fallback-flow",
+      "target_commits": [
+        "4912d1eeb906ab225068bbdbef2c14e826ad3f62"
+      ],
+      "rationale": "A16 removes the FallbackHome progress animation and, only when HOME resolves to ResolverActivity, selects the final A13 launcher package com.uncube.launcher3. The current implementation validates ResolveInfo/activityInfo, requires the preferred package to exist instead of choosing an arbitrary fallback candidate, and catches runtime failures.",
+      "necessity": "Required to leave FallbackHome and consistently launch the BlueStacks home when multiple HOME activities are installed.",
+      "performance": "HOME candidate enumeration and preferred-activity update occur only during fallback boot resolution. Removing the animation avoids rendering work; the 100 ms retry loop remains startup-only.",
+      "security": "Settings uses privileged PackageManager authority to set the default HOME. Exact package matching prevents an unrelated launcher from becoming preferred when the intended package is absent.",
+      "validation_evidence": [
+        "Final A16 FallbackHome was reviewed through candidate enumeration, preferred activity registration, null handling and finish/retry behavior. Runtime clean-Data launcher validation remains mandatory."
+      ]
+    },
+    {
+      "id": "settings-storage-iec-units",
+      "match": {
+        "project": "packages/apps/Settings",
+        "kind": "patch",
+        "source_commit": "9e9cc3048e4f91589e945f26cf5a8faf3572f3c1"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-current-storage-summary",
+      "target_commits": [
+        "ead6734925e6a6ef7b058f909e969ea74728595e"
+      ],
+      "rationale": "A16 uses Formatter.FLAG_IEC_UNITS for the storage summary at the unchanged StorageUtils responsibility boundary.",
+      "necessity": "Required so Settings storage totals use binary units consistent with guest image sizing and BlueStacks UI expectations.",
+      "performance": "Formatting-only change with negligible cost.",
+      "security": "No security impact; display semantics only.",
+      "validation_evidence": [
+        "Final A16 StorageUtils.getStorageSummary passes FLAG_IEC_UNITS."
+      ]
+    },
+    {
+      "id": "settings-hearing-aid-null-guard",
+      "match": {
+        "project": "packages/apps/Settings",
+        "kind": "patch",
+        "source_commit": "d47b592300b3a129c7eb4860fe1eb385b743f0fe"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-lifecycle",
+      "target_commits": [
+        "21109720f5a2747feb7b51ccac6c944219f3c322"
+      ],
+      "rationale": "A16 guards both lifecycle registration and unregistration when LocalBluetoothManager or its event manager is unavailable, preserving the A13 BSSettings accessibility crash fix.",
+      "necessity": "Required on products without a ready Bluetooth stack so opening accessibility settings does not crash.",
+      "performance": "Two lifecycle null checks only.",
+      "security": "No authority change; fail-open behavior skips hearing-aid callbacks when the manager is absent.",
+      "validation_evidence": [
+        "Target diff symmetrically guards onStart and onStop callback operations."
+      ]
+    },
+    {
+      "id": "settings-bluestacks-entry-aliases",
+      "match": {
+        "project": "packages/apps/Settings",
+        "kind": "patch",
+        "source_commit": "fec4ae830324142dada3b7585772f606d764e517"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-settings-target-activities",
+      "target_commits": [
+        "19f10ccc7503d8e4724962ebd7129ae2d784b4fc"
+      ],
+      "rationale": "A16 manifest exposes the six BlueStacks aliases for location, accessibility, storage, accounts, about phone and account sync, adapted to current target activities and fragment metadata.",
+      "necessity": "Required by host/UI shortcuts that open specific Settings destinations without navigating the full homepage.",
+      "performance": "Manifest-only registration; no steady-state cost.",
+      "security": "Aliases are exported and therefore externally invocable. Their target activities must continue to enforce Settings permissions and user restrictions; no sensitive fragment should trust caller extras.",
+      "validation_evidence": [
+        "Final A16 AndroidManifest.xml contains all six alias names and current targetActivity/FRAGMENT_CLASS pairs."
+      ]
+    },
+    {
+      "id": "settings-product-optimization-policy",
+      "match": {
+        "project": "packages/apps/Settings",
+        "kind": "patch",
+        "source_commit": "e4d840f84defdccd4ba8c4187062c9f92ec2ef88"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-controller-and-kotlin-layout",
+      "target_commits": [
+        "19f10ccc7503d8e4724962ebd7129ae2d784b4fc",
+        "4011bdb53de5b9a96a965b98004d8a03672596c4",
+        "4912d1eeb906ab225068bbdbef2c14e826ad3f62"
+      ],
+      "rationale": "A16 preserves the bst.config.modify_settings gate, compact BlueStacks top-level page, hidden search/action-bar and unsupported gesture, keyboard, pointer, reset, update and multi-user surfaces. Removed/renamed A16 controllers are adapted at current Java/Kotlin paths, and the 100 ms FallbackHome retry is retained without copying commented-out XML entries as active UI.",
+      "necessity": "Required to present the constrained App Player Settings experience while allowing the standard Android page when the property gate is disabled.",
+      "performance": "Static property reads occur once per class load. The compact homepage creates fewer preference/controller surfaces and skips physical-keyboard background UI updates while enabled.",
+      "security": "Hides reset, update, multi-user and device-control surfaces from normal navigation but is not an authorization boundary. Direct aliases/intents and underlying services must still enforce policy.",
+      "validation_evidence": [
+        "A13 12-file patch was compared with A16 manifest, compact XML and all current controllers, including the Kotlin SystemUpdate controller and separate MultiUser controller. Settings build and runtime navigation remain pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "system-extras-managed-su-policy",
+      "match": {
+        "project": "system/extras",
+        "kind": "patch",
+        "source_commit": [
+          "5028b2853428122f2a241eb3bfa39f5521d23212",
+          "6263dfadd71dc00bbf9ad00ff4276b1f38a4d9e9",
+          "70a1bd5690bc156db15297d967f05c98373f6f8e",
+          "eb78e76e12476f6a86884c726b50b5e1bf4b1e8a"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-managed-su-and-reporting-policy",
+      "target_commits": [
+        "2e0a75a42df3f785c500711ddada805d70e07ff2"
+      ],
+      "rationale": "Android 16 preserves the final A13 managed-su implementation: signed OTA whitelist handling, package and command-line authorization, developer-mode hcall, denial reporting and the report daemon. Common implementation files are byte-identical or differ only by whitespace/line endings, except resolve_in_allowed_dirs uses an unsized array parameter to satisfy current Clang while preserving PATH_MAX behavior. The A13 unsafe-code removal remains present in the final source.",
+      "necessity": "Required to expose root only under the host-managed developer and signed-whitelist policy and to retain denied-request telemetry.",
+      "performance": "Authorization performs package lookup, whitelist parsing, signature hashing and hcall work only when su is invoked. Denial reporting uses a local datagram and does not block on cloud upload, but verbose warning logs and fallback package scans can add cost during repeated denied calls.",
+      "security": "High-privilege surface. Public-key verification, whitelist update ownership, command canonicalization, package-to-UID resolution and fail-closed behavior are security-critical. The report payload contains command, package, cwd and signature metadata and must remain protected by socket/SELinux policy.",
+      "validation_evidence": [
+        "A13 and Android-16 final su implementations were compared file by file; headers, utilities, daemon and rc are identical, and remaining source differences are formatting plus the current-compiler array declaration adaptation.",
+        "Android-16 commit 2e0a75a42df3f785c500711ddada805d70e07ff2 changes only the managed su module and carries the complete final source set. Target build and runtime authorization oracles remain part of the final regression gate."
+      ]
+    },
+    {
+      "id": "system-extras-legacy-su-module",
+      "match": {
+        "project": "system/extras",
+        "kind": "patch",
+        "source_commit": "98daa86aa8a087f16397503fbac8f094ad93241f"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-and-extended-by-final-managed-su",
+      "target_commits": [
+        "99ab133eca8c26838fe92022070dd5ba8964f3b2",
+        "2e0a75a42df3f785c500711ddada805d70e07ff2"
+      ],
+      "rationale": "The legacy su executable restored by A13 is present in Android 16 and is extended by the later authoritative managed-whitelist implementation rather than replaced by the unrelated upstream C++ su helper.",
+      "necessity": "Required as the executable entry point for the final BlueStacks root policy.",
+      "performance": "No persistent cost; the binary runs only on an explicit su request.",
+      "security": "The legacy unrestricted behavior must never bypass the later managed authorization path. Final source inspection confirms the whitelist/developer-mode checks are integrated before privilege execution.",
+      "validation_evidence": [
+        "Android-16 tracks both upstream su.cpp and the BlueStacks su.c target, and the Soong su binary is built from the managed su.c source set."
+      ]
+    },
+    {
+      "id": "system-extras-su-xbin-soong-migration",
+      "match": {
+        "project": "system/extras",
+        "kind": "patch",
+        "source_commit": "eca6211470f74cad69b06668cdf70161f5eb4fd2"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-install-in-xbin-soong-property",
+      "target_commits": [
+        "2e0a75a42df3f785c500711ddada805d70e07ff2"
+      ],
+      "rationale": "A13 selected TARGET_OUT_OPTIONAL_EXECUTABLES in Android.mk. Android 16 has no module-local Android.mk and expresses the same /system/xbin installation contract with install_in_xbin: true in Android.bp. The Soong target also carries every A13 source, HD static dependency, crypto/log dependency and report-daemon rc declaration.",
+      "necessity": "Required because callers and root tooling expect /system/xbin/su.",
+      "performance": "Build-system-only mapping with no runtime cost.",
+      "security": "Installation location does not grant privilege by itself; file mode, ownership, SELinux domain and managed authorization still require runtime verification.",
+      "validation_evidence": [
+        "A13 Android.mk and Android-16 Android.bp were compared field by field; install_in_xbin is present and all functional sources and dependencies are represented."
+      ]
+    }
+  ],
+  "decisions": []
+}

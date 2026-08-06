@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "libhardware-prefer-bst-legacy-hal",
+      "match": {
+        "project": "hardware/libhardware",
+        "kind": "patch",
+        "source_commit": "98d36f865b801daa8ea9432d0442ce3c87647d31"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-before-default-hal-fallback",
+      "target_commits": [
+        "e2305d5c825f9d9a54059607c503951c233b0fab"
+      ],
+      "rationale": "Android 16 calls hw_module_exists for the bst variant after all hardware/property variants fail and before the default variant, exactly preserving A13 precedence while retaining current APEX/VNDK path handling.",
+      "necessity": "Required so BlueStacks passthrough HALs are selected instead of generic default modules when no hardware-specific variant matches.",
+      "performance": "At most one additional access check during legacy HAL module discovery; no steady-state HAL-call overhead.",
+      "security": "Changes dynamic module selection. Only trusted system/vendor/odm HAL directories are searched and normal module ID validation remains active.",
+      "validation_evidence": [
+        "A13 and Android-16 hw_get_module_by_class ordering was compared; target commit e2305d5c adds only the bst fallback and documentation."
+      ]
+    },
+    {
+      "id": "libhardware-disable-default-gralloc-module",
+      "match": {
+        "project": "hardware/libhardware",
+        "kind": "patch",
+        "source_commit": "c014c6d2e810b6b71e8a92b66b9d734f0adff1c0"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-current-build-file-absence",
+      "target_commits": [],
+      "rationale": "A13 disabled the default gralloc by renaming its Android.mk because App Player uses goldfish-opengl-pie/system/gralloc. Android 16 tracks the legacy gralloc sources but no Android.mk or Android.bp in modules/gralloc, so the module remains disabled without carrying an obsolete .orig file.",
+      "necessity": "Required to avoid building or selecting a second generic gralloc implementation alongside the external goldfish driver.",
+      "performance": "Avoids duplicate build output and prevents accidental runtime selection of the non-accelerated/default gralloc.",
+      "security": "Reduces graphics module ambiguity; the selected goldfish gralloc remains subject to its own ABI and buffer-validation review.",
+      "validation_evidence": [
+        "git ls-files in Android-16 modules/gralloc contains source files only and no build definition; the external goldfish-opengl-pie integration is retained by the target build configuration."
+      ]
+    }
+  ],
+  "decisions": []
+}

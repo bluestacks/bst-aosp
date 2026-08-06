@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "swiftshader-a13-upstream-sync-superseded",
+      "match": {
+        "project": "external/swiftshader",
+        "kind": "patch",
+        "source_commit": "04c4656a734c065e8af222fbf0a033708c203dd6"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-android16-upstream-swiftshader",
+      "target_commits": [],
+      "rationale": "This commit is an Android 13 upstream synchronization containing generated Vulkan headers, CTS lists and generated LLVM tables rather than a BlueStacks product delta. Android 16 carries a substantially newer 25Q4 SwiftShader snapshot, including the Vulkan CTS 1.4 generation. Reapplying the A13 snapshot would downgrade generated interfaces and compiler tables as a single inconsistent block.",
+      "necessity": "Not necessary; Android 16 must retain its release-matched SwiftShader revision.",
+      "performance": "Avoids replacing newer compiler and rasterizer code with older generated LLVM data, which could regress Vulkan correctness and performance.",
+      "security": "Keeping the release-pinned upstream version preserves later validation and compiler fixes; generated headers must match their implementation revision.",
+      "validation_evidence": [
+        "A13 HEAD is based on the Android 13 r49 synchronization; AOSP16 and Android-16 are corresponding 25Q4 snapshots with matching current file counts and layout."
+      ]
+    },
+    {
+      "id": "swiftshader-large-list-removal-superseded",
+      "match": {
+        "project": "external/swiftshader",
+        "kind": "patch",
+        "source_commit": "9c8b7237d68dc1f1decbdb570e4ba1cec72ab632"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-in-a13-by-lfs-restoration",
+      "target_commits": [],
+      "rationale": "A13 temporarily deleted pipeline.txt and vk-master-NOT_SUPPORTED.txt only to restore both in the immediately later LFS commit. The deletion is not the authoritative A13 final state.",
+      "necessity": "Not necessary because reproducing an intermediate deletion would contradict the final A13 repository state.",
+      "performance": "Repository-storage-only transition with no guest runtime effect.",
+      "security": "No runtime security effect; preserving final test data avoids silently reducing conformance coverage.",
+      "validation_evidence": [
+        "A13 history shows 9c8b7237 deleting both files and 9545e8ab restoring both as LFS objects."
+      ]
+    },
+    {
+      "id": "swiftshader-current-lfs-test-data",
+      "match": {
+        "project": "external/swiftshader",
+        "kind": "patch",
+        "source_commit": "9545e8ab19cca1c6caccdbd4051f2e97f4979270"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-current-upstream-lfs-layout",
+      "target_commits": [],
+      "rationale": "The final A13 intent is to keep oversized regression lists as LFS data. Android 16 retains LFS attributes and an LFS object for the current vk-master-NOT_SUPPORTED.txt. The old pipeline.txt no longer exists in the newer test-list layout and must not be restored from a different SwiftShader revision.",
+      "necessity": "Necessary only as repository storage metadata for current large test lists, not as a request to preserve obsolete A13 file names.",
+      "performance": "Reduces Git clone/object pressure for large generated lists; no guest runtime cost.",
+      "security": "LFS object availability must be checked before conformance builds so pointer text is not mistaken for a populated test list.",
+      "validation_evidence": [
+        "Android-16 .gitattributes marks current Vulkan master lists for LFS and git lfs ls-files reports vk-master-NOT_SUPPORTED.txt; AOSP16 has the same current layout."
+      ]
+    },
+    {
+      "id": "swiftshader-llvm-project-deinit",
+      "match": {
+        "project": "external/swiftshader",
+        "kind": "patch",
+        "source_commit": "347d4ce1e9309028a693e8171beb68e2397055a4"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-submodule-absence",
+      "target_commits": [],
+      "rationale": "A13 removed the third_party/llvm-project gitlink. Neither AOSP16 nor Android-16 tracks that submodule in the final SwiftShader repository, so the desired absence is preserved without a target-only commit.",
+      "necessity": "Required to avoid an unused nested repository and ambiguous LLVM source selection.",
+      "performance": "Reduces checkout size and submodule initialization work; no runtime impact.",
+      "security": "Removes an independently pinned code source that could drift from the SwiftShader release revision.",
+      "validation_evidence": [
+        "git ls-files -s third_party/llvm-project returns no entry in A13 final, AOSP16 or Android-16."
+      ]
+    }
+  ],
+  "decisions": []
+}

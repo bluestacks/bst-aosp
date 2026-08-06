@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "libxml2-target-xmllint",
+      "match": {
+        "project": "external/libxml2",
+        "kind": "patch",
+        "source_commit": "74cffc0e6b55ebf0913f81d8c9e76bd7bd19ee1b"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-current-soong-module",
+      "target_commits": [
+        "c724771c911ee8730f829e2d6bcb513bf0038945"
+      ],
+      "rationale": "The A13 Android.mk-only xmllint target is represented in Android 16 by converting the maintained Soong xmllint module from host-only to host-supported target binary. Current libxml2 sources do not require the old sys/timeb compatibility workaround.",
+      "necessity": "Required by guest data-recovery XML inspection tooling.",
+      "performance": "Adds a 101320-byte utility to system/bin and no resident process or boot-time work.",
+      "security": "Uses current libxml2 source and build flags instead of reviving an old makefile and compatibility macro; exposure is limited to the command-line binary already selected by product packaging.",
+      "validation_evidence": [
+        "Target output /system/bin/xmllint exists and has SHA-256 c942dcbfdd7481618589f9086af2fe616e0ae463690c8beecdc17930cfe65577. Component branch aosp16-bst-merge is clean; functional recovery invocation remains pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

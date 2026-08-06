@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "integration-merge-topology",
+      "match": {
+        "kind": "merge",
+        "automated_disposition": "integration-merge"
+      },
+      "expected_matches": 512,
+      "review_status": "reviewed-integration",
+      "manual_disposition": "integration-topology-no-independent-replay",
+      "target_commits": [],
+      "rationale": "The merge records branch integration topology. Its resulting files are covered by the frozen final-A13 file comparison, while each non-merge product patch has a separate ledger entry and disposition.",
+      "necessity": "The final merged state is necessary; replaying the historical merge object itself across Android releases is neither required nor meaningful.",
+      "performance": "No target runtime cost; this is a provenance and parent-mapping disposition.",
+      "security": "No merge commit is used to waive a final-file mismatch; security-relevant final content remains assigned to the patch and file evidence entries.",
+      "validation_evidence": [
+        "Both merge parents are preserved in this ledger entry and the audit compares the resulting final A13 component tree against Android 16."
+      ]
+    },
+    {
+      "id": "final-a13-supersession",
+      "match": {
+        "kind": "patch",
+        "automated_disposition": [
+          "superseded-in-a13",
+          "no-surviving-final-delta"
+        ]
+      },
+      "expected_matches": 15,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-before-a13-head",
+      "target_commits": [],
+      "rationale": "The patch has no surviving semantic delta in the frozen final A13 component tree, so replaying it would restore behavior that the A13 development line itself removed.",
+      "necessity": "Not necessary at the authoritative A13 head; final-state equivalence requires preserving the later A13 result.",
+      "performance": "No target runtime or build cost because the superseded intermediate state is not reintroduced.",
+      "security": "Avoids reviving intermediate policy, service, translator, graphics, audio, camera, or property behavior that is absent from the final authority state.",
+      "validation_evidence": [
+        "Coverage audit found either only superseded final-file evidence or no surviving final-tree delta."
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "project": "packages/apps/Launcher3",
+      "kind": "patch",
+      "source_commit": "8b9f433e56725266329a5aeff87dbeb1e0977029",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-adaptation",
+      "target_commits": [
+        "bc15ad50ea5a68408133a1d6c4f83ff32656831e"
+      ],
+      "rationale": "The A13 taskbar-presence gate is implemented at the Android 16 TaskbarManagerImpl enablement point with the same bst.hide_taskbar contract.",
+      "necessity": "Required to keep the guest taskbar hidden by default while allowing an explicit product property to enable it.",
+      "performance": "One property read when taskbar enablement is evaluated; no polling or per-frame work.",
+      "security": "No new privilege or IPC surface.",
+      "validation_evidence": [
+        "A13 and Android 16 hunks reviewed side by side; focused Launcher runtime regression remains pending."
+      ]
+    },
+    {
+      "project": "packages/apps/Launcher3",
+      "kind": "patch",
+      "source_commit": "b4f85d9ff4b21e9a4b7ec4dd32e3f7c8470f8775",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-adaptation",
+      "target_commits": [
+        "c3d3c1832387e1fa10d316496721e7aace0d21f3"
+      ],
+      "rationale": "Both Launcher3 manifests relinquish HOME ownership and OverviewComponentObserver uses explicit Quickstep and uncube components with null-safe Android 16 configuration handling.",
+      "necessity": "Required so com.uncube.launcher3 is the product HOME while Launcher3 remains the Recents provider.",
+      "performance": "No hot-path cost; component selection occurs during overview target resolution.",
+      "security": "Changes default-home routing but introduces no exported component or permission bypass.",
+      "validation_evidence": [
+        "A13 and Android 16 manifest/observer hunks reviewed side by side; clean-Data HOME selection regression remains pending."
+      ]
+    },
+    {
+      "project": "packages/apps/Launcher3",
+      "kind": "patch",
+      "source_commit": "d091215d140d20eafc234d999654a4fd7ffefbcc",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-adaptation",
+      "target_commits": [
+        "bc15ad50ea5a68408133a1d6c4f83ff32656831e"
+      ],
+      "rationale": "The A13 TaskView Java host launch-policy call is preserved in the Android 16 Kotlin TaskView, with null and RuntimeException fail-open handling.",
+      "necessity": "Required for host policy to veto launches selected from Recents.",
+      "performance": "One existing-system-service lookup and one binder call per clicked recent task.",
+      "security": "The A16 adaptation is narrower and safer than A13 because unavailable host policy fails open without crashing Launcher3.",
+      "validation_evidence": [
+        "A13 Java and Android 16 Kotlin launch paths reviewed side by side; host-policy runtime regression remains pending."
+      ]
+    },
+    {
+      "project": "packages/apps/Launcher3",
+      "kind": "patch",
+      "source_commit": "8993045592eaca0b8edbb42e101c2d2f47f8fd2c",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-adaptation",
+      "target_commits": [
+        "bc15ad50ea5a68408133a1d6c4f83ff32656831e"
+      ],
+      "rationale": "RecentsActivity resets the last host mouse action when returning to the default Recents state, using the Android 16 helper executor and clearing the property only after host success.",
+      "necessity": "Required to avoid a stale per-app mouse action preventing normal interaction after closing an app from Recents.",
+      "performance": "At most one asynchronous binder call for each non-empty pending mouse action.",
+      "security": "No new endpoint; the A16 adaptation catches host-call failures and avoids blocking the UI thread.",
+      "validation_evidence": [
+        "A13 and Android 16 Recents state transitions reviewed side by side; close-app and mouse-action runtime regression remains pending."
+      ]
+    }
+  ]
+}

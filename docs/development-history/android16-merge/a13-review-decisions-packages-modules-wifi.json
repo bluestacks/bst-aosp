@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "wifi-bluestacks-virtual-identity",
+      "match": {
+        "project": "packages/modules/Wifi",
+        "kind": "patch",
+        "source_commit": "162ac08516e1d8bb0b1b4dff592b346ae4b67f02"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-dedicated-a16-provider",
+      "target_commits": [
+        "025929cf5db85fea57847db7b6e29b5f224c035d"
+      ],
+      "rationale": "Android 16 preserves every final A13 virtual-Wi-Fi output: enabled Wi-Fi/AP state, BlueStacks SSID, configured MAC/BSSID, connected supplicant state, guest IP, gateway, DNS and publication of .ma for libcore. The current API adaptation isolates construction in BstWifiInfoProvider, validates MAC and IPv4 properties, uses the configurable guest address and atomically stages the MAC file before rename.",
+      "necessity": "Required for applications that inspect WifiManager rather than the underlying Ethernet transport and for the libcore wlan0/MAC compatibility path.",
+      "performance": "Creates small WifiInfo/DhcpInfo objects on API calls and writes .ma only when the validated MAC changes. Synchronized publication and fsync add bounded first-call/change cost, not packet-path overhead.",
+      "security": "Properties control app-visible network identity and DNS. Invalid values fall back safely; .ma publication is atomic and world-readable as required by app-side NetworkInterface, so it must contain only the virtual MAC and the directory must remain system-controlled.",
+      "validation_evidence": [
+        "A13 WifiServiceImpl fields and return paths were mapped to Android-16 BstWifiInfoProvider and service call sites; target commit 025929cf contains only the provider and current-service integration. Runtime WifiManager/DHCP/.ma regression remains pending."
+      ]
+    },
+    {
+      "id": "wifi-virtual-mac-permission-redaction",
+      "match": {
+        "project": "packages/modules/Wifi",
+        "kind": "patch",
+        "source_commit": "2f632f2240117521f4fa929e9674a3e8ff0bf927"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-standard-a16-wifiinfo-redactions",
+      "target_commits": [
+        "025929cf5db85fea57847db7b6e29b5f224c035d"
+      ],
+      "rationale": "A13 explicitly replaced the virtual MAC with WifiInfo.DEFAULT_MAC_ADDRESS for callers lacking local-MAC permission. Android 16 feeds the virtual WifiInfo through the platform getApplicableRedactions and makeCopy(redactions) flow, clearing REDACT_FOR_LOCAL_MAC_ADDRESS only for callers with the same privileged permission. This preserves the final information-disclosure boundary using the current framework API.",
+      "necessity": "Required so ordinary applications see the protected default MAC while authorized diagnostics can obtain the configured virtual MAC.",
+      "performance": "Uses the normal WifiInfo redaction copy already required by Android 16; no extra I/O or Binder call.",
+      "security": "Prevents disclosure of the stable virtual MAC to callers without local-MAC permission and also retains current SSID/BSSID/location redactions.",
+      "validation_evidence": [
+        "The final Android-16 getConnectionInfo path constructs the virtual WifiInfo before permission checks and returns wifiInfo.makeCopy(redactions), with local-MAC redaction cleared only by checkLocalMacAddressPermission."
+      ]
+    }
+  ],
+  "decisions": []
+}

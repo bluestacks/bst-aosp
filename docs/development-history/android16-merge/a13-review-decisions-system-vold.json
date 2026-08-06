@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "vold-shared-folder-mount-signal",
+      "match": {
+        "project": "system/vold",
+        "kind": "patch",
+        "source_commit": "19949f84b376efc8a5c71ead6133945f3f4ac050"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-at-vold-startup",
+      "target_commits": [
+        "a19a66f962e8d682b71053dc9738194788ca5038"
+      ],
+      "rationale": "Android 16 imports SetProperty and sets bst.config.mountsf to 1 at the same VolumeManager::start phase as A13, before internal emulated-volume setup. AOSP16 lacks this A13-only requirement, so the explicit target port is necessary.",
+      "necessity": "Required to signal host/shared-folder mounting readiness for the guest integration path.",
+      "performance": "One property write during vold startup; no steady-state I/O cost.",
+      "security": "The property can activate a host-file sharing surface. SELinux property ownership and the consumer's path validation must prevent untrusted apps from spoofing or widening mounts.",
+      "validation_evidence": [
+        "A13 and Android-16 VolumeManager::start contain the same property write; target commit a19a66ff changes only this startup signal. Runtime shared-folder regression remains in the final boot gate."
+      ]
+    },
+    {
+      "id": "vold-disable-unsupported-project-quota-ioctls",
+      "match": {
+        "project": "system/vold",
+        "kind": "patch",
+        "source_commit": "fb129833c9b27047bd529da67ce56fe248969075"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-as-clean-a16-no-op",
+      "target_commits": [
+        "bf57a99ee447bc089e29ff52ac3624fae61a5fde"
+      ],
+      "rationale": "A13 bypasses SetQuotaInherit and SetQuotaProjectId because App Player storage returns EOPNOTSUPP for project-quota ioctls. Android 16 preserves the exact success semantics with explicit no-op functions and removes the unreachable #if 0 blocks. AOSP16 lacks this A13-only workaround.",
+      "necessity": "Required so app-directory preparation does not fail on the virtual storage transport when project quotas are unavailable.",
+      "performance": "Avoids open and ioctl calls during app-directory creation and fixup, improving this path. It also disables project-quota accounting for the affected filesystem.",
+      "security": "Quota project IDs are not enforced by this layer, so storage isolation and abuse limits must come from the App Player storage backend and other Android controls. The no-op must remain scoped to this product tree.",
+      "validation_evidence": [
+        "Android-16 SetQuotaInherit and SetQuotaProjectId explicitly return 0 with parameter suppression; target commit bf57a99 changes only Utils.cpp for this behavior. Full storage/runtime regression remains pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

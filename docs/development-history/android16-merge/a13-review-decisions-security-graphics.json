@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "selinux-global-disable-rejected",
+      "match": {
+        "project": "external/selinux",
+        "kind": "patch",
+        "source_commit": "d42add96533decac77101c314e5abceae20070d7"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "unnecessary-and-security-regressive-on-validated-a16-baseline",
+      "target_commits": [],
+      "rationale": "A13 forced libselinux is_selinux_enabled() to return false globally. Known-good AOSP16 and Android-16 retain normal mounted-policy detection, and the promotion has already closed SELinux/APEX boot blockers without disabling enforcement. Reapplying this patch would make userspace mis-detect policy state and bypass security initialization rather than solve a current compatibility gap.",
+      "necessity": "Not necessary on the validated Android 16 baseline and explicitly contrary to current security requirements.",
+      "performance": "The forced return saves only a trivial mount-state check; any boot-time benefit is negligible.",
+      "security": "Critical negative impact: globally reports SELinux disabled, can suppress labeling/policy-aware behavior and hides enforcement state from components. It must not be promoted.",
+      "validation_evidence": [
+        "A13 source patch and final AOSP16/Android-16 enabled.c were compared; both Android 16 trees use normal selinux_mnt detection. Existing promotion records include SELinux APEX boot closure without this patch."
+      ]
+    },
+    {
+      "id": "skia-goldfish-atlas-upload-guard",
+      "match": {
+        "project": "external/skia",
+        "kind": "patch",
+        "source_commit": "90765aac329aa9b6f0166a8c88da770b6750e6c0"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-atlas-types-with-full-row-guard",
+      "target_commits": [
+        "0b9c6137b24954b6a3452adeb2f305c77f50e0dc"
+      ],
+      "rationale": "A13 added trailing atlas storage to tolerate a goldfish glTexSubImage2D encoder over-read. In current Skia the Plot allocation moved to AtlasTypes.cpp. Android 16 allocates fBytesPerPixel * fWidth * (fHeight + 1) in both lazy allocation paths, preserving the root fix and covering a full extra row instead of A13's format-dependent fWidth-byte margin.",
+      "necessity": "Required to prevent intermittent out-of-bounds reads and crashes in Play Store, Instagram, Facebook, Settings and other atlas-heavy applications when using goldfish-opengl-pie.",
+      "performance": "Adds one zeroed row per allocated atlas Plot. Memory overhead is bounded by plot width and bytes per pixel; no additional per-draw computation beyond the allocation-size arithmetic.",
+      "security": "Prevents out-of-bounds reads by the graphics encoder. The larger full-row margin is safer across multi-byte color formats than the original byte-only margin.",
+      "validation_evidence": [
+        "A13 GrDrawOpAtlas allocation and current AtlasTypes Plot allocation paths were compared; target commit 0b9c6137 modifies both dataAt and prepForRender lazy allocations. Graphics runtime regression remains pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

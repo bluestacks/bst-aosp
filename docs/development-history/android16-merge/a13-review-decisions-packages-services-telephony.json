@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "telephony-locale-without-sim",
+      "match": {
+        "project": "packages/services/Telephony",
+        "kind": "patch",
+        "source_commit": "c64fce29ac5856d05f7c7a7e03530d3b23f4f48e"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-before-current-sim-locale-fallback",
+      "target_commits": [
+        "f9e3cb10ec7ff7c323ca3ab1c607643de53b843f"
+      ],
+      "rationale": "Android 16 first returns persist.sys.locale, then bst.locale, and only then runs the current upstream SIM-country locale resolution. This preserves the A13 no-SIM result while retaining current permission and telephony-feature checks and a functional platform fallback.",
+      "necessity": "Required because the virtual guest may not have modem-backed SIM records when locale is queried.",
+      "performance": "Two property reads precede the existing method; no additional Binder, database or network work.",
+      "security": "The current privileged permission and feature enforcement remain active, unlike the commented-out A13 tail.",
+      "validation_evidence": [
+        "Current PhoneInterfaceManager lines 8136-8149 implement the ordered persist.sys.locale/bst.locale path. Component branch aosp16-bst-merge is clean; runtime locale fallback remains pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

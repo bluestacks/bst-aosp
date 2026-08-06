@@ -18,6 +18,8 @@ from typing import Any
 
 DEFAULT_TAG = "android-13.0.0_r49"
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+MAX_LINE_COMPARE_BYTES = 4 * 1024 * 1024
+MAX_PREBUILT_FILE_DETAILS = 256
 CUSTOM_WITHOUT_TAG = (
     "device/bst/",
     "external/bluestacks/",
@@ -28,6 +30,10 @@ CUSTOM_COMMIT_RE = re.compile(
     r"bst_|bstvmsg|bstpgaipc|qvirt|vbox",
     re.IGNORECASE,
 )
+
+TARGET_PROJECT_REWRITES = {
+    "kernel": "kernel-a16",
+}
 
 TARGET_PATH_REWRITES = {
     "device/generic/common": (
@@ -123,6 +129,76 @@ def submodule_paths(root: Path) -> list[str]:
         for line in text.splitlines()
         if (match := re.match(r"\s*path\s*=\s*(.+?)\s*$", line))
     )
+
+
+def root_gitlinks(root: Path) -> dict[str, str]:
+    raw = run(root, "git", "ls-tree", "-rz", "HEAD").stdout
+    result: dict[str, str] = {}
+    for record in raw.split(b"\0"):
+        if not record:
+            continue
+        metadata, path_raw = record.split(b"\t", 1)
+        mode, object_type, object_id = metadata.decode("ascii").split()
+        if mode == "160000" and object_type == "commit":
+            result[path_raw.decode("utf-8", "surrogateescape")] = object_id
+    return result
+
+
+def promoted_nested_gitlinks(
+    a13_root: Path, recorded_gitlinks: dict[str, str]
+) -> dict[str, str]:
+    """Find initialized child gitlinks advanced beyond the A13 root snapshot."""
+    result: dict[str, str] = {}
+    pattern = re.compile(
+        r"^:(?P<old_mode>\d+) (?P<new_mode>\d+) "
+        r"(?P<old>[0-9a-f]+) (?P<new>[0-9a-f]+) (?P<status>\S+)\t(?P<path>.+)$"
+    )
+    for project, recorded in recorded_gitlinks.items():
+        repository = a13_root / project
+        if not repository.is_dir():
+            continue
+        head_result = run(repository, "git", "rev-parse", "HEAD", check=False)
+        if head_result.returncode:
+            continue
+        head = head_result.stdout.decode("ascii").strip()
+        if head == recorded:
+            continue
+        if run(
+            repository,
+            "git",
+            "rev-parse",
+            "-q",
+            "--verify",
+            f"{recorded}^{{commit}}",
+            check=False,
+        ).returncode:
+            continue
+        raw = git_text(repository, "diff", "--raw", "--no-abbrev", "--no-renames", f"{recorded}..HEAD")
+        for line in raw.splitlines():
+            match = pattern.match(line)
+            if not match or match.group("new_mode") != "160000":
+                continue
+            child = f"{project}/{match.group('path')}"
+            child_repository = a13_root / child
+            if not child_repository.is_dir():
+                continue
+            child_head = run(
+                child_repository, "git", "rev-parse", "HEAD", check=False
+            )
+            if child_head.returncode:
+                continue
+            if run(
+                child_repository,
+                "git",
+                "merge-base",
+                "--is-ancestor",
+                match.group("new"),
+                child_head.stdout.decode("ascii").strip(),
+                check=False,
+            ).returncode:
+                continue
+            result[child] = match.group("old")
+    return result
 
 
 def sha256(path: Path) -> str:
@@ -229,6 +305,26 @@ def parse_commits(text: str) -> tuple[list[dict[str, Any]], dict[str, list[str]]
     return commits, file_refs
 
 
+def parse_merge_commits(text: str) -> list[dict[str, Any]]:
+    commits: list[dict[str, Any]] = []
+    for line in text.splitlines():
+        if not line.startswith("@@A13MERGE@@"):
+            continue
+        fields = line[len("@@A13MERGE@@"):].split("\t", 4)
+        if len(fields) != 5:
+            continue
+        commits.append(
+            {
+                "commit": fields[0],
+                "parents": fields[1].split(),
+                "author": fields[2],
+                "author_email": fields[3],
+                "subject": fields[4],
+            }
+        )
+    return commits
+
+
 def is_custom_commit(commit: dict[str, Any]) -> bool:
     evidence = "\n".join(
         str(commit.get(key, ""))
@@ -237,13 +333,59 @@ def is_custom_commit(commit: dict[str, Any]) -> bool:
     return bool(CUSTOM_COMMIT_RE.search(evidence))
 
 
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=128)
 def source_file_lines(path: Path) -> set[str]:
     try:
+        if path.stat().st_size > MAX_LINE_COMPARE_BYTES:
+            return set()
+        with path.open("rb") as stream:
+            if b"\0" in stream.read(8192):
+                return set()
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return set()
     return {value for line in text.splitlines() if (value := normalize_line(line))}
+
+
+def target_project_root(target_root: Path, project: str) -> Path:
+    return target_root / TARGET_PROJECT_REWRITES.get(project, project)
+
+
+def metadata_target_evidence(
+    target_root: Path, project: str, relative: str, a13_file: Path
+) -> dict[str, Any]:
+    project_root = target_project_root(target_root, project)
+    state: dict[str, Any] = {
+        "matched_path": None,
+        "path_adaptation": None,
+        "a13_size": a13_file.stat().st_size if a13_file.is_file() else None,
+        "target_size": None,
+        "exact_file": False,
+        "classification": "target-project-missing",
+    }
+    if not project_root.is_dir():
+        return state
+    candidate_paths = [(relative, None)]
+    for source_prefix, target_prefix, reason in TARGET_PATH_REWRITES.get(project, ()):
+        if relative.startswith(source_prefix):
+            candidate_paths.append((target_prefix + relative[len(source_prefix):], reason))
+    candidates = [
+        (project_root / candidate, reason)
+        for candidate, reason in candidate_paths
+        if (project_root / candidate).is_file()
+    ]
+    if not candidates:
+        state["classification"] = "target-file-missing"
+        return state
+    candidate, adaptation = candidates[0]
+    state["matched_path"] = candidate.relative_to(project_root).as_posix()
+    state["path_adaptation"] = adaptation
+    state["target_size"] = candidate.stat().st_size
+    state["exact_file"] = sha256(a13_file) == sha256(candidate)
+    state["classification"] = (
+        "exact-file" if state["exact_file"] else "binary-large-or-metadata-review"
+    )
+    return state
 
 
 def commit_target_evidence(
@@ -253,7 +395,7 @@ def commit_target_evidence(
     surviving_added: set[str],
     surviving_removed: set[str],
 ) -> dict[str, Any]:
-    project_root = target_root / project
+    project_root = target_project_root(target_root, project)
     state: dict[str, Any] = {
         "matched_path": None,
         "path_adaptation": None,
@@ -386,6 +528,15 @@ def root_target_state(
         state["coverage"] = 1.0
         return state
 
+    state["a13_size"] = a13_file.stat().st_size
+    state["target_size"] = candidate.stat().st_size
+    if (
+        state["a13_size"] > MAX_LINE_COMPARE_BYTES
+        or state["target_size"] > MAX_LINE_COMPARE_BYTES
+    ):
+        state["classification"] = "binary-large-or-metadata-review"
+        return state
+
     a13_lines = source_file_lines(a13_file)
     target_lines = source_file_lines(candidate)
     matched = len(a13_lines & target_lines)
@@ -448,7 +599,7 @@ def target_state(
     a13_file: Path,
     added_lines: set[str],
 ) -> dict[str, Any]:
-    project_root = target_root / project
+    project_root = target_project_root(target_root, project)
     state: dict[str, Any] = {
         "project_exists": project_root.is_dir(),
         "requested_path": relative,
@@ -481,7 +632,11 @@ def target_state(
     best: tuple[float, int, Path, bool, str | None] | None = None
     for candidate, adaptation in candidates:
         exact = bool(a13_hash and sha256(candidate) == a13_hash)
-        target_lines = source_file_lines(candidate) if added_lines else set()
+        target_lines = (
+            source_file_lines(candidate)
+            if added_lines and candidate.stat().st_size <= MAX_LINE_COMPARE_BYTES
+            else set()
+        )
         matched = len(added_lines & target_lines)
         coverage = matched / len(added_lines) if added_lines else 0.0
         score = 2.0 if exact else coverage
@@ -493,9 +648,19 @@ def target_state(
     state["path_adaptation"] = adaptation
     state["exact_file"] = exact
     state["matched_added_lines"] = matched
+    state["a13_size"] = a13_file.stat().st_size if a13_file.is_file() else None
+    state["target_size"] = candidate.stat().st_size
     if exact:
         state["coverage"] = 1.0
         state["classification"] = "exact-file"
+    elif (
+        state["a13_size"] is not None
+        and (
+            state["a13_size"] > MAX_LINE_COMPARE_BYTES
+            or state["target_size"] > MAX_LINE_COMPARE_BYTES
+        )
+    ):
+        state["classification"] = "binary-large-or-metadata-review"
     elif not added_lines:
         state["classification"] = "deletion-or-metadata-review"
     else:
@@ -529,8 +694,10 @@ def inspect_project(
     aosp16_root: Path,
     android16_root: Path,
     project: str,
+    recorded_gitlink: str | None,
     requested_tag: str,
     commit_detail: bool,
+    force_recorded_baseline: bool = False,
 ) -> dict[str, Any]:
     repository = a13_root / project
     result: dict[str, Any] = {"path": project, "errors": []}
@@ -539,7 +706,32 @@ def inspect_project(
         return result
     result["a13_head"] = git_text(repository, "rev-parse", "HEAD").strip()
     result["a13_branch"] = git_text(repository, "branch", "--show-current").strip()
-    baseline, method = choose_baseline(repository, project, requested_tag)
+    result["a13_root_gitlink"] = recorded_gitlink
+    result["a13_head_matches_root_gitlink"] = result["a13_head"] == recorded_gitlink
+    baseline: str | None = None
+    method = "no-a13-baseline"
+    if force_recorded_baseline and recorded_gitlink:
+        baseline = recorded_gitlink
+        method = "nested-gitlink-promotion-boundary"
+    else:
+        baseline, method = choose_baseline(repository, project, requested_tag)
+    if (
+        baseline is None
+        and recorded_gitlink
+        and recorded_gitlink != result["a13_head"]
+        and run(
+            repository,
+            "git",
+            "rev-parse",
+            "-q",
+            "--verify",
+            f"{recorded_gitlink}^{{commit}}",
+            check=False,
+        ).returncode
+        == 0
+    ):
+        baseline = recorded_gitlink
+        method = "a13-root-gitlink-promotion-boundary"
     result["baseline"] = baseline
     result["baseline_method"] = method
     if baseline is None:
@@ -556,9 +748,19 @@ def inspect_project(
         f"{baseline}..HEAD",
     )
     commits, _all_file_refs = parse_commits(log)
+    merge_log = git_text(
+        repository,
+        "log",
+        "--merges",
+        "--format=@@A13MERGE@@%H%x09%P%x09%an%x09%ae%x09%s",
+        f"{baseline}..HEAD",
+    )
+    merge_commits = parse_merge_commits(merge_log)
     for commit in commits:
         commit["product_signal"] = is_custom_commit(commit)
-        if commit_detail:
+        if commit_detail and project.startswith("prebuilts/"):
+            commit["detail_limited_reason"] = "prebuilt-project-metadata-review"
+        elif commit_detail:
             commit_patch = git_text(
                 repository,
                 "show",
@@ -574,6 +776,30 @@ def inspect_project(
             for relative in commit["files"]:
                 changed = changed_lines.get(relative, {"added": set(), "removed": set()})
                 final_file = repository / relative
+                if (
+                    final_file.is_file()
+                    and (
+                        not changed["added"] and not changed["removed"]
+                        or final_file.stat().st_size > MAX_LINE_COMPARE_BYTES
+                    )
+                ):
+                    evidence.append(
+                        {
+                            "path": relative,
+                            "commit_added_lines": len(changed["added"]),
+                            "commit_removed_lines": len(changed["removed"]),
+                            "surviving_added_lines": None,
+                            "surviving_removed_lines": None,
+                            "detail_limited_reason": "binary-large-or-metadata",
+                            "aosp16": metadata_target_evidence(
+                                aosp16_root, project, relative, final_file
+                            ),
+                            "android16": metadata_target_evidence(
+                                android16_root, project, relative, final_file
+                            ),
+                        }
+                    )
+                    continue
                 final_lines = source_file_lines(final_file) if final_file.is_file() else set()
                 surviving_added = changed["added"] & final_lines
                 surviving_removed = changed["removed"] - final_lines
@@ -602,6 +828,9 @@ def inspect_project(
                 )
             commit["evidence"] = evidence
     result["non_merge_commit_count"] = len(commits)
+    result["merge_commit_count"] = len(merge_commits)
+    result["commits"] = commits
+    result["merge_commits"] = merge_commits
     result["product_signal_commit_count"] = sum(
         commit["product_signal"] for commit in commits
     )
@@ -615,6 +844,13 @@ def inspect_project(
         for path in commit["files"]:
             file_refs[path].append(commit["commit"])
     custom_paths = sorted(file_refs)
+
+    if project.startswith("prebuilts/") and len(custom_paths) > MAX_PREBUILT_FILE_DETAILS:
+        result["changed_file_count"] = len(custom_paths)
+        result["file_detail_limited_reason"] = (
+            "large-prebuilt-project-commit-and-path-metadata-only"
+        )
+        return result
 
     numstat_raw = run(
         repository,
@@ -643,7 +879,6 @@ def inspect_project(
         *custom_paths,
     )
     additions = parse_added_lines(patch)
-    result["commits"] = commits
     files: list[dict[str, Any]] = []
     for relative, stats in sorted(numstat.items()):
         a13_file = repository / relative
@@ -692,6 +927,14 @@ def summarize(projects: list[dict[str, Any]]) -> dict[str, Any]:
         "aosp16_classifications": dict(sorted(aosp.items())),
         "android16_classifications": dict(sorted(android.items())),
         "low_or_missing_in_both": missing_both,
+        "a13_head_root_gitlink_mismatches": sum(
+            project.get("a13_head_matches_root_gitlink") is False for project in projects
+        ),
+        "a13_unexpected_branches": sum(
+            project.get("a13_branch") != "bst-v5.22.210" for project in projects
+        ),
+        "non_merge_commits": sum(project.get("non_merge_commit_count", 0) for project in projects),
+        "merge_commits": sum(project.get("merge_commit_count", 0) for project in projects),
     }
 
 
@@ -723,7 +966,7 @@ def main() -> int:
     aosp16_root = args.aosp16_root.expanduser().resolve()
     android16_root = args.android16_root.expanduser().resolve()
     payload = {
-        "schema_version": 4,
+        "schema_version": 5,
         "mode": "a13-port-coverage",
         "scope": args.scope,
         "identities": {
@@ -735,6 +978,10 @@ def main() -> int:
     }
     if args.scope in {"all", "submodules"}:
         paths = submodule_paths(a13_root)
+        recorded_gitlinks = root_gitlinks(a13_root)
+        nested_gitlinks = promoted_nested_gitlinks(a13_root, recorded_gitlinks)
+        recorded_gitlinks.update(nested_gitlinks)
+        paths = sorted(set(paths) | set(nested_gitlinks))
         if args.projects:
             requested = set(args.projects)
             unknown = sorted(requested - set(paths))
@@ -749,8 +996,10 @@ def main() -> int:
                         aosp16_root,
                         android16_root,
                         project,
+                        recorded_gitlinks.get(project),
                         args.base_tag,
                         args.commit_detail,
+                        project in nested_gitlinks,
                     ),
                     paths,
                 )

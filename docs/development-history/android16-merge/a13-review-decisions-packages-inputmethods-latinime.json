@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "latinime-host-input-bridge",
+      "match": {
+        "project": "packages/inputmethods/LatinIME",
+        "kind": "patch",
+        "source_commit": "a0a80622973cee7750241a15164b18cdcf502abb"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-isolated-a16-ime-bridge",
+      "target_commits": [
+        "30cede3a4b41fabeb621af09301882d9750e8d05"
+      ],
+      "rationale": "The A13 socket listener, command parser, composing/delete/enter handling, physical-key compatibility, filter-app policy, listener-port publication and lifecycle hooks are present in Android 16. The large LatinIME.java insertion was isolated into BstImeBridge and called from the current LatinIME lifecycle and key path. The old platform_apis switch is intentionally unnecessary because the A16 bridge resolves BlueStacks services without adding a broad platform API dependency.",
+      "necessity": "Required for Windows host text injection, physical keyboard behavior and IME composition synchronization.",
+      "performance": "One listener thread and one active client reader are retained from A13. Per-key work is bounded; reflection is limited to BlueStacks policy calls and avoids widening the app build API surface.",
+      "security": "The listener binds to the guest integration channel and parses bounded line commands. Runtime regression must confirm host-only reachability and malformed-command rejection before release.",
+      "validation_evidence": [
+        "A13 commit a0a8062 and A16 commit 30cede3 were reviewed file by file; all six surviving resource, manifest, settings, lifecycle and input behavior categories have current A16 counterparts.",
+        "Component branch aosp16-bst-merge is clean. Module build and Windows input regression remain part of the final target-tree gate."
+      ]
+    }
+  ],
+  "decisions": []
+}

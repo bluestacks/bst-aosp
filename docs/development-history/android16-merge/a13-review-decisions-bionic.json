@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "bionic-tehran-workaround-obsolete",
+      "match": {
+        "project": "bionic",
+        "kind": "patch",
+        "source_commit": [
+          "02cb0f86481ad8044ae85fa69a7577262fef7df5",
+          "56aecdc8f325a9836aeb80d410c0d46710d54d6b"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "obsolete-with-current-tzdata",
+      "target_commits": [],
+      "rationale": "The two A13 commits have the same parent and identical hard-coded Asia/Tehran transition rewrite. Android 16 ships tzdata 2025b, whose Iran rules end DST after the September 2022 transition. Reapplying the parser workaround would duplicate authoritative data and could corrupt future timezone updates.",
+      "necessity": "Not necessary because current timezone data directly represents Iran's abolition of DST.",
+      "performance": "Avoids an extra Tehran-specific scan of every transition during timezone loading.",
+      "security": "Keeping timezone policy in signed/updateable tzdata avoids hidden libc behavior that can diverge from security and certificate time calculations.",
+      "validation_evidence": [
+        "system/timezone output version is 009.001|2025b|001; the bundled tzdata2025b Iran rules end at 2022 and contain no later DST rule."
+      ]
+    },
+    {
+      "id": "bionic-per-app-property-compatibility",
+      "match": {
+        "project": "bionic",
+        "kind": "patch",
+        "source_commit": [
+          "18a39d0ddb2746d554521068f0c300a31f4fde56",
+          "65628c9eb918af27f904f80537b92e62e15c5997",
+          "a23bc9079a6295ad637546a227b015a00ac4bdad",
+          "e7687413bac802b330b05da715deadbd88df9cad"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-property-read-and-write-paths",
+      "target_commits": [
+        "40a728dc5e7eb47a6e79b098a418cae620e977d4",
+        "2d8272e1372a23e74c6845c2eab030f3e67851ef",
+        "be9ebc694619e1c521efd2d5437590385e2c5a75"
+      ],
+      "rationale": "A16 retains A13's per-app property hiding/faking, xprop UID lists, write suppression, callback handling, serial-to-length correction, missing-property reads and obfuscated ro.board.platform2 value. The A16 follow-up makes the legacy read declaration nullable so the implemented synthetic missing-property contract passes current Clang checks.",
+      "necessity": "Required for translated-app ABI reporting, anti-emulator compatibility, model overrides and protection of BlueStacks-specific properties.",
+      "performance": "Property reads are hot. Third-party lookups can inspect /proc and marker files, and obfuscated values add hashing/decryption. Property and app-start regressions must measure syscall and I/O cost; caching cannot ignore UID/package changes.",
+      "security": "This is a broad libc-level identity virtualization surface and blocks selected writes. Exact UID/package classification, marker ownership, buffer bounds and fail-open behavior are security-critical; synthetic values must not leak into system UIDs.",
+      "validation_evidence": [
+        "A13 four-patch sequence was compared with final A16 system_property_set.cpp, SystemProperties Read/Get/ReadCallback/Update/Add and obs_str.hpp. x86/x86_64 libc build and ABI checks are recorded in target commits; runtime property oracle remains pending."
+      ]
+    },
+    {
+      "id": "bionic-property-sync-and-null-guards",
+      "match": {
+        "project": "bionic",
+        "kind": "patch",
+        "source_commit": [
+          "730869a80ad8e5f75350b79ed081a8377c2bdb0a",
+          "d36e8582d22c654109e67b736bd5fa6e61aff435"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-property-policy-lines",
+      "target_commits": [
+        "40a728dc5e7eb47a6e79b098a418cae620e977d4"
+      ],
+      "rationale": "A16 includes the final A13 real-device property values for APEX, metadata encryption and Wi-Fi Direct, and guards every value-writing compatibility branch against a null output buffer.",
+      "necessity": "Required for application-visible device parity and to prevent null-buffer crashes in legacy property reads.",
+      "performance": "Adds three fixed-name comparisons on the already-gated third-party property path; null guards are negligible.",
+      "security": "Fakes security-relevant device properties for third-party applications. Values and caller classification must remain narrowly controlled and documented.",
+      "validation_evidence": [
+        "Final A16 system_property_set.cpp contains all three A13 property names/values and value != NULL guards at each writing branch."
+      ]
+    },
+    {
+      "id": "bionic-x86-ioperm-iopl",
+      "match": {
+        "project": "bionic",
+        "kind": "patch",
+        "source_commit": "6317172608a7a7a73f7d335ccc6de63d84014ff2"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-current-syscall-generation",
+      "target_commits": [
+        "8cc6198fc57fea7ab3c802f8aee14c88f61d7c85"
+      ],
+      "rationale": "A16 declares ioperm and iopl for x86/x86_64 in SYSCALLS.TXT and exports both symbols. Current bionic generates architecture assembly from that declaration, so obsolete generated A13 .S files are intentionally not hand-copied.",
+      "necessity": "Required by x86 runtime components that expect the legacy libc syscall wrappers.",
+      "performance": "No cost unless invoked; wrappers map directly to kernel syscalls.",
+      "security": "I/O privilege syscalls are highly privileged. Kernel capability and SELinux policy must deny untrusted applications even though libc exports the wrappers.",
+      "validation_evidence": [
+        "A16 target diff contains both syscall declarations and map exports for x86/x86_64; generated wrappers are build outputs rather than tracked source."
+      ]
+    },
+    {
+      "id": "bionic-x86-text-relocations",
+      "match": {
+        "project": "bionic",
+        "kind": "patch",
+        "source_commit": "a20f959e6db255e0e784872d5a3b67e0cf1ccaa0"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-x86-only-linker-exception",
+      "target_commits": [
+        "8cc6198fc57fea7ab3c802f8aee14c88f61d7c85"
+      ],
+      "rationale": "A16 preserves the A13 exception that allows text relocations only in 32-bit i386 while retaining the normal Android rejection and warnings on other architectures.",
+      "necessity": "Required for the documented legacy x86 FFmpeg/native libraries that still contain text relocations.",
+      "performance": "Text relocation processing occurs at library load and can increase startup time and dirty memory sharing.",
+      "security": "Weakens W^X/relocation hardening for 32-bit x86. The exception must remain architecture-scoped and legacy libraries should be rebuilt PIC where possible.",
+      "validation_evidence": [
+        "Final A16 linker.cpp wraps only the enforcement/warning block with the i386 exception while retaining segment unprotect/relocate behavior."
+      ]
+    },
+    {
+      "id": "bionic-null-open-compatibility",
+      "match": {
+        "project": "bionic",
+        "kind": "patch",
+        "source_commit": "79303b8a067bc830f21fee8da596614796ca108d"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-null-path-guard",
+      "target_commits": [
+        "40a728dc5e7eb47a6e79b098a418cae620e977d4"
+      ],
+      "rationale": "A16 preserves the A13 early -1 return for null pathname in variadic open and openat without altering the fortified entry points.",
+      "necessity": "Required by legacy callers that pass null and expect an error instead of a crash or lower-layer fault.",
+      "performance": "One predictable null check per open/openat call.",
+      "security": "Prevents a null dereference path. Existing technical debt: despite the A13 comment mentioning ENOENT, the guard does not set errno, so callers can observe stale errno; changing that is a separate compatibility decision.",
+      "validation_evidence": [
+        "Final A16 open.cpp contains the same guards in open and openat; no unrelated API entry point was changed."
+      ]
+    },
+    {
+      "id": "bionic-ipv4-preference",
+      "match": {
+        "project": "bionic",
+        "kind": "patch",
+        "source_commit": "aab5aaabd675c329a83cbaccfda5b4c5b83fdce4"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-dns-ordering",
+      "target_commits": [
+        "40a728dc5e7eb47a6e79b098a418cae620e977d4"
+      ],
+      "rationale": "A16 retains A13's AF_INET default and A-before-AAAA query order when callers request an unspecified family.",
+      "necessity": "Required for App Player networks and applications where IPv6 resolution succeeds but IPv6 connectivity is unavailable or unreliable.",
+      "performance": "Can improve connection latency on IPv4-only paths but delays or suppresses optimal IPv6 use; dual-stack network regression is required.",
+      "security": "Changes address selection globally and can bypass IPv6-only policy expectations. DNS answers remain resolved through the normal net context.",
+      "validation_evidence": [
+        "Final A16 getaddrinfo.c sets PF_INET for unspecified family and issues T_A before T_AAAA."
+      ]
+    },
+    {
+      "id": "bionic-game-fd-size-compatibility",
+      "match": {
+        "project": "bionic",
+        "kind": "patch",
+        "source_commit": "c7ecb7f88f5347649f723ade3b260bf616529141"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-process-scoped-fd-workaround",
+      "target_commits": [
+        "40a728dc5e7eb47a6e79b098a418cae620e977d4"
+      ],
+      "rationale": "A16 retains the process-name-scoped FD_SETSIZE fortify relaxation and select fallback for Mobile Legends and Wild Rift, including the stricter eight-times-FD_SETSIZE ceiling.",
+      "necessity": "Required by the two documented game processes that pass oversized descriptors to fd_set/select code.",
+      "performance": "Reads /proc/self/cmdline on exceptional fortified FD operations and oversized select calls; ordinary descriptor paths are unaffected.",
+      "security": "High-risk semantic workaround: select can report one ready descriptor without updating fd sets, and Mobile Legends FD_ISSET can return true for an out-of-range descriptor. Scope must remain exact and runtime tests must watch busy loops and stale I/O assumptions.",
+      "validation_evidence": [
+        "Final A16 fortify.cpp, poll.cpp and bionic_fortify.h contain the same process names, bounds and return behavior as A13."
+      ]
+    }
+  ],
+  "decisions": []
+}

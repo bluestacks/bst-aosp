@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "hardware-interfaces-audio-threadpool-crash-workaround",
+      "match": {
+        "project": "hardware/interfaces",
+        "kind": "patch",
+        "source_commit": "451dd10409f43a4446d092380d9c5f778b9ee96c"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-current-single-rpc-threadpool-configuration",
+      "target_commits": [],
+      "rationale": "A13 stopped calling ABinderProcess_setThreadPoolMaxThreadCount(1) after the vndbinder pool had already started, preventing the fatal 'threadpool cannot be shrunk' assertion. The Android 16 service no longer has that conflicting NDK Binder call and configures a single 16-thread RPC pool before joining it, preserving the crash fix through the current service architecture.",
+      "necessity": "Required semantically: the audio HAL service must not shrink a running Binder pool. No A13 line should be copied because the obsolete API sequence no longer exists.",
+      "performance": "The current 16-thread pool can consume more stack memory than the old one-thread request but supports concurrent HAL traffic and is the Android 16 service design.",
+      "security": "Avoids an unauthenticated service abort path. Binder concurrency still requires thread-safe HAL implementations.",
+      "validation_evidence": [
+        "A13 crash trace and one-line workaround were compared with the final Android-16 service startup sequence; no late ABinderProcess thread-count mutation remains. Audio runtime regression is pending."
+      ]
+    },
+    {
+      "id": "hardware-interfaces-framebuffer-fps-policy",
+      "match": {
+        "project": "hardware/interfaces",
+        "kind": "patch",
+        "source_commit": "7b5efb33e999c7acb912ee749f09b28a7ab388fc"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-synchronized-a16-callback-adaptation",
+      "target_commits": [
+        "ea0df662b9130b01dee2d26635d5cc14e9a87ec9",
+        "fc6ad60000d63de650ed1cfec1e1184a341c7293",
+        "bf800caa090008c2fbbc1723c6fe814ece6f7eb9"
+      ],
+      "rationale": "Android 16 preserves the complete A13 FPS contract: read bst.max_fps, update the framebuffer vsync period, expose the new period through HWC2 display attributes and notify SurfaceFlinger through the refresh callback. Follow-up commits remove the unvalidated direct callback and restore it with null checks, mutex-protected state, atomic period publication, per-thread timing and callback invocation outside the lock.",
+      "necessity": "Required for host-configured frame-rate changes to affect framebuffer HWC timing and reach SurfaceFlinger.",
+      "performance": "One property read per second in the vsync thread. The callback runs only when the period changes; no per-frame property read is introduced. Very high/invalid FPS values are rejected when the computed period is non-positive.",
+      "security": "The privileged bst.max_fps property controls display scheduling. Parsing is bounded and callbacks are null-checked and invoked without holding the adapter mutex, reducing deadlock and crash risk.",
+      "validation_evidence": [
+        "Final Android-16 source contains libcutils linkage, refresh registration, synchronized one-second polling, atomic refresh-period publication and lock-safe callback delivery. Component commits ea0df662, fc6ad600 and bf800caa encode the implementation and safety follow-ups; runtime FPS regression remains pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

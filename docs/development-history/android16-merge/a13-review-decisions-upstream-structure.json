@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "android-x86-64-current-product-definition",
+      "match": {
+        "project": "device/generic/x86_64",
+        "kind": "patch",
+        "source_commit": "ea5519ab0d11a31dcb2f96a335703ca7b46397cb"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-current-android-x86-64-product-layout",
+      "target_commits": [],
+      "rationale": "The A13 initialization created the standalone android_x86_64 product. Android 16 retains the current AndroidProducts.mk, BoardConfig.mk and android_x86_64.mk definitions; obsolete local Android.bp/license files are no longer required by the current device layout.",
+      "necessity": "Required because Windows App Player builds and regression use android_x86_64 rather than a unified remote/local board.",
+      "performance": "Product-definition-only change; selected board flags determine the final image but add no runtime code.",
+      "security": "Board configuration controls partitions, architecture and security features and must remain bound to the target tree identity gate.",
+      "validation_evidence": [
+        "android_x86_64-trunk_staging-eng lunch and multiple target module builds succeeded from Android-16; the product resolves to TARGET_PRODUCT=android_x86_64 and x86_64/x86 architectures."
+      ]
+    },
+    {
+      "id": "cuttlefish-apex-removal-not-applicable-to-current-target",
+      "match": {
+        "project": "device/google/cuttlefish",
+        "kind": "patch",
+        "source_commit": "3e67edef683571fa58bc611a2d53a8ba5e2d7cce"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "not-applicable-to-android-x86-64-and-superseded-upstream",
+      "target_commits": [],
+      "rationale": "A13 removed old Cuttlefish-only APEX definitions to reduce its build surface. Android 16 upstream has newer Cuttlefish APEX files, but the android_x86_64 product neither references nor installs any com.google.cf module. Deleting current unrelated board support would increase mainline divergence without changing the App Player image.",
+      "necessity": "Not necessary for the selected android_x86_64 board.",
+      "performance": "The files are parsed as source metadata but no Cuttlefish APEX is built or installed for the target product; removal would not improve guest boot time.",
+      "security": "Keeping unused upstream board definitions has no target image exposure and avoids silently weakening Cuttlefish configurations used by other developers.",
+      "validation_evidence": [
+        "Android-16 x86_64 installed-files outputs contain no com.google.cf entry and device/generic/x86_64 plus device/generic/common contain no reference to the reviewed Cuttlefish APEX modules."
+      ]
+    },
+    {
+      "id": "angle-nested-repository-deinit",
+      "match": {
+        "project": "external/angle",
+        "kind": "patch",
+        "source_commit": "34fee3e7ae64a187d9526a66ed27df49bf5517da"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-gitlink-absence",
+      "target_commits": [],
+      "rationale": "All 29 nested third-party gitlinks removed by A13 are also absent from final AOSP16 and Android-16 ANGLE repositories. Current dependencies are supplied by the platform checkout/build integration rather than independently initialized nested repositories.",
+      "necessity": "Required to keep repository initialization deterministic and avoid duplicate dependency revisions.",
+      "performance": "Reduces checkout and submodule initialization size; runtime graphics performance is unaffected.",
+      "security": "Eliminates independently pinned nested sources that could drift from the platform-reviewed dependency set.",
+      "validation_evidence": [
+        "Git index checks across A13 final, AOSP16 and Android-16 found zero 160000 entries for the reviewed ANGLE paths."
+      ]
+    },
+    {
+      "id": "freetype-dlg-submodule-deinit",
+      "match": {
+        "project": "external/freetype",
+        "kind": "patch",
+        "source_commit": "b1517c5efcdda833d2ed79513cd7c30d464f5f09"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-gitlink-and-gitmodules-absence",
+      "target_commits": [],
+      "rationale": "The subprojects/dlg gitlink removed by A13 is absent from A13 final, AOSP16 and Android-16; no stale nested checkout is required by the current Freetype build.",
+      "necessity": "Required for deterministic source initialization.",
+      "performance": "Reduces checkout metadata only; no runtime effect.",
+      "security": "Avoids an unused independently versioned build dependency.",
+      "validation_evidence": [
+        "Git index checks report no 160000 subprojects/dlg entry in all three final trees."
+      ]
+    },
+    {
+      "id": "subsampling-old-upstream-merge-superseded",
+      "match": {
+        "project": "external/subsampling-scale-image-view",
+        "kind": "patch",
+        "source_commit": "0de3cb23b1473359e3fe489ff7a738264ea4352d"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-current-upstream-snapshot",
+      "target_commits": [],
+      "rationale": "This is an Android 12 automerger snapshot, not a BlueStacks behavioral delta. Android 16 carries a newer 130-file upstream repository; replacing it with the A13 129-file snapshot would downgrade source and metadata.",
+      "necessity": "Not necessary; current upstream library content is authoritative for Android 16.",
+      "performance": "Avoids reverting later image-decoding and view fixes.",
+      "security": "Retains later upstream fixes and current platform metadata rather than an old bulk snapshot.",
+      "validation_evidence": [
+        "A13 final is 0de3cb2 with 129 files; AOSP16 and Android-16 use newer c1f2ae5/24a4c6e snapshots with 130 files."
+      ]
+    },
+    {
+      "id": "dexter-current-selective-lfs",
+      "match": {
+        "project": "tools/dexter",
+        "kind": "patch",
+        "source_commit": "4cd18ae4c129b632e8c2d4270c24342713ab3ded"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-current-size-based-lfs-selection",
+      "target_commits": [],
+      "rationale": "A13 moved 16 then-large generated test artifacts to LFS. Android 16 retains the reviewed test artifacts and applies LFS only to the two outputs that remain large in the current upstream snapshot: large.code_coverage and large.verbose_cfg. Restoring old LFS attributes for now-small or regenerated files would add storage indirection without preserving behavior.",
+      "necessity": "Necessary as repository storage policy only for current large objects.",
+      "performance": "Keeps large clone objects out of normal Git while avoiding unnecessary LFS fetches for smaller fixtures; no guest runtime effect.",
+      "security": "LFS availability must be validated for tests, but these fixtures are not shipped in the guest image.",
+      "validation_evidence": [
+        "Android-16 .gitattributes and git lfs ls-files agree on exactly two current files; ledger comparison finds the A13 expected fixture contents retained or superseded in the current tree."
+      ]
+    }
+  ],
+  "decisions": []
+}

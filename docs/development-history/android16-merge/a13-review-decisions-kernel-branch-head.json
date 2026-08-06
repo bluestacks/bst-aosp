@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "kernel-filesystem-proc-and-identity-compatibility",
+      "match": {
+        "project": "kernel",
+        "kind": "patch",
+        "source_commit": [
+          "001ee35e0027888d7d7115336161acf65198cfcb",
+          "089b043ea02ccca310a43d2d2a34f3cf2ac45049",
+          "092fb989671145a9795101e4da785e5d1d2311d8",
+          "22405de18120843f7f5e9b158e4c8e53a4314339",
+          "2f636076816aece71253bf4ee8ce9161bee80161",
+          "34f092c5497cac7854ccb6cbefd2e42eadd23106",
+          "399c89ffc434db1273c5aff51dbe3c4fe180c9be",
+          "417caffce5fb56c017f4d2167b35d86bde71b259",
+          "47c2a2688255e09c2fb0c374be380d528da19710",
+          "52c775684dd41102fe323566c2c93739e2b190b7",
+          "687c8ee890dde9048db463ab861127c8902d5228",
+          "6c310f7819b4b77e9b9d33b1628de56c9ac52a9d",
+          "6d2abc85babd11c3ce98d5c56fff9a127b710838",
+          "848b12dc47ea4ce956b159845215d3626ec21aee",
+          "8d5b6308090e339d617b066f0ece8551fc2f3a5c",
+          "bad1244b6fb0da7693e9024225248ff2d2e832e0",
+          "d4605abb5cc08e41ce4efd922715c6ccfe3fca6c",
+          "d5576bc2890a664b37f61114958ce091a202ce63",
+          "ec3320cd8e7007383b59c3ffd318d208da81b543",
+          "f4443c667c27f1cf358adb18ccef3cab1a9e306e",
+          "f59f9e3607bd77ad600194d7d42d26567664e273"
+        ]
+      },
+      "expected_matches": 21,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-kernel-a16-final-filesystem-and-proc-hooks",
+      "target_commits": [
+        "eee2a2da325ff8f7901cdbd1cdf2bfcd6ea8e61e"
+      ],
+      "rationale": "These A13 patches form the final Linux 5.15 BlueStacks filesystem hook layer, process/proc presentation, emulator-string filtering, app UID policy, ptrace/kallsyms restrictions, SELinux audit filtering and application-specific compatibility fixes. Android 16 uses kernel-a16; every surviving changed line maps to the corresponding final target file, with only the later A13 revisions winning where several commits touch bst_hooks.c.",
+      "necessity": "Required for the established guest filesystem contract, host path translation, application compatibility and intended process/device presentation.",
+      "performance": "Adds UID and path checks to selected VFS/proc/stat operations. A13 includes caching/optimized UID classification; final regression must watch syscall-heavy workloads and boot time.",
+      "security": "High-risk kernel surface: intentionally filters proc/device information and adds privileged path hooks. Bounds, user-pointer handling, recursion avoidance and privilege gates must remain covered by kernel review and runtime tests.",
+      "validation_evidence": [
+        "Commit-level audit reports complete final line evidence for all files except fs/bst_hooks.h in ec3320cd, where partial evidence is expected because later A13 patches revise the same helper. The final header and implementation are present in kernel-a16.",
+        "Android-16 root tracks kernel-a16 10d61b7393ec37012e27530bf344c559da766590 on aosp16-bst-merge; eee2a2da is its AOSP16/A13 semantic merge commit."
+      ]
+    },
+    {
+      "id": "kernel-boot-storage-memory-and-latency-policy",
+      "match": {
+        "project": "kernel",
+        "kind": "patch",
+        "source_commit": [
+          "510a93ecf371e60a89dee165fb1db90f41f26dc4",
+          "e205e974d19e532a376624bfdcc074ad93c71d9d",
+          "91478d873857cf209fe154c502e7071c51d03ba1",
+          "a64ed171e844383116d458b8ec851d6797302485",
+          "eed8fdeb2ee898255e467411b8426bf72ccdd2dd",
+          "fd3f61e0b1d82a69badfcdefce8608f39e96f664",
+          "a2d4f4d144b115a3863ce5bb2bbb43f2b2a04f45",
+          "fb04cfb6e4c2a3d6c193cfb764f2415c645b6570"
+        ]
+      },
+      "expected_matches": 8,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-boot-storage-memory-and-input-behavior",
+      "target_commits": [
+        "eee2a2da325ff8f7901cdbd1cdf2bfcd6ea8e61e"
+      ],
+      "rationale": "This group preserves A13 boot-time input/cgroup tuning, AHCI fast paths, quiet boot, pcd/pcr memory controls, low-memory lmkd correction, CPU-idle policy and tty input compatibility. All surviving hunks are present in kernel-a16.",
+      "necessity": "Required for the validated BlueStacks boot/storage/input behavior and memory-mode compatibility.",
+      "performance": "Intentionally trades generic hardware delays and CPU idle power savings for lower virtual-disk/input latency. Memory controls can affect reclaim pressure; final regression needs boot-time, I/O latency and memory-pressure evidence.",
+      "security": "TTY permission bypass and custom memory sysctls require product/UID confinement. AHCI shortcuts are valid only for the known virtual controller contract.",
+      "validation_evidence": [
+        "Every surviving A13 file in this group has complete line evidence in kernel-a16 at the audit head."
+      ]
+    },
+    {
+      "id": "kernel-config-and-boot-contract",
+      "match": {
+        "project": "kernel",
+        "kind": "patch",
+        "source_commit": [
+          "06ed013c7419cf0a2bf23935cd02eef1fe38c944",
+          "165e5db472b71a1fbacdfaff56fde55554456fa1",
+          "52d257768b73e4d3f2e9ebd157a81ea5f424577c",
+          "789629edabc6251ff6f85b03908f4cfca211dc5c",
+          "8289a136f9e1150aad9286a009b56b55799d0113",
+          "9344ead449b0dbfe85b50c3fc08fb3ee70f1eac5",
+          "b901c42e4f8c6dff657e5b05bdb6f5d1c9692016",
+          "d9ae0f3a41d6b488973e754e4a8e60fb0f536348",
+          "e8368878a34523d52e11af0016138fd262381910",
+          "ea03043ec57c5965d6c426f4431093ac910ba277"
+        ]
+      },
+      "expected_matches": 10,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-x86-64-config-and-boot-state",
+      "target_commits": [
+        "eee2a2da325ff8f7901cdbd1cdf2bfcd6ea8e61e",
+        "10d61b7393ec37012e27530bf344c559da766590"
+      ],
+      "rationale": "These commits establish the A13 x86_64 defconfig, boot init/default header, Tiramisu identification, NLS, virtualization/media options, disabled unused DRM/USB options and removal of empty prebuilt gitlinks. Android 16 kernel-a16 preserves the final semantic state and additionally enables SquashFS for system.sfs.",
+      "necessity": "Required for the android_x86_64 Windows board, bootloader contract and packaged system filesystem.",
+      "performance": "Configuration removes unused drivers and enables required virtualization/filesystem features, reducing irrelevant initialization while adding only selected kernel code.",
+      "security": "Kernel config defines attack surface. Disabled unused drivers reduce exposure; enabled virtualization, NLS, videobuf and SquashFS options must stay limited to required product functionality.",
+      "validation_evidence": [
+        "All final config/boot hunks map to kernel-a16; e8368878 partial defconfig evidence is explained by later A13 defconfig commits and the final target config is compared at head."
+      ]
+    },
+    {
+      "id": "kernel-usermode-helper-selection",
+      "match": {
+        "project": "kernel",
+        "kind": "patch",
+        "source_commit": "d04adeab91d28cd7f25227532656eace46ce2581"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-defconfig-umh-contract",
+      "target_commits": [
+        "eee2a2da325ff8f7901cdbd1cdf2bfcd6ea8e61e"
+      ],
+      "rationale": "A13 selects the user-specified UMH program through the product defconfig; kernel-a16 retains the final configuration.",
+      "necessity": "Required only for the established BlueStacks kernel helper contract.",
+      "performance": "No cost unless the kernel invokes the configured helper.",
+      "security": "Usermode helper execution is privileged and must use an immutable, trusted path with controlled arguments.",
+      "validation_evidence": [
+        "The final defconfig line has complete evidence in kernel-a16."
+      ]
+    }
+  ],
+  "decisions": []
+}

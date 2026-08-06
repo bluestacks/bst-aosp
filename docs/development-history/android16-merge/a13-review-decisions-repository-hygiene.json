@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "version-bound-a13-prebuilt-snapshots",
+      "match": {
+        "kind": "patch",
+        "automated_disposition": "metadata-review"
+      },
+      "expected_matches": 84,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-android16-toolchain-snapshot",
+      "target_commits": [],
+      "rationale": "The entry is an Android 13 prebuilt toolchain, SDK, JDK, NDK, Rust, host-tool or generated API snapshot. Android 16 must use the matching current prebuilt repository revision rather than copy version-bound binaries from A13.",
+      "necessity": "The capability is necessary to build Android, but the A13 binary revision is not a portable product customization.",
+      "performance": "Using the Android 16-matched prebuilt avoids unsupported host-tool and generated-code mismatches; no guest runtime payload is added.",
+      "security": "Avoids importing stale opaque executables and libraries outside the Android 16 toolchain provenance set.",
+      "validation_evidence": [
+        "Audit limited these prebuilts to commit/file metadata and the Android 16 target-only build uses its own pinned prebuilt graph."
+      ]
+    },
+    {
+      "id": "github-workflow-removal",
+      "match": {
+        "kind": "patch",
+        "files_all_prefix": ".github/"
+      },
+      "expected_matches": 124,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "repository-hosting-hygiene-not-guest-code",
+      "target_commits": [],
+      "rationale": "The patch only removes GitHub workflow files. These files are repository-hosting automation, are not Android build inputs, and cannot affect the guest image or runtime behavior.",
+      "necessity": "No Android 16 port is necessary; each target repository follows its own current hosting and CI policy.",
+      "performance": "No build or runtime effect.",
+      "security": "Avoids copying stale third-party CI credentials, triggers or permissions into unrelated Android 16 repositories.",
+      "validation_evidence": [
+        "Every file listed by the entry is under .github/ and no source, build, test, payload or product file is touched."
+      ]
+    }
+  ],
+  "decisions": []
+}

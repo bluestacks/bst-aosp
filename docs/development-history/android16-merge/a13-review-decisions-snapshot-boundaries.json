@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "a13-frozen-snapshot-boundaries",
+      "match": {
+        "kind": "baseline-boundary",
+        "automated_disposition": "baseline-unresolved"
+      },
+      "expected_matches": 34,
+      "review_status": "reviewed-integration",
+      "manual_disposition": "frozen-root-snapshot-no-inferred-branch-patch",
+      "target_commits": [],
+      "rationale": "These projects have no reachable android-13 tag or other defensible upstream baseline, and their checked-out HEAD equals the A13 root gitlink. They are therefore frozen component snapshots, not enumerable post-root branch patches. Their files remain covered by final-tree inventory and AOSP16-to-Android-16 promotion evidence; no synthetic empty-tree patch is invented.",
+      "necessity": "The component snapshots may be necessary build/runtime inputs, but classifying every upstream file as a BlueStacks patch would be false provenance.",
+      "performance": "No target cost; this is an audit-boundary decision.",
+      "security": "Prebuilt and custom snapshot identities must be pinned by SHA/hash and supplied through controlled sources. Lack of an upstream baseline is recorded, not hidden.",
+      "validation_evidence": [
+        "All 34 entries have A13 HEAD equal to the root gitlink and no post-gitlink branch delta; the four projects whose branch heads differ from root pointers are separately enumerated as real patch histories."
+      ]
+    }
+  ],
+  "decisions": []
+}

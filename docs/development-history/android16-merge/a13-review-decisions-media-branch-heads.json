@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "ffmpeg-a13-build-fixes",
+      "match": {
+        "project": "external/ffmpeg",
+        "kind": "patch",
+        "source_commit": "897ac9079811c3c9d833520dd48200aab8184f2c"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-and-adapted-to-a16-media-build",
+      "target_commits": [
+        "b58396a9a465ec3875e01d1719bd0beea971b359"
+      ],
+      "rationale": "The A13 branch-head patch adjusts FFmpeg Android make integration and Ut Video codec sources. Android 16 retains every surviving line and adds only media-stack adaptations required by current headers and libraries.",
+      "necessity": "Required to build the FFmpeg codec backend consumed by Stagefright plugins.",
+      "performance": "Build-system changes have no runtime cost; codec source fixes preserve the intended FFmpeg execution path.",
+      "security": "Codec parsers handle untrusted media. The A16 adaptation must remain covered by malformed-media and playback regression.",
+      "validation_evidence": [
+        "All four A13 files have complete line evidence in Android 16 and target commit b58396a9 records the current adaptation."
+      ]
+    },
+    {
+      "id": "stagefright-ffmpeg-playback-fixes",
+      "match": {
+        "project": "external/stagefright-plugins",
+        "kind": "patch",
+        "source_commit": [
+          "9a1729044d3a3c52d48f7cd5246355d554405a82",
+          "d60dd85034638cfa548cb0f0212c09c130d5addf",
+          "50387554f01d42d308f78a328d6755eaa7a1c50f",
+          "b5a0358d6d240e64346de31cbd06e43be334c98c"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-codec-registration-and-extractor-state",
+      "target_commits": [
+        "6462e1ed74e9c91b4bf336713c8f928afeb3a4fc"
+      ],
+      "rationale": "The four A13 patches evolve codec XML registration and FFmpeg extractor/audio behavior for Instagram/Facebook reels and Duolingo sound. Android 16 preserves the final XML exactly and all surviving extractor/audio lines while adapting to the A16 media APIs.",
+      "necessity": "Required for the known social-video and game/application audio compatibility cases.",
+      "performance": "Adds FFmpeg codec fallback/selection work only for affected media; no system-wide polling or frame-loop service is introduced.",
+      "security": "Expands media formats handled by native code, so malformed media remains a security-sensitive regression area.",
+      "validation_evidence": [
+        "Final media_codecs_ffmpeg.xml is exact; extractor and SoftFFmpegAudio have complete line evidence; target commit 6462e1ed contains the A16 adaptation."
+      ]
+    }
+  ],
+  "decisions": []
+}

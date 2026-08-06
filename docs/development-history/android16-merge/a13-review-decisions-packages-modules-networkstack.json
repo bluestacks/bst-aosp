@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "networkstack-china-validation-default",
+      "match": {
+        "project": "packages/modules/NetworkStack",
+        "kind": "patch",
+        "source_commit": [
+          "36f17f9da91003020cc9ac1c166930ef590a8ec9",
+          "7843886c36eb2f360366781fce9b2ed7957253b8"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-as-default-with-explicit-setting-precedence",
+      "target_commits": [
+        "da967b74218a71de2409433653032f690f1f45af",
+        "6d7e4d175654da4b8155da5916cf63d99c6cdf0c"
+      ],
+      "rationale": "Android 16 preserves the final A13 China-game validation policy for both nxt_cn and bst.country=CN configurations. The initial promotion returned false before reading the global captive-portal setting; follow-up 6d7e4d17 instead selects IGNORE as the regional default and then applies an explicit user or administrator override.",
+      "necessity": "Required to prevent China-region game update failures while retaining the platform control surface used for diagnostics and managed policy.",
+      "performance": "Two property reads and one settings lookup when validation policy is evaluated; there is no packet-path overhead.",
+      "security": "Ignoring validation can hide captive portals or interception. Restricting it to the regional default and preserving explicit setting precedence limits that exposure.",
+      "validation_evidence": [
+        "android_x86_64-trunk_staging-eng NetworkStack and NetworkStackTests built successfully after the correction.",
+        "NetworkStack.apk SHA-256 042732ea95fd4617c10b86f6593fe2afe61f03a7939c6af099f1acb66d49550d; NetworkStackTests.apk SHA-256 06e8f512f6a35cf7a6ee16543876f7360e2fb33d20910b7f0323d5e96120ec2b.",
+        "Component commit 6d7e4d175654da4b8155da5916cf63d99c6cdf0c and root commit d3715b34bb4fbc8ab1e0860da13f422b2080caeb record the final policy. Runtime override regression remains in the final boot gate."
+      ]
+    }
+  ],
+  "decisions": []
+}

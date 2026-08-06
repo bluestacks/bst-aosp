@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "libbase-missing-property-fake-superseded",
+      "match": {
+        "project": "system/libbase",
+        "kind": "patch",
+        "source_commit": "31bba9e80ee31aac26bc11733b88e11df7647a58"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-a13-full-revert",
+      "target_commits": [],
+      "rationale": "This intermediate A13 change called __system_property_read with a null prop_info so bionic could synthesize selected missing properties. A13 fully reverted it later the same day. The final authoritative libbase behavior is to return default_value when the property does not exist.",
+      "necessity": "Not necessary and contrary to final A13 behavior. Missing-property virtualization that remains required is implemented inside the reviewed bionic compatibility boundary.",
+      "performance": "Avoids extra stack buffers and a libc compatibility call for every missing property lookup.",
+      "security": "Avoids deliberately passing a null property descriptor across the libc API and keeps generic libbase callers on the documented default-value contract.",
+      "validation_evidence": [
+        "A13 commit 1d05b47e is an exact revert of 31bba9e8; final A13, AOSP16 and Android-16 all return default_value immediately for pi == nullptr."
+      ]
+    },
+    {
+      "id": "libbase-missing-property-fake-revert",
+      "match": {
+        "project": "system/libbase",
+        "kind": "patch",
+        "source_commit": "1d05b47e865d4c4f085937a5b07568f87d1c3cdb"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-revert-state",
+      "target_commits": [],
+      "rationale": "The complete A13 revert is preserved by the unchanged Android-16 implementation: an absent prop_info returns the caller-provided default and never enters the read callback path.",
+      "necessity": "Necessary to represent the final A13 decision and prevent resurrection of the unsafe intermediate hook.",
+      "performance": "Restores the constant-time missing-property fast path.",
+      "security": "Keeps property spoofing out of generic libbase and avoids a null descriptor call; bionic remains the single reviewed virtualization boundary.",
+      "validation_evidence": [
+        "Final properties.cpp in all three trees was inspected and contains the same immediate null return."
+      ]
+    }
+  ],
+  "decisions": []
+}

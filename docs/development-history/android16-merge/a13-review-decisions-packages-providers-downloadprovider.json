@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "download-provider-immediate-retry",
+      "match": {
+        "project": "packages/providers/DownloadProvider",
+        "kind": "patch",
+        "source_commit": "6be0a145972d85db66d05e19403de3a11711983e"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-dedicated-validated-receiver",
+      "target_commits": [
+        "db61a3d4e87ab1312486fdb481573b990f22de53"
+      ],
+      "rationale": "Android 16 retains the host retry action, optional download-id filter, failed-connection reset, query and job rescheduling, plus the one-second override deadline. It moves the exported action out of the multi-purpose DownloadReceiver into RetryDownloadReceiver and validates the sender UID/advanced permission before accessing all-downloads state.",
+      "necessity": "Required for the host to wake downloads that are waiting for retry/network without waiting for platform backoff.",
+      "performance": "Work runs on the provider async handler, performs one bounded update/query over pending states and schedules only matching rows. It is action-triggered, not a polling path.",
+      "security": "Improves A13 by rejecting arbitrary exported-broadcast callers; only root, shell, system, the provider itself or holders of ACCESS_DOWNLOAD_MANAGER_ADVANCED may request retries.",
+      "validation_evidence": [
+        "A13 commit 6be0a14 and target commit db61a3d were reviewed hunk by hunk. Component branch aosp16-bst-merge is clean; authorized and unauthorized broadcast tests remain pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

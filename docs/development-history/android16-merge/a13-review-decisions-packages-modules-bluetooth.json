@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "bluetooth-keystore-startup-tolerance",
+      "match": {
+        "project": "packages/modules/Bluetooth",
+        "kind": "patch",
+        "source_commit": "4853f5160e4d7689f30bf7ef0deac7379b4f7c0c"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-narrow-a16-startup-failure-handling",
+      "target_commits": [
+        "7f96b596a749046fefd1fe87c683ecc2cdb48bc7"
+      ],
+      "rationale": "A13 unconditionally returned before Bluetooth keystore initialization to avoid startup failure. Android 16 preserves the required non-fatal startup behavior by catching a RuntimeException when Keystore2 is not yet published, while retaining normal hash/config loading once the service is available. This is a narrower API-current implementation of the surviving requirement rather than a blanket disable.",
+      "necessity": "Required to prevent delayed Keystore2 publication from aborting Bluetooth startup in the guest.",
+      "performance": "No steady-state overhead. The failure path logs once and returns; the success path remains upstream behavior.",
+      "security": "Safer than the A13 unconditional bypass because Bluetooth keystore integrity/config processing remains enabled whenever Keystore2 is ready.",
+      "validation_evidence": [
+        "The A13 early return and Android-16 start() exception boundary were reviewed directly. Component branch aosp16-bst-merge is clean; Bluetooth startup regression remains pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

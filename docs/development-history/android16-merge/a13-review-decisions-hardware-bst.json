@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "hardware-bst-audio-final-tree",
+      "match": {
+        "project": "hardware/bst/audio",
+        "kind": "patch",
+        "automated_disposition": ["textually-complete", "semantic-review-required"]
+      },
+      "expected_matches": 30,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "final-runtime-tree-exact-with-a16-build-includes",
+      "target_commits": ["ac13f7b60680f60a3b0efc031aaa42019be254be"],
+      "rationale": "The complete final A13 audio HAL tree is byte-identical in Android 16 except for the additional libhardware include path required by the A16 header layout.",
+      "necessity": "All surviving audio HAL history contributes to the selected audio.primary.bst implementation.",
+      "performance": "Runtime PCM routing, buffering and card selection are unchanged; the target delta is build-only.",
+      "security": "No new device access or IPC surface beyond the final A13 HAL.",
+      "validation_evidence": ["Recursive final-tree comparison found only Android.mk different; audio HAL dependency builds passed."]
+    },
+    {
+      "id": "hardware-bst-lights-final-tree",
+      "match": {
+        "project": "hardware/bst/lights",
+        "kind": "patch"
+      },
+      "expected_matches": 11,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "final-runtime-tree-exact-with-a16-build-includes",
+      "target_commits": ["d7fb147bdaf6c5675ba98c308c0411c8f6762bdd"],
+      "rationale": "The final A13 lights HAL source is byte-identical; Android 16 only adds the vendor libhardware include path.",
+      "necessity": "Required for lights.bst backlight discovery and control.",
+      "performance": "Runtime behavior is unchanged.",
+      "security": "No new device paths or permissions are introduced.",
+      "validation_evidence": ["Recursive final-tree comparison found only Android.mk different; lights HAL built."]
+    },
+    {
+      "id": "hardware-bst-memtrack-final-tree",
+      "match": {
+        "project": "hardware/bst/memtrack",
+        "kind": "patch"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "final-runtime-tree-exact-with-a16-build-includes",
+      "target_commits": ["d3596f32d4f042ccbb17653ab84132cfa07080d0"],
+      "rationale": "The dummy memtrack implementation is byte-identical; Android 16 only adds current libhardware/libsystem include paths.",
+      "necessity": "Required by the selected memtrack.bst product contract.",
+      "performance": "Runtime behavior is unchanged and remains minimal.",
+      "security": "No new memory disclosure behavior is added.",
+      "validation_evidence": ["Recursive final-tree comparison found only Android.mk different; memtrack target built."]
+    },
+    {
+      "id": "hardware-bst-power-final-tree",
+      "match": {
+        "project": "hardware/bst/power",
+        "kind": "patch"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "final-runtime-tree-exact-with-a16-build-includes",
+      "target_commits": ["2b2e3e1dd69985937d122b400dded54532e8519f"],
+      "rationale": "The BlueStacks power HAL source is byte-identical; Android 16 only adds current libhardware/libsystem include paths.",
+      "necessity": "Required by the selected power.bst module.",
+      "performance": "Runtime hint behavior is unchanged.",
+      "security": "No new control surface beyond the final A13 HAL.",
+      "validation_evidence": ["Recursive final-tree comparison found only Android.mk different; power target built."]
+    },
+    {
+      "id": "hardware-bst-camera-final-tree",
+      "match": {
+        "project": "hardware/bst/camera",
+        "kind": "patch",
+        "automated_disposition": "semantic-review-required"
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "final-runtime-tree-with-a16-api-and-pointer-fixes",
+      "target_commits": [
+        "ccb6e510172f5da98b70841a9873824d1658ad88",
+        "33cdca5464ea1a50e98058a40c36bf3121dbe2b7"
+      ],
+      "rationale": "All final A13 camera files are retained. Four reviewed differences mark the module vendor, replace removed String8::string calls with c_str, drop a removed cutils header, and widen MessageQueue arg0 to prevent 64-bit pointer truncation.",
+      "necessity": "Required for camera.bst and its HAL3 implementation on android_x86_64.",
+      "performance": "No new processing stage; pointer widening and API substitutions have negligible cost.",
+      "security": "The 64-bit fix removes memory-corruption risk without expanding camera access.",
+      "validation_evidence": ["Recursive final-tree comparison isolated exactly four adapted files; camera component build history passed, runtime capture remains pending."]
+    }
+  ],
+  "decisions": []
+}

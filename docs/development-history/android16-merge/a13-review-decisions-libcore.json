@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "libcore-low-core-and-native-load-compatibility",
+      "match": {
+        "project": "libcore",
+        "kind": "patch",
+        "source_commit": "1a94ca7a309f17398b9466214fd0560990926be5"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-libcore-apis",
+      "target_commits": [
+        "3ff2bb739c048758662fd4203563291362d3f722"
+      ],
+      "rationale": "Android 16 preserves all three final A13 behaviors: expose a synthetic cpu1 entry, report at least two available processors and retry an Amazon ARM library request through the corresponding x86 path. The port uses relative File construction, Math.max and the current nativeLoad signature, and verifies the replacement library exists before retrying.",
+      "necessity": "Required for applications that reject one-core devices or select an incompatible Amazon native-library ABI path.",
+      "performance": "Adds constant-time checks to CPU enumeration and processor queries. The filesystem existence check occurs only on the narrowly matched Amazon native-load failure path.",
+      "security": "Virtualizes CPU topology and library selection for compatibility. The replacement path is derived from the requested path and gated by existence; it must remain package/path scoped to avoid loading unintended libraries.",
+      "validation_evidence": [
+        "A13 commit 1a94ca7a and Android-16 commit 3ff2bb73 were compared across File, Runtime and Runtime nativeLoad integration."
+      ]
+    },
+    {
+      "id": "libcore-string-format-debug-hook-superseded",
+      "match": {
+        "project": "libcore",
+        "kind": "patch",
+        "source_commit": [
+          "41e19fe9906ae3473dc8d0fa59f6094e89351ea9",
+          "5c1b509e89fbfe71a228b96324d96eee3e2d9895",
+          "58ca3be1e5329a6bae08a56599dfabf4a19b79ff"
+        ]
+      },
+      "expected_matches": 3,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-final-a13-full-revert",
+      "target_commits": [],
+      "rationale": "These commits add and then reshape/partially revert a GMS token-debug hook in String.format. The later authoritative A13 commit 460204e1 fully reverts the original merge, so no hook survives in final A13. Reintroducing any intermediate step would put process inspection and property or shell side effects on a ubiquitous Java formatting path.",
+      "necessity": "Not necessary because final A13 explicitly removed the feature.",
+      "performance": "Avoids overhead on every matching String.format call and prevents formatting from triggering process or diagnostic work.",
+      "security": "Avoids hidden side effects in a core string API and prevents application-controlled format operations from activating privileged diagnostics.",
+      "validation_evidence": [
+        "The four-commit A13 sequence was reviewed in parent order; final A13 and Android-16 contain no GMS token String.format hook."
+      ]
+    },
+    {
+      "id": "libcore-string-format-debug-hook-final-revert",
+      "match": {
+        "project": "libcore",
+        "kind": "patch",
+        "source_commit": "460204e1551614b3761a6bf7d4d1eae953c3e765"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-revert-state",
+      "target_commits": [],
+      "rationale": "Android 16 preserves the final A13 full-revert state: String formatting has no BlueStacks GMS diagnostic hook or side effect.",
+      "necessity": "Necessary to prevent an intermediate, later-withdrawn diagnostic experiment from entering the promoted mainline.",
+      "performance": "Restores the normal String.format cost and behavior.",
+      "security": "Keeps core Java formatting deterministic and free of hidden process/property interactions.",
+      "validation_evidence": [
+        "Final source inspection confirms the reverted hook is absent in A13, AOSP16 and Android-16."
+      ]
+    },
+    {
+      "id": "libcore-droidguard-url-compatibility-gate",
+      "match": {
+        "project": "libcore",
+        "kind": "patch",
+        "source_commit": "ba89be4af05129e72dbd39779755c4f9c2392a0c"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-explicit-a16-safety-gate",
+      "target_commits": [
+        "02a54f0a80975d89248b6514e180dca09cb7477a"
+      ],
+      "rationale": "A13 redirects the Android anti-abuse URL by default unless a marker exists. Known-good AOSP16 has no redirect. Android 16 retains the compatibility mechanism only when the explicit .ddg.disable marker is present, preventing a default global mutation of Google anti-abuse traffic while keeping a controlled fallback available.",
+      "necessity": "The default A13 behavior is not necessary for the AOSP16-derived baseline; an explicit compatibility switch is retained for diagnosed cases.",
+      "performance": "One marker-file existence check only for the narrowly matched URL constructor path; no network hot-path loop is added.",
+      "security": "Intentional A16 hardening deviation: anti-abuse traffic is not redirected by default. Marker ownership and SELinux access must remain privileged.",
+      "validation_evidence": [
+        "A13 URL constructor behavior, AOSP16 absence and Android-16 gated implementation in commit 02a54f0a were reviewed together."
+      ]
+    },
+    {
+      "id": "libcore-virtual-wifi-interface-and-mac",
+      "match": {
+        "project": "libcore",
+        "kind": "patch",
+        "source_commit": "c6d764996cdd6817e29307cb536b2eb46cff7cd0"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-current-ioctl-layout-and-fixed-a13-fallback",
+      "target_commits": [
+        "e98191e0c6fee02332c3968f721692c09ffcfe0c",
+        "a11d197a9cf7771a80d9b8a8cd7d477bab1f5889"
+      ],
+      "rationale": "Android 16 keeps the kernel interface name separate from the app-visible name, exposes eth0 as wlan0 for application UIDs, and reads the virtual MAC from /data/downloads/.tmp/.ma through the current ioctl-based implementation. Follow-up a11d197a restores the exact final A13 fallback of 02:00:00:00:00:00 when the override is missing or invalid instead of leaking the underlying eth0 address.",
+      "necessity": "Required for applications that require Wi-Fi interface semantics and a stable host-managed virtual MAC.",
+      "performance": "UID classification and one small marker-file read occur during interface enumeration, not packet processing. The follow-up changes only the already existing fallback argument.",
+      "security": "The feature intentionally virtualizes network identity. Robust parsing and the fixed fallback prevent malformed host metadata from exposing the backend MAC; marker file ownership must remain privileged.",
+      "validation_evidence": [
+        "android_x86_64-trunk_staging-eng core-oj built successfully with -j8 after the fallback correction; installed core-oj.jar SHA-256 615958cfc0735ce6db38d9344318a15a4e52dfc8a76dc4516b0b1f70eaad09af.",
+        "Component commit a11d197a9cf7771a80d9b8a8cd7d477bab1f5889 and root gitlink commit 637b87dd9f1f416342c6913d041c0ecdbbbf31ab record the correction. Runtime app-visible interface/MAC regression remains in the final boot gate."
+      ]
+    }
+  ],
+  "decisions": []
+}

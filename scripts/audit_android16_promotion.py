@@ -76,7 +76,7 @@ def root_dirty(root: Path) -> bool:
 
 def patch_identity(path: Path) -> dict[str, Any]:
     diff = subprocess.run(
-        ["git", "diff", "--binary", "HEAD", "--"],
+        ["git", "diff", "--binary", "--ignore-submodules=dirty", "HEAD", "--"],
         cwd=path,
         check=False,
         stdout=subprocess.PIPE,

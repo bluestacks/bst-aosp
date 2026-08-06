@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "device-common-final-file-equivalence",
+      "match": {
+        "project": "device/generic/common",
+        "kind": "patch",
+        "automated_disposition": "textually-complete"
+      },
+      "expected_matches": 20,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "present-in-final-a16-device-files",
+      "target_commits": ["7b6874dc74745c956af674344fda5d5fe55216e9"],
+      "rationale": "Every surviving addition or removal from this A13 patch is present in the final Android 16 device component, including payload bytes where the evidence is an exact file match.",
+      "necessity": "Required when the per-entry file list is an active product input; removed intermediate code remains absent exactly as at the final A13 head.",
+      "performance": "No extra promotion work beyond the corresponding static payload, build metadata or on-demand helper recorded by the entry.",
+      "security": "The rule proves final content equivalence only; privileged binaries and native-bridge data remain subject to their component-level provenance and runtime gates.",
+      "validation_evidence": ["Final A13 and Android 16 file additions/removals were compared by normalized text or exact SHA-256 payload identity."]
+    }
+  ],
+  "decisions": [
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "0aae19c5f0f104aaa5b8d0982176ad506a270509",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "superseded-by-a16-aidl-dumpstate",
+      "target_commits": ["7b5e4e1522c36f84359ca1496258a85621c72151"],
+      "rationale": "A13 avoided the HIDL dumpstate 1.1 crash by selecting 1.0. Android 16 no longer uses that HIDL declaration and packages android.hardware.dumpstate-service.example through its AIDL VINTF fragment.",
+      "necessity": "The developer-options dumpstate path is required, but replaying an obsolete HIDL version is not.",
+      "performance": "One standard AIDL service, with no additional polling.",
+      "security": "Uses the current platform dumpstate interface instead of weakening the Android 16 manifest level.",
+      "validation_evidence": ["All 32 adapted HAL/service targets, including dumpstate, completed their dependency build; runtime developer-options regression remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "0f405e00d959e93aa7877e2ff8d332c54c12affc",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-baklava-and-houdini16-adaptation",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "d180a37d930a932663df75bd82ba39c315c905c9",
+        "1423a2de1c61f694d16d58e498e238bee7efaf14"
+      ],
+      "rationale": "The exact NDK translation payload is retained under libndk_baklava64, libnb still selects it per app, and Android 16 mounts the selected arm64 libraries before dropping app privileges. Houdini 16 remains the alternate backend.",
+      "necessity": "Required for per-app ARM64 translation selection.",
+      "performance": "Backend selection is per translated process; bind mounts occur once in the app namespace.",
+      "security": "Translation payload is immutable product data; mount scope is limited to the selected app namespace.",
+      "validation_evidence": ["Payload files are exact; libnb, Houdini and app_process builds passed; translated-app runtime remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "21f3d6fde6845d1cb2cb9fd20446970a1f10a05f",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported",
+      "target_commits": ["7b6874dc74745c956af674344fda5d5fe55216e9"],
+      "rationale": "The A13 prebuilt-app discovery, presigned certificate handling, dex preoptimization and packaged JNI extraction remain in app/Android.mk, with the same product APK directory.",
+      "necessity": "Required to package BlueStacks system applications and their architecture-specific native libraries.",
+      "performance": "Build-time APK inspection and dex preoptimization; no new runtime loop.",
+      "security": "All APKs remain PRESIGNED inputs, so signing provenance must be validated externally.",
+      "validation_evidence": ["Current app makefile and packaged APK inventory reviewed against A13."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "2521f4b96beca939da7ea2ebe93608156cc14dda",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-drm-vintf-bridge",
+      "target_commits": [
+        "7b5e4e1522c36f84359ca1496258a85621c72151",
+        "0edb96a328b99742a8c3583e3d1aafc501308252",
+        "00623898eb9bd0afc4374f6c79f805939f873311"
+      ],
+      "rationale": "ClearKey uses the Android 16 AIDL service, while the A13 Widevine 1.3 service and plugin are retained behind an explicit FCM 8 compatibility matrix instead of a stale common manifest block.",
+      "necessity": "Required for Widevine and ClearKey DRM registration.",
+      "performance": "VINTF metadata adds no steady-state work; service cost is unchanged.",
+      "security": "The restricted Widevine binary remains provenance-gated and the legacy HIDL bridge is explicit technical debt.",
+      "validation_evidence": ["check-vintf-all passed and DRM artifacts built; playback/runtime factory regression remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "389314807031b78eea3a3a3d381121d775036954",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-external-secret-injection",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "ef3dc3be915dfc9733de5703941d142100899229"
+      ],
+      "rationale": "The apksigner script and jar are exact A13 payloads. The private market keystore is intentionally excluded and must be injected from the external secret store.",
+      "necessity": "Signer tooling is required; committing a reusable private key is not.",
+      "performance": "On-demand signing tool only.",
+      "security": "Removes the tracked private key and requires rotation/external provisioning.",
+      "validation_evidence": ["Script and jar final-file evidence is complete; keystore absence is asserted by the target commit."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "3901ff8b9aa4ef78b550170adb9c0a201c62c7da",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-libxml2-module",
+      "target_commits": ["b19e17995222fb5d314be414a3e44a22102f2398"],
+      "rationale": "xmllint remains a product package, backed by the current Android 16 libxml2 Soong module rather than the obsolete A13 Make-only definition.",
+      "necessity": "Required by proper_shutdown guest data recovery.",
+      "performance": "No cost unless recovery invokes the command.",
+      "security": "Uses the maintained platform XML parser and does not add a privileged daemon.",
+      "validation_evidence": ["xmllint built and is present in the product package list."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "3d1a0014fa35656e7fd72539f02fcd26fac6c3ae",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-target-kernel-repository-name",
+      "target_commits": ["7b6874dc74745c956af674344fda5d5fe55216e9"],
+      "rationale": "The A13 relative kernel source path is retained as kernel-a16, the explicit Android 16 repository name, instead of the historical host-absolute path.",
+      "necessity": "Required for reproducible in-tree kernel builds.",
+      "performance": "Build-path metadata only.",
+      "security": "Eliminates dependence on an uncontrolled host-absolute source directory.",
+      "validation_evidence": ["Current kernel task points only to kernel-a16 and earlier SquashFS kernel builds passed."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "3d950593dd200a2a68f8828dc31862c182ccff30",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-houdini16-callback-api",
+      "target_commits": ["d180a37d930a932663df75bd82ba39c315c905c9"],
+      "rationale": "The consolidated libnb dispatcher, zygote guard, package comparison, callback synchronization and backend selection are retained with Android 16 native-bridge callback fields.",
+      "necessity": "Required for deterministic, thread-safe native-bridge selection.",
+      "performance": "One backend decision per translated process; callback locking is outside translated instruction hot paths.",
+      "security": "Backend libraries are selected from fixed product paths; native bridge remains a privileged compatibility boundary.",
+      "validation_evidence": ["libnb and Houdini 16 builds passed; nativebridge runtime regression remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "4498e9e02dfc54b7dfd7871e09a5c8f499d10a7e",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-memtrack-apex",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "7b5e4e1522c36f84359ca1496258a85621c72151"
+      ],
+      "rationale": "memtrack.bst remains packaged and Android 16 supplies the binderized memtrack service through com.android.hardware.memtrack rather than the A13 HIDL manifest block.",
+      "necessity": "Required for graphics memory accounting and the product legacy HAL.",
+      "performance": "Uses the standard Android 16 service lifecycle.",
+      "security": "Avoids declaring a stale HIDL contract while preserving the product implementation.",
+      "validation_evidence": ["memtrack package/service targets built; runtime registration remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "47816eea2ce9d94f0606b631b81341bc21aaab59",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-android-x86_64-mainline-product",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "7b5e4e1522c36f84359ca1496258a85621c72151"
+      ],
+      "rationale": "All active x86 resources, ALSA state, IDC, fstab/init data, media profiles, overlays, networking and build tasks are retained. Obsolete GSI/MGSI board files are not recreated because Windows now uses device/generic/x86_64/android_x86_64.",
+      "necessity": "Required product resources are preserved without reintroducing the removed unified bst_x86_64 board.",
+      "performance": "Static product assembly; no additional runtime control plane.",
+      "security": "Keeps board ownership in the standard Android x86_64 product and avoids inactive arm/GSI surface.",
+      "validation_evidence": ["Active resource files are exact or complete; android_x86_64 full build and prior Layer 2 7/7 passed."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "4facbf0174fcae1c8bf9181544343c16f9e1ea9d",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-current-service-delivery",
+      "target_commits": ["7b5e4e1522c36f84359ca1496258a85621c72151"],
+      "rationale": "GNSS is delivered by com.android.hardware.gnss and ConfigStore by its retained 1.1 service; their own VINTF fragments replace the old common manifest declarations.",
+      "necessity": "Required for location and legacy graphics configuration contracts.",
+      "performance": "Standard service/APEX startup only.",
+      "security": "Uses platform-owned manifests and avoids duplicate HAL declarations.",
+      "validation_evidence": ["GNSS and ConfigStore package targets completed dependency builds; runtime registration remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "5cb77e7887322aeb20b98ceb668b24d197d0d6fa",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-houdini16-payload",
+      "target_commits": ["d180a37d930a932663df75bd82ba39c315c905c9"],
+      "rationale": "The A13 libnb dispatcher, allow/deny lists and package configuration are retained while the supplied Houdini 16 version-8 payload replaces Houdini 13.",
+      "necessity": "Required for ARM64 application translation on Android 16.",
+      "performance": "Native translation overhead is limited to ARM64 apps selected for this backend.",
+      "security": "The proprietary payload is ignored from Git and must be provisioned from the authorized external package.",
+      "validation_evidence": ["libnb, houdini64, policy and ramdisk targets built; translated-app launch remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "76143e920d5496dbbbd68b47b009bceee5e45817",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-baklava-and-houdini16-adaptation",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "d180a37d930a932663df75bd82ba39c315c905c9",
+        "1423a2de1c61f694d16d58e498e238bee7efaf14"
+      ],
+      "rationale": "This duplicate/follow-up authority change reaches the same final NDK translation payload and per-app libnb selection as 0f405e00; both source SHAs map to the retained final implementation.",
+      "necessity": "Required as part of the final NDK translation history and payload identity.",
+      "performance": "No duplicate runtime path is introduced.",
+      "security": "Uses the same immutable payload and app-namespace mount boundary.",
+      "validation_evidence": ["All translation payload files are exact after the Tiramisu-to-Baklava path rewrite."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "7fd69d779315e93c5e7a6d5b905b2f40d45797b0",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "final-removal-preserved",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "7b5e4e1522c36f84359ca1496258a85621c72151"
+      ],
+      "rationale": "The common device manifest has no Gatekeeper HAL declaration and the legacy Gatekeeper package block remains disabled; Android 16 framework handling does not require replaying the deleted HIDL XML.",
+      "necessity": "Required to avoid registering the unsupported guest Gatekeeper HAL.",
+      "performance": "Removes service startup.",
+      "security": "Removes hardware-backed credential service capability; framework fallback behavior must be regression-tested.",
+      "validation_evidence": ["Manifest and package assembly were reviewed; lock/settings runtime regression remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "874610a60b6e5f431c720a5d49a3206e7500d8f7",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-service-owned-vintf",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "7b5e4e1522c36f84359ca1496258a85621c72151"
+      ],
+      "rationale": "lights.bst remains packaged and the Android 16 light service supplies its VINTF declaration instead of duplicating the A13 common manifest block.",
+      "necessity": "Required for guest backlight and light-state handling.",
+      "performance": "No extra lookup beyond normal HAL startup.",
+      "security": "Avoids conflicting duplicate VINTF ownership.",
+      "validation_evidence": ["Light HAL and service targets built; runtime light control remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "ad572b19fb9a62343f2ce2451edc046cff93fbed",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "duplicate-payload-with-external-secret-injection",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "ef3dc3be915dfc9733de5703941d142100899229"
+      ],
+      "rationale": "This duplicate apksigner payload commit maps to the same exact script/jar and externally provisioned keystore policy as 38931480.",
+      "necessity": "Signer tooling remains required; duplicated private-key history is not replayed.",
+      "performance": "On-demand signing only.",
+      "security": "No private signing key is stored in the Android 16 tree.",
+      "validation_evidence": ["Final apksigner script/jar identity and keystore exclusion reviewed."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "af22f7913f2a1f64bc10bee31297ea8c46a82d81",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported",
+      "target_commits": ["7b6874dc74745c956af674344fda5d5fe55216e9"],
+      "rationale": "camera.bst replaces camera.x86 in the final Android 16 product package list.",
+      "necessity": "Required for the BlueStacks camera HAL.",
+      "performance": "Module selection only.",
+      "security": "No extra camera provider is exposed beyond the selected product HAL.",
+      "validation_evidence": ["Package list and camera.bst component build history reviewed; camera runtime remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "afba6c8513febb448436281d439f32cfcd479c21",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-drm-services",
+      "target_commits": [
+        "7b5e4e1522c36f84359ca1496258a85621c72151",
+        "0edb96a328b99742a8c3583e3d1aafc501308252"
+      ],
+      "rationale": "The obsolete conflicting common DRM interface declaration is gone. Current ClearKey AIDL and Widevine HIDL services own their exact interface manifests, eliminating the A13 factory-version crash condition.",
+      "necessity": "Required for stable DRM factory registration.",
+      "performance": "No additional service beyond the selected DRM implementations.",
+      "security": "Avoids broad or mismatched interface claims.",
+      "validation_evidence": ["DRM service graph and VINTF compatibility passed; playback runtime remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "c61fe93a26cdb3d20d6c25308a7e5b1515e09d63",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-baklava-board-fallbacks",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "7c8d1833f16bc911e49b8d2bad16d885c5f40987",
+        "130da841435e1ee25f8b770a2622536884a54db0"
+      ],
+      "rationale": "Device packaging uses fixed fstab.baklava and init.baklava paths, init.x86.rc mounts that fstab, and system/core supplies the x86 hardware fallback without requiring a Player ro.hardware boot argument.",
+      "necessity": "Required because the current Player reports an unknown boot hardware value.",
+      "performance": "Boot-only path selection.",
+      "security": "Deterministic packaged paths replace host-controlled board suffix dependence.",
+      "validation_evidence": ["Baklava files were read back from ramdisk and init.rc verifier passed; clean-Data boot remains pending."]
+    },
+    {
+      "project": "device/generic/common",
+      "kind": "patch",
+      "source_commit": "ef2f4da5e521cf04e9d687c24c6bb46d9cc303fc",
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-service-owned-vintf",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9",
+        "7b5e4e1522c36f84359ca1496258a85621c72151"
+      ],
+      "rationale": "power.bst remains packaged alongside the Android 16 power service; service-owned VINTF metadata replaces the A13 common HIDL declaration.",
+      "necessity": "Required for App Player power hints and compatibility behavior.",
+      "performance": "Normal HAL/service startup only.",
+      "security": "Avoids duplicate manifest ownership while retaining the product module.",
+      "validation_evidence": ["Power HAL and service targets built; runtime power-hint regression remains pending."]
+    }
+  ]
+}

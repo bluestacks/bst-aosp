@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "build-superproject-topology",
+      "match": {
+        "project": "build",
+        "kind": "patch",
+        "source_commit": [
+          "611bd16cc0f14fd9c7a61366ede524993e0e7283",
+          "04a5a80b2c4a009a3220e982d2056835c69bc90a"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-integration",
+      "manual_disposition": "superproject-topology-expanded-into-child-ledgers",
+      "target_commits": [],
+      "rationale": "The A13 build repository is a superproject. Init build establishes its child layout and 04a5a80 advances make and soong gitlinks. Android 16 tracks build/make and build/soong directly, so replaying the superproject objects would be incorrect; every child patch is enumerated separately from the recorded pre-update child SHAs through the child bst-v5.22.210 heads.",
+      "necessity": "The topology is necessary provenance but has no independent target runtime behavior.",
+      "performance": "No runtime or build-time cost; this decision prevents double replay of child changes.",
+      "security": "No superproject object is treated as proof that child content is present; child source patches retain independent review decisions.",
+      "validation_evidence": [
+        "A13 build commit 04a5a80 records make a9966132 to 47f341a7 and soong 34839fc9 to 60366476; the audit continues through current child heads fa3b06f0 and e5cbcf04."
+      ]
+    },
+    {
+      "id": "build-make-product-app-policy",
+      "match": {
+        "project": "build/make",
+        "kind": "patch",
+        "source_commit": [
+          "009b98d230e5a5cc911129f8cffa6588b8c74782",
+          "4fb7ca55c56d467ef434ba6035175853b100fc24",
+          "950eafc0550111bf7e1bba0026f098ae8c37cbb2"
+        ]
+      },
+      "expected_matches": 3,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-package-set-not-intermediate-calendar-state",
+      "target_commits": [
+        "6483acb67e59f70c756df342ab7fe989dd13a8f5"
+      ],
+      "rationale": "The two calendar commits are an add-then-replace sequence whose final A13 state selects DeskClock. Android 16 preserves that final state and the removal of Browser2, Calendar, Music, QuickSearchBox, BasicDreams, BluetoothMidiService, BuiltInPrintService, ManagedProvisioning, MmsService, HTMLViewer and EmergencyInfo.",
+      "necessity": "Required to retain the BlueStacks guest package surface and avoid duplicate or unsupported system applications.",
+      "performance": "Reduces image size, package scanning and background services; no hot-path overhead.",
+      "security": "Reduces the preinstalled application surface. CalendarProvider remains because other applications may depend on its provider contract.",
+      "validation_evidence": [
+        "Target commit 6483acb67e removes the final A13 package set at the Android 16 product files and retains DeskClock."
+      ]
+    },
+    {
+      "id": "build-make-vendor-service-manager",
+      "match": {
+        "project": "build/make",
+        "kind": "patch",
+        "source_commit": "2d424ae9c5d580280a2695540a3bbe9ab1dcb2c3"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-at-android-x86-64-product-boundary",
+      "target_commits": [
+        "4a985857f52160c55bca07d4acc6766580592316"
+      ],
+      "rationale": "A13 made vndservice and vndservicemanager unconditional globally. Android 16 keeps upstream shipping-API policy and selects vndservicemanager only for the Windows android_x86_64 product; its dependency installs vndservice. This preserves the required guest behavior without changing every A16 product.",
+      "necessity": "Required by legacy vendor Binder services used by the BlueStacks Windows guest.",
+      "performance": "Starts one required service-manager process only on the target product.",
+      "security": "Narrower than A13: the legacy vendor service manager is not added to unrelated Android 16 products.",
+      "validation_evidence": [
+        "Built installed-files.txt contains /system/vendor/bin/vndservice, /system/vendor/bin/vndservicemanager and its init rc."
+      ]
+    },
+    {
+      "id": "build-make-widevine-product-module",
+      "match": {
+        "project": "build/make",
+        "kind": "patch",
+        "source_commit": "52d56647ba8b30c9469ffc4acec4a45ebd5c6fd8"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-current-houdini-widevine-product-integration",
+      "target_commits": [],
+      "rationale": "A13 added libwvdrmengine to the global vendor package list. The Android 16 Windows product obtains the current Houdini/Widevine module through its product integration rather than changing the platform-wide base_vendor list.",
+      "necessity": "Required for guest Widevine DRM compatibility.",
+      "performance": "Adds one shared library to the image; no cost until a DRM client loads it.",
+      "security": "The binary is external proprietary input and must be identity-pinned and runtime-tested; it is not copied into the documentation repository.",
+      "validation_evidence": [
+        "Built installed-files.txt records /system/vendor/lib/libwvdrmengine.so and the output file exists at 1,250,188 bytes. Runtime DRM playback remains in the final boot gate."
+      ]
+    },
+    {
+      "id": "build-make-release-art",
+      "match": {
+        "project": "build/make",
+        "kind": "patch",
+        "source_commit": "6cfc81f46d75dace9fe3bc52553db9e8245cfe1a"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-android-x86-64-product-variable",
+      "target_commits": [
+        "fa9bb993e37ddb56d083a7ecae7a73387adf04a2"
+      ],
+      "rationale": "Android 16 sets PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD=false in android_x86_64.mk, preserving A13 release ART behavior for eng images while leaving other products at upstream defaults.",
+      "necessity": "Required for application compatibility and production-equivalent ART behavior in the Windows image pipeline.",
+      "performance": "Uses the release ART APEX, avoiding debug overhead and reducing image/runtime cost.",
+      "security": "Avoids shipping debug ART behavior in the product guest.",
+      "validation_evidence": [
+        "The target product assignment and current runtime_libart selection path were inspected together."
+      ]
+    },
+    {
+      "id": "build-make-full-dexpreopt",
+      "match": {
+        "project": "build/make",
+        "kind": "patch",
+        "source_commit": "9535b76b56ca5adbde4c2652e51dacace7e758c9"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-override-disable-dexopt-control",
+      "target_commits": [
+        "90781461de1d7e7fa6806e622a2a3c6b0fa39d6f"
+      ],
+      "rationale": "A13 bypassed eng and prebuilt dexpreopt restrictions when BST_BUILD_WITH_DEXPREOPT=true. Android 16 implements the same final intent at the current OVERRIDE_DISABLE_DEXOPT_ALL gate.",
+      "necessity": "Required for production package startup performance from the eng image pipeline.",
+      "performance": "Increases build time and image size in exchange for lower first-run compilation and launch latency.",
+      "security": "Does not change code trust; generated oat/vdex artifacts remain bound to the built APK/JAR inputs.",
+      "validation_evidence": [
+        "Target commit 90781461 is present and incremental Java builds completed with the Android 16 product configuration."
+      ]
+    },
+    {
+      "id": "build-make-runtime-density",
+      "match": {
+        "project": "build/make",
+        "kind": "patch",
+        "source_commit": "9b011eb99931b7cee8e858a72417281d04d8bf37"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-as-host-driven-runtime-density",
+      "target_commits": [
+        "7b6874dc74745c956af674344fda5d5fe55216e9"
+      ],
+      "rationale": "A13 hard-coded 240 into every generated partition build.prop. Android 16 applies the host-provided DPI in device/generic/common init.sh, preserving the Windows product contract without globally mutating all partitions/products.",
+      "necessity": "Required for host-controlled display density and launcher/layout compatibility.",
+      "performance": "One boot-time property assignment; no rendering-loop overhead.",
+      "security": "The host value must remain validated because extreme density values can make UI inaccessible.",
+      "validation_evidence": [
+        "Target init.sh calls set_property ro.sf.lcd_density with the resolved DPI."
+      ]
+    },
+    {
+      "id": "build-make-historical-signing-keys",
+      "match": {
+        "project": "build/make",
+        "kind": "patch",
+        "source_commit": [
+          "cfb096aee9da966cd137af4adaf1e02bb645f498",
+          "5d79778e477335004f491a7f0553c005bd43cdec"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "external-secret-input-not-source-port",
+      "target_commits": [],
+      "rationale": "These A13 commits add and rotate private product signing material inside build/make. Android 16 intentionally does not import historical private keys into source control; signing identity is an external release-pipeline input.",
+      "necessity": "The signing identity may be necessary for upgrade compatibility, but the secret files themselves are neither a source patch nor safe repository content.",
+      "performance": "No runtime performance impact.",
+      "security": "Private keys must be rotated and injected from controlled secret storage. Only public identity/hash provenance belongs in project documentation.",
+      "validation_evidence": [
+        "Android 16 build/make tracks no bluestacks-market key files. Final release signing identity requires a separate secure gate."
+      ]
+    },
+    {
+      "id": "build-make-outside-binary-cwd-relaxation",
+      "match": {
+        "project": "build/make",
+        "kind": "patch",
+        "source_commit": "47f341a768b874381f7fd164b93ef2593ab0412b"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "replaced-by-explicit-soong-finder-integration",
+      "target_commits": [],
+      "rationale": "A13 relaxed core/binary.mk path handling globally to build out-of-tree modules. Android 16 discovers only the explicit BlueStacks Android.mk files through Soong and retains platform path validation; restoring the broad Make relaxation would increase drift and hide bad include paths.",
+      "necessity": "The broad relaxation is unnecessary because all required external modules are explicitly discovered and current target builds pass.",
+      "performance": "Retaining strict path checks has no runtime cost and avoids ambiguous incremental dependencies.",
+      "security": "Strict source/output boundaries reduce accidental reads from arbitrary host paths during builds.",
+      "validation_evidence": [
+        "Current Soong finder lists hd and gated goldfish Android.mk inputs; build/make commit 2872af3a restores strict outside-include errors."
+      ]
+    },
+    {
+      "id": "build-make-elf-check-disable",
+      "match": {
+        "project": "build/make",
+        "kind": "patch",
+        "source_commit": [
+          "d07696fe5359834be493c3b7eb3aaccf39fbc358",
+          "ec981b625a398943af5b3bbe083a3e2037d45c5c"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "a16-retains-elf-prebuilt-validation",
+      "target_commits": [],
+      "rationale": "The duplicate A13 changes disabled ELF validation for every PRODUCT_COPY_FILES entry. Android 16 retains the upstream default and uses product-specific fixes for incompatible prebuilts.",
+      "necessity": "Not necessary for the current build and too broad for mainline promotion.",
+      "performance": "Adds build-time validation only; no guest runtime cost.",
+      "security": "Retaining ELF validation catches ABI, partition and dependency mistakes before image publication.",
+      "validation_evidence": [
+        "Current core/Makefile initializes check_elf_prebuilt_product_copy_files to true and target builds pass."
+      ]
+    },
+    {
+      "id": "build-soong-explicit-external-modules",
+      "match": {
+        "project": "build/soong",
+        "kind": "patch",
+        "source_commit": [
+          "b0a6899b671a1ee41eb6ad541844e4839e19afc0",
+          "94df06f4484c8b5bae4436ae4146896f4dbdd357"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-current-paths-and-goldfish-build-gate",
+      "target_commits": [
+        "1507967b133907d86da1cddb0c972f85c3f4f997",
+        "dc02281d4deab2150dbba63833e02fd7834cb092"
+      ],
+      "rationale": "Android 16 preserves every final A13 hd module path, including bstchkdata, and gates goldfish-opengl-pie discovery on BST_BUILD_EXTERNAL_GOLDFISH. Later A16 commits add only explicitly required settings and FFmpeg paths.",
+      "necessity": "Required to link app-player guest modules while keeping the android_x86_64 target build self-identifying.",
+      "performance": "Adds a fixed small list to finder output; no recursive external-tree scan and no guest runtime cost.",
+      "security": "Only named Android.mk files are admitted, and external goldfish input requires an explicit environment gate.",
+      "validation_evidence": [
+        "Current ui/build/finder.go contains vmsg, xpl, bstconf, bstchkdata, hcall, gcall and gated goldfish entries."
+      ]
+    },
+    {
+      "id": "build-soong-global-write-and-cwd-relaxation",
+      "match": {
+        "project": "build/soong",
+        "kind": "patch",
+        "source_commit": "78ffe858123eeaf124fb1af9bf6506535fbdb87d"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "a16-retains-source-root-and-kati-write-enforcement",
+      "target_commits": [],
+      "rationale": "A13 disabled the source-root cwd check and Kati --werror_writable globally. Android 16 external modules are integrated through finder paths, so these broad diagnostics remain enabled.",
+      "necessity": "Not necessary; all focused target builds pass with --werror_writable.",
+      "performance": "Build-only validation with negligible runtime; retaining it improves deterministic incremental builds.",
+      "security": "Prevents builds from silently writing source/read-only locations or running from an unintended tree.",
+      "validation_evidence": [
+        "Current ui/build/kati.go passes --werror_writable and current config.go retains source-root validation."
+      ]
+    },
+    {
+      "id": "build-soong-perl-path-allowlist",
+      "match": {
+        "project": "build/soong",
+        "kind": "patch",
+        "source_commit": "6036647625844c03bdaa27ce1d902b99b01a1a62"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "unused-host-tool-exception-not-promoted",
+      "target_commits": [],
+      "rationale": "A13 globally allowlisted host perl for an older build dependency. The Android 16 target build does not require that exception, so it is not promoted.",
+      "necessity": "Not necessary for current source or packaging workflows.",
+      "performance": "No guest impact; avoiding unused host tools reduces build-environment variability.",
+      "security": "Keeps the path interposer allowlist minimal and avoids admitting arbitrary host perl scripts into hermetic builds.",
+      "validation_evidence": [
+        "Current ui/build/paths/config.go does not allowlist perl and focused Android 16 builds complete successfully."
+      ]
+    }
+  ],
+  "decisions": []
+}

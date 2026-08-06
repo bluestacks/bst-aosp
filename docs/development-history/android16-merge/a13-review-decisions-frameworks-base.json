@@ -1,0 +1,1023 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "frameworks-base-final-code-line-complete",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "automated_disposition": "textually-complete"
+      },
+      "expected_matches": 88,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-surviving-code-confirmed",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416"
+      ],
+      "rationale": "Every surviving added or removed source line for this patch is present in the Android 16 final tree. The comparison is against the A13 final branch state, so intermediate lines later replaced in A13 are not treated as required promotion content.",
+      "necessity": "The surviving behavior is part of the authoritative A13 guest compatibility baseline and remains active in Android 16.",
+      "performance": "No additional delta is proposed by this review; runtime cost is the already retained A13 behavior and is assessed with its owning feature during regression.",
+      "security": "No new privilege is introduced by the review. Existing BlueStacks policy exceptions remain explicit compatibility debt and are covered by the final-tree evidence.",
+      "validation_evidence": [
+        "Patch-level final-state comparison reports only complete-line, complete-removal, or exact-file evidence in the Android 16 tree."
+      ]
+    },
+    {
+      "id": "frameworks-base-explicit-a13-source-mapping",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "automated_disposition": "semantic-review-required",
+        "candidate_target_commits_present": true
+      },
+      "expected_matches": 41,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-api-adaptation",
+      "target_commits_from_candidates": true,
+      "rationale": "The Android 16 promotion commit explicitly cites this A13 source SHA and implements the same final behavior on the current framework API. Source and target changed-file sets were compared; path mismatches are confined to documented Android 16 refactors such as the screen-timeout constants split and window-management ownership moves.",
+      "necessity": "Required to retain the referenced A13 framework behavior while using Android 16 service, Binder, package-manager, SystemUI, or native interfaces.",
+      "performance": "The target commit review records whether work is boot-only, event-driven, or on a hot path; no unbounded polling or new background loop is accepted by this rule.",
+      "security": "Target adaptations retain Android 16 identity checks, per-user handling, and service boundaries where the A13 implementation crossed framework policy.",
+      "validation_evidence": [
+        "Target commit message contains the A13 source SHA.",
+        "Target commit changed files and the Android 16 final implementation were compared with the source patch; component build evidence is recorded in the target commit where applicable."
+      ]
+    },
+    {
+      "id": "frameworks-base-a13-later-superseded",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "0a0a94889364d94dfc0a74a54f88ba09b0c61cf2",
+          "2f31e0ae5ea0381ab9337278631f15ba497ba22d"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-later-a13-final-state",
+      "target_commits": [],
+      "rationale": "The first patch temporarily reverted an older PScore implementation that later A13 commits replaced with the final getPScoreAbove design. The second added ForceClearGms and was reverted byte-for-byte by A13 d9545d421d16. Neither transient state belongs in the promoted final tree.",
+      "necessity": "Not necessary; promotion follows the authoritative A13 branch tip rather than preserving transient intermediate states.",
+      "performance": "Avoids restoring dead configuration parsing and Binder surface. The final PScore implementation is assessed with the retained game-default feature.",
+      "security": "Avoids reintroducing an unused service method and state table that were removed by the source authority.",
+      "validation_evidence": [
+        "A13 d9545d421d16 explicitly reverts 2f31e0ae5ea0 and ForceClearGms is absent from both final trees.",
+        "A13 final ActivityThread and SharedPreferencesImpl use getPScoreAbove; Android 16 matches that later final design."
+      ]
+    },
+    {
+      "id": "frameworks-base-remove-home-accessibility-auto-enable",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "560cb49cbda262ee44ba708c4f52f88e564a47f6"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "final-absence-preserved",
+      "target_commits": [
+        "9bc935a532663bb04c9f48c8c0bd4f31834fe253"
+      ],
+      "rationale": "A13 removes a settings migration that automatically enabled the Home accessibility service. Android 16 never adds that migration, while retaining the separate query-hiding policy; the required final state is absence, not a forward code hunk.",
+      "necessity": "Necessary final behavior because silently enabling an accessibility service is not part of the A13 tip.",
+      "performance": "Removes one settings-upgrade write path and has no steady-state cost.",
+      "security": "Preserves user control of accessibility enablement and avoids silently granting a sensitive service capability.",
+      "validation_evidence": [
+        "Reviewed A13 removal patch and Android 16 SettingsProvider upgrade history; no Home auto-enable migration exists."
+      ]
+    },
+    {
+      "id": "frameworks-base-display-orientation-and-dpi",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "036a6922fa4a1413d357e88c2798947b911bf0fe",
+          "2c364040bb48604e65e0c2443c5e914e77606d86",
+          "8c63dfd40186f61f1b9e3ee070f458967629230a",
+          "8ede0aaab9ec9ab63fc62b3080e6c6605eb027d9",
+          "9fd68594cac52e33aa449c1ef447c9584ec9137b",
+          "c9c9fdde981d1d62cdb24ecb2e7dc92173e84dab",
+          "e148a5bf34ad6fa2cf8c4cebc17757e54cc6093e"
+        ]
+      },
+      "expected_matches": 7,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-across-a16-display-and-wm-refactors",
+      "target_commits": [
+        "d875979700baed6c4792db3036066bf4e2c8c975",
+        "7833020346161b74631b048b56ceba7dd7ee7b7b",
+        "1b50e47b9082c64b6452e404b085969ea0e0ff08"
+      ],
+      "rationale": "The final camera inversion, recents rotation, custom DPI, fixed surface rotation, RuneScape density and per-app orientation policies are present. Android 16 routes them through current Display, ResourcesImpl, activity lifecycle and window-management ownership rather than the removed A13 call sites.",
+      "necessity": "Required for host/guest orientation coherence and package-specific display compatibility.",
+      "performance": "Adds bounded configuration lookups on display/resource updates and activity transitions. No polling is introduced; repeated Binder lookups remain a regression watch item.",
+      "security": "Package-specific overrides are obtained from the privileged FilterApps service and do not expose a new untrusted Binder endpoint.",
+      "validation_evidence": [
+        "Final Android 16 code contains modifyDispRotationVal, fixedSurfaceRotation, getCustomDpi and recents orientation synchronization paths.",
+        "A16 target commits were reviewed against all nine source files in the camera-inversion squash patch."
+      ]
+    },
+    {
+      "id": "frameworks-base-game-defaults-and-high-fps",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "096617d2ac97ff68ee76556e47e97754ed4f5171",
+          "1c4e428b17cbc6ad818556b1d06ec712e9df8e50",
+          "6f24c854abff60161bac0fcb06afc681529348d5",
+          "822d88c74b87e50aff8cc18dad9e4b8ae6ea953a",
+          "c6cef2744507a5d50e1c8f3a10472a28df6d62b6",
+          "e17d18f399fa2ca52b874dc0aa6a93192ea413a7",
+          "e5f9eab9f72202bce9fa67abd808c6176d50467a",
+          "fbbbba8770f88560f710f37da7fcdc54041c65e4",
+          "9f7db03352b1d1ed7987c75c6d08267556972982"
+        ]
+      },
+      "expected_matches": 9,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-a13-game-policy",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416"
+      ],
+      "rationale": "Android 16 retains the final A13 FilterApps defaults, PScore threshold, one-time SharedPreferences injection, default profile bootstrap, Martial/Dungeon overrides and Unreal high-FPS console-command loop. The temporary PScore revert is excluded separately.",
+      "necessity": "Required for config.db driven game defaults and the established high-FPS compatibility contract.",
+      "performance": "SharedPreferences initialization can perform one-time synchronous writes. Eligible Unreal processes run one background thread that posts once per second; this is a material CPU/wakeup cost and must be measured during game regression.",
+      "security": "Parses privileged config.db values and writes only app-owned preference/profile paths, but malformed profile paths remain compatibility debt requiring runtime validation.",
+      "validation_evidence": [
+        "A13 and Android 16 final files both contain getPScoreAbove, mBstDefaultSet, Martial/Dungeon overrides, getDefaultProfile and processUEHighFPS.",
+        "The Android 16 implementation clamps FPS to 60..120 and limits the loop to eligible non-system Unreal applications."
+      ]
+    },
+    {
+      "id": "frameworks-base-nowgg-account-visibility-build-fix",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "1110db4a424bb085b40cf827c3c9bc20d5740710"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-condition",
+      "target_commits": [
+        "7344fdd6934a6fc8c5751b6bd14d12c05ed85b97"
+      ],
+      "rationale": "The corrected now.gg account visibility condition is present in the final Android 16 AccountManager policy; the source patch itself is a parenthesis/build correction to that retained behavior.",
+      "necessity": "Required so now.gg accounts remain visible without breaking the account visibility expression.",
+      "performance": "One additional account-type comparison during account filtering.",
+      "security": "Broadens now.gg account visibility intentionally; no other account type bypasses normal visibility checks.",
+      "validation_evidence": [
+        "Final AccountManagerService source and the dedicated A16 account-visibility commit were reviewed."
+      ]
+    },
+    {
+      "id": "frameworks-base-play-store-gles-feature-reporting",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "15f58d06e049c579812e075a3ae0685e990ecdba"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-package-query-adaptation",
+      "target_commits": [
+        "83196e80ae870ed84db9c3db8ed64425913b2213"
+      ],
+      "rationale": "Per-app GLES version and feature reporting is retained in current PackageManager and ActivityTaskManager query paths, using the Android 16 FilterApps access points.",
+      "necessity": "Required for Play Store compatibility filtering and package-specific graphics capability exposure.",
+      "performance": "Adds a service lookup on selected feature/GLES queries; no background work.",
+      "security": "Only alters reported capabilities and does not grant the underlying hardware permission.",
+      "validation_evidence": [
+        "Final Android 16 PackageManagerService and ActivityTaskManagerService call getGlVersion and FilterApps feature policy."
+      ]
+    },
+    {
+      "id": "frameworks-base-native-library-extraction-policy",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "174c3b04466cbf9ac82a2292f1009201f471804d",
+          "7fdcf1219e70b038e3ea5980b04cdb96821b2ef3",
+          "b01064d4221b61d5286fce13a40195bbcc2835b2",
+          "d8caf5f91e27ca367e3026ac241ba06160ac4524"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-a16-package-parser",
+      "target_commits": [
+        "ec24b0a37f36643040b3180626ce1b5b93dda636",
+        "48715625bff3fbf2fc86075df18e778a787dd43b"
+      ],
+      "rationale": "The uncube ABI crash fixes and config-controlled extractNativeLibs policy survive in A16 package parsing, ABI derivation and native library handling. The old PackageParser entry point is supplemented by ApkLiteParseUtils and current scan helpers.",
+      "necessity": "Required for launcher startup and packages whose bundled native libraries must be extracted despite manifest defaults.",
+      "performance": "May increase install time and disk usage only for configured packages; scan-time FilterApps queries are bounded.",
+      "security": "Extraction remains constrained to package-owned native libraries and package-manager controlled paths.",
+      "validation_evidence": [
+        "Final tree contains isExtractNativeLibs in manager, AIDL, service, PackageParser, ApkLiteParseUtils and NativeLibraryHelper.",
+        "A16 uncube commit covers PackageAbiHelperImpl, PackageManagerService and ScanPackageUtils."
+      ]
+    },
+    {
+      "id": "frameworks-base-screenshot-integration",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "28534f689069e172ca0f13b96afee3996abc6af6",
+          "fe57e2b693342bcbdef5532367aa64dbf8d82599"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-screenshot-and-key-gesture-pipelines",
+      "target_commits": [
+        "8ffc55bdca7a126d6b24b3bfc36063952e8eacee"
+      ],
+      "rationale": "Host screenshot export behavior is adapted to Kotlin ScreenshotController/ImageExporter, while SYSRQ screenshot capture is already provided by Android 16 KeyGestureController instead of PhoneWindowManager.",
+      "necessity": "Required for host-triggered screenshots and the A13 SYSRQ control mapping.",
+      "performance": "No idle cost; image copy/export occurs only on screenshot requests.",
+      "security": "Retains Android 16 screenshot mediation and display targeting; no new arbitrary file-read path is exposed.",
+      "validation_evidence": [
+        "A16 screenshot target commit reviewed; KeyGestureController maps KEYCODE_SYSRQ to TAKE_SCREENSHOT."
+      ]
+    },
+    {
+      "id": "frameworks-base-package-visibility-and-protection",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "325cfaa730fbde5724102f3fb63cdc0fa9b02a73",
+          "5c72c1d5c29d4865cd0bf9bb8c1f2537118c50b1",
+          "936c9f22adc07a3154708074d4326f8da4a9abaa",
+          "950075f9f6de580684572bedfe303fd65ff78b54",
+          "9aa9a23e0693b60dec1734eef5dfdec7393e9c18",
+          "9f90bba2f27ed0c7d3d512b8a3462752ad3f5b40",
+          "ca629bb1f72b0a1d6a17f68588f7aa89d53ab0b2"
+        ]
+      },
+      "expected_matches": 7,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-computer-and-permission-model",
+      "target_commits": [
+        "4a6dc9ec6d2f315d9c8a8434365370ecc678202f",
+        "8221d29acc036e034493bc09d58a5316fac4005f",
+        "2022162505304786857870ec510162ed2a74fca5"
+      ],
+      "rationale": "BlueStacks package hiding, privileged caller detection, Home protection, permission-revocation restrictions, DeviceDetails exceptions, App Center null-caller handling and intent-resolution filtering are retained on Android 16 ComputerEngine and permission APIs.",
+      "necessity": "Required for product component integrity and anti-detection compatibility.",
+      "performance": "Adds package/caller checks to query paths. Centralized BstUtils predicates avoid duplicated A13 filtering blocks, but package-query overhead remains measurable.",
+      "security": "Intentionally creates narrow product-package exceptions. UID/package validation is retained; the DeviceDetails bypass is limited to the named trusted component.",
+      "validation_evidence": [
+        "Final tree contains hideBlueStacksPkg, bstIsCallingAppPrivileged and ComponentResolver filtering.",
+        "A13 d59 accessibility consolidation and later null-caller correction were reviewed against current centralized helpers."
+      ]
+    },
+    {
+      "id": "frameworks-base-navigation-systemui-and-timeout",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "33b824b1578600e5f1798acb95d822f3ee39583e",
+          "73ff2c7e6cd7ec615d632054c62ce8c2c7a41fdc",
+          "75860ab8e437945dc5e0b42291e211a35e967ab2",
+          "f6371e7ca93b09dccac2bc460a3a8f69ee48d81f",
+          "cb0f79d5de75be74382717efa3a7b70e427135b0"
+        ]
+      },
+      "expected_matches": 5,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-through-a16-systemui-and-settings-apis",
+      "target_commits": [
+        "a4434f303477f5d472a6be282abd434aa3433004",
+        "648e475b2dbba35f1fba4fc95bf5d3d3d140fdb7",
+        "909ededdeaef7620d0e76eef5daccf2b992858f4",
+        "9e477356edc5255ae92162c9975470ed3cf6e081"
+      ],
+      "rationale": "Navigation hiding, compact SystemUI, zero status-bar height for hidden mode, default-awake behavior and blocking third-party brightness/timeout writes are present at their current A16 ownership points.",
+      "necessity": "Required for an app-player display without guest chrome and for host-controlled screen power policy.",
+      "performance": "Property and package checks occur on resource/settings access; no new periodic work.",
+      "security": "Restricts third-party settings writes and keeps host/product packages privileged; it does not grant new settings authority.",
+      "validation_evidence": [
+        "Final code contains status_bar_height override, navigation policy, ScreenTimeoutConstants default and Settings.System write guard."
+      ]
+    },
+    {
+      "id": "frameworks-base-wallpaper-assets",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "34babcccc01e082a930738d1a6f04032c04d5769",
+          "40d3b10507595e4db5c785e188fb4151057e738e"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-assets-and-selector",
+      "target_commits": [
+        "2dbd4b83c1a58943be8b87410414ad682d7a9beb"
+      ],
+      "rationale": "The final MSI wallpaper payloads, resource symbols and WallpaperManager selector are present; the later A13 asset update wins over the earlier payload while the original selection code remains required.",
+      "necessity": "Required for the product default wallpaper when the guest launcher requests framework wallpaper content.",
+      "performance": "Static resource selection only; image decode cost is unchanged from normal wallpaper loading.",
+      "security": "Bundled read-only resources, no external input.",
+      "validation_evidence": [
+        "All three default_wallpaper_msi assets and the WallpaperManager selector exist in Android 16."
+      ]
+    },
+    {
+      "id": "frameworks-base-aidl-unit-test-script",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "35830d67f34a69b64f038b686390327e3f09c73c"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "retained-development-scaffold",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416"
+      ],
+      "rationale": "The historical IBst AIDL comparison script remains in the component. Its hard-coded old include layout is not an active Android 16 build gate and is documented as development scaffolding rather than runtime code.",
+      "necessity": "Useful as source history and interface drift reference; not required in the product image.",
+      "performance": "No runtime cost and no build cost unless invoked manually.",
+      "security": "No secrets or network access; writes temporary generated AIDL output only when explicitly run.",
+      "validation_evidence": [
+        "unit-test.sh exists in the Android 16 component and is excluded from runtime packaging."
+      ]
+    },
+    {
+      "id": "frameworks-base-hide-running-services",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "3612d300ca848513b53b4c5f93fd5e02393b1774"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-active-services",
+      "target_commits": [
+        "6eeda468c57ede6e1f5f5b220f01aa8de3ecabe0"
+      ],
+      "rationale": "A16 filters BlueStacks service records from both active and restarting service query lists while preserving visibility for trusted/system callers.",
+      "necessity": "Required for anti-detection and product service privacy.",
+      "performance": "One package predicate per returned service record; bounded by getRunningServices result size.",
+      "security": "Information-hiding only; it does not change service lifecycle or caller permissions.",
+      "validation_evidence": [
+        "ActiveServices final code calls shouldHideBstRunningService in every result loop."
+      ]
+    },
+    {
+      "id": "frameworks-base-accessibility-query-hiding",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "3de7d7954424c0e1b69b4224e1c3752389359f01",
+          "d59dd7ba73267584e7decb35d32483f6bd05909e",
+          "d925f0dd2f406796b02b0a6a2d426554a32ec662"
+        ]
+      },
+      "expected_matches": 3,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-as-centralized-a16-filter",
+      "target_commits": [
+        "9bc935a532663bb04c9f48c8c0bd4f31834fe253"
+      ],
+      "rationale": "The final A13 consolidation into BstUtils is preserved: service lists, enabled-service strings, package resolution and framework accessibility queries filter product accessibility components from third-party callers.",
+      "necessity": "Required for product accessibility automation without exposing it to app detection queries.",
+      "performance": "Copies and filters accessibility result lists on query paths. The property-gated centralized helper reduces duplicated service-side code but allocation cost remains.",
+      "security": "Does not auto-enable services or grant accessibility access; only controls third-party visibility, with system UID bypass retained.",
+      "validation_evidence": [
+        "Final BstUtils provides filterHiddenServices and applyAccessibilityServiceFilter and all A16 call sites were reviewed."
+      ]
+    },
+    {
+      "id": "frameworks-base-location-compatibility",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "3e9fd572fe1a8bf03ca0fe6f0368b3cc03fd6a4e",
+          "a5d38f19da52267ccea14e299276674f7957a0bb"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-location-provider-api",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416",
+        "6216c241c4b448c2009a3d6dbca311e92d44720b"
+      ],
+      "rationale": "GMS network-provider checks use A16 LocationProviderManager state instead of the removed secure-setting list, and the Location/AppOps compatibility fixes preserve mock/location provider behavior without the A13 crash path.",
+      "necessity": "Required to suppress the guest location-accuracy prompt and keep configured location-provider apps functional.",
+      "performance": "Provider-state and package lookup only when provider-enabled is queried; no polling.",
+      "security": "The GMS exception is package-scoped. A16 user handling and provider ownership are retained rather than bypassed globally.",
+      "validation_evidence": [
+        "LocationManagerService final code checks network provider state for com.google.android.gms using LocationProviderManager."
+      ]
+    },
+    {
+      "id": "frameworks-base-play-download-forwarding",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "423364b372b8d1b85109fd5b32f6ceca8e076cf9",
+          "3fca2ee1746a4837fda3caffb2cdc28141f38ee0"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-broadcast-controller",
+      "target_commits": [
+        "018112ec4d9bb2fe4edb875d26ba6240e430bb1a"
+      ],
+      "rationale": "A16 forwards the four Play Store download broadcasts from BroadcastController, preserves extras and package identity, suppresses duplicate states and starts the Home receiver with current BackgroundStartPrivileges arguments. This subsumes the A13 compile-fix follow-up.",
+      "necessity": "Required for launcher download/install progress and Play attribution telemetry.",
+      "performance": "Constant-time action filter plus one small per-package state map; service start occurs only on changed Play download state.",
+      "security": "Caller package must be com.android.vending and the target package/action are fixed before privileged service start.",
+      "validation_evidence": [
+        "BroadcastController final code and target commit were reviewed for all actions, caller validation, duplicate suppression and A16 startService signature."
+      ]
+    },
+    {
+      "id": "frameworks-base-ime-host-policy",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "48ddd2e05ea0e7ac6dc49369e2071a92ad7629f0",
+          "517e86f37e7e27640f39ac00e2a4f8a4a7ab4acf",
+          "ee63bacfaf1424f188f1f705cbc9523df9f24153",
+          "eebc5c7960b9b942080491d8d3e6f10c75bce149"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-ime-lifecycle",
+      "target_commits": [
+        "e2b8a5a1c8c48d8349ed85522908cf98c5f7abdb",
+        "513a551268c0a36b43de65fb70426ddd026c7840",
+        "6b2d5b08763e054484090e3aefbdf962b90952bf"
+      ],
+      "rationale": "A16 retains hardware-keyboard fixes, IME selection reset, secure-input recording notification, onImeChange and text-edit-mode host calls at the current InputMethodManagerService lifecycle points.",
+      "necessity": "Required for host keyboard mapping, secure input signaling and correct default IME recovery.",
+      "performance": "Event-driven host calls on IME transitions and text-mode changes; no polling. Binder calls are fail-open.",
+      "security": "Secure-input state is sent only through the privileged host-call service; Android 16 per-user IME settings semantics are retained.",
+      "validation_evidence": [
+        "Final InputMethodManagerService contains lazy host-call setup, onImeChange, text-edit-mode updates and the listener reset path."
+      ]
+    },
+    {
+      "id": "frameworks-base-host-clipboard",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "4a948bf5fb349cec5d2a6ab7cc3bc0e470d0c315",
+          "bc7a252e589e14436c30139ede7621e4583db8b1",
+          "fc8608092e7fbdddd5a2afdc6534d214111ce168"
+        ]
+      },
+      "expected_matches": 3,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-clipboard-service",
+      "target_commits": [
+        "99469a0605fee0a7b50d20cf0e96f4a59b175606"
+      ],
+      "rationale": "Host clipboard forwarding, null-safety and paste-while-unlocked compatibility are present in the A16 multi-user ClipboardService implementation.",
+      "necessity": "Required for host/guest clipboard synchronization and app paste compatibility.",
+      "performance": "One bounded host call on clipboard changes; payload is capped by the host-call manager.",
+      "security": "Keeps Android 16 package attribution and clipboard access checks before forwarding; host payload length is bounded.",
+      "validation_evidence": [
+        "Final ClipboardService invokes setClipboardText after normal clipboard validation and handles unavailable host service."
+      ]
+    },
+    {
+      "id": "frameworks-base-bst-strictmode-policy",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "4f6786867b48f53f87342d06326fa4f634c0bf61"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-expression-correction",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416"
+      ],
+      "rationale": "A16 preserves the BlueStacks package StrictMode startup exception and adds parentheses so the normal writesAllowed branch cannot accidentally override the package exemption.",
+      "necessity": "Required for legacy product apps that perform startup disk I/O under the established policy.",
+      "performance": "Avoids StrictMode restoration for named product apps; no additional work.",
+      "security": "Package-prefix scoped and does not disable process sandboxing, but it suppresses developer diagnostics for those apps.",
+      "validation_evidence": [
+        "Final ActivityThread contains the corrected isBstPkg guarded StrictMode condition."
+      ]
+    },
+    {
+      "id": "frameworks-base-basic-product-services",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "5e23f975cddb0cf37ab3ebd38c764215a4866148"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-complete-service-surface",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416",
+        "f97857cfee46d4837e2e116b998bf6e3815a3db2"
+      ],
+      "rationale": "The foundational Context constants, managers, AIDL contracts, SystemServer registration and BlueStacks service implementations are present and form the dependency base for later feature patches.",
+      "necessity": "Required; without these services most config.db, host-call and product-policy patches cannot function.",
+      "performance": "Adds persistent system_server services and their config state. Initialization cost is boot-time; per-call costs are assessed by dependent features.",
+      "security": "Large privileged Binder surface. Service registration, caller checks and target-only use require full system_server and SELinux regression.",
+      "validation_evidence": [
+        "Final tree contains BST_FILTER_APPS/BST_HOST_CALL service constants, AIDL, managers, native bridges and SystemServer registration."
+      ]
+    },
+    {
+      "id": "frameworks-base-runtime-permission-upgrade",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "5f7c0b5f311086e553314dfb288d7a41d776cfd6"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-package-settings",
+      "target_commits": [
+        "3ed5ebb11508ba8b9b2b98290af29eb48cc75fed"
+      ],
+      "rationale": "The host-driven permission-upgrade marker and fresh apps.xml parsing behavior are retained on A16 package settings and boot permission flow.",
+      "necessity": "Required so upgraded guest images apply the current permission manifest rather than stale serialized grants.",
+      "performance": "Can force one extra permission/state refresh on upgrade boot; no steady-state cost.",
+      "security": "May grant updated product permissions, but remains gated by the explicit upgrade marker and package-manager policy.",
+      "validation_evidence": [
+        "Dedicated A16 permission-upgrade commit and PackageManagerService/Settings call sites reviewed."
+      ]
+    },
+    {
+      "id": "frameworks-base-periodic-ntp-refresh",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "65c8b2b506770b68344511f3e6988e778e5b9a25"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-time-detector-service",
+      "target_commits": [
+        "6de1f2bd8b40a2d9fbd4ca37a5fe7a82d03a4904"
+      ],
+      "rationale": "The A13 periodic network-time sync is adapted to A16 timedetector NetworkTimeUpdateService using handler-posted forced polls and current wake-lock handling.",
+      "necessity": "Required because long-running guests cannot rely on one boot/network event to maintain host-aligned time.",
+      "performance": "One forced poll every 30 minutes plus wake-lock/network cost; bounded but must be checked for idle wakeups.",
+      "security": "Uses the platform trusted time source and existing service permissions; no untrusted time provider is introduced.",
+      "validation_evidence": [
+        "A16 target commit includes service tests; final code schedules BstPeriodicRefreshRunnable and calls onForcedPollNetworkTime."
+      ]
+    },
+    {
+      "id": "frameworks-base-input-compatibility",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "6a7d3285bc650be71159859eb4ab39d56f4fdac8",
+          "bbe9209ae32d06ceb2af4e3862d7cc1a5ddcf0e1",
+          "f577c7cec551bd56566990650b5e6745a33ad2e0"
+        ]
+      },
+      "expected_matches": 3,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-input-global-split",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416",
+        "d7a99628fff0644fd7dbf42345f60c11b8d158fa",
+        "d094604e10e92aab5ec6c35f2b93b1c2cb276255"
+      ],
+      "rationale": "FreeFire key release, sanitized input-device names and nativeMouse filtering are retained. The device-list filter moved to InputManagerGlobal in A16 while public name sanitization remains on InputDevice.",
+      "necessity": "Required for game controls and emulator-detection compatibility.",
+      "performance": "Key workaround is package/key scoped. getName can issue a FilterApps Binder query and is a hot-path risk; device filtering is bounded by device count.",
+      "security": "Only changes reported names/filtering and synthesized key-up timing; no input injection endpoint is exposed.",
+      "validation_evidence": [
+        "Final code contains FreeFireMax delayed key-up, Synaptics name policy and package-specific nativeMouse filtering."
+      ]
+    },
+    {
+      "id": "frameworks-base-zygote-vm-and-device-profile",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "279c7128863117fe2d0d57069ca294ff1fffb5e7",
+          "af2af26ebba1e52e355cb919b3bf326075e18c35",
+          "cd161672739a1bc726e71fd178696cdd425d53f8",
+          "d0c915247a889c7d77a6e4a4218ac0c837125ff0"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-zygote-profile-stage",
+      "target_commits": [
+        "6e0617b2bc0ecf73272e92393cf984a1538a6dc7",
+        "a00f53e9b5d618700f40cbba7f9d04d1c847de9b",
+        "36873742bfc85c581607b405205c0d2213a37039",
+        "e192afc1d33dc473506d075507e608681a0656be"
+      ],
+      "rationale": "Per-app virtual-memory size, global VMS defaults, xcpu configuration and device-profile constants are retained in the current A16 Zygote specialization sequence.",
+      "necessity": "Required for config.db controlled process memory/CPU presentation and game compatibility.",
+      "performance": "Applies bounded parsing and process-limit/property work once during app specialization; no steady-state loop.",
+      "security": "Changes process resource presentation and limits for selected packages; invalid values fall back to defaults rather than escaping the app sandbox.",
+      "validation_evidence": [
+        "Final Zygote code and four dedicated A16 profile/VM commits were reviewed against the source methods and properties."
+      ]
+    },
+    {
+      "id": "frameworks-base-zygote-readproc-group",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "6ded277e4530b6ae03ad5ad0c3dc6a267455717c"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-vector-based-a16-gid-adaptation",
+      "target_commits": [
+        "301b7a7f84521d2b46ccb4193b8ca41d244c36c7"
+      ],
+      "rationale": "A16 adds AID_READPROC to the current std::vector gid list for trusted BlueStacks/uncube packages before specialization instead of rebuilding a JNI array as A13 did.",
+      "necessity": "Required for trusted product diagnostics that read otherwise restricted proc entries.",
+      "performance": "One package-prefix test and vector lookup during process fork.",
+      "security": "This grants broad proc visibility to product apps and is explicit privileged compatibility debt; scope remains package-prefix limited.",
+      "validation_evidence": [
+        "Final Zygote source checks for AID_READPROC and appends it only to the product package set."
+      ]
+    },
+    {
+      "id": "frameworks-base-preunlock-shared-preferences",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "6f3c41bafb3565300092b707ef43261188ad31ee"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-context-credential-check",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416"
+      ],
+      "rationale": "ContextImpl retains the pre-unlock credential-storage exception for the BlueStacks command processor and required Google/location components at the Android 16 access check.",
+      "necessity": "Required for early product command/config access before user unlock.",
+      "performance": "A few package-name comparisons on credential storage access.",
+      "security": "Bypasses normal pre-unlock storage protection for a narrow allowlist and must be exercised only by trusted packages.",
+      "validation_evidence": [
+        "Final ContextImpl contains the package-scoped pre-unlock exception and otherwise preserves the A16 exception path."
+      ]
+    },
+    {
+      "id": "frameworks-base-displayed-package-focus-host-call",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "78298c72dab40702d5af0c79eb7fc05ff8f61be6"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-display-focus-flow",
+      "target_commits": [
+        "c0af154c7c5fb1958251193da9016ba3f117de1c",
+        "d094604e10e92aab5ec6c35f2b93b1c2cb276255"
+      ],
+      "rationale": "The host is notified when the displayed/focused package changes through A16 DisplayContent and WindowManagerService, with resumed/focus fallback retained.",
+      "necessity": "Required for host controls, IME, mouse and top-app state synchronization.",
+      "performance": "One host call on focus/package transition; duplicate transition state is bounded by normal WM events.",
+      "security": "Only publishes foreground package/activity metadata to the privileged host bridge.",
+      "validation_evidence": [
+        "Final DisplayContent calls bstSendTopDisplayedOnFocusChange and the displayed-package target commit updates all related properties."
+      ]
+    },
+    {
+      "id": "frameworks-base-zygote-capability-bounding-set",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "78497893ae239c445c6ee2792518ffc4988fcb30"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-capability-mask-api",
+      "target_commits": [
+        "35a892f196f2cb3667fcdd4c40d70635aa91429d"
+      ],
+      "rationale": "A16 preserves the parent capability bounding set through its current bounding_capabilities mask API rather than restoring the commented A13 loop verbatim.",
+      "necessity": "Required by the established guest root/su compatibility behavior.",
+      "performance": "Fork-time capability mask handling only.",
+      "security": "Deliberately retains capabilities that stock Android would drop and is high-risk compatibility debt; regression must confirm scope does not expand beyond intended processes.",
+      "validation_evidence": [
+        "Dedicated A16 commit and final DropCapabilitiesBoundingSet call path reviewed."
+      ]
+    },
+    {
+      "id": "frameworks-base-iap-and-nowgg-host-flow",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "7e22ff78568bb54ca8573791d59ba6b044289724",
+          "9d8c5f6c87f72f35beecf4f686aa66fe3cb337a4",
+          "bb8f77eceb39d70da9bded3d92a7c6a2dbb43a93",
+          "d803b524b1d857a17fcddc6b920089c43b25e7f8"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-activity-and-intent-flow",
+      "target_commits": [
+        "fb4c6cdbb744908fe77c55b75ae808cb0e1b955e",
+        "cb141933695d9afa9109867e8041b4b914139fa7",
+        "513a551268c0a36b43de65fb70426ddd026c7840"
+      ],
+      "rationale": "Google/OneStore IAP interception, payment redirect, host intent forwarding and now.gg sign-in click callbacks survive on current Activity, Instrumentation and proxy-activity APIs.",
+      "necessity": "Required for app-player billing and now.gg account flows.",
+      "performance": "Event-driven JSON/Binder work during billing, intent and sign-in events; no idle loop.",
+      "security": "Privileged interception of purchase flows is sensitive. Target code validates component/package paths and keeps callbacks behind product Binder services.",
+      "validation_evidence": [
+        "Final tree contains PaymentRedirectProxyActivity, IAP Activity hooks, OneStore handling and now.gg host-call methods."
+      ]
+    },
+    {
+      "id": "frameworks-base-monster-strike-sdk-compatibility",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "803b0902b28ede460c9c55610556f962dbdee074"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-as-package-scoped-a16-compatibility",
+      "target_commits": [
+        "b2f72405a99ed1451c7f71ed5ffbad12066414f2"
+      ],
+      "rationale": "The SDK/location fallback is retained for the target game through package-scoped PendingIntent/Zygote compatibility rather than changing the global Build SDK.",
+      "necessity": "Required for the game to select LocationManager and avoid its incompatible modern path.",
+      "performance": "Package checks at process setup/PendingIntent use only.",
+      "security": "Package-scoped SDK reporting can alter app security decisions; scope is deliberately limited to the named compatibility target.",
+      "validation_evidence": [
+        "Dedicated A16 Monster Strike commit touches both source authority files and preserves package scoping."
+      ]
+    },
+    {
+      "id": "frameworks-base-h264-encoder-name-compatibility",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "80f7566b67ef86e05ff44b5dbbf4a3691558bc9f"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-codec-name-override",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416"
+      ],
+      "rationale": "MediaCodecInfo retains the A13 package-specific replacement of OMX.google.h264.encoder with the guest-compatible encoder name.",
+      "necessity": "Required for the affected video/chat applications to choose a working encoder.",
+      "performance": "Constant string/package comparison during codec-name query.",
+      "security": "Changes capability reporting only; codec access controls are unchanged.",
+      "validation_evidence": [
+        "Final MediaCodecInfo contains the OMX.google.h264.encoder override."
+      ]
+    },
+    {
+      "id": "frameworks-base-default-locale-from-bst",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "850970af8180fe9164fa2d5cd007a8d4ca056a78"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-runtime-locale-bootstrap",
+      "target_commits": [
+        "9364133ff643709056247240e56bb79903f32dc1"
+      ],
+      "rationale": "AndroidRuntime uses bst.locale when language/country boot properties are absent, with current A16 property and locale initialization APIs.",
+      "necessity": "Required for per-instance locale before framework settings are available.",
+      "performance": "Boot-time property read only.",
+      "security": "Locale is non-privileged presentation state; malformed values fall through normal locale parsing.",
+      "validation_evidence": [
+        "Final AndroidRuntime.cpp contains bst.locale fallback and dedicated A16 target commit."
+      ]
+    },
+    {
+      "id": "frameworks-base-zygote-identity-and-abi-reporting",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "a27e7747610d957ad59ef3b17c8a81aefecf4d3b",
+          "aa4684109af3a9f559b79e245dc6ee62890718d7",
+          "d5b7029546611bccbd4d9ed1e2cada5f01088bd3",
+          "f2a61c25c74082063d182704f8b4c67e1994ddf8"
+        ]
+      },
+      "expected_matches": 4,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-property-and-jdwp-adaptation",
+      "target_commits": [
+        "5d3fdabab6b43589abc9c9f6b62a6d8430cebb06",
+        "bea26a3a0b93c4e78799aa6eef7152d475374cb9",
+        "85a72f10237fb3fea48befa861eba19e7c3e0228",
+        "ced626d294f0adc87a56fe1f7377cef6fd2e7748"
+      ],
+      "rationale": "Instagram reel orientation/property handling, selective debuggable/JDWP policy and Play Store ABI reporting from bst.abi_list are retained in the A16 Zygote and package-facing paths.",
+      "necessity": "Required for app compatibility, anti-detection and correct translated/native ABI visibility.",
+      "performance": "Process-start property parsing and package checks only.",
+      "security": "Selective debuggability and identity spoofing are sensitive. Target behavior remains package/config scoped and does not globally enable JDWP.",
+      "validation_evidence": [
+        "Final Zygote code parses bst.abi_list with validation and the four dedicated A16 compatibility commits were reviewed."
+      ]
+    },
+    {
+      "id": "frameworks-base-nowgg-detection-stats-exclusion",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "bd98e1ff2a869a944b461c98dc597a22e5b6ec67"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-package-exclusion",
+      "target_commits": [
+        "35847c26966d341195d3c30315c54323c622fc87"
+      ],
+      "rationale": "now.gg account and billing packages are excluded from package-detection statistics in the A16 package manager path.",
+      "necessity": "Required to keep internal platform services out of customer-facing detection telemetry.",
+      "performance": "Two constant package-name comparisons per relevant stats event.",
+      "security": "Telemetry filtering only; package visibility and access are handled separately.",
+      "validation_evidence": [
+        "Dedicated A16 exclusion commit and final package-manager predicate reviewed."
+      ]
+    },
+    {
+      "id": "frameworks-base-clone-android-id-sync",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "c35a667e804ae56679e29a06f6ac0c9d369551bd"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-settings-provider",
+      "target_commits": [
+        "6502086e164d045af39c38ddd11d773aa05ebf65"
+      ],
+      "rationale": "SettingsProvider synchronizes the secure Android ID with the per-instance BlueStacks property on clone/initialization using current A16 settings state APIs.",
+      "necessity": "Required so cloned instances receive their intended identity rather than duplicating the source instance value.",
+      "performance": "Settings initialization/update only; no polling.",
+      "security": "Controls a device identifier from a privileged instance property. Write remains inside SettingsProvider and is not exposed to arbitrary callers.",
+      "validation_evidence": [
+        "Dedicated A16 Android ID commit and final SettingsProvider ANDROID_ID path reviewed."
+      ]
+    },
+    {
+      "id": "frameworks-base-instagram-dm-audio",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "e337053f1991e4165c594debeecd032c53f76145"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-activity-input-policy",
+      "target_commits": [
+        "2bd74445341ebf2b8e6f843b4a7c457129b73f5b"
+      ],
+      "rationale": "The Instagram DM audio compatibility behavior is present in the A16 Activity and InputManagerService ownership points.",
+      "necessity": "Required to restore audio during Instagram direct-message video playback.",
+      "performance": "Package/activity event checks only.",
+      "security": "Package-scoped media/input behavior; no global audio permission bypass.",
+      "validation_evidence": [
+        "Dedicated A16 commit touches both A13 source files and final implementation was reviewed."
+      ]
+    },
+    {
+      "id": "frameworks-base-mdsd-storage-redirection",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "e8b17680656324016e163cc480edffa021837c06"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-environment-policy",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416"
+      ],
+      "rationale": "The mdsd/config driven external-storage path redirection survives in A16 Environment using SDCARD_EMUL_PATH and FilterApps policy.",
+      "necessity": "Required for packages configured to use the emulated per-app storage layout.",
+      "performance": "Path construction and one config lookup on selected Environment queries.",
+      "security": "Redirects only configured app paths and retains normal filesystem permissions; path canonicalization remains a regression item.",
+      "validation_evidence": [
+        "Final Environment code contains SDCARD_EMUL_PATH and all storage query redirection entry points."
+      ]
+    },
+    {
+      "id": "frameworks-base-network-type-and-policy",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": [
+          "ea79024fc44f46bc856735a919bdfbc67b35c5ce",
+          "f7f8733fc19a7160669e637c0963578f2a433655"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-network-policy",
+      "target_commits": [
+        "49849371cfd919f23d7c5e4fa225696962a4d473"
+      ],
+      "rationale": "Configurable Ethernet/Wi-Fi presentation and the inherited guest network defaults/policy changes are retained on current connectivity and settings APIs.",
+      "necessity": "Required for apps that select behavior based on reported network transport and for guest network stability.",
+      "performance": "Transport/package checks on network queries; no additional periodic scanner.",
+      "security": "Changes reported transport and policy defaults but does not grant raw network privileges.",
+      "validation_evidence": [
+        "Final FilterApps service contains etherNetType and the A16 guest network target commit covers current policy/default files."
+      ]
+    },
+    {
+      "id": "frameworks-base-backup-schedule-corruption",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "f0aa8c92b54e2d911fa544176b9d8be9358c5922"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "upstream-a16-semantic-equivalent",
+      "target_commits": [
+        "90b014897eebc5b70d293104b86bcec924136a93"
+      ],
+      "rationale": "Stock Android 16 already throws IllegalArgumentException for an unknown backup schedule version inside the same recovery try/catch, causing corrupt schedule cleanup and queue reconstruction exactly as required by A13.",
+      "necessity": "Required behavior, but no custom target delta is necessary because the target baseline implements it.",
+      "performance": "Only affects corrupt-file recovery; normal schedule parsing is unchanged.",
+      "security": "Rejects malformed persistent state instead of propagating null and avoids trusting an unknown format.",
+      "validation_evidence": [
+        "Reviewed A16 UserBackupManagerService lines 925-950 and confirmed exception-based recovery before custom commits."
+      ]
+    },
+    {
+      "id": "frameworks-base-virtual-vibrator-presence",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "f29e2908dd8dafbee1b6d80d6482d86b29962b36"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-virtual-device-policy",
+      "target_commits": [
+        "49e50b48aa16a213610cff4241184d3758b50416"
+      ],
+      "rationale": "SystemVibrator retains the BlueStacks policy to report vibrator availability for the virtual device.",
+      "necessity": "Required for games that gate haptic behavior or controls on vibrator presence.",
+      "performance": "Constant return/property path; negligible.",
+      "security": "Capability reporting only; vibration permission checks remain intact.",
+      "validation_evidence": [
+        "Final SystemVibrator contains the explicit A13 virtual-vibrator policy marker."
+      ]
+    },
+    {
+      "id": "frameworks-base-play-store-affiliate-source",
+      "match": {
+        "project": "frameworks/base",
+        "kind": "patch",
+        "source_commit": "fd7032a168f1e7b14aa6d7111193ae705784c1c6"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-broadcast-attribution",
+      "target_commits": [
+        "619f7a1eab0a9f229351778e1b1153955a04d426"
+      ],
+      "rationale": "Play Store package-enqueued attribution uses WINDOWS_SOURCE=play_store in A16 BroadcastController, replacing the removed ActivityManagerService broadcast ownership.",
+      "necessity": "Required for correct affiliate/source attribution of Play installs.",
+      "performance": "One intent construction only on Play package-enqueued broadcasts.",
+      "security": "Caller is validated as Play Store and the affiliate target/action are fixed.",
+      "validation_evidence": [
+        "Final BroadcastController and dedicated A16 attribution commit were reviewed for play_store source value."
+      ]
+    }
+  ],
+  "decisions": []
+}

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "adb-command-policy-and-privilege-drop",
+      "match": {
+        "project": "packages/modules/adb",
+        "kind": "patch",
+        "source_commit": "6f4cd55e077314d86efd21632bbb5f80bf53c7b7"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-bounded-fail-closed-a16-parser",
+      "target_commits": [
+        "361c29e743452cf1a6d944aa2d836de5fa776c1f"
+      ],
+      "rationale": "Android 16 preserves the final A13 command policy for OPEN services and sync paths, the bst.enable_adb_access override, comma-separated prefix/wildcard whitelist and unconditional adbd privilege drop. The current adaptation strips protocol NULs before checking, bounds input to 1024 bytes and 32 entries, trims tokens and fails closed when .adbcmd is absent or unreadable. This replaces an earlier AOSP16 fail-open approximation.",
+      "necessity": "Required to keep remote ADB restricted by default while allowing host-approved diagnostics and file operations, and to prevent adbd from retaining root due to ro.secure configuration.",
+      "performance": "When unrestricted ADB is disabled, each service/sync request opens and parses one small whitelist file. Bounds cap cost; heavy ADB workloads should be measured, but this is outside guest packet and application hot paths.",
+      "security": "Critical access-control boundary. Missing policy fails closed, command pointers are null-checked, parsing is bounded and adbd always drops to shell. Prefix and wildcard entries remain powerful and the policy file must be writable only by trusted host/system components.",
+      "validation_evidence": [
+        "A13 adb.cpp/adb.h/file_sync_service.cpp/main.cpp were mapped to current Android-16 APIs; target commit 361c29e7 contains the bounded parser, both enforcement points and forced privilege drop. Runtime allowed/denied ADB command tests remain pending."
+      ]
+    },
+    {
+      "id": "adb-windows-share-fs-config-bypass",
+      "match": {
+        "project": "packages/modules/adb",
+        "kind": "patch",
+        "source_commit": "1d0b4472c01532d14d6939ebe2daa6db295c6e8d"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-before-api-level-fs-config-policy",
+      "target_commits": [
+        "361c29e743452cf1a6d944aa2d836de5fa776c1f"
+      ],
+      "rationale": "Android 16 excludes /mnt/windows/ from fs_config before the current API-level branch, preserving A13 Hyper-V shared-folder push semantics on both old and current platform behavior. The /data and /sdcard exceptions remain limited to legacy API levels as required by upstream A16.",
+      "necessity": "Required so adb push does not apply Android image ownership/mode rules to the host-backed Windows shared filesystem, which rejects those operations.",
+      "performance": "One prefix check per sync path; avoiding unsupported metadata operations improves shared-folder transfers.",
+      "security": "ADB writes to the shared mount retain host-filesystem permissions rather than fs_config. Access still depends on the ADB command whitelist, shell UID, mount options and host path controls.",
+      "validation_evidence": [
+        "Final should_use_fs_config returns false for /mnt/windows/ before evaluating device API level; target commit 361c29e7 scopes this exception to that prefix. Shared-folder push regression remains pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

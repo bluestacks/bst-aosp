@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "telephony-virtual-sim-identities",
+      "match": {
+        "project": "frameworks/opt/telephony",
+        "kind": "patch",
+        "source_commit": "0a28c7cf6737a26ac346fa47c834a29dfcddeeff"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-phone-and-subscription-apis-with-two-omissions-corrected",
+      "target_commits": [
+        "3240a0be5948fd6f9bc3e73815d035d5a28cc230",
+        "2e929cdce086df0cf42ad3e99ce030bb15ae12d1",
+        "b06a887a526981cbc0b23fd2bf469334df9b9f9d"
+      ],
+      "rationale": "The A13 telephony patch spans phone identity, virtual subscriptions, UICC readiness and subscriber information. Android 16 already contained the current-API ports for IMEI, virtual subscription and UICC behavior, but public subscriber-ID and ICC-serial calls still fell through to real PhoneSubInfo paths. Follow-up b06a887a restores those two final A13 fast paths behind the existing BST telephony gate.",
+      "necessity": "Required for a coherent virtual SIM identity: applications must observe the same host-provided subscriber and SIM serial values exposed by the rest of the promoted telephony stack.",
+      "performance": "Each affected call adds one feature-gate branch and either one property read or one existing utility lookup. Normal Android behavior has no additional work when the gate is disabled.",
+      "security": "The fast paths intentionally bypass normal subscriber-identifier permission checks only when the privileged BlueStacks telephony mode is active, matching A13. The feature gate and backing properties must remain inaccessible to untrusted applications.",
+      "validation_evidence": [
+        "android_x86_64-trunk_staging-eng telephony-common and FrameworksTelephonyTests built successfully in 08:20 with -j8.",
+        "telephony-common.jar SHA-256 cbe0980f420651ea3e733dc0cb8ea2b6869917ee2a00853d841173ac1b69ce39; FrameworksTelephonyTests.apk SHA-256 da9158e42a01caadb8c1c46d075c7241fecc7571f450994f95a3811c820c4ec6.",
+        "Component commit b06a887a526981cbc0b23fd2bf469334df9b9f9d and root commit f5ea05cd7f9bf5d7e2c1744d6b6c3390dec1236d record the omissions. Runtime subscriber and ICC serial checks remain in the final boot gate."
+      ]
+    }
+  ],
+  "decisions": []
+}

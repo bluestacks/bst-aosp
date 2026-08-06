@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "icu-tehran-hardcoded-transition-workaround-obsolete",
+      "match": {
+        "project": "external/icu",
+        "kind": "patch",
+        "source_commit": [
+          "75196450dc70390a7275f03e42600e6c61a2e11a",
+          "852874633a8096dd813dcaf07ca956c27084e826"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "obsolete-with-current-tzdata-and-duplicate-a13-siblings",
+      "target_commits": [],
+      "rationale": "The two A13 commits have the same parent and identical code that truncates Asia/Tehran transitions at September 2022 and bypasses ICU final-rule processing. Android 16 uses tzdata 2025b, which already encodes Iran's abolition of DST after 2022. Reapplying the parser workaround would duplicate policy outside tzdata and can discard legitimate future transition metadata.",
+      "necessity": "Not necessary with the current signed/updateable timezone data. The final timezone result, not the old parser hook, is the requirement.",
+      "performance": "Avoids Tehran-specific array scans, copies and allocations during timezone construction.",
+      "security": "Keeps civil-time policy in updateable tzdata rather than hidden Java special cases that can diverge across native and Java consumers, certificates, logs and scheduling.",
+      "validation_evidence": [
+        "Both A13 commits are identical siblings of 55c400a0 and implement the same hard-coded timestamp truncation.",
+        "Android-16 tzdata version 009.001|2025b|001 already ends Iran DST rules after 2022, matching the bionic timezone audit.",
+        "The apparent Tehran code in the AOSP16 reference checkout is an uncommitted working-tree change (git blame reports Not Committed Yet), was treated as non-baseline evidence and was not modified or used."
+      ]
+    }
+  ],
+  "decisions": []
+}

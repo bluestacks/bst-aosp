@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "frameworks-native-final-code-line-complete",
+      "match": {
+        "project": "frameworks/native",
+        "kind": "patch",
+        "automated_disposition": "textually-complete"
+      },
+      "expected_matches": 44,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-surviving-code-confirmed",
+      "target_commits": [
+        "a98023c677684dda5ffe2733ff0aaaafd12facef"
+      ],
+      "rationale": "Every surviving added or removed source line for these patches is present in the Android 16 final component state. This covers the native FilterApps method growth, install paths, graphics flags and compatibility entries after A13's own reverts.",
+      "necessity": "The surviving behavior is part of the authoritative A13 native framework baseline.",
+      "performance": "No new delta is proposed by review; hot-path graphics/input/service calls remain covered by their owning runtime regressions.",
+      "security": "Native Binder and installer exceptions remain explicit compatibility debt; no additional authority is added by this disposition.",
+      "validation_evidence": [
+        "Patch-level final-state comparison reports only complete-line, complete-removal, or exact-file evidence at frameworks/native head a98023c67768."
+      ]
+    },
+    {
+      "id": "frameworks-native-surfaceflinger-fps",
+      "match": {
+        "project": "frameworks/native",
+        "kind": "patch",
+        "source_commit": [
+          "02be203f086f72dc3cf9acc6fbddbe93fdfa7fe9",
+          "3fa54846d20adb0b159c5ecb29838b88a665b374"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-scheduler-with-locking-fix",
+      "target_commits": [
+        "1c8fde2ee05bef21309b4e8061e89729249474f7",
+        "e1460f0fc5bdc943d5e88367fccce4c70582c235",
+        "6698b43b159e031a206279e8c406bb61dc50b9b8",
+        "2449c48789d020360dca1363e88a476cf9638e4a",
+        "d150d24b57af14d0d41d4d4cb2737d171caa215a"
+      ],
+      "rationale": "The source feature was temporarily reverted and restored in A13. Android 16 implements the final bst.max_fps scheduler override on the validated resync path, propagates display changes, and avoids the recursive lock exposed during A16 adaptation.",
+      "necessity": "Required so post-data bst.max_fps changes affect SurfaceFlinger rather than remaining a dead property.",
+      "performance": "Property read and mode update occur on hardware-vsync resync/display changes, not per frame. Extra forced schedule updates can cause transient jank and require FPS regression.",
+      "security": "Property is privileged guest configuration; values are constrained by available display modes and do not expose a new IPC surface.",
+      "validation_evidence": [
+        "Final Scheduler reads bst.max_fps inside resyncToHardwareVsyncLocked; the five A16 commits record scheduler-path, propagation and lock-order fixes."
+      ]
+    },
+    {
+      "id": "frameworks-native-vulkan-default-policy",
+      "match": {
+        "project": "frameworks/native",
+        "kind": "patch",
+        "source_commit": [
+          "3b8d0a3e99d89124fb20cb1c12ca7c0f4ff6309d",
+          "ee59a4b38fd0290483aefa5e00547f6a4c38eaff"
+        ]
+      },
+      "expected_matches": 2,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-with-a16-sphal-loader",
+      "target_commits": [
+        "13fa9b698bcf3026a3bfc0e9ab1581eb91d3e919",
+        "1025aa3a15899e31274c82f00794e6bbbe243a64"
+      ],
+      "rationale": "The null Vulkan driver remains unbuildable because its Android.bp is absent, while A16's SP-HAL loader explicitly falls back to vulkan.default.so when no property-selected built-in driver loads. This preserves both A13 decisions without the obsolete hw/ path string rewrite.",
+      "necessity": "Required to select the App Player Vulkan HAL and avoid silently loading the framework null driver.",
+      "performance": "One extra dlopen fallback only during Vulkan loader initialization.",
+      "security": "Uses the SP-HAL namespace and fixed library name; it does not widen arbitrary library search paths.",
+      "validation_evidence": [
+        "vulkan/nulldrv has no Android.bp in target; A16 driver.cpp calls android_load_sphal_library for vulkan.default.so."
+      ]
+    },
+    {
+      "id": "frameworks-native-absolute-mouse",
+      "match": {
+        "project": "frameworks/native",
+        "kind": "patch",
+        "source_commit": "767f4107a5bfce659069e3949ff061a32aa323ce"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-cursor-input-mapper",
+      "target_commits": [
+        "dad15bbbd29371ef74f714bdcd89eef51c632611"
+      ],
+      "rationale": "Absolute mouse axes are adapted to the current CursorInputMapper configuration/event model, while unrelated EventHub behavior remains on A16. New tests cover coordinate conversion and source reporting.",
+      "necessity": "Required for host absolute pointer coordinates and app-player controls.",
+      "performance": "Adds bounded axis conversion per absolute mouse event; no background work.",
+      "security": "Input remains sourced from registered devices and normal dispatcher trust; no new injection channel.",
+      "validation_evidence": [
+        "A16 target commit changes CursorInputMapper cpp/header and adds CursorInputMapper tests for absolute coordinates."
+      ]
+    },
+    {
+      "id": "frameworks-native-rtvboxmm-interface",
+      "match": {
+        "project": "frameworks/native",
+        "kind": "patch",
+        "source_commit": "777e772cc2284363ddaac1e308a77d7288e8f1b3"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-final-binder-interface-allowlist",
+      "target_commits": [
+        "13fa9b698bcf3026a3bfc0e9ab1581eb91d3e919"
+      ],
+      "rationale": "RTVboxMM is retained in the manual Binder interface allowlist at the current IInterface header location.",
+      "necessity": "Required so generated/manual RTVbox guest interfaces pass the Binder AIDL build checks.",
+      "performance": "Build-time metadata only.",
+      "security": "Does not register or grant the service; it only acknowledges a manually implemented Binder interface.",
+      "validation_evidence": [
+        "Final IInterface.h contains the RTVboxMM allowlist entry."
+      ]
+    },
+    {
+      "id": "frameworks-native-bst-native-binder-services",
+      "match": {
+        "project": "frameworks/native",
+        "kind": "patch",
+        "source_commit": "89b9e997f3cc73d386ade93a4e1110c171c62fbf"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-complete-native-service-surface",
+      "target_commits": [
+        "13fa9b698bcf3026a3bfc0e9ab1581eb91d3e919"
+      ],
+      "rationale": "All native FilterApps and BstUtils managers, Binder proxies/stubs, exported headers and libbinder build entries are present at Android 16 locations. Later A13 interface growth is covered by line-complete patch entries.",
+      "necessity": "Required by graphics, media, installer and native runtime clients that cannot call Java managers.",
+      "performance": "Adds synchronous Binder calls on feature queries; callers must avoid per-frame use. Service handles are cached by managers.",
+      "security": "Large privileged native Binder surface; transaction codes and parcel types must remain aligned with the Java service authority.",
+      "validation_evidence": [
+        "Final libbinder Android.bp, manager/proxy/stub sources and exported headers reviewed; RTVboxMM manual interface is separately tracked."
+      ]
+    },
+    {
+      "id": "frameworks-native-dumpstate-diagnostics",
+      "match": {
+        "project": "frameworks/native",
+        "kind": "patch",
+        "source_commit": "c0767b13d53191ddeec0ed3100af656adfab7dfc"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-a16-dumpstate-layout",
+      "target_commits": [
+        "2ee235d5ec3a055713a9d48f40d43de001a4fcb9",
+        "a98023c677684dda5ffe2733ff0aaaafd12facef"
+      ],
+      "rationale": "The managed /system/xbin/bstk/su path, product diagnostics and sensitive path hiding are adapted to A16 DumpstateUtil/dumpstate ownership without restoring removed header hooks.",
+      "necessity": "Required for actionable App Player bugreports and to avoid leaking the managed su implementation path.",
+      "performance": "Extra commands run only during bugreport collection and can lengthen dumpstate; timeouts remain bounded by dumpstate command options.",
+      "security": "Runs privileged diagnostics through a fixed managed su path and suppresses that path from output; command allowlist requires regression review.",
+      "validation_evidence": [
+        "Final DumpstateUtil defines kSuPath and always uses managed su; A16 completion commit adds current diagnostic sections."
+      ]
+    },
+    {
+      "id": "frameworks-native-force-clear-gms-reverted",
+      "match": {
+        "project": "frameworks/native",
+        "kind": "patch",
+        "source_commit": "fc96e2b740198c76805bed3637a6eb5ef1b7fc00"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-not-ported",
+      "manual_disposition": "superseded-by-later-a13-revert",
+      "target_commits": [],
+      "rationale": "A13 dc91d18ddad9 reverts this native ForceClearGms transaction surface. The final source and target native Binder APIs intentionally omit it.",
+      "necessity": "Not necessary because the authoritative A13 branch removed the feature.",
+      "performance": "Avoids dead Binder transaction and config lookup.",
+      "security": "Avoids reintroducing a host-visible data-clear control that was removed from the authority branch.",
+      "validation_evidence": [
+        "A13 revert subject and final BstFilterApps native headers/stubs were reviewed; ForceClearGms is absent."
+      ]
+    }
+  ],
+  "decisions": []
+}

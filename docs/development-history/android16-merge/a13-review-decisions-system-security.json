@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "mode": "a13-semantic-review-decisions",
+  "rules": [
+    {
+      "id": "prng-seeder-early-init-disable",
+      "match": {
+        "project": "system/security",
+        "kind": "patch",
+        "source_commit": "ef05d6c885bc1a74ff8bf37d322b0b9c1d86d31a"
+      },
+      "expected_matches": 1,
+      "review_status": "reviewed-ported",
+      "manual_disposition": "ported-to-current-rust-defaults",
+      "target_commits": [
+        "6443d21a351b50b343ea7f037cb045585c4d0f26"
+      ],
+      "rationale": "The current prng_seeder module inherits init_rc through rust_defaults; Android 16 comments out that current init_rc entry, preserving the A13 product behavior without deleting the binary or changing unrelated Rust dependencies.",
+      "necessity": "Required by the established App Player boot profile, which has no hardware RNG device expected by this early-init helper.",
+      "performance": "Avoids launching and scheduling one early-init service, matching the A13 boot-time objective.",
+      "security": "This removes supplemental persistent seed mixing, so release validation must confirm the kernel CRNG initializes and no service consumes weak randomness. It does not disable the kernel RNG or platform crypto APIs.",
+      "validation_evidence": [
+        "A13 and A16 Android.bp entries were compared directly. Component branch aosp16-bst-merge is clean; boot log/CRNG readiness verification remains pending."
+      ]
+    }
+  ],
+  "decisions": []
+}

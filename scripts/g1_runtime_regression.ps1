@@ -97,7 +97,7 @@ $bootLogs = Invoke-AdbBounded -Arguments @("logcat", "-b", "all", "-d", "-v", "b
     -TimeoutSec 30
 $retainedHidlPattern =
     'android\.hardware\.(audio|audio\.effect|camera\.provider|configstore|drm|' +
-    'graphics\.allocator|graphics\.composer|light|media\.omx|power|soundtrigger)'
+    'graphics\.allocator|graphics\.composer|light|media\.omx|power|sensors|soundtrigger)'
 if ($bootLogs -match "Service $retainedHidlPattern.*must be in VINTF manifest" -or
     $bootLogs -match "Could not register service $retainedHidlPattern") {
     $failures += "retained_hidl_registration"
@@ -294,6 +294,7 @@ foreach ($interface in @(
     "android.hardware.media.omx@1.0::IOmx/default",
     "android.hardware.media.omx@1.0::IOmxStore/default",
     "android.hardware.power@1.0::IPower/default",
+    "android.hardware.sensors@1.0::ISensors/default",
     "android.hardware.soundtrigger@2.3::ISoundTriggerHw/default"
 )) {
     if ($hidl -notmatch [regex]::Escape($interface)) { $failures += "hidl:$interface" }

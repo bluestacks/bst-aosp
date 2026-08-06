@@ -45,7 +45,7 @@ Target source identity at discovery:
 | Media OMX 1.0 | Retained HIDL media codec service; no fragment | Add x86_64 declaration | Both IOmx interfaces are in frozen FCM 8, so no compatibility bridge is needed. |
 | Power 1.3 | Retained HIDL 1.0 wrapper loading `power.bst`, plus Android-16 AIDL example service | Add exact HIDL 1.0 declaration and FCM bridge | The AIDL service owns only AIDL Power 6. The legacy wrapper/rc remain installed and 671 registrations were rejected. Exact 1.0 describes the wrapper actually built on A16. |
 | RenderScript 1.0 | Retained passthrough implementation; no fragment | Add x86_64 declaration | Frozen FCM 8 still accepts this exact HIDL interface; metadata preserves the A13 lookup contract. |
-| Sensors 1.0 | No selected `sensors.bst`/default module and no HIDL service | Do not replay | The adapter library alone is not a provider. Declaring it would advertise a service the product cannot supply; current AIDL sensor probes remain a separate product capability gap. |
+| Sensors 1.0 | `BUILD_EXTERNAL_BLUESTACKS_SENSORS=true` installs `sensors.default` for both architectures; `android.hardware.sensors@1.0-impl` is packaged; no declaration | Add x86_64 passthrough declaration and FCM bridge | A13 exposes this exact module through HIDL Sensors 1.0 passthrough. FCM 8 accepts only AIDL Sensors 2, so both the device contract and compatibility bridge are required. No standalone service binary is expected for passthrough transport. |
 | SoundTrigger 2.3 | Retained impl loaded by the HIDL audio service; no fragment | Add x86_64 declaration | Frozen FCM 8 accepts 2.3; 34 old-log registration failures independently prove the missing device declaration. |
 | DRM default 1.0 | Retained generic HIDL service; no fragment | Add x86_64 declaration and FCM bridge | The service registers both default factories and exits fatally if either registration fails. FCM 8 otherwise allows only AIDL DRM. |
 | DRM ClearKey 1.4 | Android-16 AIDL ClearKey service | Replaced by AIDL | Do not recreate the obsolete HIDL 1.4 declaration. |
@@ -63,8 +63,8 @@ It changes only `device/generic/x86_64`:
 2. `manifest_bst_legacy_hal.xml` declares only retained legacy providers that
    have an implementation or service path in the current product.
 3. `framework_compatibility_matrix.xml` adds optional level-8 bridges only for
-   Camera, ConfigStore, DRM, Light, and Power. FCM-accepted interfaces are not
-   duplicated there.
+   Camera, ConfigStore, DRM, Light, Power, and Sensors. FCM-accepted interfaces
+   are not duplicated there.
 
 The patch does not alter HAL implementation code, service startup order,
 SELinux policy, binder transport, product selection, or common/arm products.
@@ -93,7 +93,7 @@ security and hardware services remain authoritative where replacements exist.
 - `check-vintf-all` and the affected image targets pass from `~/android-16`;
 - generated vendor manifest contains each retained declaration exactly once;
 - clean-Data boot keeps `system_server`, Launcher, and SystemUI stable;
-- Light, Power, SoundTrigger, Camera, ConfigStore, OMX, and DRM registrations
+- Light, Power, Sensors, SoundTrigger, Camera, ConfigStore, OMX, and DRM registrations
   show no undeclared-HAL or fatal registration errors;
 - AIDL replacement services remain present and no HIDL replacement entry is
   accidentally reintroduced.

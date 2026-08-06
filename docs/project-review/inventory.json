@@ -4,8 +4,8 @@
   "summary": {
     "files": 1811,
     "existing_files": 1810,
-    "bytes": 77368898,
-    "text_lines": 1342431,
+    "bytes": 77369970,
+    "text_lines": 1342457,
     "by_stage": {
       "android16-promotion": 633,
       "aosp16-development": 840,
@@ -13725,11 +13725,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 3650,
-      "sha256": "513002e8b951f97110ac48bc949b4ba53fe2b1cf77afb80a69ede9033c6a6634",
+      "bytes": 4238,
+      "sha256": "52551a163cb1c439759a0ca7bede7b1887fea714e19228dce03792579336fcf4",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 89,
+      "line_count": 102,
       "line_endings": "lf",
       "stage": "aosp16-development",
       "timeline_refs": [
@@ -13751,7 +13751,8 @@
       "replacement": null,
       "dependencies": [
         "scripts/audit_android16_promotion.py",
-        "scripts/g1_build_android16.sh"
+        "scripts/g1_build_android16.sh",
+        "scripts/validate_a13_target_commits.py"
       ],
       "validation_evidence": {
         "status": "pass",
@@ -59701,11 +59702,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 58018,
-      "sha256": "3ddbb174e5b37f520b1e634dc9de35273fd4219225435431e946837c14b2bc23",
+      "bytes": 58502,
+      "sha256": "83d6d1b04b6ed498121062b476301ea216b23eba322d501cae8ae290b4871557",
       "media_type": "text/x-python",
       "encoding": "utf-8-sig",
-      "line_count": 1564,
+      "line_count": 1577,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [
@@ -59728,8 +59729,10 @@
       "result": "current",
       "replacement": null,
       "dependencies": [
+        "scripts/audit_a13_port_coverage.py",
         "scripts/audit_a16_merge.sh",
         "scripts/audit_android16_promotion.py",
+        "scripts/g1_adb_policy_regression.ps1",
         "scripts/g1_app_runtime_oracle.ps1",
         "scripts/g1_apply_boot_overlays.sh",
         "scripts/g1_boot_verify.ps1",
@@ -59738,6 +59741,7 @@
         "scripts/g1_build_libs.sh",
         "scripts/g1_build_pack.sh",
         "scripts/g1_copy_bst_apks.sh",
+        "scripts/g1_fps_regression.ps1",
         "scripts/g1_pack_root.sh",
         "scripts/g1_property_verify.ps1",
         "scripts/g1_rebuild_graphics.sh",
@@ -59747,14 +59751,19 @@
         "scripts/g1_start_pack_remote.sh",
         "scripts/g1_win_deploy.ps1",
         "scripts/g8_disable_vendor_hal_rc.sh",
+        "scripts/generate_a13_patch_ledger.py",
         "scripts/generate_android16_patch_inventory.py",
         "scripts/lib/android16_env.sh",
         "scripts/manage_binary_artifacts.py",
+        "scripts/map_a13_target_commits.py",
+        "scripts/merge_a13_audit_batches.py",
         "scripts/merge_aosp16_to_android16.sh",
         "scripts/p2_mech2_apply.py",
         "scripts/patch-goldfish-emuhwc2-vsync-sp.py",
         "scripts/patch-goldfish-hwc2-bst-product.py",
         "scripts/prepare_android16_package_inputs.sh",
+        "scripts/render_a13_port_audit.py",
+        "scripts/validate_a13_target_commits.py",
         "scripts/validate_project_files.py"
       ],
       "validation_evidence": {

@@ -6613,10 +6613,10 @@
         "7b5e4e1522c36f84359ca1496258a85621c72151"
       ],
       "validation_evidence": [
-        "Active resource files remain exact or complete. The new HAL/VINTF correction passes static patch and XML checks; target build and clean-Data runtime validation remain pending."
+        "Active resource files remain exact or complete. App-player output installs sensors.default and android.hardware.sensors@1.0-impl for both architectures. The expanded HAL/VINTF correction requires renewed patch, XML, check-vintf, target build and clean-Data runtime validation."
       ],
       "manual_disposition": "ported-to-android-x86_64-with-legacy-hal-vintf-correction-prepared",
-      "rationale": "Active x86 resources, ALSA state, IDC, fstab/init data, media profiles, overlays, networking and build tasks are retained without restoring qvirt or obsolete GSI/MGSI boards. The board migration omitted the Camera, OMX, RenderScript, SoundTrigger and DRM declarations required by still-packaged legacy providers; an x86_64-only correction is prepared.",
+      "rationale": "Active x86 resources, ALSA state, IDC, fstab/init data, media profiles, overlays, networking and build tasks are retained without restoring qvirt or obsolete GSI/MGSI boards. The board migration omitted the Camera, OMX, RenderScript, Sensors, SoundTrigger and DRM declarations required by still-packaged legacy providers; an x86_64-only correction is prepared. The canonical app-player build proves BUILD_EXTERNAL_BLUESTACKS_SENSORS selects both sensors.default architectures, so the A13 passthrough Sensors 1.0 contract remains active.",
       "necessity": "Required product resources are preserved without reintroducing the removed unified bst_x86_64 board.",
       "performance": "Static product assembly; no additional runtime control plane.",
       "security": "Keeps board ownership in the standard Android x86_64 product and avoids inactive arm/GSI surface."

@@ -43,6 +43,31 @@ BUILD_SCRIPT="$BST_APP_PLAYER_ROOT/buildscripts/build.sh"
 }
 [ -f "$BUILD_SCRIPT" ] || { echo "missing app-player build script: $BUILD_SCRIPT" >&2; exit 1; }
 
+APP_PLAYER_BRANCH="$(git -C "$BST_APP_PLAYER_ROOT" branch --show-current)"
+APP_PLAYER_HEAD="$(git -C "$BST_APP_PLAYER_ROOT" rev-parse HEAD)"
+BUILD_MAKEFILE="$BST_APP_PLAYER_ROOT/buildscripts/Makefile"
+SFS_SCRIPT="$BST_APP_PLAYER_ROOT/buildscripts/make-baklava-system-sfs.sh"
+MOUNTSF_PAYLOAD="$BST_APP_PLAYER_ROOT/bst/bin/mountsf"
+for input in "$BUILD_MAKEFILE" "$SFS_SCRIPT" "$MOUNTSF_PAYLOAD"; do
+  [ -f "$input" ] || { echo "missing app-player packaging input: $input" >&2; exit 1; }
+done
+BUILD_SCRIPT_SHA256="$(sha256sum "$BUILD_SCRIPT" | awk '{print $1}')"
+BUILD_MAKEFILE_SHA256="$(sha256sum "$BUILD_MAKEFILE" | awk '{print $1}')"
+SFS_SCRIPT_SHA256="$(sha256sum "$SFS_SCRIPT" | awk '{print $1}')"
+MOUNTSF_SHA256="$(sha256sum "$MOUNTSF_PAYLOAD" | awk '{print $1}')"
+BUILD_FLOW_DIFF_SHA256="$(
+  git -C "$BST_APP_PLAYER_ROOT" diff --binary -- \
+    buildscripts/build.sh buildscripts/Makefile buildscripts/make-baklava-system-sfs.sh |
+    sha256sum | awk '{print $1}'
+)"
+echo "A16DBG:IDENTITY: app_player_branch=$APP_PLAYER_BRANCH"
+echo "A16DBG:IDENTITY: app_player_head=$APP_PLAYER_HEAD"
+echo "A16DBG:IDENTITY: build_script_sha256=$BUILD_SCRIPT_SHA256"
+echo "A16DBG:IDENTITY: build_makefile_sha256=$BUILD_MAKEFILE_SHA256"
+echo "A16DBG:IDENTITY: sfs_script_sha256=$SFS_SCRIPT_SHA256"
+echo "A16DBG:IDENTITY: build_flow_diff_sha256=$BUILD_FLOW_DIFF_SHA256"
+echo "A16DBG:IDENTITY: mountsf_sha256=$MOUNTSF_SHA256"
+
 if [ "$CHECK_ONLY" -eq 1 ]; then
   echo "A16DBG:ANDROID16: app-player build CHECK OK; no build started"
   exit 0
@@ -91,6 +116,15 @@ bst_write_identity_file "$VHD.identity" "$VHD"
 {
   printf 'system_img_sha256=%s\n' "$(sha256sum "$SYSTEM_IMG" | awk '{print $1}')"
   printf 'system_sfs_sha256=%s\n' "$(sha256sum "$SYSTEM_SFS" | awk '{print $1}')"
+} >> "$VHD.identity"
+{
+  printf 'app_player_branch=%s\n' "$APP_PLAYER_BRANCH"
+  printf 'app_player_head=%s\n' "$APP_PLAYER_HEAD"
+  printf 'build_script_sha256=%s\n' "$BUILD_SCRIPT_SHA256"
+  printf 'build_makefile_sha256=%s\n' "$BUILD_MAKEFILE_SHA256"
+  printf 'sfs_script_sha256=%s\n' "$SFS_SCRIPT_SHA256"
+  printf 'build_flow_diff_sha256=%s\n' "$BUILD_FLOW_DIFF_SHA256"
+  printf 'mountsf_sha256=%s\n' "$MOUNTSF_SHA256"
 } >> "$VHD.identity"
 cat "$VHD.identity"
 echo "A16DBG:ANDROID16: app-player build DONE $(date -Is)"

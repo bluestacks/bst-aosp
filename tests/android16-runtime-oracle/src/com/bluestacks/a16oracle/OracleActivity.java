@@ -35,7 +35,10 @@ import android.os.Process;
 import android.util.Log;
 import android.util.Size;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.NetworkInterface;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
@@ -117,6 +120,12 @@ public final class OracleActivity extends Activity {
                     @Override
                     public String run() {
                         return checkNetworkPresentation();
+                    }
+                });
+                runTest("bionic_properties", new CheckedTest() {
+                    @Override
+                    public String run() throws Exception {
+                        return checkBionicProperties();
                     }
                 });
                 runTest("skia_render", new CheckedTest() {
@@ -216,6 +225,38 @@ public final class OracleActivity extends Activity {
         } finally {
             bitmap.recycle();
         }
+    }
+
+    private String checkBionicProperties() throws Exception {
+        String boardPlatform = appGetprop("ro.board.platform2");
+        String debuggable = appGetprop("ro.debuggable");
+        String secure = appGetprop("ro.secure");
+        require("ngg-client".equals(boardPlatform),
+                "missing synthetic ro.board.platform2: " + boardPlatform);
+        require("0".equals(debuggable), "ro.debuggable was not hidden: " + debuggable);
+        require("1".equals(secure), "ro.secure was not hardened: " + secure);
+        return "platform=" + boardPlatform + ",debuggable=" + debuggable
+                + ",secure=" + secure;
+    }
+
+    private static String appGetprop(String name) throws Exception {
+        java.lang.Process child = new ProcessBuilder("/system/bin/getprop", name)
+                .redirectErrorStream(true)
+                .start();
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                child.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (output.length() > 0) {
+                    output.append('\n');
+                }
+                output.append(line);
+            }
+        }
+        require(child.waitFor(5, TimeUnit.SECONDS), "getprop timeout for " + name);
+        require(child.exitValue() == 0, "getprop failed for " + name);
+        return output.toString().trim();
     }
 
     private String checkAudioTrack() throws Exception {

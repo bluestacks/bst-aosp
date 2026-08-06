@@ -9,6 +9,8 @@ The app runs as an ordinary app UID and emits one `A16ORACLE:PASS` or
 
 - BlueStacks `WifiInfo`/`DhcpInfo`, Wi-Fi transport presentation, and the
   `eth0` to `wlan0` Java facade;
+- app-UID bionic property compatibility for the synthetic board platform and
+  hardened secure/debuggable values;
 - software Canvas pixel output through the Android graphics API;
 - an initialized and playing `AudioTrack`;
 - one non-empty Camera2 YUV frame;

@@ -78,8 +78,9 @@ bash scripts/g1_build_pack.sh --pack-only
    翻译执行、app 可见 Wi-Fi 及未授权下载重试仍需独立 app/host oracle。
 11. 从 `tests/android16-runtime-oracle/build.sh` 构建临时测试 APK，再运行
    `g1_app_runtime_oracle.ps1 -ApkPath <path>`；必须读回 app UID 下 Wi-Fi、
-   DHCP、`wlan0`、Skia、AudioTrack、Camera2 实帧及 DownloadProvider 拒绝日志，
-   runner 最后卸载 APK。该 APK 不进入产品、app-player 或 PR。
+   DHCP、`wlan0`、bionic 属性伪装、Skia、AudioTrack、Camera2 实帧及
+   DownloadProvider 拒绝日志，runner 最后卸载 APK。该 APK 不进入产品、
+   app-player 或 PR。
 
 Baklava 外部 APK 输入在打包前由
 `scripts/prepare_android16_package_inputs.sh --install` 组装或复核。脚本只

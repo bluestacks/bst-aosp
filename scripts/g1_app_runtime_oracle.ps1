@@ -144,7 +144,7 @@ try {
         throw "App runtime oracle failures:`n$($failLines -join "`n")"
     }
     foreach ($name in @(
-        "wifi_identity", "network_presentation", "skia_render",
+        "wifi_identity", "network_presentation", "bionic_properties", "skia_render",
         "audio_track", "camera_frame", "download_retry_sent"
     )) {
         if ($logs -notmatch "A16ORACLE:PASS:$([regex]::Escape($name)):") {

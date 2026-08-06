@@ -102,6 +102,10 @@ if ($bootLogs -match "Service $retainedHidlPattern.*must be in VINTF manifest" -
     $bootLogs -match "Could not register service $retainedHidlPattern") {
     $failures += "retained_hidl_registration"
 }
+if ($bootLogs -match
+    '(?is)FATAL EXCEPTION.*?Process:\s+com\.android\.bluetooth(?:\s|,|$)') {
+    $failures += "bluetooth_process_crash"
+}
 
 [void](Invoke-AdbBounded -Arguments @("logcat", "-c"))
 [void](Invoke-AdbBounded -Arguments @(
@@ -164,6 +168,30 @@ try {
 } catch {
     Write-Warning $_
     $failures += "shared_folder"
+}
+
+$hostProbe = [System.IO.Path]::GetTempFileName()
+$guestProbe = "/mnt/windows/BstSharedFolder/.a16_adb_push_probe"
+try {
+    [System.IO.File]::WriteAllText(
+        $hostProbe, "A16_ADB_PUSH_PROBE", [System.Text.Encoding]::ASCII)
+    [void](Invoke-AdbBounded -Arguments @("push", $hostProbe, $guestProbe))
+    $pushedProbe = (Invoke-AdbBounded -Arguments @(
+        "shell", "cat", $guestProbe
+    )).Trim()
+    if ($pushedProbe -ne "A16_ADB_PUSH_PROBE") {
+        $failures += "shared_folder_adb_push:$pushedProbe"
+    }
+} catch {
+    Write-Warning $_
+    $failures += "shared_folder_adb_push"
+} finally {
+    try {
+        [void](Invoke-AdbBounded -Arguments @("shell", "rm", "-f", $guestProbe))
+    } catch {
+        Write-Warning "Unable to remove guest ADB probe: $($_.Exception.Message)"
+    }
+    Remove-Item -LiteralPath $hostProbe -Force -ErrorAction SilentlyContinue
 }
 
 try {
@@ -288,6 +316,17 @@ foreach ($service in @(
     $result = Invoke-AdbBounded -Arguments @("shell", "service", "check", $service)
     if ($result -notmatch 'found') { $failures += "service:$service" }
 }
+try {
+    $bluetoothPid = (Invoke-AdbBounded -Arguments @(
+        "shell", "pidof", "com.android.bluetooth"
+    )).Trim()
+    if ($bluetoothPid -notmatch '^\d+(?:\s+\d+)*$') {
+        $failures += "bluetooth_process:$bluetoothPid"
+    }
+} catch {
+    Write-Warning $_
+    $failures += "bluetooth_process"
+}
 
 [void](Invoke-AdbBounded -Arguments @("logcat", "-c"))
 $settingsChecks = @(
@@ -300,6 +339,13 @@ $settingsChecks = @(
         Arguments = @(
             "shell", "am", "start", "-W", "-n",
             "com.bluestacks.settings/.SettingsActivity"
+        )
+    },
+    [pscustomobject]@{
+        Name = "android.settings.APPLICATION_DEVELOPMENT_SETTINGS"
+        Arguments = @(
+            "shell", "am", "start", "-W", "-a",
+            "android.settings.APPLICATION_DEVELOPMENT_SETTINGS"
         )
     }
 )

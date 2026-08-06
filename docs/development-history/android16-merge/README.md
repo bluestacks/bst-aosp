@@ -14,6 +14,13 @@ features from scratch.
 - [`a13-authority-completion.md`](a13-authority-completion.md): current
   code-level A13 authority review, newly restored patch groups and validation
   debt after the previous PR was withdrawn.
+- [`a13-runtime-oracle-matrix.md`](a13-runtime-oracle-matrix.md): all 32
+  runtime-pending A13 patch entries mapped source-commit by source-commit to
+  executable and host/manual acceptance gates.
+- [`runtime-regression-2026-08-06.md`](runtime-regression-2026-08-06.md): current
+  launcher/property/HAL findings, active build identity and regression record.
+- [`a13-hal-vintf-review.md`](a13-hal-vintf-review.md): six prepared corrections
+  for retained x86_64 HIDL service declarations.
 - [`timeline.md`](timeline.md): generated cont.103-cont.106 chronology.
 - [`patch-traceability.md`](patch-traceability.md): every archived patch mapped
   to registry and timeline evidence where available.

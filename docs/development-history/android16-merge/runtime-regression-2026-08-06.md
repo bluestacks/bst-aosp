@@ -212,8 +212,9 @@ The temporary app-UID oracle is now implemented under
 with the bounded Windows runner
 [`g1_app_runtime_oracle.ps1`](../../../scripts/g1_app_runtime_oracle.ps1). It is
 not runtime evidence yet. Local API-34 `android.jar` compilation, D8 conversion,
-AAPT2 packaging, zip alignment, manifest XML, Bash syntax, PowerShell parsing,
-and `-CheckOnly` pass. The lightweight build omits javac debug metadata because
+AAPT2 packaging, zip alignment, v3 APK signing/verification, manifest XML, Bash
+syntax, PowerShell parsing, and `-CheckOnly` pass. The lightweight build omits
+javac debug metadata because
 build-tools 34 D8 rejects JDK 21 anonymous-class debug metadata; this does not
 change executable code or oracle coverage. Target Android-16 APK assembly and
 guest execution remain blocked on the active full build. The
@@ -221,6 +222,12 @@ runner requires independent DownloadProvider rejection for the installed app
 UID and uninstalls the APK in `finally`. Camera acceptance requires a non-empty
 YUV frame, while AudioTrack acceptance proves the guest playback pipeline only,
 not audible host output.
+
+All 32 ledger entries that still require runtime evidence are mapped without
+commit omissions in
+[`a13-runtime-oracle-matrix.md`](a13-runtime-oracle-matrix.md). The corrected
+count replaces the earlier broad text-search count, which could mistake
+`PendingIntent.java` for a pending validation result.
 
 The stability gate is 95 seconds by default because the old deployed guest can
 remain superficially ready for about 82 seconds between watchdog resets. During

@@ -2,12 +2,12 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 1789,
-    "existing_files": 1788,
-    "bytes": 77221565,
-    "text_lines": 1339131,
+    "files": 1790,
+    "existing_files": 1789,
+    "bytes": 77223758,
+    "text_lines": 1339173,
     "by_stage": {
-      "android16-promotion": 606,
+      "android16-promotion": 607,
       "aosp16-development": 845,
       "generated": 15,
       "reference": 45,
@@ -17,11 +17,11 @@
       "generated": 15,
       "removed": 1,
       "tracked": 1535,
-      "untracked": 238
+      "untracked": 239
     },
     "by_availability": {
       "generated": 15,
-      "local-only": 238,
+      "local-only": 239,
       "removed-tombstone": 1,
       "repository": 1535
     },
@@ -30802,6 +30802,45 @@
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
       "line_count": 43,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Reviewed Android 16 promotion commit patch and root-pointer evidence.",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "Review changed code for runtime impact; artifact itself only affects storage and review time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch",
+      "exists": true,
+      "git_state": "untracked",
+      "availability": "local-only",
+      "authority": "local-observation",
+      "content_source": "working-tree",
+      "bytes": 2193,
+      "sha256": "8a1c15460bb0bc40f6464500a6b243721f13808e17624de10145516ec9030a7c",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 42,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [],

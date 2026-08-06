@@ -2,7 +2,7 @@
 
 > Every archived patch is listed even when no progress-log basename mention exists. Registry and checkpoint fields are the primary semantic evidence.
 
-Artifacts: **577**.
+Artifacts: **580**.
 
 | Patch | Category | Registry IDs | Verification/checkpoint | Timeline evidence |
 |---|---|---|---|---|
@@ -324,6 +324,7 @@ Artifacts: **577**.
 | [`external-libva-core-vendor.patch`](../../../patches/android-16/a13-completion/external-libva-core-vendor.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`external-libva-driver-discovery.patch`](../../../patches/android-16/a13-completion/external-libva-driver-discovery.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`external-libxml2-device-xmllint.patch`](../../../patches/android-16/a13-completion/external-libxml2-device-xmllint.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
+| [`external-selinux-apex-labeling.patch`](../../../patches/android-16/a13-completion/external-selinux-apex-labeling.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`external-selinux-userspace-disabled.patch`](../../../patches/android-16/a13-completion/external-selinux-userspace-disabled.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`external-skia-atlas-padding.patch`](../../../patches/android-16/a13-completion/external-skia-atlas-padding.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`external-stagefright-plugins-a16.patch`](../../../patches/android-16/a13-completion/external-stagefright-plugins-a16.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
@@ -419,6 +420,7 @@ Artifacts: **577**.
 | [`frameworks-base-setbstime.patch`](../../../patches/android-16/a13-completion/frameworks-base-setbstime.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`frameworks-base-signin-popup-stop.patch`](../../../patches/android-16/a13-completion/frameworks-base-signin-popup-stop.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`frameworks-base-skip-temp-downloads.patch`](../../../patches/android-16/a13-completion/frameworks-base-skip-temp-downloads.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
+| [`frameworks-base-stale-package-resolve.patch`](../../../patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`frameworks-base-stopapp-gcall.patch`](../../../patches/android-16/a13-completion/frameworks-base-stopapp-gcall.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`frameworks-base-system-feature-query-policy.patch`](../../../patches/android-16/a13-completion/frameworks-base-system-feature-query-policy.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`frameworks-base-systemui-battery-fix.patch`](../../../patches/android-16/a13-completion/frameworks-base-systemui-battery-fix.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
@@ -483,6 +485,7 @@ Artifacts: **577**.
 | [`root-media-compat-pointer.patch`](../../../patches/android-16/a13-completion/root-media-compat-pointer.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`root-readiness-runtime-pointer.patch`](../../../patches/android-16/a13-completion/root-readiness-runtime-pointer.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`root-readiness-service-pointer.patch`](../../../patches/android-16/a13-completion/root-readiness-service-pointer.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
+| [`root-selinux-pointer.patch`](../../../patches/android-16/a13-completion/root-selinux-pointer.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`root-servicemanager-readiness-pointer.patch`](../../../patches/android-16/a13-completion/root-servicemanager-readiness-pointer.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`root-swcodec-sphal-pointer.patch`](../../../patches/android-16/a13-completion/root-swcodec-sphal-pointer.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`root-system-core-completion-pointer.patch`](../../../patches/android-16/a13-completion/root-system-core-completion-pointer.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |

@@ -1,0 +1,42 @@
+From 5acece03e566c739235304c30a81afb7e7a3256c Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Thu, 6 Aug 2026 18:03:30 +0800
+Subject: [PATCH] [A16] Drop stale package resolve results
+
+---
+ .../java/com/android/server/pm/ComputerEngine.java   | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
+index 9a54fbcab962..34651abd85c0 100644
+--- a/services/core/java/com/android/server/pm/ComputerEngine.java
++++ b/services/core/java/com/android/server/pm/ComputerEngine.java
+@@ -1274,6 +1274,12 @@ public class ComputerEngine implements Computer {
+                         mSettings.getSettingBase(UserHandle.getAppId(filterCallingUid));
+                 PackageStateInternal resolvedSetting =
+                         getPackageStateInternal(info.activityInfo.packageName, 0);
++                if (resolvedSetting == null) {
++                    Slog.w(TAG, "Dropping stale activity resolve result for "
++                            + info.activityInfo.packageName);
++                    resolveInfos.remove(i);
++                    continue;
++                }
+                 if (resolveForStart
+                         || !mAppsFilter.shouldFilterApplication(this,
+                         filterCallingUid, callingSetting, resolvedSetting, userId)) {
+@@ -1309,6 +1315,12 @@ public class ComputerEngine implements Computer {
+                         mSettings.getSettingBase(UserHandle.getAppId(filterCallingUid));
+                 PackageStateInternal resolvedSetting =
+                         getPackageStateInternal(info.serviceInfo.packageName, 0);
++                if (resolvedSetting == null) {
++                    Slog.w(TAG, "Dropping stale service resolve result for "
++                            + info.serviceInfo.packageName);
++                    resolveInfos.remove(i);
++                    continue;
++                }
+                 if (!mAppsFilter.shouldFilterApplication(this,
+                         filterCallingUid, callingSetting, resolvedSetting, userId)) {
+                     continue;
+-- 
+2.34.1
+

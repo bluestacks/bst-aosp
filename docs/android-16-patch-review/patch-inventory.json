@@ -3773,7 +3773,8 @@
           "patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch",
           "patches/android-16/a13-authority/frameworks-base/0214-udpate.patch",
           "patches/android-16/a13-completion/frameworks-base-accessibility-query.patch",
-          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch"
+          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch",
+          "patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch"
         ]
       },
       "overlap_groups": [
@@ -12521,7 +12522,8 @@
           "patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch",
           "patches/android-16/a13-authority/frameworks-base/0214-udpate.patch",
           "patches/android-16/a13-completion/frameworks-base-accessibility-query.patch",
-          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch"
+          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch",
+          "patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch"
         ]
       },
       "overlap_groups": [
@@ -15371,7 +15373,8 @@
           "patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch",
           "patches/android-16/a13-authority/frameworks-base/0214-udpate.patch",
           "patches/android-16/a13-completion/frameworks-base-accessibility-query.patch",
-          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch"
+          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch",
+          "patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch"
         ]
       },
       "overlap_groups": [
@@ -15447,7 +15450,8 @@
           "patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch",
           "patches/android-16/a13-authority/frameworks-base/0214-udpate.patch",
           "patches/android-16/a13-completion/frameworks-base-accessibility-query.patch",
-          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch"
+          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch",
+          "patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch"
         ]
       },
       "overlap_groups": [
@@ -17605,6 +17609,33 @@
       ]
     },
     {
+      "artifact": "patches/android-16/a13-completion/external-selinux-apex-labeling.patch",
+      "name": "external-selinux-apex-labeling.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "52bab10de0321d5e9fcbbf312ed34e787133e70ffd2b79e300d667abbb7f0336",
+      "bytes": 2197,
+      "lines": 52,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 5,
+      "deletions": 10,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "libselinux/src/enabled.c"
+      ],
+      "registry": [],
+      "overlaps": {
+        "libselinux/src/enabled.c": [
+          "patches/android-16/a13-completion/external-selinux-apex-labeling.patch",
+          "patches/android-16/a13-completion/external-selinux-userspace-disabled.patch"
+        ]
+      },
+      "overlap_groups": [
+        "libselinux/src/enabled.c"
+      ]
+    },
+    {
       "artifact": "patches/android-16/a13-completion/external-selinux-userspace-disabled.patch",
       "name": "external-selinux-userspace-disabled.patch",
       "category": "Host/build/graphics companion patches",
@@ -17621,8 +17652,15 @@
         "libselinux/src/enabled.c"
       ],
       "registry": [],
-      "overlaps": {},
-      "overlap_groups": []
+      "overlaps": {
+        "libselinux/src/enabled.c": [
+          "patches/android-16/a13-completion/external-selinux-apex-labeling.patch",
+          "patches/android-16/a13-completion/external-selinux-userspace-disabled.patch"
+        ]
+      },
+      "overlap_groups": [
+        "libselinux/src/enabled.c"
+      ]
     },
     {
       "artifact": "patches/android-16/a13-completion/external-skia-atlas-padding.patch",
@@ -18226,7 +18264,8 @@
           "patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch",
           "patches/android-16/a13-authority/frameworks-base/0214-udpate.patch",
           "patches/android-16/a13-completion/frameworks-base-accessibility-query.patch",
-          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch"
+          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch",
+          "patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch"
         ]
       },
       "overlap_groups": [
@@ -19503,7 +19542,8 @@
           "patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch",
           "patches/android-16/a13-authority/frameworks-base/0214-udpate.patch",
           "patches/android-16/a13-completion/frameworks-base-accessibility-query.patch",
-          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch"
+          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch",
+          "patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch"
         ]
       },
       "overlap_groups": [
@@ -21190,6 +21230,38 @@
       ]
     },
     {
+      "artifact": "patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch",
+      "name": "frameworks-base-stale-package-resolve.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "8a1c15460bb0bc40f6464500a6b243721f13808e17624de10145516ec9030a7c",
+      "bytes": 2193,
+      "lines": 42,
+      "files_changed": 1,
+      "hunks": 2,
+      "additions": 12,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "services/core/java/com/android/server/pm/ComputerEngine.java"
+      ],
+      "registry": [],
+      "overlaps": {
+        "services/core/java/com/android/server/pm/ComputerEngine.java": [
+          "patches/android-16/a13-authority/frameworks-base/0046-A13-Changes-to-Hide-the-Bluestacks-packages.patch",
+          "patches/android-16/a13-authority/frameworks-base/0178-ROB-14842-Fix-App-Center-not-getting-launched-throug.patch",
+          "patches/android-16/a13-authority/frameworks-base/0213-BSAI-2-Hide-the-accessibility-interface-to-prevent-i.patch",
+          "patches/android-16/a13-authority/frameworks-base/0214-udpate.patch",
+          "patches/android-16/a13-completion/frameworks-base-accessibility-query.patch",
+          "patches/android-16/a13-completion/frameworks-base-hide-bst-packages.patch",
+          "patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch"
+        ]
+      },
+      "overlap_groups": [
+        "services/core/java"
+      ]
+    },
+    {
       "artifact": "patches/android-16/a13-completion/frameworks-base-stopapp-gcall.patch",
       "name": "frameworks-base-stopapp-gcall.patch",
       "category": "Host/build/graphics companion patches",
@@ -22865,8 +22937,15 @@
         "external/selinux"
       ],
       "registry": [],
-      "overlaps": {},
-      "overlap_groups": []
+      "overlaps": {
+        "external/selinux": [
+          "patches/android-16/a13-completion/root-external-selinux-pointer.patch",
+          "patches/android-16/a13-completion/root-selinux-pointer.patch"
+        ]
+      },
+      "overlap_groups": [
+        "external/selinux"
+      ]
     },
     {
       "artifact": "patches/android-16/a13-completion/root-ffmpeg-runtime-pointers.patch",
@@ -23240,6 +23319,33 @@
       },
       "overlap_groups": [
         "frameworks/native"
+      ]
+    },
+    {
+      "artifact": "patches/android-16/a13-completion/root-selinux-pointer.patch",
+      "name": "root-selinux-pointer.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "131cd8dacc2ade1aa51ef163e705316df2ab399ab0a021fb0e6c0260cf916228",
+      "bytes": 757,
+      "lines": 20,
+      "files_changed": 1,
+      "hunks": 1,
+      "additions": 1,
+      "deletions": 2,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "external/selinux"
+      ],
+      "registry": [],
+      "overlaps": {
+        "external/selinux": [
+          "patches/android-16/a13-completion/root-external-selinux-pointer.patch",
+          "patches/android-16/a13-completion/root-selinux-pointer.patch"
+        ]
+      },
+      "overlap_groups": [
+        "external/selinux"
       ]
     },
     {

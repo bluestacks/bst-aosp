@@ -39,6 +39,42 @@ The Android-16 adaptation drops stale activity and service resolve results in
 is fail-closed: the stale package is not exposed to the caller. The normal path
 adds only a null branch; warning emission occurs only for the exceptional race.
 
+#### Patch review and identity
+
+- archived patch:
+  [`frameworks-base-stale-package-resolve.patch`](../../../patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch)
+- target component: `frameworks/base`
+- changed file:
+  `services/core/java/com/android/server/pm/ComputerEngine.java`
+- component commit:
+  `5acece03e566c739235304c30a81afb7e7a3256c`
+- root gitlink commit:
+  `4eb695060852919cdb100617f4880c737bc9bdcf`
+- stage: `android16-promotion`
+- result: `current`, with runtime validation pending
+
+The activity and service paths have the same lifetime hazard and therefore
+receive the same guard. Removing a stale result is necessary because passing a
+null package state into `AppsFilter` crashes the caller; keeping such a result
+would also return an object whose package disappeared from the current package
+snapshot. The change deliberately does not reconstruct state, retry resolution,
+or alter visibility policy, which keeps it narrowly aligned with Android-16
+snapshot semantics.
+
+Code review found no new privilege or information-disclosure path. The null
+case is fail-closed and the existing filtering behavior is unchanged for valid
+results. The normal-path performance cost is one predictable null check per
+resolved activity or service. Warning formatting and logging occur only in the
+race case. A retry was rejected because it would add locking and query cost to
+the package resolution hot path without guaranteeing that a concurrently
+removed package becomes valid again.
+
+This is an Android-16 runtime adaptation discovered during promotion regression,
+not evidence of an omitted A13 source commit. Its necessity is established by
+the old artifact's uncube Launcher and SystemUI crash traces. Acceptance still
+requires a clean-data boot of the new image followed by the post-oracle
+stabilization window and explicit Launcher/SystemUI crash scan.
+
 Final validation remains pending. It must prove that HOME reaches the uncube
 launcher without an uncube crash, package-state null dereference, or transition
 flush failure.

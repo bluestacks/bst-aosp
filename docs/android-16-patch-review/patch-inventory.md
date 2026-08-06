@@ -4,7 +4,7 @@
 
 ## Summary
 
-- Patch artifacts: **577**
+- Patch artifacts: **580**
 - Total size: **21.56 MiB**
 - Artifacts containing binary patch data: **4**
 - Payload-free artifacts referencing binary differences: **2**
@@ -13,7 +13,7 @@
 | Category | Count |
 |---|---:|
 | AOSP16 project snapshots | 21 |
-| Host/build/graphics companion patches | 498 |
+| Host/build/graphics companion patches | 501 |
 | P2 aggregate/candidate snapshots | 5 |
 | P2 bionic/art source overlays | 2 |
 | P2 cross-project mechanical patches | 18 |
@@ -346,6 +346,7 @@
 | [`external-libva-core-vendor.patch`](../../patches/android-16/a13-completion/external-libva-core-vendor.patch) | Host/build/graphics companion patches | 1 | 3 | 3 | 4 | 0.9 | no | 0 |
 | [`external-libva-driver-discovery.patch`](../../patches/android-16/a13-completion/external-libva-driver-discovery.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.6 | no | 0 |
 | [`external-libxml2-device-xmllint.patch`](../../patches/android-16/a13-completion/external-libxml2-device-xmllint.patch) | Host/build/graphics companion patches | 1 | 1 | 2 | 2 | 0.6 | no | 0 |
+| [`external-selinux-apex-labeling.patch`](../../patches/android-16/a13-completion/external-selinux-apex-labeling.patch) | Host/build/graphics companion patches | 1 | 2 | 5 | 10 | 2.1 | no | 0 |
 | [`external-selinux-userspace-disabled.patch`](../../patches/android-16/a13-completion/external-selinux-userspace-disabled.patch) | Host/build/graphics companion patches | 1 | 2 | 9 | 6 | 2.2 | no | 0 |
 | [`external-skia-atlas-padding.patch`](../../patches/android-16/a13-completion/external-skia-atlas-padding.patch) | Host/build/graphics companion patches | 1 | 2 | 7 | 4 | 1.1 | no | 0 |
 | [`external-stagefright-plugins-a16.patch`](../../patches/android-16/a13-completion/external-stagefright-plugins-a16.patch) | Host/build/graphics companion patches | 4 | 4 | 3 | 4 | 1.7 | no | 0 |
@@ -441,6 +442,7 @@
 | [`frameworks-base-setbstime.patch`](../../patches/android-16/a13-completion/frameworks-base-setbstime.patch) | Host/build/graphics companion patches | 6 | 8 | 63 | 2 | 7.3 | no | 0 |
 | [`frameworks-base-signin-popup-stop.patch`](../../patches/android-16/a13-completion/frameworks-base-signin-popup-stop.patch) | Host/build/graphics companion patches | 1 | 1 | 16 | 0 | 1.3 | no | 0 |
 | [`frameworks-base-skip-temp-downloads.patch`](../../patches/android-16/a13-completion/frameworks-base-skip-temp-downloads.patch) | Host/build/graphics companion patches | 1 | 3 | 18 | 0 | 2.0 | no | 0 |
+| [`frameworks-base-stale-package-resolve.patch`](../../patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch) | Host/build/graphics companion patches | 1 | 2 | 12 | 1 | 2.1 | no | 0 |
 | [`frameworks-base-stopapp-gcall.patch`](../../patches/android-16/a13-completion/frameworks-base-stopapp-gcall.patch) | Host/build/graphics companion patches | 7 | 17 | 77 | 11 | 12.9 | no | 0 |
 | [`frameworks-base-system-feature-query-policy.patch`](../../patches/android-16/a13-completion/frameworks-base-system-feature-query-policy.patch) | Host/build/graphics companion patches | 1 | 2 | 9 | 6 | 2.1 | no | 0 |
 | [`frameworks-base-systemui-battery-fix.patch`](../../patches/android-16/a13-completion/frameworks-base-systemui-battery-fix.patch) | Host/build/graphics companion patches | 1 | 3 | 2 | 3 | 1.4 | no | 0 |
@@ -505,6 +507,7 @@
 | [`root-media-compat-pointer.patch`](../../patches/android-16/a13-completion/root-media-compat-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-readiness-runtime-pointer.patch`](../../patches/android-16/a13-completion/root-readiness-runtime-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-readiness-service-pointer.patch`](../../patches/android-16/a13-completion/root-readiness-service-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
+| [`root-selinux-pointer.patch`](../../patches/android-16/a13-completion/root-selinux-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.7 | no | 0 |
 | [`root-servicemanager-readiness-pointer.patch`](../../patches/android-16/a13-completion/root-servicemanager-readiness-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-swcodec-sphal-pointer.patch`](../../patches/android-16/a13-completion/root-swcodec-sphal-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 2 | 0.5 | no | 0 |
 | [`root-system-core-completion-pointer.patch`](../../patches/android-16/a13-completion/root-system-core-completion-pointer.patch) | Host/build/graphics companion patches | 1 | 1 | 1 | 1 | 0.2 | no | 0 |
@@ -4782,6 +4785,18 @@
 - Changed paths:
   - `Android.bp`
 
+### `external-selinux-apex-labeling.patch`
+
+- Artifact: [`patches/android-16/a13-completion/external-selinux-apex-labeling.patch`](../../patches/android-16/a13-completion/external-selinux-apex-labeling.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `52bab10de0321d5e9fcbbf312ed34e787133e70ffd2b79e300d667abbb7f0336`
+- Size/stat: 2197 bytes, 1 files, 2 hunks, +5/-10
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `libselinux/src/enabled.c`
+
 ### `external-selinux-userspace-disabled.patch`
 
 - Artifact: [`patches/android-16/a13-completion/external-selinux-userspace-disabled.patch`](../../patches/android-16/a13-completion/external-selinux-userspace-disabled.patch)
@@ -4790,7 +4805,7 @@
 - Size/stat: 2241 bytes, 1 files, 2 hunks, +9/-6
 - Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `libselinux/src/enabled.c`
 
@@ -6003,6 +6018,18 @@
 - Changed paths:
   - `services/core/java/com/android/server/pm/InstallPackageHelper.java`
 
+### `frameworks-base-stale-package-resolve.patch`
+
+- Artifact: [`patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch`](../../patches/android-16/a13-completion/frameworks-base-stale-package-resolve.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `8a1c15460bb0bc40f6464500a6b243721f13808e17624de10145516ec9030a7c`
+- Size/stat: 2193 bytes, 1 files, 2 hunks, +12/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `services/core/java/com/android/server/pm/ComputerEngine.java`
+
 ### `frameworks-base-stopapp-gcall.patch`
 
 - Artifact: [`patches/android-16/a13-completion/frameworks-base-stopapp-gcall.patch`](../../patches/android-16/a13-completion/frameworks-base-stopapp-gcall.patch)
@@ -6746,7 +6773,7 @@
 - Size/stat: 944 bytes, 1 files, 1 hunks, +1/-2
 - Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `external/selinux`
 
@@ -6906,6 +6933,18 @@
 - Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `frameworks/native`
+
+### `root-selinux-pointer.patch`
+
+- Artifact: [`patches/android-16/a13-completion/root-selinux-pointer.patch`](../../patches/android-16/a13-completion/root-selinux-pointer.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `131cd8dacc2ade1aa51ef163e705316df2ab399ab0a021fb0e6c0260cf916228`
+- Size/stat: 757 bytes, 1 files, 1 hunks, +1/-2
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `external/selinux`
 
 ### `root-servicemanager-readiness-pointer.patch`
 

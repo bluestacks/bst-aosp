@@ -120,7 +120,45 @@ try {
     $failures += "houdini_sanity"
 }
 
-foreach ($service in @("media.audio_flinger", "SurfaceFlinger")) {
+$entropy = (Invoke-AdbBounded -Arguments @(
+    "shell", "cat", "/proc/sys/kernel/random/entropy_avail"
+)).Trim()
+$entropyValue = 0
+if (-not [int]::TryParse($entropy, [ref]$entropyValue) -or $entropyValue -le 0) {
+    $failures += "kernel_entropy"
+}
+
+$defaultRoute = Invoke-AdbBounded -Arguments @("shell", "ip", "-4", "route", "show", "default")
+if ($defaultRoute -notmatch '(?m)^default\s') { $failures += "default_ipv4_route" }
+
+$operatorNumeric = (Invoke-AdbBounded -Arguments @(
+    "shell", "getprop", "gsm.operator.numeric"
+)).Trim()
+if ($operatorNumeric -notmatch '^\d{5,6}$') { $failures += "telephony_operator" }
+
+$imeState = (Invoke-AdbBounded -Arguments @(
+    "shell", "getprop", "init.svc.imeservice"
+)).Trim()
+try {
+    [void](Invoke-AdbBounded -Arguments @("shell", "test", "-x", "/system/bin/bstime"))
+} catch {
+    Write-Warning $_
+    $failures += "bstime_payload"
+}
+if ($imeState -ne "running") { $failures += "imeservice_state:$imeState" }
+
+$hidl = Invoke-AdbBounded -Arguments @("shell", "lshal", "-i") -TimeoutSec 30
+foreach ($factory in @(
+    "android.hardware.drm@1.3::IDrmFactory/widevine",
+    "android.hardware.drm@1.3::ICryptoFactory/widevine"
+)) {
+    if ($hidl -notmatch [regex]::Escape($factory)) { $failures += "widevine:$factory" }
+}
+
+foreach ($service in @(
+    "media.audio_flinger", "SurfaceFlinger", "media.camera",
+    "connectivity", "phone", "isub"
+)) {
     $result = Invoke-AdbBounded -Arguments @("shell", "service", "check", $service)
     if ($result -notmatch 'found') { $failures += "service:$service" }
 }

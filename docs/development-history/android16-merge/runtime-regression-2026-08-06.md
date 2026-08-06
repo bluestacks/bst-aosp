@@ -132,3 +132,12 @@ eight jobs. Before deployment, bind the root and component commits to hashes of
 the new Root, `system.img`, and `system.sfs`. Boot, property, Launcher, shared
 folder, network, telephony, DRM, audio, graphics, and Houdini checks must then be
 rerun on clean Data.
+
+The automated runtime gate now covers the stable readback subset of that list:
+uncube HOME and crash stability, shared-folder mount, Houdini/native bridge,
+kernel entropy availability, an IPv4 default route, virtual-SIM operator
+format, the `bstime` payload and running `imeservice`, both Widevine HIDL 1.3
+factories, and the audio, graphics, camera, connectivity, phone and subscription
+Binder services. Fake-Wi-Fi API presentation, real camera frames, media
+playback, and external network reachability remain explicit application or host
+oracles; service presence alone must not be reported as those behaviors passing.

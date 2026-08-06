@@ -12,13 +12,14 @@ Static parser results and the historical exception are in
 
 ## Android-16 Active Pipeline
 
-These are the maintained promotion/mainline entry points. They reject an
-`aosp16` source root and print the resolved tree, branch, HEAD, product, and
-`OUT_DIR` before work starts.
+These are the maintained promotion/mainline entry points. They require the
+active tree to resolve exactly to `~/android-16`, reject unresolved component
+indexes, and print the resolved tree, branch, HEAD, product, and `OUT_DIR`
+before work starts.
 
 | Entry | Role | Side effects |
 |---|---|---|
-| `g1_build_app_player.sh` | Canonical full Android-16 build and app-player package | Builds only the linked target tree, injects established payloads, and writes artifact identity |
+| `g1_build_app_player.sh` | Canonical full Android-16 build and app-player package | Builds only the linked target tree; records app-player, HD, VBox, graphics and payload identity; requires newly generated Root/system/fastboot artifacts and rejects an image missing uncube, `libflutter.so`, `mountsf`, or the BlueStacks build identity |
 | `g1_build_android16.sh` | Target-only Layer 1 Android-16 build and graphics stage | Builds under the validated Android-16 root; does not create a release-complete Root |
 | `g1_build_libs.sh` | Builds and hashes required HD guest native libraries | Builds under the validated Android-16 root |
 | `g1_build_pack.sh` | Orchestrates build, Root packaging, deploy, and Layer 2 verification | Remote build plus Windows deployment |
@@ -40,6 +41,12 @@ These are the maintained promotion/mainline entry points. They reject an
 Run `--check` on the supported pipeline entry before target-tree work. Static
 review in this repository does not invoke those checks because this review must
 not read either Android source tree.
+
+The app-player and HD checkouts are external packaging inputs on
+`bst-v5.22.210`, not Android promotion submissions. The active full-package
+entry rejects unresolved indexes, records their content identity, and pins the
+A13-compatible VBox 7.0.8 guest-additions revision without committing those
+repositories.
 
 ## Promotion Audit
 

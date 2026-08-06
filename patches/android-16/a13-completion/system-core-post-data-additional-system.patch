@@ -1,0 +1,29 @@
+From bbbdfb60d537f304b783f34e5500eeadc9ee62ea Mon Sep 17 00:00:00 2001
+From: mark-bst <zeqing.xu@bluestacks.com>
+Date: Fri, 7 Aug 2026 01:42:23 +0800
+Subject: [PATCH] [A16] Reload additional system properties post-data
+
+A13 source 133a180f818218a9056c58cc83aac0be7a579d4d loads .additional_system.prop with the other BlueStacks property inputs. Android 16 mounts /data after the early boot-default read, and b9e2de4775bc48df040d8dd8d936afcc1f87fc50 restored only the first three files in the post-data path.
+
+Reload the fourth file in the same map and precedence order. The normal-path cost is one access check and one boot-time parse; there is no steady-state runtime cost. Existing restorecon coverage and property-service policy remain unchanged.
+
+Validation: git diff --check; target check-vintf-all and clean-Data property readback pending.
+---
+ init/property_service.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 8a0331865..717131dea 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -889,6 +889,10 @@ static void load_override_properties() {
+             load_properties_from_file("/data/.vendor.prop", nullptr, &properties);
+             LOG(INFO) << "Loaded /data/.vendor.prop overrides";
+         }
++        if (access("/data/.additional_system.prop", R_OK) == 0) {
++            load_properties_from_file("/data/.additional_system.prop", nullptr, &properties);
++            LOG(INFO) << "Loaded /data/.additional_system.prop overrides";
++        }
+         for (const auto& [name, value] : properties) {
+             std::string error;
+             if (PropertySetNoSocket(name, value, &error) != PROP_SUCCESS) {

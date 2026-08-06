@@ -13,7 +13,7 @@ for both words `runtime` and `pending`, so paths such as `PendingIntent.java`
 could produce false positives and unrelated rationale text could widen the
 set. The corrected count inspects `review_status` and validation evidence.
 
-The six `reviewed-correction-prepared` legacy-HAL VINTF entries are additional
+The five `reviewed-correction-prepared` legacy-HAL VINTF entries are additional
 promotion work, not part of these 32 already-ported patches. They are tracked
 separately in [`a13-hal-vintf-review.md`](a13-hal-vintf-review.md).
 

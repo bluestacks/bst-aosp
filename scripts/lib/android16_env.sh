@@ -2,6 +2,7 @@
 # Shared identity and safety checks for the promoted Android-16 workflow.
 
 BST_ANDROID16_ROOT="${BST_ANDROID16_ROOT:-$HOME/android-16}"
+BST_CANONICAL_ANDROID16_ROOT="${BST_CANONICAL_ANDROID16_ROOT:-$HOME/android-16}"
 BST_AOSP16_REFERENCE_ROOT="${BST_AOSP16_REFERENCE_ROOT:-}"
 BST_APP_PLAYER_ROOT="${BST_APP_PLAYER_ROOT:-$HOME/app-player}"
 BST_HD_SOURCE_TOP="${BST_HD_SOURCE_TOP:-$BST_APP_PLAYER_ROOT/hd}"
@@ -86,8 +87,13 @@ bst_require_android16_root() {
     return 1
   }
 
-  local target reference
+  local target canonical reference
   target="$(bst_realpath "$BST_ANDROID16_ROOT")" || return 1
+  canonical="$(bst_realpath "$BST_CANONICAL_ANDROID16_ROOT")" || return 1
+  [ "$target" = "$canonical" ] || {
+    echo "A16DBG:IDENTITY: active target must resolve to $canonical, got $target" >&2
+    return 1
+  }
   reference=""
   if [ -n "$BST_AOSP16_REFERENCE_ROOT" ]; then
     reference="$(bst_realpath "$BST_AOSP16_REFERENCE_ROOT" 2>/dev/null || true)"

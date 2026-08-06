@@ -67782,14 +67782,15 @@
       "target_commits": [
         "ab102bbed8be2041886a511890359684bc3e08c2",
         "b9e2de4775bc48df040d8dd8d936afcc1f87fc50",
+        "bbbdfb60d537f304b783f34e5500eeadc9ee62ea",
         "475ab3838709bb0f7683feb2e2ebbeb676192531",
         "b935c0010aef4c5f7d5aba93bfc30a5a019e24df"
       ],
       "validation_evidence": [
-        "init_second_stage compiled; source ordering and labels reviewed; clean-Data runtime property oracle remains pending."
+        "All four post-data branches and restorecon inputs were reviewed; renewed target compilation and clean-Data file-by-file property readback remain pending."
       ],
       "manual_disposition": "ported-with-a16-post-data-adaptation",
-      "rationale": "All four BlueStacks property files are loaded after Data is mounted, relabeled before parsing, and ordered after modern partition defaults so A13 per-instance precedence is preserved.",
+      "rationale": "All four BlueStacks property files are relabeled and read after Data is mounted. Commit bbbdfb60 corrects the earlier post-data adaptation, which handled .bluestacks.prop, .bstconf.prop and .vendor.prop but omitted .additional_system.prop. Modern partition defaults remain loaded first so mutable A13 per-instance values retain override precedence; read-only ro.* identity still depends on the complete app-player build.prop packaging path and requires runtime readback.",
       "necessity": "Required for FPS, locale, identity, feature and per-instance guest configuration.",
       "performance": "Boot-only parsing and restorecon of four small optional files; no polling.",
       "security": "Uses property contexts and explicit restorecon instead of bypassing Android 16 property labeling."

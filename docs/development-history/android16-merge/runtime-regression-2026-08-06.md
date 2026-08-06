@@ -79,6 +79,17 @@ Final validation remains pending. It must prove that HOME reaches the uncube
 launcher without an uncube crash, package-state null dereference, or transition
 flush failure.
 
+The complete app-player packaging review found a second, independent Launcher
+failure mode. `com.uncube.launcher3.apk` is listed below the `Downloads:` marker
+in the Baklava APK configuration, while `copy_system_apks` intentionally stops
+at that marker. The Android OUT staging tree therefore contained
+`Launcher3QuickStep`, but the folded `system.img` did not contain the uncube
+HOME package selected by the framework. The temporary app-player Makefile now
+installs only this boot-critical APK under `system/priv-app` and extracts its
+x86/x86_64 native libraries; app-player remains an external build input and is
+not part of the Android source submission. The active build gate records the
+APK hash and rejects an image missing either the APK or `libflutter.so`.
+
 ### Shared-folder payload missing from the old image
 
 The guest has `bst.config.mountsf=1` and the init service declaration, but
@@ -111,6 +122,17 @@ Post-data loading now makes the `.bstconf.prop` runtime values visible;
 entries and an unlabeled externally generated `.bstconf.prop`; these are HD
 input and relabel findings, not missing Android-16 file-context changes, because
 A13, AOSP16, and Android-16 have no dedicated path rule for these files.
+
+Code-level readback then found that the Android-16 post-data adaptation loaded
+`.bluestacks.prop`, `.bstconf.prop`, and `.vendor.prop`, but omitted the fourth
+A13 input, `.additional_system.prop`. Component commit
+`bbbdfb60d537f304b783f34e5500eeadc9ee62ea` restores that one missing branch;
+root commit `c4d2b530567706a7250b77e9db9a0cbafb18f903` records the gitlink. All four
+files are now included in both the post-data `restorecon` list and the property
+load list. This is not yet runtime credit: mutable `bst.*` values can be loaded
+post-data, while already initialized `ro.*` identity values may remain
+read-only and must be verified against the complete packaged build.prop on a
+clean Data boot.
 
 The old image has 17 `ro.build.*` mismatches against `.bluestacks.prop`. Its
 `system.img` contains the AOSP engineering `build.prop` rather than the
@@ -149,7 +171,7 @@ This is a code-level omission rather than a binary or packaging-input issue:
   1.3 service is different: its generated module-owned fragment already
   declares both Widevine factories and must not be duplicated by the board.
 
-The minimal adaptation is prepared as
+The minimal adaptation is archived as
 [`device-generic-x86_64-legacy-hal-vintf.patch`](../../../patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch).
 It attaches one Windows-product-only device manifest and adds level-8 framework
 matrix bridges only for legacy HIDL interfaces no longer accepted by the stock
@@ -173,11 +195,14 @@ packaged services should remove failed registration/restart work. Security
 impact is limited to making the intentionally retained legacy HAL endpoints
 visible to the framework on `android_x86_64`. This is explicit compatibility
 debt and remains scoped away from common, arm, and retired qvirt products.
-Patch structure, XML parsing, and `git apply --check` pass. It must not be
-applied to the remote component until the active full build has stopped using
-the frozen source tree. Acceptance requires `check-vintf-all`, component and
-root commits, a target-only incremental rebuild, and clean-Data runtime
-registration checks.
+Patch structure, XML parsing, and `git apply --check` pass. It is committed in
+`device/generic/x86_64` as
+`773ab33851c67d54c6f9b6912f23baf208d8c11b`, with root gitlink commit
+`0337c0c02bd1082aad6067b79bd70b2a52b626fb`. The current `check-vintf-all`
+run is bound to later root commit `c4d2b530567706a7250b77e9db9a0cbafb18f903`
+and remains pending. Acceptance still requires a successful generated-manifest
+uniqueness check, a complete image build, and clean-Data runtime registration
+checks.
 
 ## Baseline Passes
 
@@ -194,6 +219,30 @@ eight jobs. Before deployment, bind the root and component commits to hashes of
 the new Root, `system.img`, and `system.sfs`. Boot, property, Launcher, shared
 folder, network, telephony, DRM, audio, graphics, and Houdini checks must then be
 rerun on clean Data.
+
+The packaging identity also records the app-player HEAD and build-flow diff,
+the HD branch/HEAD and complete tracked diff hash, the exact `stage2.sh` hash,
+and the VBox guest-additions commit. HD had an unresolved three-way index entry
+for `stage2.sh`; its worktree content exactly matched the archived 148-line
+R246 snapshot (`66407de17c701dc841ff400ad09edf2b6afaa539c582a786493ddefcd866ee2b`),
+so only that existing content was marked resolved in the `markxu` checkout.
+No HD or app-player commit is part of the Android submission. The build gate
+now rejects any remaining external-input unmerged entry. It also requires
+`Root.vhd`, `system.img`, `system.sfs`, and `fastboot.vdi` to be newer than the
+current build start marker and records all four hashes, so a failed fastboot
+stage cannot borrow an older file and report a false package pass.
+
+The complete HD tracked diff contains ten files. `bstsetconf.sh`,
+`bstsetup.env`, and `stage2.sh` match the archived promotion snapshots exactly.
+The remaining adaptations are bounded to: finding `videobuf-core.ko` in the
+Android-16 kernel output, detecting the SDK-36 system as the Baklava guest
+profile, preserving fastboot input symlinks during clean, enabling the existing
+Tiramisu gcall feature gate for Baklava, replacing unavailable C++ formatting
+helpers, and compiling VBox drivers when the pinned source layout exists. The
+build preflight verifies all three VBox driver source directories. These are
+build/boot compatibility changes, not Android component patches; their runtime
+cost is limited to one first-stage file/property probe, and their full diff hash
+is evidence rather than a submitted HD commit.
 
 The automated runtime gate now covers the stable shell-readable subset of that
 list: uncube HOME and crash stability, shared-folder mount plus a real write and

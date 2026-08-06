@@ -28,6 +28,16 @@ Target source identity at discovery:
   `00623898eb9bd0afc4374f6c79f805939f873311`
 - common service graph: `device/generic/common/treble.mk`
 
+Applied target identity:
+
+- Android root after this correction:
+  `0337c0c02bd1082aad6067b79bd70b2a52b626fb`
+- `device/generic/x86_64`:
+  `773ab33851c67d54c6f9b6912f23baf208d8c11b`
+- branch: `aosp16-bst-merge`
+- current validation root, including the later property correction:
+  `c4d2b530567706a7250b77e9db9a0cbafb18f903`
+
 ## Entry Review
 
 | A13 declaration | Android-16 provider and declaration owner | Decision | Necessity and evidence |
@@ -66,7 +76,7 @@ example must not be restored.
 
 ## Patch Review
 
-The prepared patch is
+The applied and archived patch is
 [`device-generic-x86_64-legacy-hal-vintf.patch`](../../../patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch).
 It changes only `device/generic/x86_64`:
 
@@ -80,8 +90,9 @@ It changes only `device/generic/x86_64`:
 
 The patch does not alter HAL implementation code, service startup order,
 SELinux policy, binder transport, product selection, or common/arm products.
-It also does not restore qvirt. Patch application, XML parsing, and whitespace
-validation pass against component head `00623898`.
+It also does not restore qvirt. Patch application, XML parsing, whitespace
+validation, and commit readback pass. `check-vintf-all` and generated-manifest
+uniqueness validation remain in progress and are not yet counted as passed.
 
 ### Performance
 

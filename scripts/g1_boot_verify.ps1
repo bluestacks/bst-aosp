@@ -3,6 +3,7 @@ param(
     [string]$PlayerExe = "C:\Program Files\BlueStacks_nxt\HD-Player.exe",
     [string]$LogDir = "C:\ProgramData\BlueStacks_nxt\Logs",
     [int]$TimeoutSec = 600,
+    [int]$StabilizationSec = 75,
     [string]$ArtifactIdentity = "C:\ProgramData\BlueStacks_nxt\Engine\Tiramisu64\Root.vhd.identity",
     [switch]$CheckOnly
 )
@@ -62,6 +63,28 @@ while ((Get-Date) -lt $deadline) {
     Write-Host "[$elapsed s] oracles: $($found.Keys.Count)/$($patterns.Count)"
     if ($found.Keys.Count -ge $patterns.Count) { break }
 }
+
+if ($found.Keys.Count -ge $patterns.Count -and $StabilizationSec -gt 0) {
+    Write-Host "A16DBG:G1: boot oracles complete; stabilizing for ${StabilizationSec}s"
+    Start-Sleep -Seconds $StabilizationSec
+}
+
+$stabilityLogs = @()
+foreach ($name in @("Player.log", "Player.log.1", "BstkCore.log")) {
+    $stabilityLogs += Get-LogLinesSince -Path (Join-Path $LogDir $name) -Since $before
+}
+$fatalPatterns = @(
+    @{ id = "package_state_null"; rx = "PackageStateInternal\.getAppId\(\).*null object reference" },
+    @{ id = "apps_filter_crash"; rx = "AppsFilterBase\.shouldFilterApplication" },
+    @{ id = "systemui_crash_loop"; rx = "Process com\.android\.systemui has crashed too many times" }
+)
+$stabilityFailures = @()
+foreach ($pat in $fatalPatterns) {
+    if ($stabilityLogs | Select-String -Pattern $pat.rx -Quiet) {
+        $stabilityFailures += $pat.id
+    }
+}
+
 Write-Host "=== G1 boot oracle results ==="
 $failed = @()
 foreach ($pat in $patterns) {
@@ -69,9 +92,13 @@ foreach ($pat in $patterns) {
     if (-not $ok) { $failed += $pat.id }
     Write-Host ("  [{0}] {1}" -f ($(if($ok){"PASS"}else{"FAIL"})), $pat.id)
 }
+foreach ($id in $stabilityFailures) {
+    Write-Host "  [FAIL] stability:$id"
+}
 Write-Host "A16DBG:G1: boot-verify done elapsed=$([int]((Get-Date)-$before).TotalSeconds)s"
-if ($failed.Count -gt 0) {
-    Write-Error "Boot oracle failed: $($failed -join ', ')"
+if ($failed.Count -gt 0 -or $stabilityFailures.Count -gt 0) {
+    $allFailures = @($failed) + @($stabilityFailures | ForEach-Object { "stability:$_" })
+    Write-Error "Boot oracle failed: $($allFailures -join ', ')"
     exit 1
 }
 exit 0

@@ -11,8 +11,9 @@
 ### Layer 1 — 编译验证（远程，完整 AOSP 树）
 
 当前 mainline 的 `<remote-root>` 必须解析为 `~/android-16`。先执行
-`bash ~/bst-aosp/scripts/g1_build_android16.sh --check`；保存 tree、branch、
-HEAD、OUT_DIR 和 product readback。历史 AOSP16 绿基线只证明 development
+`bash ~/bst-aosp/scripts/g1_build_app_player.sh --check`；保存 tree、branch、
+HEAD、OUT_DIR、product 和 app-player link readback。完整 Root 必须由该入口
+调用既有 app-player Makefile 生成；target-only staging 不构成发布包。历史 AOSP16 绿基线只证明 development
 阶段，不替代 Android-16 target build。
 
 ```bash
@@ -33,6 +34,9 @@ sidecar。**绝不信任「m 跑完没报错」。**
 oracle 清单与取数见 [docs/boot-oracles.md](../../docs/boot-oracles.md) + boot-guide：kernel/串口、`system mounted from sfs`、init、odsign/boot.art、`boot_completed`、`Player state: ready`、Settings、优雅关机。
 
 - **陷阱条款**：Layer 1 通过**不构成 done**。并入 boot 的组须 Layer 2 至少覆盖挂载 + init + launcher/ready。
+- 七项 host oracle 首次齐全后必须经过稳定窗口，并执行
+  `g1_property_verify.ps1` 与 `g1_runtime_regression.ps1`；SystemUI/Launcher
+  package-state 崩溃、共享目录未挂载或 Houdini sanity 失败均阻断发布。
 - 若 Layer 2 因耗时本会话跑不完，summary 标 `verification: build-only, boot-pending` 并登记 `progress/`。
 - **mac 不做 Layer 2**（见 `platform-win-first-mac-reuse.md`）。
 - **绝不未跑就声称 gate 通过。**

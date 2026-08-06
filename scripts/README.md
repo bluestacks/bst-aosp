@@ -18,10 +18,11 @@ These are the maintained promotion/mainline entry points. They reject an
 
 | Entry | Role | Side effects |
 |---|---|---|
-| `g1_build_android16.sh` | Layer 1 Android-16 build and graphics stage | Builds under the validated Android-16 root |
+| `g1_build_app_player.sh` | Canonical full Android-16 build and app-player package | Builds only the linked target tree, injects established payloads, and writes artifact identity |
+| `g1_build_android16.sh` | Target-only Layer 1 Android-16 build and graphics stage | Builds under the validated Android-16 root; does not create a release-complete Root |
 | `g1_build_libs.sh` | Builds and hashes required HD guest native libraries | Builds under the validated Android-16 root |
 | `g1_build_pack.sh` | Orchestrates build, Root packaging, deploy, and Layer 2 verification | Remote build plus Windows deployment |
-| `g1_pack_root.sh` | Authoritative target-tree Root packaging | Recreates staged system and Root artifacts |
+| `g1_pack_root.sh` | Guarded target-only Root repack | Refuses release packaging when app-player system payloads or build identity are absent |
 | `g1_stage_system.sh` | Folds target `OUT_DIR` into the release staging tree | Replaces staged system content |
 | `g1_apply_boot_overlays.sh` | Applies source-built overlays before packaging | Copies framework, HAL, and graphics files |
 | `g1_rebuild_graphics.sh` | Builds `goldfish-opengl-pie` from the target tree | Cleans selected intermediates and rebuilds graphics |
@@ -30,6 +31,8 @@ These are the maintained promotion/mainline entry points. They reject an
 | `g1_win_deploy.ps1` | Deploys Root with SHA-256 readback | Replaces the Windows engine Root |
 | `g1_reset_data_wipe.ps1` | Restores the verified clean Data snapshot with SHA-256 readback | Stops the local instance and replaces `Data.vhdx` |
 | `g1_boot_verify.ps1` | Evaluates the Layer 2 boot oracle | Starts/stops the local instance and reads logs |
+| `g1_property_verify.ps1` | Compares property payloads with guest runtime values | Temporarily enables the BlueStacks getprop diagnostic switch |
+| `g1_runtime_regression.ps1` | Checks Launcher stability, shared folders, Houdini, audio, and graphics | Starts HOME and reads bounded ADB diagnostics |
 | `lib/android16_env.sh` | Shared tree and artifact identity gate | None when sourced; writes identity only on request |
 
 Run `--check` on the supported pipeline entry before target-tree work. Static

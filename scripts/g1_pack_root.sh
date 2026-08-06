@@ -24,6 +24,17 @@ bash "$SCRIPT_DIR/g1_stage_system.sh"
 bash "$SCRIPT_DIR/g1_copy_bst_apks.sh"
 bash "$SCRIPT_DIR/g1_apply_boot_overlays.sh"
 bash "$SCRIPT_DIR/g8_disable_vendor_hal_rc.sh"
+STAGED_SYSTEM="$BST_RELEASE_ROOT/system"
+[ -x "$STAGED_SYSTEM/bin/mountsf" ] || {
+  echo "release staging is missing app-player payload bin/mountsf" >&2
+  echo "run g1_build_app_player.sh for a release-complete Android-16 package" >&2
+  exit 1
+}
+grep -q '^ro.build.display.id=BlueStacks-' "$STAGED_SYSTEM/build.prop" || {
+  echo "release staging is missing the app-player BlueStacks build identity" >&2
+  echo "run g1_build_app_player.sh for a release-complete Android-16 package" >&2
+  exit 1
+}
 PACK_HOST_TOOLS="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/host/linux-x86/bin"
 MKUSERIMG="$PACK_HOST_TOOLS/mkuserimg_mke2fs"
 SIMG2IMG="$PACK_HOST_TOOLS/simg2img"

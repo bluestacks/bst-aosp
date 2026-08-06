@@ -18,7 +18,8 @@ python3 scripts/audit_android16_promotion.py audit \
   --root ~/android-16 --expected-total 1021
 ```
 
-当前 rework 要求 1021/1021 初始化、无 detached/dirty/gitlink mismatch。
+当前 A13 completion 基线要求 1025/1025 初始化、974 个 `aosp16-bst`、
+51 个 `aosp16-bst-merge`，且无 detached/dirty/gitlink mismatch。
 branch distribution 必须保存并 review，但在 history normalization 完成前不硬编码。
 `--enforce-recorded-baseline` 仅用于复现已撤回候选的 1016/985/31 历史值。
 

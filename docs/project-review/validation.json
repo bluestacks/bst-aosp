@@ -3,7 +3,7 @@
   "scope": "local repository only; Android source trees are not read",
   "counts": {
     "expected-failure": 1,
-    "pass": 635
+    "pass": 691
   },
   "checks": [
     {
@@ -31,7 +31,253 @@
       "detail": ""
     },
     {
+      "path": "docs/development-history/android16-merge/a13-patch-ledger.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
       "path": "docs/development-history/android16-merge/a13-port-coverage.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-art.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-bionic.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-build-stack.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-device-generic-common.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-external-boringssl.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-external-deqp.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-external-icu.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-external-libxml2.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-external-swiftshader.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-frameworks-av.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-frameworks-base.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-frameworks-native.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-frameworks-opt-telephony.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-hardware-bst.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-hardware-interfaces.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-hardware-libhardware.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-kernel-branch-head.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-libcore.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-media-branch-heads.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-packages-apps-settings.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-packages-inputmethods-latinime.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-packages-modules-adb.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-packages-modules-bluetooth.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-packages-modules-connectivity.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-packages-modules-networkstack.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-packages-modules-wifi.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-packages-providers-downloadprovider.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-packages-services-telephony.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-repository-hygiene.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-security-graphics.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-snapshot-boundaries.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-system-core.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-system-extras.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-system-libbase.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-system-security.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-system-vold.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-tools-tradefederation-prebuilts.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions-upstream-structure.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-review-decisions.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "docs/development-history/android16-merge/a13-target-commit-map.json",
       "check": "json-parse",
       "status": "pass",
       "detail": ""
@@ -1843,6 +2089,12 @@
       "detail": ""
     },
     {
+      "path": "scripts/g1_build_app_player.sh",
+      "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
       "path": "scripts/g1_build_libs.sh",
       "check": "bash-n",
       "status": "pass",
@@ -1891,6 +2143,12 @@
       "detail": ""
     },
     {
+      "path": "scripts/g1_property_verify.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
       "path": "scripts/g1_rebuild_graphics.sh",
       "check": "bash-n",
       "status": "pass",
@@ -1898,6 +2156,12 @@
     },
     {
       "path": "scripts/g1_reset_data_wipe.ps1",
+      "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/g1_runtime_regression.ps1",
       "check": "powershell-parser",
       "status": "pass",
       "detail": ""
@@ -1929,6 +2193,12 @@
     {
       "path": "scripts/g8_disable_vendor_hal_rc.sh",
       "check": "bash-n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/generate_a13_patch_ledger.py",
+      "check": "python-ast",
       "status": "pass",
       "detail": ""
     },
@@ -1982,6 +2252,18 @@
     },
     {
       "path": "scripts/manual-relink-init.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/map_a13_target_commits.py",
+      "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/merge_a13_audit_batches.py",
       "check": "python-ast",
       "status": "pass",
       "detail": ""
@@ -3821,6 +4103,60 @@
     {
       "path": "scripts/win-replace-tiramisu64.ps1",
       "check": "powershell-parser",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tmp/a13-audit-batch-000.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tmp/a13-audit-batch-1000.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tmp/a13-audit-batch-250.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tmp/a13-audit-batch-500.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tmp/a13-audit-batch-750.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tmp/a13-audit-root.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tmp/a13-port-coverage-build-nested.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tmp/a13-port-coverage-root-v6.json",
+      "check": "json-parse",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "tmp/a13-system-core-current.json",
+      "check": "json-parse",
       "status": "pass",
       "detail": ""
     }

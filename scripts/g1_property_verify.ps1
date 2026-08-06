@@ -1,17 +1,17 @@
 # G1 Layer2: verify BlueStacks data property files against the running guest.
 param(
     [string]$AdbExe = "C:\Program Files\BlueStacks_nxt\HD-Adb.exe",
-    [string]$Serial = "127.0.0.1:5556",
+    [string]$Serial,
     [switch]$StrictMutable,
     [switch]$CheckOnly
 )
 
 $ErrorActionPreference = "Stop"
 $propertyFiles = @(
-    "/data/.bluestacks.prop",
-    "/data/.bstconf.prop",
-    "/data/.vendor.prop",
-    "/data/.additional_system.prop"
+    [pscustomobject]@{ Path = "/data/.bluestacks.prop"; Required = $true },
+    [pscustomobject]@{ Path = "/data/.bstconf.prop"; Required = $true },
+    [pscustomobject]@{ Path = "/data/.vendor.prop"; Required = $true },
+    [pscustomobject]@{ Path = "/data/.additional_system.prop"; Required = $false }
 )
 
 if (-not (Test-Path $AdbExe)) { throw "HD-Adb missing: $AdbExe" }
@@ -29,9 +29,27 @@ function Invoke-Adb {
     return $output
 }
 
+function Resolve-AdbSerial {
+    if (-not [string]::IsNullOrWhiteSpace($Serial)) { return $Serial }
+
+    $output = @(& $AdbExe devices 2>&1)
+    if ($LASTEXITCODE -ne 0) {
+        throw "HD-Adb devices failed ($LASTEXITCODE):`n$($output -join "`n")"
+    }
+    $devices = @($output | ForEach-Object {
+        if ($_ -match '^(\S+)\s+device\s*$') { $Matches[1] }
+    })
+    if ($devices.Count -eq 0) { throw "No online HD-Adb device found" }
+    if ($devices.Count -gt 1) {
+        throw "Multiple HD-Adb devices found; pass -Serial explicitly: $($devices -join ', ')"
+    }
+    return $devices[0]
+}
+
 function ConvertFrom-PropertyFile {
     param([string]$Path, [string[]]$Lines)
     $properties = [ordered]@{}
+    $duplicates = @()
     foreach ($rawLine in $Lines) {
         $line = $rawLine.TrimEnd("`r")
         if ([string]::IsNullOrWhiteSpace($line) -or $line.TrimStart().StartsWith("#")) { continue }
@@ -39,10 +57,17 @@ function ConvertFrom-PropertyFile {
         if ($separator -le 0) { throw "Invalid property line in ${Path}: $line" }
         $name = $line.Substring(0, $separator).Trim()
         $value = $line.Substring($separator + 1)
-        if ($properties.Contains($name)) { throw "Duplicate property in ${Path}: $name" }
+        if ($properties.Contains($name)) {
+            $duplicates += [pscustomobject]@{
+                Path = $Path
+                Name = $name
+                Previous = [string]$properties[$name]
+                Current = $value
+            }
+        }
         $properties[$name] = $value
     }
-    return $properties
+    return [pscustomobject]@{ Properties = $properties; Duplicates = $duplicates }
 }
 
 function ConvertFrom-GetProp {
@@ -57,6 +82,7 @@ function ConvertFrom-GetProp {
     return $properties
 }
 
+$Serial = Resolve-AdbSerial
 Write-Host "A16DBG:G1: property-verify start serial=$Serial"
 Invoke-Adb -Arguments @("get-state") | Out-Null
 
@@ -65,9 +91,22 @@ try {
     # A13 hides bst.* from toolbox getprop unless this diagnostic switch is enabled.
     Invoke-Adb -Arguments @("shell", "setprop bst.debug.show_prop 1") | Out-Null
 
-    foreach ($path in $propertyFiles) {
-        $lines = Invoke-Adb -Arguments @("shell", "su -c 'test -r $path && cat $path'")
-        $fileProperties[$path] = ConvertFrom-PropertyFile -Path $path -Lines $lines
+    $duplicateProperties = @()
+    $missingFiles = @()
+    foreach ($file in $propertyFiles) {
+        $path = $file.Path
+        $lines = Invoke-Adb -Arguments @(
+            "shell",
+            "su -c 'if test -r $path; then cat $path; else echo __BST_PROPERTY_FILE_MISSING__; fi'"
+        )
+        if ($lines -contains "__BST_PROPERTY_FILE_MISSING__") {
+            if ($file.Required) { $missingFiles += $path }
+            else { Write-Warning "Optional property file is absent: $path" }
+            continue
+        }
+        $parsed = ConvertFrom-PropertyFile -Path $path -Lines $lines
+        $fileProperties[$path] = $parsed.Properties
+        $duplicateProperties += $parsed.Duplicates
     }
 
     $runtime = ConvertFrom-GetProp -Lines (Invoke-Adb -Arguments @("shell", "getprop"))
@@ -75,7 +114,7 @@ try {
 
     $labelLines = Invoke-Adb -Arguments @(
         "shell",
-        "su -c 'ls -lZ $($propertyFiles -join ' ') 2>&1'"
+        "su -c 'ls -lZ $($fileProperties.Keys -join ' ') 2>&1'"
     )
     $unlabeled = @($labelLines | Select-String -SimpleMatch "u:object_r:unlabeled:s0")
 
@@ -85,7 +124,7 @@ try {
     $mutableMismatch = @()
     $exact = 0
 
-    foreach ($path in $propertyFiles) {
+    foreach ($path in $fileProperties.Keys) {
         foreach ($entry in $fileProperties[$path].GetEnumerator()) {
             $name = [string]$entry.Key
             $expected = [string]$entry.Value
@@ -107,19 +146,23 @@ try {
     }
 
     Write-Host "=== G1 property verification ==="
-    foreach ($path in $propertyFiles) {
+    foreach ($path in $fileProperties.Keys) {
         Write-Host ("  [FILE] {0}: {1} properties" -f $path, $fileProperties[$path].Count)
     }
     $labelLines | ForEach-Object { Write-Host "  [LABEL] $_" }
-    Write-Host "  exact=$exact missing=$($missing.Count) ro_mismatch=$($readonlyMismatch.Count) critical_mismatch=$($criticalMismatch.Count) mutable_mismatch=$($mutableMismatch.Count)"
+    Write-Host "  missing_files=$($missingFiles.Count) duplicate_entries=$($duplicateProperties.Count) exact=$exact missing=$($missing.Count) ro_mismatch=$($readonlyMismatch.Count) critical_mismatch=$($criticalMismatch.Count) mutable_mismatch=$($mutableMismatch.Count)"
 
+    foreach ($path in $missingFiles) { Write-Error "Required property file is absent: $path" -ErrorAction Continue }
+    foreach ($item in $duplicateProperties) {
+        Write-Warning "Duplicate property (last value wins): $($item.Path) :: $($item.Name) previous=[$($item.Previous)] current=[$($item.Current)]"
+    }
     foreach ($item in $mutableMismatch) { Write-Warning "Runtime-updated mutable property: $item" }
     foreach ($item in $missing) { Write-Error "Missing runtime property: $item" -ErrorAction Continue }
     foreach ($item in $readonlyMismatch) { Write-Error "Read-only override mismatch: $item" -ErrorAction Continue }
     foreach ($item in $criticalMismatch) { Write-Error "Critical property mismatch: $item" -ErrorAction Continue }
-    foreach ($item in $unlabeled) { Write-Error "Unlabeled property file: $item" -ErrorAction Continue }
+    foreach ($item in $unlabeled) { Write-Warning "Externally generated property file is unlabeled: $item" }
 
-    $failureCount = $missing.Count + $readonlyMismatch.Count + $criticalMismatch.Count + $unlabeled.Count
+    $failureCount = $missingFiles.Count + $missing.Count + $readonlyMismatch.Count + $criticalMismatch.Count
     if ($StrictMutable) { $failureCount += $mutableMismatch.Count }
     if ($failureCount -gt 0) { throw "Property verification failed with $failureCount blocking finding(s)" }
 

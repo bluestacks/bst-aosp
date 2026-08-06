@@ -17,7 +17,7 @@ from typing import Any
 
 BASE_BRANCH = "aosp16-bst"
 MERGE_BRANCH = "aosp16-bst-merge"
-CURRENT_BASELINE = (1022, 987, 35)
+CURRENT_BASELINE = (1025, 974, 51)
 WITHDRAWN_BASELINE = (1016, 985, 31)
 EMPTY_PATCH_SHA256 = hashlib.sha256(b"").hexdigest()
 
@@ -529,7 +529,7 @@ def main() -> int:
     audit_parser.add_argument(
         "--enforce-current-baseline",
         action="store_true",
-        help="enforce the current 1022/987/35 mainline-synchronized topology",
+        help="enforce the current 1025/974/51 A13-complete topology",
     )
     audit_parser.add_argument(
         "--enforce-recorded-baseline",

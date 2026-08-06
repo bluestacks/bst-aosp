@@ -5,6 +5,7 @@
 /scripts/aemu_host_supported.py text eol=lf
 /scripts/check_android16_worktree.py text eol=lf
 /scripts/g1_apply_boot_overlays.sh text eol=lf
+/scripts/g1_build_app_player.sh text eol=lf
 /scripts/g1_build_android16.sh text eol=lf
 /scripts/g1_build_libs.sh text eol=lf
 /scripts/g1_build_pack.sh text eol=lf
@@ -30,7 +31,9 @@
 /scripts/rewrite_a16_commit_messages.sh text eol=lf
 /scripts/validate_project_files.py text eol=lf
 /scripts/g1_boot_verify.ps1 text eol=crlf
+/scripts/g1_property_verify.ps1 text eol=crlf
 /scripts/g1_reset_data_wipe.ps1 text eol=crlf
+/scripts/g1_runtime_regression.ps1 text eol=crlf
 /scripts/g1_win_deploy.ps1 text eol=crlf
 
 # Machine-readable publication evidence retains its audited byte identity.

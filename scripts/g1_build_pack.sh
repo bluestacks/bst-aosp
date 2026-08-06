@@ -42,23 +42,18 @@ if [ "$CHECK_ONLY" = 1 ]; then
 fi
 
 # --- 远程：build + pack ---
-step "remote: g1_build_android16.sh (m droid, Layer1)"
+step "remote: g1_build_app_player.sh (canonical Android-16 build + package)"
 if [ "$DO_BUILD" = 1 ]; then
-  ssh "$HOST" 'bash ~/bst-aosp/scripts/g1_build_android16.sh' || { echo "BUILD FAILED"; exit 1; }
+  ssh "$HOST" 'bash ~/bst-aosp/scripts/g1_build_app_player.sh' || { echo "BUILD/PACK FAILED"; exit 1; }
 else
   echo "  (skipped --no-build; 用现有 OUT)"
 fi
 
-step "remote: g1_build_libs.sh (hd guest + goldfish mmm)"
-if [ "$DO_BUILD" = 1 ]; then
-  ssh "$HOST" 'bash ~/bst-aosp/scripts/g1_build_libs.sh' || { echo "BUILD_LIBS FAILED"; exit 1; }
-else
-  echo "  (skipped --no-build)"
-fi
-
-if [ "$DO_PACK" = 1 ]; then
+if [ "$DO_PACK" = 1 ] && [ "$DO_BUILD" = 0 ]; then
   step "remote: g1_pack_root.sh (stage + APK + overlays + HAL policy + pack)"
   ssh "$HOST" 'bash ~/bst-aosp/scripts/g1_pack_root.sh' || { echo "PACK FAILED"; exit 1; }
+fi
+if [ "$DO_PACK" = 1 ]; then
   ssh "$HOST" 'cat ~/releases/Baklava64/bst-v5.22.210_Baklava64-local/Root.vhd.identity' ||
     { echo "PACK IDENTITY READBACK FAILED"; exit 1; }
 fi

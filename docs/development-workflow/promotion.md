@@ -33,8 +33,10 @@ python3 scripts/audit_android16_promotion.py audit \
 
 The withdrawn first candidate recorded 1016 initialized projects: 985 on
 `aosp16-bst` and 31 on `aosp16-bst-merge`. That topology remains historical.
-The current reviewed baseline is 1022 submodules: 987 on `aosp16-bst` and 35 on
-`aosp16-bst-merge`; `--enforce-current-baseline` checks those values explicitly.
+The current reviewed baseline after A13 completion is 1025 submodules: 974 on
+`aosp16-bst` and 51 on `aosp16-bst-merge`; `--enforce-current-baseline` checks
+those values explicitly. The earlier 1022/987/35 distribution remains a
+historical promotion checkpoint rather than the active gate.
 The camera HAL is inline in the current mainline root, so a duplicate camera
 submodule is intentionally excluded.
 

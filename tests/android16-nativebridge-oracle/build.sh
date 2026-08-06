@@ -72,7 +72,7 @@ for input in "$ANDROID_JAR" "$AAPT2" "$D8" "$ZIPALIGN" "$APKSIGNER" \
     "$CLANG" "$READOBJ"; do
   [[ -e "$input" ]] || { echo "missing Android-16 prebuilt: $input" >&2; exit 2; }
 done
-for tool in javac keytool zip sha256sum; do
+for tool in install javac keytool zip sha256sum; do
   command -v "$tool" >/dev/null || { echo "missing host tool: $tool" >&2; exit 2; }
 done
 
@@ -82,7 +82,7 @@ case "$OUTPUT" in
   "$ANDROID_ROOT"/*) echo "refusing output inside Android source tree: $OUTPUT" >&2; exit 2 ;;
 esac
 mkdir -p "$(dirname "$OUTPUT")"
-rm -f "$OUTPUT" "$OUTPUT.identity"
+rm -f "$OUTPUT" "$OUTPUT.identity" "$OUTPUT.binfmt"
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/a16-nativebridge-oracle.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$WORK/classes" "$WORK/dex" "$WORK/apk/lib/arm64-v8a"
@@ -96,6 +96,19 @@ mkdir -p "$WORK/classes" "$WORK/dex" "$WORK/apk/lib/arm64-v8a"
     echo "native oracle is not AArch64" >&2
     exit 2
   }
+"$CLANG" --target=aarch64-linux-android35 -Os -nostdlib -static -fno-pie \
+  -fno-stack-protector -fno-builtin -Wl,-e,_start -Wl,--build-id=sha1 \
+  -Wl,--no-dynamic-linker -o "$WORK/a16-binfmt-oracle" \
+  "$SCRIPT_DIR/native/binfmt_oracle.c"
+"$READOBJ" --file-headers "$WORK/a16-binfmt-oracle" |
+  grep -q 'Arch: aarch64' || {
+    echo "binfmt oracle is not AArch64" >&2
+    exit 2
+  }
+if "$READOBJ" --dynamic-table "$WORK/a16-binfmt-oracle" | grep -q 'NEEDED'; then
+    echo "binfmt oracle unexpectedly has dynamic dependencies" >&2
+    exit 2
+fi
 
 mapfile -t SOURCES < <(find "$SCRIPT_DIR/src" -type f -name '*.java' -print | sort)
 [[ ${#SOURCES[@]} -gt 0 ]] || { echo "oracle Java sources missing" >&2; exit 2; }
@@ -116,11 +129,13 @@ keytool -genkeypair -keystore "$WORK/oracle.keystore" -storepass android \
 "$APKSIGNER" sign --ks "$WORK/oracle.keystore" --ks-pass pass:android \
   --key-pass pass:android --out "$OUTPUT" "$WORK/aligned.apk"
 "$APKSIGNER" verify "$OUTPUT"
+install -m 0755 "$WORK/a16-binfmt-oracle" "$OUTPUT.binfmt"
 
 APK_SHA=$(sha256sum "$OUTPUT" | awk '{print $1}')
 NATIVE_SHA=$(sha256sum "$WORK/apk/lib/arm64-v8a/liba16nativeoracle.so" | awk '{print $1}')
+BINFMT_SHA=$(sha256sum "$OUTPUT.binfmt" | awk '{print $1}')
 SOURCE_SHA=$(
-  find "$SCRIPT_DIR" -type f \( -name '*.java' -o -name '*.c' \
+  find "$SCRIPT_DIR" -type f \( -name '*.java' -o -name '*.c' -o -name '*.sh' \
     -o -name 'AndroidManifest.xml' \) -print0 |
     sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}'
 )
@@ -131,6 +146,7 @@ SOURCE_SHA=$(
   echo "head=$(git -C "$ANDROID_ROOT" rev-parse HEAD)"
   echo "oracle_source_sha256=$SOURCE_SHA"
   echo "native_elf_sha256=$NATIVE_SHA"
+  echo "binfmt_elf_sha256=$BINFMT_SHA"
   echo "apk_sha256=$APK_SHA"
 } >"$OUTPUT.identity"
-echo "A16DBG:ANDROID16: native-bridge oracle APK=$OUTPUT sha256=$APK_SHA"
+echo "A16DBG:ANDROID16: native-bridge oracle APK=$OUTPUT sha256=$APK_SHA binfmt_sha256=$BINFMT_SHA"

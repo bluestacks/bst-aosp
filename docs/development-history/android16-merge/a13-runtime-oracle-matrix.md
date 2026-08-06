@@ -27,7 +27,7 @@ image. It is not a pass result.
 | ART/native bridge | `3f6c563145b8`, `4f8c891b39ce`, `57905d797d85`, `7151a45339ef`, `8cd41668fa70`, `cfc8b82d8090` | `art` | ABI/config selection, package export, hotfix callbacks, cpuinfo bind, xarch and anti-detection work in translated apps | Install the hash-bound arm64-only native-bridge oracle; require regular/FastNative/CriticalNative results, `arm64-v8a` package ABI, Houdini and test ELF maps, ARMv8 cpuinfo and process stability | prepared; representative apps pending |
 | Bionic property compatibility | `18a39d0ddb27`, `65628c9eb918`, `a23bc9079a62`, `e7687413bac8` | `bionic` | App UID sees synthetic/hardened values while framework property reads retain correct lengths | App oracle runs `/system/bin/getprop` as app UID and requires `ro.board.platform2=ngg-client`, `ro.debuggable=0`, `ro.secure=1`; shell property verifier covers target values | prepared |
 | Developer options/dumpstate | `0aae19c5f0f1` | `device/generic/common` | Opening developer options does not crash while current AIDL dumpstate is registered | AIDL service check, launch `android.settings.APPLICATION_DEVELOPMENT_SETTINGS`, scan Settings/SystemUI crashes | prepared |
-| Houdini 16 payload | `0f405e00d959`, `3d950593dd20` | `device/generic/common` | Native-bridge payload, callback API and binfmt registrations execute translated code | Shell payload/binfmt gate plus the hash-bound arm64-only native-bridge oracle | translated execution gate prepared; standalone binfmt pending |
+| Houdini 16 payload | `0f405e00d959`, `3d950593dd20` | `device/generic/common` | Native-bridge payload, callback API and binfmt registrations execute translated code | Shell payload/binfmt gate plus the hash-bound arm64-only native-bridge oracle and its static AArch64 direct-execution companion | translated execution and standalone binfmt gates prepared |
 | Memtrack | `4498e9e02dfc` | `device/generic/common` | Current AIDL memtrack service registers from its APEX | `service check android.hardware.memtrack.IMemtrack/default` | prepared |
 | GateKeeper removal | `7fd69d779315` | `device/generic/common` | Lock settings and Settings remain usable without the retired HAL lifecycle | `locksettings get-disabled`, lock service check, platform/BST Settings smoke and crash scan | prepared |
 | Camera product/HAL | `af22f7913f2a`, `62b0613d8fa3`, `68b5e0b2297b` | `device/generic/common`, `hardware/bst/camera` | `camera.bst` is selected and Camera2 returns real frames | HIDL/Binder registration plus app oracle Camera2 capture requiring a non-empty YUV frame | prepared |
@@ -54,7 +54,7 @@ image. It is not a pass result.
 3. Build the hash-bound temporary APK from Android-16 prebuilts and run
    `g1_app_runtime_oracle.ps1`.
 4. Build and run `android16-nativebridge-oracle`, then run the remaining FPS
-   timing, Launcher/host, locale, denied-ADB, standalone-binfmt,
+   timing, Launcher/host, locale, denied-ADB,
    graceful-shutdown and broader storage oracles listed as pending above.
 5. Attach evidence to every source commit in this matrix before changing its
    ledger text from pending to pass.

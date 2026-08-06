@@ -2,28 +2,28 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 1809,
-    "existing_files": 1808,
-    "bytes": 77358987,
-    "text_lines": 1342178,
+    "files": 1810,
+    "existing_files": 1809,
+    "bytes": 77360608,
+    "text_lines": 1342222,
     "by_stage": {
       "android16-promotion": 618,
       "aosp16-development": 847,
       "generated": 15,
       "reference": 45,
-      "shared": 284
+      "shared": 285
     },
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 1555,
+      "tracked": 1556,
       "untracked": 238
     },
     "by_availability": {
       "generated": 15,
       "local-only": 238,
       "removed-tombstone": 1,
-      "repository": 1555
+      "repository": 1556
     },
     "findings_by_severity": {
       "P2": 1,
@@ -11071,7 +11071,7 @@
       "authority": "repository-authoritative",
       "content_source": "git-index",
       "bytes": 4545793,
-      "sha256": "470bfd00e5e0eec2506602758ef6bff9e88ab1ac7d7a76dd0391d75533a3df75",
+      "sha256": "be6d7c9ff9cdfc0c3f57eed41d11a406c2f967e096d17957984d7bb363ad8a56",
       "media_type": "application/json",
       "encoding": "utf-8-sig",
       "line_count": 69622,
@@ -11584,7 +11584,7 @@
       "authority": "repository-authoritative",
       "content_source": "git-index",
       "bytes": 19388,
-      "sha256": "980b835c4abcc5e2cd1b594b4cd4b52f59b739374616c0bcc0bbf2d5fd47e1f9",
+      "sha256": "0bfb1f99379ccc2e0248f3865154e419747940adceaf4da467bd8b937cc9aee4",
       "media_type": "application/json",
       "encoding": "utf-8-sig",
       "line_count": 332,
@@ -12286,7 +12286,7 @@
       "authority": "repository-authoritative",
       "content_source": "git-index",
       "bytes": 1459,
-      "sha256": "a96ee0893b5654de7a1167cbdb2fc6df688eea08faf4ea62c387c5be4694e54b",
+      "sha256": "67228f9869606ee234d2a15a312a7604fee9c982d2d6d64b52be77820afec64f",
       "media_type": "application/json",
       "encoding": "utf-8-sig",
       "line_count": 28,
@@ -60015,11 +60015,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 5792,
-      "sha256": "f3c93a9ee8a8a73be714d62dece5f2fd29e5fd49e2c266eff15733a2a073c3fe",
+      "bytes": 6684,
+      "sha256": "3aa5d200e31e93d2888482241ff1fc2d1a62240512e0ff569fd7ddea724176c1",
       "media_type": "text/x-python",
       "encoding": "utf-8-sig",
-      "line_count": 183,
+      "line_count": 205,
       "line_endings": "lf",
       "stage": "aosp16-development",
       "timeline_refs": [],
@@ -72981,6 +72981,45 @@
         "status": "pending",
         "checks": [
           "bash-n"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
+      "path": "tests/android16-nativebridge-oracle/native/binfmt_oracle.c",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 729,
+      "sha256": "57956937696e250afee2ceb657cebe40d6fc2bf9826d243b213390ce85886d54",
+      "media_type": "text/plain",
+      "encoding": "utf-8-sig",
+      "line_count": 22,
+      "line_endings": "lf",
+      "stage": "shared",
+      "timeline_refs": [],
+      "origin_tree": null,
+      "target_tree": null,
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "if !defined(__aarch64__)",
+      "necessity": "Retain unless a canonical replacement and inbound-reference audit prove redundancy.",
+      "performance": "No material runtime cost identified from repository role.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "text-decode"
         ]
       },
       "preservation": "active",

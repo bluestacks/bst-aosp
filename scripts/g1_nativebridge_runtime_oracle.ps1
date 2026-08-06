@@ -2,6 +2,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$ApkPath,
+    [string]$BinfmtPath,
     [string]$AdbExe = "C:\Program Files\BlueStacks_nxt\HD-Adb.exe",
     [string]$Serial,
     [int]$AdbTimeoutSec = 20,
@@ -18,6 +19,10 @@ if ($CheckOnly) {
     exit 0
 }
 if (-not (Test-Path $ApkPath -PathType Leaf)) { throw "Oracle APK missing: $ApkPath" }
+if ([string]::IsNullOrWhiteSpace($BinfmtPath)) { $BinfmtPath = "$ApkPath.binfmt" }
+if (-not (Test-Path $BinfmtPath -PathType Leaf)) {
+    throw "Binfmt oracle missing: $BinfmtPath"
+}
 if ($OracleTimeoutSec -lt 30) { throw "OracleTimeoutSec must be at least 30" }
 
 function Invoke-AdbBounded {
@@ -81,18 +86,35 @@ $actualHash = (Get-FileHash -Algorithm SHA256 $ApkPath).Hash.ToLowerInvariant()
 if ($identity.apk_sha256 -ne $actualHash) {
     throw "Oracle APK identity mismatch: expected $($identity.apk_sha256), got $actualHash"
 }
+$actualBinfmtHash = (Get-FileHash -Algorithm SHA256 $BinfmtPath).Hash.ToLowerInvariant()
+if ($identity.binfmt_elf_sha256 -ne $actualBinfmtHash) {
+    throw "Binfmt oracle identity mismatch: expected $($identity.binfmt_elf_sha256), got $actualBinfmtHash"
+}
 if ($identity.stage -ne "android16-promotion" -or
     $identity.branch -ne "aosp16-bst-merge" -or
     $identity.tree -notmatch '(?:^|/)android-16$' -or
     $identity.tree -match 'aosp16' -or
     $identity.head -notmatch '^[0-9a-f]{40}$' -or
     $identity.oracle_source_sha256 -notmatch '^[0-9a-f]{64}$' -or
-    $identity.native_elf_sha256 -notmatch '^[0-9a-f]{64}$') {
+    $identity.native_elf_sha256 -notmatch '^[0-9a-f]{64}$' -or
+    $identity.binfmt_elf_sha256 -notmatch '^[0-9a-f]{64}$') {
     throw "Oracle APK was not built from the Android-16 promotion tree"
 }
 
 $installed = $false
+$binfmtPushed = $false
+$guestBinfmtPath = "/data/local/tmp/a16-binfmt-oracle"
 try {
+    [void](Invoke-AdbBounded -Arguments @("push", $BinfmtPath, $guestBinfmtPath))
+    $binfmtPushed = $true
+    [void](Invoke-AdbBounded -Arguments @("shell", "chmod", "0755", $guestBinfmtPath))
+    $binfmtOutput = (Invoke-AdbBounded -Arguments @(
+        "shell", $guestBinfmtPath
+    )).Trim()
+    if ($binfmtOutput -ne "A16_BINFMT_ARM64_PASS") {
+        throw "Standalone AArch64 binfmt oracle returned unexpected output: $binfmtOutput"
+    }
+
     $installOutput = Invoke-AdbBounded -Arguments @("install", "-r", $ApkPath) -TimeoutSec 60
     if ($installOutput -notmatch '(?m)^Success\s*$') {
         throw "Oracle APK install did not report Success: $installOutput"
@@ -155,13 +177,22 @@ try {
         throw "Native-bridge oracle process is not alive after execution: $pidOutput"
     }
 
-    Write-Host "A16DBG:G1: native-bridge oracle PASS uid=$oracleUid pid=$pidOutput"
+    Write-Host "A16DBG:G1: native-bridge and binfmt oracles PASS uid=$oracleUid pid=$pidOutput"
 } finally {
     if ($installed) {
         try {
             [void](Invoke-AdbBounded -Arguments @("uninstall", $packageName) -TimeoutSec 45)
         } catch {
             Write-Warning "Unable to uninstall native-bridge oracle: $($_.Exception.Message)"
+        }
+    }
+    if ($binfmtPushed) {
+        try {
+            [void](Invoke-AdbBounded -Arguments @(
+                "shell", "rm", "-f", $guestBinfmtPath
+            ))
+        } catch {
+            Write-Warning "Unable to remove binfmt oracle: $($_.Exception.Message)"
         }
     }
 }

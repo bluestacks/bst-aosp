@@ -12,6 +12,13 @@ translated process sees the supplied ARMv8 `/proc/cpuinfo` view. The Windows
 runner independently checks PackageManager selected `arm64-v8a`, scans for
 native or Java crashes, and uninstalls the APK in `finally`.
 
+The same build emits `<apk>.binfmt`, a static AArch64 executable with no
+platform-library dependencies. The runner verifies its bound hash, pushes it
+to `/data/local/tmp`, executes it directly through the registered kernel
+`binfmt_misc` handler, requires `A16_BINFMT_ARM64_PASS`, and removes it in
+`finally`. This keeps the kernel/Houdini entry test separate from ART's JNI
+native-bridge path.
+
 Build it only from Android-16 source prebuilts after the product build has
 finished:
 
@@ -22,10 +29,11 @@ bash tests/android16-nativebridge-oracle/build.sh \
 ```
 
 The build rejects AOSP16 paths and outputs inside the Android source tree. The
-identity sidecar binds the generated APK to the target root, branch, root SHA,
-oracle source hash, AArch64 ELF hash and APK hash. The ELF is compiled without
-platform libraries so the result tests translator entry and JNI trampoline
-behavior without importing another native dependency surface.
+identity sidecar binds the generated APK and standalone executable to the
+target root, branch, root SHA, oracle source hash, both AArch64 ELF hashes and
+the APK hash. Both ELF files are compiled without platform libraries so the
+result tests translator entry, JNI trampolines and kernel binfmt dispatch
+without importing another native dependency surface.
 
 Run it on the clean Android-16 instance:
 
@@ -34,6 +42,5 @@ Run it on the clean Android-16 instance:
   -ApkPath C:\path\to\a16-nativebridge-oracle.apk
 ```
 
-Passing this oracle does not by itself prove representative game performance,
-all package-specific hotfixes, or standalone binfmt execution. Those remain
-separate regression gates.
+Passing this oracle does not by itself prove representative game performance
+or all package-specific hotfixes. Those remain separate regression gates.

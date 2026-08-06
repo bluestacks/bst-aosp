@@ -74,13 +74,16 @@ bash scripts/g1_build_pack.sh --pack-only
 10. win `g1_runtime_regression.ps1`：启动 uncube HOME，并在 95 秒窗口内
    轮询 ADB、boot ID 和 `system_server` PID，再验证 shared folder 真实读写、
    设备端 xmllint、Houdini、Wi-Fi MAC、telephony、HIDL/AIDL HAL、Settings
-   启动和核心 Binder 服务。真实相机帧、音频/Widevine 播放、ARM64 APK
-   翻译执行、app 可见 Wi-Fi 及未授权下载重试仍需独立 app/host oracle。
-11. 从 `tests/android16-runtime-oracle/build.sh` 构建临时测试 APK，再运行
-   `g1_app_runtime_oracle.ps1 -ApkPath <path>`；必须读回 app UID 下 Wi-Fi、
-   DHCP、`wlan0`、bionic 属性伪装、Skia、AudioTrack、Camera2 实帧及
-   DownloadProvider 拒绝日志，runner 最后卸载 APK。该 APK 不进入产品、
-   app-player 或 PR。
+   启动和核心 Binder 服务。
+11. 总入口从同一 Android-16 根提交构建哈希绑定的 runtime 和 ARM64
+   native-bridge 临时 APK，并复制到 Windows 临时目录。随后自动运行
+   `g1_fps_regression.ps1`、`g1_app_runtime_oracle.ps1`、
+   `g1_nativebridge_runtime_oracle.ps1` 和 `g1_adb_policy_regression.ps1`，
+   覆盖动态 FPS/CPU、app UID 下 Wi-Fi/DHCP/`wlan0`/属性伪装、Skia、
+   AudioTrack、Camera2 实帧、DownloadProvider 拒绝、ARM64 Houdini/binfmt
+   执行和 ADB fail-closed 策略。测试 APK 和本地副本在流程结束时清理，
+   不进入产品、app-player 或 PR。真实 Widevine 解密播放仍需要授权媒体
+   和宿主播放器 oracle，不能由 ClearKey 或服务注册结果替代。
 
 Baklava 外部 APK 输入在打包前由
 `scripts/prepare_android16_package_inputs.sh --install` 组装或复核。脚本只

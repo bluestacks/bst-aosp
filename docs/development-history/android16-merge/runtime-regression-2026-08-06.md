@@ -236,6 +236,16 @@ the new Root, `system.img`, and `system.sfs`. Boot, property, Launcher, shared
 folder, network, telephony, DRM, audio, graphics, and Houdini checks must then be
 rerun on clean Data.
 
+The canonical `g1_build_pack.sh` verification phase now builds two temporary,
+hash-bound oracle APKs from the same Android-16 root and runs the complete
+automated sequence: boot stability, four property files, Launcher/SystemUI and
+HAL registration, dynamic FPS with bounded renderer CPU, app-visible network,
+Skia/audio/camera/DownloadProvider behavior, standalone AArch64 binfmt plus
+ARM64 APK translation, and fail-closed ADB policy restoration. The APKs and
+their Windows copies are outside all product trees and are removed after the
+run. Actual Widevine protected-media playback remains a separate host/media
+oracle; service registration alone does not satisfy it.
+
 The packaging identity also records the app-player HEAD and build-flow diff,
 the HD branch/HEAD and complete tracked diff hash, the exact `stage2.sh` hash,
 and the VBox guest-additions commit. HD had an unresolved three-way index entry

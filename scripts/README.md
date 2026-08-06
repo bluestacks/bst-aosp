@@ -22,7 +22,7 @@ before work starts.
 | `g1_build_app_player.sh` | Canonical full Android-16 build and app-player package | Builds only the linked target tree; records app-player, HD, VBox, graphics and payload identity; stages the validated uncube APK outside the generated APK folder; requires newly generated Root/system/fastboot artifacts and rejects an image missing uncube, `libflutter.so`, `mountsf`, or the BlueStacks build identity |
 | `g1_build_android16.sh` | Target-only Layer 1 Android-16 build and graphics stage | Builds under the validated Android-16 root; does not create a release-complete Root |
 | `g1_build_libs.sh` | Builds and hashes required HD guest native libraries | Builds under the validated Android-16 root |
-| `g1_build_pack.sh` | Orchestrates build, Root packaging, deploy, and Layer 2 verification | Remote build plus Windows deployment |
+| `g1_build_pack.sh` | Orchestrates build, Root packaging, deploy, and complete Layer 2 verification | Builds hash-bound test APKs, then runs boot, property, Launcher/HAL, FPS, app-visible media, ARM64 translation, and fail-closed ADB oracles |
 | `g1_pack_root.sh` | Guarded target-only Root repack | Refuses release packaging when app-player system payloads or build identity are absent |
 | `g1_stage_system.sh` | Folds target `OUT_DIR` into the release staging tree | Replaces staged system content |
 | `g1_apply_boot_overlays.sh` | Applies source-built overlays before packaging | Copies framework, HAL, and graphics files |
@@ -34,7 +34,10 @@ before work starts.
 | `g1_boot_verify.ps1` | Evaluates the Layer 2 boot oracle | Starts/stops the local instance and reads logs |
 | `g1_property_verify.ps1` | Compares property payloads with guest runtime values | Temporarily enables the BlueStacks getprop diagnostic switch |
 | `g1_runtime_regression.ps1` | Checks Launcher/Settings stability, shared-folder I/O, Houdini, network identity, and HAL registration | Starts activities, writes two fixed temporary probe files, removes them, and reads bounded ADB diagnostics |
+| `g1_fps_regression.ps1` | Verifies dynamic `bst.max_fps` frame pacing and bounded renderer CPU | Temporarily changes FPS, measures SurfaceFlinger/composer, and restores the original value |
 | `g1_app_runtime_oracle.ps1` | Runs the temporary app-UID property, Wi-Fi, graphics, audio, camera, and DownloadProvider oracle | Installs a hash-bound test APK, grants declared runtime permissions, reads logs, and uninstalls it |
+| `g1_nativebridge_runtime_oracle.ps1` | Proves standalone AArch64 binfmt and ARM64 APK execution through Houdini | Pushes a hash-bound temporary ELF, installs a hash-bound test APK, then removes both |
+| `g1_adb_policy_regression.ps1` | Proves the guest ADB command policy fails closed | Temporarily installs a restrictive policy, tests denial, and restores the original file by SHA-256 |
 | `prepare_android16_package_inputs.sh` | Assembles or verifies the fixed Baklava APK input bundle | Reads immutable Git/LFS inputs and a hash-pinned external Root; optionally installs ignored app-player staging links |
 | `lib/android16_env.sh` | Shared tree and artifact identity gate | None when sourced; writes identity only on request |
 

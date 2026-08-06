@@ -2,7 +2,7 @@
 
 > Every archived patch is listed even when no progress-log basename mention exists. Registry and checkpoint fields are the primary semantic evidence.
 
-Artifacts: **580**.
+Artifacts: **581**.
 
 | Patch | Category | Registry IDs | Verification/checkpoint | Timeline evidence |
 |---|---|---|---|---|
@@ -312,6 +312,7 @@ Artifacts: **580**.
 | [`device-common-ntp-interval.patch`](../../../patches/android-16/a13-completion/device-common-ntp-interval.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`device-common-treble-a16-services.patch`](../../../patches/android-16/a13-completion/device-common-treble-a16-services.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`device-generic-x86_64-hal-selectors.patch`](../../../patches/android-16/a13-completion/device-generic-x86_64-hal-selectors.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
+| [`device-generic-x86_64-legacy-hal-vintf.patch`](../../../patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`device-generic-x86_64-widevine-fcm-bridge.patch`](../../../patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | `docs/development-history/android16-merge/a13-authority-completion.md:268` |
 | [`device-x86_64-houdini16.patch`](../../../patches/android-16/a13-completion/device-x86_64-houdini16.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |
 | [`device-x86_64-release-art.patch`](../../../patches/android-16/a13-completion/device-x86_64-release-art.patch) | Host/build/graphics companion patches | unmapped | inspect registry/review | registry-only |

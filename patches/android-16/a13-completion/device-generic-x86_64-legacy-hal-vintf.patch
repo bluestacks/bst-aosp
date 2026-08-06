@@ -1,0 +1,169 @@
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -33,5 +33,6 @@ BOARD_SEPOLICY_DIRS += device/generic/common/sepolicy/houdini
+ # android_x86_64 does not inherit the goldfish generic product, so attach the
+-# legacy BlueStacks graphics declarations used by the external HIDL stack.
++# retained BlueStacks HAL declarations and the external HIDL graphics stack.
++DEVICE_MANIFEST_FILE += device/generic/x86_64/manifest_bst_legacy_hal.xml
+ DEVICE_MANIFEST_FILE += device/generic/common/manifest/android.hardware.graphics.allocator@2.0.xml
+ DEVICE_MANIFEST_FILE += device/generic/common/manifest/android.hardware.graphics.composer@2.1.xml
+ DEVICE_MANIFEST_FILE += device/generic/common/manifest/android.hardware.graphics.mapper@2.1.xml
+diff --git a/framework_compatibility_matrix.xml b/framework_compatibility_matrix.xml
+--- a/framework_compatibility_matrix.xml
++++ b/framework_compatibility_matrix.xml
+@@ -1,7 +1,39 @@
+ <compatibility-matrix version="1.0" type="framework" level="8">
+     <!-- Android 16 compatibility bridges for validated Windows guest HALs. -->
++    <!-- The standard x86_64 product retains the A13 camera provider while
++         camera.bst remains a legacy camera_module_t implementation. -->
++    <hal format="hidl" optional="true">
++        <name>android.hardware.camera.provider</name>
++        <version>2.4</version>
++        <interface>
++            <name>ICameraProvider</name>
++            <instance>legacy/0</instance>
++        </interface>
++    </hal>
++    <!-- SurfaceFlinger still consumes the packaged ConfigStore 1.1 service. -->
++    <hal format="hidl" optional="true">
++        <name>android.hardware.configstore</name>
++        <version>1.1</version>
++        <interface>
++            <name>ISurfaceFlingerConfigs</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++    <!-- The generic 1.0 DRM service supplies the default legacy factories. -->
++    <hal format="hidl" optional="true">
++        <name>android.hardware.drm</name>
++        <version>1.0</version>
++        <interface>
++            <name>ICryptoFactory</name>
++            <instance>default</instance>
++        </interface>
++        <interface>
++            <name>IDrmFactory</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
+     <!-- Widevine retains the A13-validated HIDL service until its vendor plugin
+          is available behind the Android 16 AIDL DRM interface. -->
+     <hal format="hidl" optional="true">
+         <name>android.hardware.drm</name>
+         <version>1.3</version>
+@@ -18,6 +50,24 @@
+             <instance>widevine</instance>
+         </interface>
+     </hal>
++    <!-- BlueStacks light and power modules still use the legacy module API;
++         their HIDL wrappers are deliberately retained for host compatibility. -->
++    <hal format="hidl" optional="true">
++        <name>android.hardware.light</name>
++        <version>2.0</version>
++        <interface>
++            <name>ILight</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++    <hal format="hidl" optional="true">
++        <name>android.hardware.power</name>
++        <version>1.0</version>
++        <interface>
++            <name>IPower</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
+     <!-- The Windows renderer still uses the validated goldfish HIDL stack. -->
+     <hal format="hidl" optional="true">
+         <name>android.hardware.graphics.allocator</name>
+diff --git a/manifest_bst_legacy_hal.xml b/manifest_bst_legacy_hal.xml
+new file mode 100644
+--- /dev/null
++++ b/manifest_bst_legacy_hal.xml
+@@ -0,0 +1,85 @@
++<manifest version="1.0" type="device">
++    <!-- A13 camera.bst is loaded through the retained HIDL provider wrapper. -->
++    <hal format="hidl">
++        <name>android.hardware.camera.provider</name>
++        <transport>hwbinder</transport>
++        <version>2.4</version>
++        <interface>
++            <name>ICameraProvider</name>
++            <instance>legacy/0</instance>
++        </interface>
++    </hal>
++    <hal format="hidl">
++        <name>android.hardware.configstore</name>
++        <transport>hwbinder</transport>
++        <version>1.1</version>
++        <interface>
++            <name>ISurfaceFlingerConfigs</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++    <hal format="hidl">
++        <name>android.hardware.drm</name>
++        <transport>hwbinder</transport>
++        <version>1.0</version>
++        <interface>
++            <name>ICryptoFactory</name>
++            <instance>default</instance>
++        </interface>
++        <interface>
++            <name>IDrmFactory</name>
++            <instance>default</instance>
++        </interface>
++        <fqname>@1.3::ICryptoFactory/widevine</fqname>
++        <fqname>@1.3::IDrmFactory/widevine</fqname>
++    </hal>
++    <hal format="hidl">
++        <name>android.hardware.light</name>
++        <transport>hwbinder</transport>
++        <version>2.0</version>
++        <interface>
++            <name>ILight</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++    <hal format="hidl">
++        <name>android.hardware.media.omx</name>
++        <transport>hwbinder</transport>
++        <version>1.0</version>
++        <interface>
++            <name>IOmx</name>
++            <instance>default</instance>
++        </interface>
++        <interface>
++            <name>IOmxStore</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++    <hal format="hidl">
++        <name>android.hardware.power</name>
++        <transport>hwbinder</transport>
++        <version>1.0</version>
++        <interface>
++            <name>IPower</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++    <hal format="hidl">
++        <name>android.hardware.renderscript</name>
++        <transport arch="32+64">passthrough</transport>
++        <version>1.0</version>
++        <interface>
++            <name>IDevice</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++    <hal format="hidl">
++        <name>android.hardware.soundtrigger</name>
++        <transport>hwbinder</transport>
++        <version>2.3</version>
++        <interface>
++            <name>ISoundTriggerHw</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++</manifest>

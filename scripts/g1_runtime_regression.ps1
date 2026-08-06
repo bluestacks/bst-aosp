@@ -93,6 +93,16 @@ $systemServerPidBefore = (Invoke-AdbBounded -Arguments @(
 if ($bootIdBefore -notmatch '^[0-9a-f-]{36}$') { $failures += "boot_id_before" }
 if ($systemServerPidBefore -notmatch '^\d+$') { $failures += "system_server_pid_before" }
 
+$bootLogs = Invoke-AdbBounded -Arguments @("logcat", "-b", "all", "-d", "-v", "brief") `
+    -TimeoutSec 30
+$retainedHidlPattern =
+    'android\.hardware\.(audio|audio\.effect|camera\.provider|configstore|drm|' +
+    'graphics\.allocator|graphics\.composer|light|media\.omx|power|soundtrigger)'
+if ($bootLogs -match "Service $retainedHidlPattern.*must be in VINTF manifest" -or
+    $bootLogs -match "Could not register service $retainedHidlPattern") {
+    $failures += "retained_hidl_registration"
+}
+
 [void](Invoke-AdbBounded -Arguments @("logcat", "-c"))
 [void](Invoke-AdbBounded -Arguments @(
     "shell", "am", "start", "-a", "android.intent.action.MAIN",
@@ -192,11 +202,24 @@ try {
 if ($imeState -ne "running") { $failures += "imeservice_state:$imeState" }
 
 $hidl = Invoke-AdbBounded -Arguments @("shell", "lshal", "-i") -TimeoutSec 30
-foreach ($factory in @(
+foreach ($interface in @(
+    "android.hardware.audio@7.0::IDevicesFactory/default",
+    "android.hardware.audio.effect@7.0::IEffectsFactory/default",
+    "android.hardware.camera.provider@2.4::ICameraProvider/legacy/0",
+    "android.hardware.configstore@1.1::ISurfaceFlingerConfigs/default",
+    "android.hardware.drm@1.0::IDrmFactory/default",
+    "android.hardware.drm@1.0::ICryptoFactory/default",
     "android.hardware.drm@1.3::IDrmFactory/widevine",
-    "android.hardware.drm@1.3::ICryptoFactory/widevine"
+    "android.hardware.drm@1.3::ICryptoFactory/widevine",
+    "android.hardware.graphics.allocator@2.0::IAllocator/default",
+    "android.hardware.graphics.composer@2.1::IComposer/default",
+    "android.hardware.light@2.0::ILight/default",
+    "android.hardware.media.omx@1.0::IOmx/default",
+    "android.hardware.media.omx@1.0::IOmxStore/default",
+    "android.hardware.power@1.0::IPower/default",
+    "android.hardware.soundtrigger@2.3::ISoundTriggerHw/default"
 )) {
-    if ($hidl -notmatch [regex]::Escape($factory)) { $failures += "widevine:$factory" }
+    if ($hidl -notmatch [regex]::Escape($interface)) { $failures += "hidl:$interface" }
 }
 
 foreach ($service in @(

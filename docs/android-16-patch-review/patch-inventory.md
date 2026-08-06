@@ -4,16 +4,16 @@
 
 ## Summary
 
-- Patch artifacts: **580**
-- Total size: **21.56 MiB**
+- Patch artifacts: **581**
+- Total size: **21.57 MiB**
 - Artifacts containing binary patch data: **4**
 - Payload-free artifacts referencing binary differences: **2**
-- Unique changed paths: **793**
+- Unique changed paths: **794**
 
 | Category | Count |
 |---|---:|
 | AOSP16 project snapshots | 21 |
-| Host/build/graphics companion patches | 501 |
+| Host/build/graphics companion patches | 502 |
 | P2 aggregate/candidate snapshots | 5 |
 | P2 bionic/art source overlays | 2 |
 | P2 cross-project mechanical patches | 18 |
@@ -334,6 +334,7 @@
 | [`device-common-ntp-interval.patch`](../../patches/android-16/a13-completion/device-common-ntp-interval.patch) | Host/build/graphics companion patches | 1 | 1 | 3 | 0 | 0.6 | no | 0 |
 | [`device-common-treble-a16-services.patch`](../../patches/android-16/a13-completion/device-common-treble-a16-services.patch) | Host/build/graphics companion patches | 1 | 4 | 4 | 8 | 1.0 | no | 0 |
 | [`device-generic-x86_64-hal-selectors.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-hal-selectors.patch) | Host/build/graphics companion patches | 1 | 1 | 6 | 1 | 0.6 | no | 0 |
+| [`device-generic-x86_64-legacy-hal-vintf.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch) | Host/build/graphics companion patches | 3 | 4 | 137 | 1 | 6.3 | no | 0 |
 | [`device-generic-x86_64-widevine-fcm-bridge.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch) | Host/build/graphics companion patches | 1 | 1 | 15 | 1 | 1.4 | no | 0 |
 | [`device-x86_64-houdini16.patch`](../../patches/android-16/a13-completion/device-x86_64-houdini16.patch) | Host/build/graphics companion patches | 1 | 1 | 5 | 0 | 0.7 | no | 0 |
 | [`device-x86_64-release-art.patch`](../../patches/android-16/a13-completion/device-x86_64-release-art.patch) | Host/build/graphics companion patches | 1 | 2 | 4 | 9 | 1.2 | no | 0 |
@@ -4631,6 +4632,20 @@
 - Changed paths:
   - `android_x86_64.mk`
 
+### `device-generic-x86_64-legacy-hal-vintf.patch`
+
+- Artifact: [`patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch)
+- Category: Host/build/graphics companion patches
+- SHA-256: `f1ab2e00758c2771a37019318a94905cb732c30e6eb5fdc13c322a5b3a233b29`
+- Size/stat: 6450 bytes, 3 files, 4 hunks, +137/-1
+- Binary evidence: none
+- Registry mapping: none; classify from progress records before replay
+- Overlap: **yes**, 2 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
+- Changed paths:
+  - `BoardConfig.mk`
+  - `framework_compatibility_matrix.xml`
+  - `manifest_bst_legacy_hal.xml`
+
 ### `device-generic-x86_64-widevine-fcm-bridge.patch`
 
 - Artifact: [`patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch`](../../patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch)
@@ -4639,7 +4654,7 @@
 - Size/stat: 1385 bytes, 1 files, 1 hunks, +15/-1
 - Binary evidence: none
 - Registry mapping: none; classify from progress records before replay
-- Overlap: none detected by changed path
+- Overlap: **yes**, 1 changed paths also occur in other archived artifacts. See `patch-inventory.json` for exact edges.
 - Changed paths:
   - `framework_compatibility_matrix.xml`
 

@@ -117,6 +117,58 @@ The old image has 17 `ro.build.*` mismatches against `.bluestacks.prop`. Its
 BlueStacks packaging input, so these mismatches share the incomplete packaging
 root cause with `mountsf`. The next complete package must be checked again.
 
+### Android-x86_64 legacy HAL manifest gap
+
+The A13 final `device/generic/common/manifest.xml` declared the legacy HIDL
+providers used by its generic x86_64 product. The AOSP16 development line later
+reduced the common manifest to audio, graphics fragments, and
+`android.hidl.manager`; promotion retained that reduced file while changing the
+Windows product from qvirt to `android_x86_64`. The board migration therefore
+lost declarations for several services that `device/generic/common/treble.mk`
+still packages and init still starts.
+
+This is a code-level omission rather than a binary or packaging-input issue:
+
+- Light 2.0, Power 1.0, Camera Provider 2.4, ConfigStore 1.1, Media OMX 1.0,
+  DRM 1.0, and their init rc files are present in the Android-16 installed-file
+  inventory, but none of those HIDL modules supplies a VINTF fragment.
+- SoundTrigger 2.3 is loaded by the retained HIDL audio service and likewise
+  has no service-owned fragment.
+- The old runtime log independently recorded 673 rejected Light 2.0
+  registrations, 671 rejected Power 1.0 registrations, and 34 rejected
+  SoundTrigger 2.3 registrations. These counts are diagnostic evidence from
+  the old Tiramisu64 deployment, not current-image boot credit.
+- The existing review decisions incorrectly said that Light, Power, ConfigStore,
+  and the retained HIDL DRM services owned their declarations. Source and
+  generated-output readback disproves those statements.
+
+The minimal adaptation is prepared as
+[`device-generic-x86_64-legacy-hal-vintf.patch`](../../../patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch).
+It attaches one Windows-product-only device manifest and adds level-8 framework
+matrix bridges only for legacy HIDL interfaces no longer accepted by the stock
+Android-16 matrix. Media OMX, RenderScript, and SoundTrigger need device
+declarations but no custom matrix entry because frozen FCM 8 already accepts
+their exact HIDL versions.
+
+Bluetooth, Dumpstate, GNSS, Memtrack, USB, and KeyMint are deliberately not
+redeclared as A13 HIDL HALs: current AIDL services or APEXes provide their own
+verified fragments. ClearKey similarly stays on the Android-16 AIDL service;
+the retained Widevine 1.3 service remains the only HIDL plugin bridge. The A13
+Sensors 1.0 declaration is not replayed because the current product packages no
+legacy sensors module or service for it to describe.
+
+The patch adds metadata only and no daemon, polling loop, or data-path code.
+Its normal-path performance cost is therefore negligible; enabling already
+packaged services should remove failed registration/restart work. Security
+impact is limited to making the intentionally retained legacy HAL endpoints
+visible to the framework on `android_x86_64`. This is explicit compatibility
+debt and remains scoped away from common, arm, and retired qvirt products.
+Patch structure, XML parsing, and `git apply --check` pass. It must not be
+applied to the remote component until the active full build has stopped using
+the frozen source tree. Acceptance requires `check-vintf-all`, component and
+root commits, a target-only incremental rebuild, and clean-Data runtime
+registration checks.
+
 ## Baseline Passes
 
 The old artifact passed static or service-level checks for audio, SurfaceFlinger

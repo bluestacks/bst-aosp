@@ -17274,6 +17274,42 @@
       ]
     },
     {
+      "artifact": "patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch",
+      "name": "device-generic-x86_64-legacy-hal-vintf.patch",
+      "category": "Host/build/graphics companion patches",
+      "sha256": "f1ab2e00758c2771a37019318a94905cb732c30e6eb5fdc13c322a5b3a233b29",
+      "bytes": 6450,
+      "lines": 169,
+      "files_changed": 3,
+      "hunks": 4,
+      "additions": 137,
+      "deletions": 1,
+      "contains_binary_patch": false,
+      "references_binary_difference": false,
+      "files": [
+        "BoardConfig.mk",
+        "framework_compatibility_matrix.xml",
+        "manifest_bst_legacy_hal.xml"
+      ],
+      "registry": [],
+      "overlaps": {
+        "BoardConfig.mk": [
+          "patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch",
+          "patches/android-16/a13-completion/device-x86_64-houdini16.patch",
+          "patches/android-16/patches/aosp16__device_generic_common.patch",
+          "patches/android-16/patches/aosp16__device_generic_x86_64.patch"
+        ],
+        "framework_compatibility_matrix.xml": [
+          "patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch",
+          "patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch"
+        ]
+      },
+      "overlap_groups": [
+        "BoardConfig.mk",
+        "framework_compatibility_matrix.xml"
+      ]
+    },
+    {
       "artifact": "patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch",
       "name": "device-generic-x86_64-widevine-fcm-bridge.patch",
       "category": "Host/build/graphics companion patches",
@@ -17290,8 +17326,15 @@
         "framework_compatibility_matrix.xml"
       ],
       "registry": [],
-      "overlaps": {},
-      "overlap_groups": []
+      "overlaps": {
+        "framework_compatibility_matrix.xml": [
+          "patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch",
+          "patches/android-16/a13-completion/device-generic-x86_64-widevine-fcm-bridge.patch"
+        ]
+      },
+      "overlap_groups": [
+        "framework_compatibility_matrix.xml"
+      ]
     },
     {
       "artifact": "patches/android-16/a13-completion/device-x86_64-houdini16.patch",
@@ -17312,6 +17355,7 @@
       "registry": [],
       "overlaps": {
         "BoardConfig.mk": [
+          "patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch",
           "patches/android-16/a13-completion/device-x86_64-houdini16.patch",
           "patches/android-16/patches/aosp16__device_generic_common.patch",
           "patches/android-16/patches/aosp16__device_generic_x86_64.patch"
@@ -24177,6 +24221,7 @@
       ],
       "overlaps": {
         "BoardConfig.mk": [
+          "patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch",
           "patches/android-16/a13-completion/device-x86_64-houdini16.patch",
           "patches/android-16/patches/aosp16__device_generic_common.patch",
           "patches/android-16/patches/aosp16__device_generic_x86_64.patch"
@@ -24310,6 +24355,7 @@
       ],
       "overlaps": {
         "BoardConfig.mk": [
+          "patches/android-16/a13-completion/device-generic-x86_64-legacy-hal-vintf.patch",
           "patches/android-16/a13-completion/device-x86_64-houdini16.patch",
           "patches/android-16/patches/aosp16__device_generic_common.patch",
           "patches/android-16/patches/aosp16__device_generic_x86_64.patch"

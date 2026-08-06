@@ -69,6 +69,8 @@ def main() -> int:
         source = entry.get("source_commit") or entry.get("kind", "unknown")
         for commit in entry.get("target_commits", []):
             references[(entry["project"], commit)].append(source)
+        for mapping in entry.get("target_mappings", []):
+            references[(mapping["project"], mapping["commit"])].append(source)
 
     repository_cache: dict[str, tuple[Path | None, str, str | None]] = {}
     results: list[dict[str, Any]] = []

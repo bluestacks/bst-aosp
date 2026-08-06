@@ -25,10 +25,9 @@ Automated dispositions are triage evidence, not final port or validation claims.
 
 | Review status | Entries |
 | --- | ---: |
-| `reviewed-correction-prepared` | 5 |
 | `reviewed-integration` | 548 |
 | `reviewed-not-ported` | 260 |
-| `reviewed-ported` | 529 |
+| `reviewed-ported` | 534 |
 
 ## Semantic Review Queue
 

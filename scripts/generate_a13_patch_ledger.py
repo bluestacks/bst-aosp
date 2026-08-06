@@ -53,6 +53,7 @@ def apply_review_decisions(
         "review_status",
         "manual_disposition",
         "target_commits",
+        "target_mappings",
         "rationale",
         "necessity",
         "performance",

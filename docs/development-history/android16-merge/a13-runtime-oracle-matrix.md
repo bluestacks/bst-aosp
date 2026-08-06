@@ -5,17 +5,19 @@
 This matrix is generated conceptually from the current 1,342-entry A13 patch
 ledger, then reviewed at source-commit level. A runtime-pending entry is a
 `reviewed-ported` patch whose validation evidence explicitly leaves runtime or
-feature-startup regression pending. There are **32 such patch entries**,
-collapsed below into **21 behavior groups** without dropping any source commit.
+feature-startup regression pending. There are **37 such patch entries**,
+collapsed below into **22 behavior groups** without dropping any source commit.
 
 The former count of 40 was not authoritative. It searched serialized entries
 for both words `runtime` and `pending`, so paths such as `PendingIntent.java`
 could produce false positives and unrelated rationale text could widen the
 set. The corrected count inspects `review_status` and validation evidence.
 
-The five `reviewed-correction-prepared` legacy-HAL VINTF entries are additional
-promotion work, not part of these 32 already-ported patches. They are tracked
-separately in [`a13-hal-vintf-review.md`](a13-hal-vintf-review.md).
+The five legacy-HAL VINTF entries are now `reviewed-ported`: their cross-project
+mapping points from A13 `device/generic/common` to Android-16
+`device/generic/x86_64` commit `773ab33851c67d54c6f9b6912f23baf208d8c11b`.
+Build-time VINTF and generated-manifest uniqueness pass, while runtime service
+registration remains part of this matrix.
 
 ## Patch-To-Oracle Mapping
 
@@ -30,6 +32,7 @@ image. It is not a pass result.
 | Houdini 16 payload | `0f405e00d959`, `3d950593dd20` | `device/generic/common` | Native-bridge payload, callback API and binfmt registrations execute translated code | Shell payload/binfmt gate plus the hash-bound arm64-only native-bridge oracle and its static AArch64 direct-execution companion | translated execution and standalone binfmt gates prepared |
 | Memtrack | `4498e9e02dfc` | `device/generic/common` | Current AIDL memtrack service registers from its APEX | `service check android.hardware.memtrack.IMemtrack/default` | prepared |
 | GateKeeper removal | `7fd69d779315` | `device/generic/common` | Lock settings and Settings remain usable without the retired HAL lifecycle | `locksettings get-disabled`, lock service check, platform/BST Settings smoke and crash scan | prepared |
+| x86_64 legacy HAL VINTF | `47816eea2ce9`, `4facbf0174fc`, `874610a60b6e`, `afba6c8513fe`, `ef2f4da5e521` | A13 `device/generic/common` -> A16 `device/generic/x86_64` | Camera, ConfigStore, Light, default DRM and Power register through the product-scoped declarations without duplicate ownership; OMX, RenderScript, Sensors and SoundTrigger remain declared once | `check-vintf-all` and generated uniqueness already pass; clean-Data `lshal -i`, Binder/service checks, Camera2 frame, DRM factories, light/power behavior and registration-error scan | build-time pass; runtime prepared |
 | Camera product/HAL | `af22f7913f2a`, `62b0613d8fa3`, `68b5e0b2297b` | `device/generic/common`, `hardware/bst/camera` | `camera.bst` is selected and Camera2 returns real frames | HIDL/Binder registration plus app oracle Camera2 capture requiring a non-empty YUV frame | prepared |
 | Skia atlas | `90765aac329a` | `external/skia` | Lazy atlas allocation no longer crashes affected apps | App oracle Canvas pixel check, then representative GP/Instagram/Facebook/Settings navigation | prepared for API path; representative apps pending |
 | Audio service | `451dd10409f4` | `hardware/interfaces` | Audio service remains alive with the current Binder thread pool and accepts playback | HIDL/Binder checks, app oracle initialized/playing `AudioTrack`, host audible-output oracle | prepared for guest path; audible host output pending |
@@ -51,10 +54,11 @@ image. It is not a pass result.
 1. Run Layer 2 boot and property gates on clean Data.
 2. Run `g1_runtime_regression.ps1`, including ADB push and Settings/developer
    options smoke tests.
-3. Build the hash-bound temporary APK from Android-16 prebuilts and run
-   `g1_app_runtime_oracle.ps1`.
-4. Build and run `android16-nativebridge-oracle`, then run the remaining FPS
-   timing, Launcher/host, locale, denied-ADB,
-   graceful-shutdown and broader storage oracles listed as pending above.
+3. Let `g1_build_pack.sh` build the two hash-bound temporary APKs and run the
+   app, native-bridge, FPS and denied-ADB oracles; do not reuse an APK from a
+   different Android root commit.
+4. Run the remaining host/manual Launcher, locale, graceful-shutdown, audible
+   audio, authorized Widevine playback and broader storage oracles listed as
+   pending above.
 5. Attach evidence to every source commit in this matrix before changing its
    ledger text from pending to pass.

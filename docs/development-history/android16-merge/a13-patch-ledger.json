@@ -73,10 +73,9 @@
       "textually-complete": 278
     },
     "review_statuses": {
-      "reviewed-correction-prepared": 5,
       "reviewed-integration": 548,
       "reviewed-not-ported": 260,
-      "reviewed-ported": 529
+      "reviewed-ported": 534
     },
     "explicit_target_candidates": 98
   },
@@ -6607,16 +6606,22 @@
         "partial-line-evidence": 8,
         "superseded-in-a13": 1
       },
-      "review_status": "reviewed-correction-prepared",
+      "review_status": "reviewed-ported",
       "target_commits": [
         "7b6874dc74745c956af674344fda5d5fe55216e9",
         "7b5e4e1522c36f84359ca1496258a85621c72151"
       ],
       "validation_evidence": [
-        "Active resource files remain exact or complete. App-player output installs sensors.default and android.hardware.sensors@1.0-impl for both architectures. The expanded HAL/VINTF correction requires renewed patch, XML, check-vintf, target build and clean-Data runtime validation."
+        "Active resource files remain exact or complete. App-player output installs sensors.default and android.hardware.sensors@1.0-impl for both architectures. Commit 773ab33851c67d54c6f9b6912f23baf208d8c11b passes XML parsing, check-vintf-all, and generated vendor/APEX manifest uniqueness with zero duplicate instances; complete image and clean-Data runtime validation remain pending."
       ],
-      "manual_disposition": "ported-to-android-x86_64-with-legacy-hal-vintf-correction-prepared",
-      "rationale": "Active x86 resources, ALSA state, IDC, fstab/init data, media profiles, overlays, networking and build tasks are retained without restoring qvirt or obsolete GSI/MGSI boards. The board migration omitted the Camera, OMX, RenderScript, Sensors, SoundTrigger and DRM declarations required by still-packaged legacy providers; an x86_64-only correction is prepared. The canonical app-player build proves BUILD_EXTERNAL_BLUESTACKS_SENSORS selects both sensors.default architectures, so the A13 passthrough Sensors 1.0 contract remains active.",
+      "manual_disposition": "ported-to-android-x86_64-with-legacy-hal-vintf-correction",
+      "target_mappings": [
+        {
+          "project": "device/generic/x86_64",
+          "commit": "773ab33851c67d54c6f9b6912f23baf208d8c11b"
+        }
+      ],
+      "rationale": "Active x86 resources, ALSA state, IDC, fstab/init data, media profiles, overlays, networking and build tasks are retained without restoring qvirt or obsolete GSI/MGSI boards. The board migration omitted the Camera, OMX, RenderScript, Sensors, SoundTrigger and DRM declarations required by still-packaged legacy providers; the committed x86_64-only correction restores them. The canonical app-player build proves BUILD_EXTERNAL_BLUESTACKS_SENSORS selects both sensors.default architectures, so the A13 passthrough Sensors 1.0 contract remains active.",
       "necessity": "Required product resources are preserved without reintroducing the removed unified bst_x86_64 board.",
       "performance": "Static product assembly; no additional runtime control plane.",
       "security": "Keeps board ownership in the standard Android x86_64 product and avoids inactive arm/GSI surface."
@@ -6647,15 +6652,21 @@
       "android16_evidence": {
         "partial-line-evidence": 1
       },
-      "review_status": "reviewed-correction-prepared",
+      "review_status": "reviewed-ported",
       "target_commits": [
         "7b5e4e1522c36f84359ca1496258a85621c72151"
       ],
       "validation_evidence": [
-        "GNSS APEX fragment ownership was verified in source. ConfigStore package presence alone was insufficient; its prepared declaration passes static checks and runtime registration remains pending."
+        "GNSS APEX fragment ownership was verified in source. ConfigStore package presence alone was insufficient; commit 773ab33851c67d54c6f9b6912f23baf208d8c11b passes check-vintf-all and generated-manifest uniqueness, while runtime registration remains pending."
       ],
-      "manual_disposition": "gnss-ported-configstore-vintf-correction-prepared",
-      "rationale": "GNSS is correctly delivered by com.android.hardware.gnss with an APEX-owned AIDL fragment. ConfigStore 1.1 remains a standalone HIDL service with no fragment, so its x86_64 declaration and level-8 bridge are prepared and await target validation.",
+      "manual_disposition": "gnss-ported-configstore-vintf-corrected",
+      "target_mappings": [
+        {
+          "project": "device/generic/x86_64",
+          "commit": "773ab33851c67d54c6f9b6912f23baf208d8c11b"
+        }
+      ],
+      "rationale": "GNSS is correctly delivered by com.android.hardware.gnss with an APEX-owned AIDL fragment. ConfigStore 1.1 remains a standalone HIDL service with no fragment, so the committed x86_64 declaration and level-8 bridge restore its contract.",
       "necessity": "Required for location and legacy graphics configuration contracts.",
       "performance": "Standard service/APEX startup only.",
       "security": "Uses platform-owned manifests and avoids duplicate HAL declarations."
@@ -7069,16 +7080,22 @@
         "complete-line-evidence": 1,
         "partial-line-evidence": 1
       },
-      "review_status": "reviewed-correction-prepared",
+      "review_status": "reviewed-ported",
       "target_commits": [
         "7b6874dc74745c956af674344fda5d5fe55216e9",
         "7b5e4e1522c36f84359ca1496258a85621c72151"
       ],
       "validation_evidence": [
-        "Source readback disproved service-owned VINTF. The old runtime recorded 673 rejected registrations; the prepared correction passes static checks and current-image light validation remains pending."
+        "Source readback disproved service-owned VINTF. The old runtime recorded 673 rejected registrations; commit 773ab33851c67d54c6f9b6912f23baf208d8c11b passes check-vintf-all and generated-manifest uniqueness, while current-image light validation remains pending."
       ],
-      "manual_disposition": "x86_64-light-vintf-correction-prepared",
-      "rationale": "lights.bst and the HIDL 2.0 wrapper remain packaged, but the Android 16 service has init metadata only and no VINTF fragment. The x86_64 declaration and level-8 bridge are prepared and await target validation.",
+      "manual_disposition": "x86_64-light-vintf-corrected",
+      "target_mappings": [
+        {
+          "project": "device/generic/x86_64",
+          "commit": "773ab33851c67d54c6f9b6912f23baf208d8c11b"
+        }
+      ],
+      "rationale": "lights.bst and the HIDL 2.0 wrapper remain packaged, but the Android 16 service has init metadata only and no VINTF fragment. The committed x86_64 declaration and level-8 bridge restore the retained endpoint.",
       "necessity": "Required for guest backlight and light-state handling.",
       "performance": "No extra lookup beyond normal HAL startup.",
       "security": "Avoids conflicting duplicate VINTF ownership."
@@ -7559,15 +7576,21 @@
       "android16_evidence": {
         "partial-line-evidence": 1
       },
-      "review_status": "reviewed-correction-prepared",
+      "review_status": "reviewed-ported",
       "target_commits": [
         "7b5e4e1522c36f84359ca1496258a85621c72151",
         "0edb96a328b99742a8c3583e3d1aafc501308252"
       ],
       "validation_evidence": [
-        "Installed-files and generated VINTF output prove the default 1.0 service lacks a fragment and Widevine 1.3 owns one. Static correction checks pass; target check-vintf, default-factory registration and playback validation remain pending."
+        "Installed-files and generated VINTF output prove the default 1.0 service lacked a fragment and Widevine 1.3 owns one. Commit 773ab33851c67d54c6f9b6912f23baf208d8c11b passes check-vintf-all and generated-manifest uniqueness; default-factory runtime registration and playback validation remain pending."
       ],
-      "manual_disposition": "a16-drm-services-with-device-vintf-correction-prepared",
+      "manual_disposition": "a16-drm-services-with-device-vintf-corrected",
+      "target_mappings": [
+        {
+          "project": "device/generic/x86_64",
+          "commit": "773ab33851c67d54c6f9b6912f23baf208d8c11b"
+        }
+      ],
       "rationale": "The obsolete broad common DRM declaration remains removed and ClearKey uses AIDL. Generated output proves Widevine 1.3 owns its exact module fragment, while the retained HIDL 1.0 default service has no fragment. The x86_64 correction therefore declares only the default 1.0 factories.",
       "necessity": "Required for stable DRM factory registration.",
       "performance": "No additional service beyond the selected DRM implementations.",
@@ -7763,16 +7786,22 @@
         "binary-large-or-metadata-review": 1,
         "partial-line-evidence": 1
       },
-      "review_status": "reviewed-correction-prepared",
+      "review_status": "reviewed-ported",
       "target_commits": [
         "7b6874dc74745c956af674344fda5d5fe55216e9",
         "7b5e4e1522c36f84359ca1496258a85621c72151"
       ],
       "validation_evidence": [
-        "Source readback disproved HIDL service-owned VINTF. The old runtime recorded 671 rejected registrations; target registration and power-hint regression remain pending."
+        "Source readback disproved HIDL service-owned VINTF. The old runtime recorded 671 rejected registrations; commit 773ab33851c67d54c6f9b6912f23baf208d8c11b passes check-vintf-all and generated-manifest uniqueness, while target runtime registration and power-hint regression remain pending."
       ],
-      "manual_disposition": "x86_64-power-vintf-correction-prepared",
-      "rationale": "power.bst and its HIDL 1.0 wrapper remain packaged alongside the Android 16 AIDL example service. The AIDL fragment does not declare the retained HIDL endpoint, so an exact x86_64 declaration and level-8 bridge are prepared.",
+      "manual_disposition": "x86_64-power-vintf-corrected",
+      "target_mappings": [
+        {
+          "project": "device/generic/x86_64",
+          "commit": "773ab33851c67d54c6f9b6912f23baf208d8c11b"
+        }
+      ],
+      "rationale": "power.bst and its HIDL 1.0 wrapper remain packaged alongside the Android 16 AIDL example service. The AIDL fragment does not declare the retained HIDL endpoint, so the committed exact x86_64 declaration and level-8 bridge restore it.",
       "necessity": "Required for App Player power hints and compatibility behavior.",
       "performance": "Normal HAL/service startup only.",
       "security": "Avoids duplicate manifest ownership while retaining the product module."

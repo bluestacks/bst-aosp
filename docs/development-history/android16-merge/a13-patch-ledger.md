@@ -7,6 +7,8 @@ Automated dispositions are triage evidence, not final port or validation claims.
 `reviewed-equivalent` requires structured target-state evidence where Android 16
 already has the final behavior without a promotion commit. `reviewed-not-ported`
 records an intentional, fully assessed exclusion rather than an unmapped omission.
+Executable validation of commit-free states is recorded in
+[`a13-target-state-validation.json`](a13-target-state-validation.json).
 
 ## Counts
 

@@ -140,6 +140,7 @@ ANDROID16_ACTIVE_SCRIPTS = {
     "scripts/prepare_android16_package_inputs.sh",
     "scripts/render_a13_port_audit.py",
     "scripts/validate_a13_target_commits.py",
+    "scripts/validate_a13_target_states.py",
 }
 SHARED_REPOSITORY_TOOLS = {
     "scripts/generate_project_review.py",

@@ -35,7 +35,19 @@
       "target_state": {
         "project": "system/libbase",
         "assertion": "missing property lookup returns the caller default without a null descriptor read",
-        "evidence": "Current properties.cpp retains the immediate pi-null return used by the final A13 revert state."
+        "evidence": "Current properties.cpp retains the immediate pi-null return used by the final A13 revert state.",
+        "checks": [
+          {
+            "type": "regex-present",
+            "path": "properties.cpp",
+            "patterns": ["if\\s*\\(pi\\s*==\\s*nullptr\\)\\s*return\\s+default_value\\s*;"]
+          },
+          {
+            "type": "regex-absent",
+            "path": "properties.cpp",
+            "patterns": ["__system_property_read\\s*\\(pi\\s*,"]
+          }
+        ]
       },
       "rationale": "The complete A13 revert is preserved by the unchanged Android-16 implementation: an absent prop_info returns the caller-provided default and never enters the read callback path.",
       "necessity": "Necessary to represent the final A13 decision and prevent resurrection of the unsafe intermediate hook.",

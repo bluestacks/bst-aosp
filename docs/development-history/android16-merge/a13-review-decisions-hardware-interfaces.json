@@ -16,7 +16,19 @@
       "target_state": {
         "project": "hardware/interfaces",
         "assertion": "audio service startup contains no late Binder thread-pool shrink operation",
-        "evidence": "Current service configures its RPC pool before join and has no conflicting ABinderProcess_setThreadPoolMaxThreadCount call."
+        "evidence": "Current service configures its RPC pool before join and has no conflicting ABinderProcess_setThreadPoolMaxThreadCount call.",
+        "checks": [
+          {
+            "type": "regex-absent",
+            "path": "audio/common/all-versions/default/service/service.cpp",
+            "patterns": ["(?m)^\\s*ABinderProcess_setThreadPoolMaxThreadCount\\s*\\("]
+          },
+          {
+            "type": "regex-ordered",
+            "path": "audio/common/all-versions/default/service/service.cpp",
+            "patterns": ["configureRpcThreadpool\\s*\\(16", "joinRpcThreadpool\\s*\\("]
+          }
+        ]
       },
       "rationale": "A13 stopped calling ABinderProcess_setThreadPoolMaxThreadCount(1) after the vndbinder pool had already started, preventing the fatal 'threadpool cannot be shrunk' assertion. The Android 16 service no longer has that conflicting NDK Binder call and configures a single 16-thread RPC pool before joining it, preserving the crash fix through the current service architecture.",
       "necessity": "Required semantically: the audio HAL service must not shrink a running Binder pool. No A13 line should be copied because the obsolete API sequence no longer exists.",

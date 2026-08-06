@@ -203,7 +203,7 @@ def validate_final_entries(entries: list[dict[str, Any]]) -> int:
             if not isinstance(state, dict) or any(
                 not isinstance(state.get(field), str) or not state[field]
                 for field in ("project", "assertion", "evidence")
-            ):
+            ) or not isinstance(state.get("checks"), list) or not state["checks"]:
                 raise RuntimeError(
                     f"equivalent entry has no structured target state: {identity}"
                 )
@@ -355,6 +355,8 @@ def main() -> int:
         "`reviewed-equivalent` requires structured target-state evidence where Android 16",
         "already has the final behavior without a promotion commit. `reviewed-not-ported`",
         "records an intentional, fully assessed exclusion rather than an unmapped omission.",
+        "Executable validation of commit-free states is recorded in",
+        "[`a13-target-state-validation.json`](a13-target-state-validation.json).",
         "",
         "## Counts",
         "",

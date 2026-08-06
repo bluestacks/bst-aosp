@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "mode": "a13-target-state-validation",
+  "android16_root": "/home/clouddev/bst/workspace/markxu/android-16",
+  "android16_root_branch": "aosp16-bst-merge",
+  "android16_root_head": "c4d2b530567706a7250b77e9db9a0cbafb18f903",
+  "counts": {
+    "equivalent_entries": 10,
+    "checks": 13,
+    "repositories": 9,
+    "errors": 0
+  },
+  "results": [
+    {
+      "source_project": "device/generic/x86_64",
+      "source_commit": "ea5519ab0d11a31dcb2f96a335703ca7b46397cb",
+      "target_project": "device/generic/x86_64",
+      "assertion": "android_x86_64 product definitions are present in the current target layout",
+      "errors": []
+    },
+    {
+      "source_project": "external/angle",
+      "source_commit": "34fee3e7ae64a187d9526a66ed27df49bf5517da",
+      "target_project": "external/angle",
+      "assertion": "the 29 obsolete nested third-party gitlinks remain absent",
+      "errors": []
+    },
+    {
+      "source_project": "external/freetype",
+      "source_commit": "b1517c5efcdda833d2ed79513cd7c30d464f5f09",
+      "target_project": "external/freetype",
+      "assertion": "subprojects/dlg and its stale gitmodule declaration remain absent",
+      "errors": []
+    },
+    {
+      "source_project": "external/swiftshader",
+      "source_commit": "347d4ce1e9309028a693e8171beb68e2397055a4",
+      "target_project": "external/swiftshader",
+      "assertion": "the obsolete third_party/llvm-project gitlink remains absent",
+      "errors": []
+    },
+    {
+      "source_project": "external/swiftshader",
+      "source_commit": "9545e8ab19cca1c6caccdbd4051f2e97f4979270",
+      "target_project": "external/swiftshader",
+      "assertion": "the current Vulkan master list uses the release-matched LFS layout",
+      "errors": []
+    },
+    {
+      "source_project": "hardware/interfaces",
+      "source_commit": "451dd10409f43a4446d092380d9c5f778b9ee96c",
+      "target_project": "hardware/interfaces",
+      "assertion": "audio service startup contains no late Binder thread-pool shrink operation",
+      "errors": []
+    },
+    {
+      "source_project": "hardware/libhardware",
+      "source_commit": "c014c6d2e810b6b71e8a92b66b9d734f0adff1c0",
+      "target_project": "hardware/libhardware",
+      "assertion": "modules/gralloc has no active Android build definition",
+      "errors": []
+    },
+    {
+      "source_project": "libcore",
+      "source_commit": "460204e1551614b3761a6bf7d4d1eae953c3e765",
+      "target_project": "libcore",
+      "assertion": "String formatting contains no reverted BlueStacks GMS diagnostic hook",
+      "errors": []
+    },
+    {
+      "source_project": "system/libbase",
+      "source_commit": "1d05b47e865d4c4f085937a5b07568f87d1c3cdb",
+      "target_project": "system/libbase",
+      "assertion": "missing property lookup returns the caller default without a null descriptor read",
+      "errors": []
+    },
+    {
+      "source_project": "tools/dexter",
+      "source_commit": "4cd18ae4c129b632e8c2d4270c24342713ab3ded",
+      "target_project": "tools/dexter",
+      "assertion": "current large generated fixtures use the current selective LFS policy",
+      "errors": []
+    }
+  ]
+}

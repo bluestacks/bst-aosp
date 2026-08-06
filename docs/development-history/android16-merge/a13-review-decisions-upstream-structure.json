@@ -16,7 +16,13 @@
       "target_state": {
         "project": "device/generic/x86_64",
         "assertion": "android_x86_64 product definitions are present in the current target layout",
-        "evidence": "Lunch resolves android_x86_64 with x86_64/x86 architectures and current BoardConfig/product files."
+        "evidence": "Lunch resolves android_x86_64 with x86_64/x86 architectures and current BoardConfig/product files.",
+        "checks": [
+          {
+            "type": "files-exist",
+            "paths": ["AndroidProducts.mk", "BoardConfig.mk", "android_x86_64.mk"]
+          }
+        ]
       },
       "rationale": "The A13 initialization created the standalone android_x86_64 product. Android 16 retains the current AndroidProducts.mk, BoardConfig.mk and android_x86_64.mk definitions; obsolete local Android.bp/license files are no longer required by the current device layout.",
       "necessity": "Required because Windows App Player builds and regression use android_x86_64 rather than a unified remote/local board.",
@@ -59,7 +65,13 @@
       "target_state": {
         "project": "external/angle",
         "assertion": "the 29 obsolete nested third-party gitlinks remain absent",
-        "evidence": "Git index inspection reports no 160000 entries for the reviewed ANGLE paths."
+        "evidence": "Git index inspection reports no 160000 entries for the reviewed ANGLE paths.",
+        "checks": [
+          {
+            "type": "gitlinks-absent",
+            "paths_from_source_entry": true
+          }
+        ]
       },
       "rationale": "All 29 nested third-party gitlinks removed by A13 are also absent from final AOSP16 and Android-16 ANGLE repositories. Current dependencies are supplied by the platform checkout/build integration rather than independently initialized nested repositories.",
       "necessity": "Required to keep repository initialization deterministic and avoid duplicate dependency revisions.",
@@ -83,7 +95,17 @@
       "target_state": {
         "project": "external/freetype",
         "assertion": "subprojects/dlg and its stale gitmodule declaration remain absent",
-        "evidence": "Git index and .gitmodules inspection report no current dlg submodule."
+        "evidence": "Git index and .gitmodules inspection report no current dlg submodule.",
+        "checks": [
+          {
+            "type": "gitlinks-absent",
+            "paths": ["subprojects/dlg"]
+          },
+          {
+            "type": "gitmodule-path-absent",
+            "paths": ["subprojects/dlg"]
+          }
+        ]
       },
       "rationale": "The subprojects/dlg gitlink removed by A13 is absent from A13 final, AOSP16 and Android-16; no stale nested checkout is required by the current Freetype build.",
       "necessity": "Required for deterministic source initialization.",
@@ -126,7 +148,16 @@
       "target_state": {
         "project": "tools/dexter",
         "assertion": "current large generated fixtures use the current selective LFS policy",
-        "evidence": ".gitattributes and git lfs ls-files agree on the two currently large fixtures."
+        "evidence": ".gitattributes and git lfs ls-files agree on the two currently large fixtures.",
+        "checks": [
+          {
+            "type": "lfs-paths",
+            "paths": [
+              "testdata/expected/large.code_coverage",
+              "testdata/expected/large.verbose_cfg"
+            ]
+          }
+        ]
       },
       "rationale": "A13 moved 16 then-large generated test artifacts to LFS. Android 16 retains the reviewed test artifacts and applies LFS only to the two outputs that remain large in the current upstream snapshot: large.code_coverage and large.verbose_cfg. Restoring old LFS attributes for now-small or regenerated files would add storage indirection without preserving behavior.",
       "necessity": "Necessary as repository storage policy only for current large objects.",

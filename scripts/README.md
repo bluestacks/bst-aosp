@@ -59,6 +59,8 @@ repositories.
 | `audit_android16_promotion.py audit` | Audits Android-16 submodule initialization, branch distribution, gitlinks, remotes, and optional remote SHA presence | Read-only |
 | `audit_a16_merge.sh` | Compatibility wrapper for the Python audit | Read-only |
 | `generate_android16_patch_inventory.py` | Rebuilds patch and payload review documents | Repository-only |
+| `validate_a13_target_commits.py` | Verifies every mapped A13 target SHA exists, is reachable, and has an `[A16]` subject | Read-only Android-16 target inspection |
+| `validate_a13_target_states.py` | Executes the structured checks for commit-free Android-16 equivalent states | Read-only Android-16 target inspection |
 | `generate_project_review.py` | Rebuilds inventory and history indexes | Repository-only |
 | `validate_project_files.py` | Runs Python, JSON, Bash, and PowerShell static parsers | Repository-only |
 | `merge_aosp16_to_android16.sh` | Preserved cont.103 merge executor | Refuses to run unless `--apply-historical` is explicit |

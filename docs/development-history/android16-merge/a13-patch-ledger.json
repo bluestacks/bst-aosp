@@ -7895,7 +7895,17 @@
       "target_state": {
         "project": "device/generic/x86_64",
         "assertion": "android_x86_64 product definitions are present in the current target layout",
-        "evidence": "Lunch resolves android_x86_64 with x86_64/x86 architectures and current BoardConfig/product files."
+        "evidence": "Lunch resolves android_x86_64 with x86_64/x86 architectures and current BoardConfig/product files.",
+        "checks": [
+          {
+            "type": "files-exist",
+            "paths": [
+              "AndroidProducts.mk",
+              "BoardConfig.mk",
+              "android_x86_64.mk"
+            ]
+          }
+        ]
       },
       "rationale": "The A13 initialization created the standalone android_x86_64 product. Android 16 retains the current AndroidProducts.mk, BoardConfig.mk and android_x86_64.mk definitions; obsolete local Android.bp/license files are no longer required by the current device layout.",
       "necessity": "Required because Windows App Player builds and regression use android_x86_64 rather than a unified remote/local board.",
@@ -8210,7 +8220,13 @@
       "target_state": {
         "project": "external/angle",
         "assertion": "the 29 obsolete nested third-party gitlinks remain absent",
-        "evidence": "Git index inspection reports no 160000 entries for the reviewed ANGLE paths."
+        "evidence": "Git index inspection reports no 160000 entries for the reviewed ANGLE paths.",
+        "checks": [
+          {
+            "type": "gitlinks-absent",
+            "paths_from_source_entry": true
+          }
+        ]
       },
       "rationale": "All 29 nested third-party gitlinks removed by A13 are also absent from final AOSP16 and Android-16 ANGLE repositories. Current dependencies are supplied by the platform checkout/build integration rather than independently initialized nested repositories.",
       "necessity": "Required to keep repository initialization deterministic and avoid duplicate dependency revisions.",
@@ -9487,7 +9503,21 @@
       "target_state": {
         "project": "external/freetype",
         "assertion": "subprojects/dlg and its stale gitmodule declaration remain absent",
-        "evidence": "Git index and .gitmodules inspection report no current dlg submodule."
+        "evidence": "Git index and .gitmodules inspection report no current dlg submodule.",
+        "checks": [
+          {
+            "type": "gitlinks-absent",
+            "paths": [
+              "subprojects/dlg"
+            ]
+          },
+          {
+            "type": "gitmodule-path-absent",
+            "paths": [
+              "subprojects/dlg"
+            ]
+          }
+        ]
       },
       "rationale": "The subprojects/dlg gitlink removed by A13 is absent from A13 final, AOSP16 and Android-16; no stale nested checkout is required by the current Freetype build.",
       "necessity": "Required for deterministic source initialization.",
@@ -14646,7 +14676,15 @@
       "target_state": {
         "project": "external/swiftshader",
         "assertion": "the obsolete third_party/llvm-project gitlink remains absent",
-        "evidence": "git ls-files -s reports no third_party/llvm-project entry."
+        "evidence": "git ls-files -s reports no third_party/llvm-project entry.",
+        "checks": [
+          {
+            "type": "gitlinks-absent",
+            "paths": [
+              "third_party/llvm-project"
+            ]
+          }
+        ]
       },
       "rationale": "A13 removed the third_party/llvm-project gitlink. Neither AOSP16 nor Android-16 tracks that submodule in the final SwiftShader repository, so the desired absence is preserved without a target-only commit.",
       "necessity": "Required to avoid an unused nested repository and ambiguous LLVM source selection.",
@@ -14692,7 +14730,15 @@
       "target_state": {
         "project": "external/swiftshader",
         "assertion": "the current Vulkan master list uses the release-matched LFS layout",
-        "evidence": ".gitattributes and git lfs ls-files identify the current vk-master-NOT_SUPPORTED.txt object."
+        "evidence": ".gitattributes and git lfs ls-files identify the current vk-master-NOT_SUPPORTED.txt object.",
+        "checks": [
+          {
+            "type": "lfs-paths",
+            "paths": [
+              "tests/regres/testlists/vk-master-NOT_SUPPORTED.txt"
+            ]
+          }
+        ]
       },
       "rationale": "The final A13 intent is to keep oversized regression lists as LFS data. Android 16 retains LFS attributes and an LFS object for the current vk-master-NOT_SUPPORTED.txt. The old pipeline.txt no longer exists in the newer test-list layout and must not be restored from a different SwiftShader revision.",
       "necessity": "Necessary only as repository storage metadata for current large test lists, not as a request to preserve obsolete A13 file names.",
@@ -39378,7 +39424,24 @@
       "target_state": {
         "project": "hardware/interfaces",
         "assertion": "audio service startup contains no late Binder thread-pool shrink operation",
-        "evidence": "Current service configures its RPC pool before join and has no conflicting ABinderProcess_setThreadPoolMaxThreadCount call."
+        "evidence": "Current service configures its RPC pool before join and has no conflicting ABinderProcess_setThreadPoolMaxThreadCount call.",
+        "checks": [
+          {
+            "type": "regex-absent",
+            "path": "audio/common/all-versions/default/service/service.cpp",
+            "patterns": [
+              "(?m)^\\s*ABinderProcess_setThreadPoolMaxThreadCount\\s*\\("
+            ]
+          },
+          {
+            "type": "regex-ordered",
+            "path": "audio/common/all-versions/default/service/service.cpp",
+            "patterns": [
+              "configureRpcThreadpool\\s*\\(16",
+              "joinRpcThreadpool\\s*\\("
+            ]
+          }
+        ]
       },
       "rationale": "A13 stopped calling ABinderProcess_setThreadPoolMaxThreadCount(1) after the vndbinder pool had already started, preventing the fatal 'threadpool cannot be shrunk' assertion. The Android 16 service no longer has that conflicting NDK Binder call and configures a single 16-thread RPC pool before joining it, preserving the crash fix through the current service architecture.",
       "necessity": "Required semantically: the audio HAL service must not shrink a running Binder pool. No A13 line should be copied because the obsolete API sequence no longer exists.",
@@ -39538,7 +39601,16 @@
       "target_state": {
         "project": "hardware/libhardware",
         "assertion": "modules/gralloc has no active Android build definition",
-        "evidence": "Tracked modules/gralloc sources contain neither Android.mk nor Android.bp, so default gralloc remains disabled."
+        "evidence": "Tracked modules/gralloc sources contain neither Android.mk nor Android.bp, so default gralloc remains disabled.",
+        "checks": [
+          {
+            "type": "files-absent",
+            "paths": [
+              "modules/gralloc/Android.mk",
+              "modules/gralloc/Android.bp"
+            ]
+          }
+        ]
       },
       "rationale": "A13 disabled the default gralloc by renaming its Android.mk because App Player uses goldfish-opengl-pie/system/gralloc. Android 16 tracks the legacy gralloc sources but no Android.mk or Android.bp in modules/gralloc, so the module remains disabled without carrying an obsolete .orig file.",
       "necessity": "Required to avoid building or selecting a second generic gralloc implementation alongside the external goldfish driver.",
@@ -42746,7 +42818,19 @@
       "target_state": {
         "project": "libcore",
         "assertion": "String formatting contains no reverted BlueStacks GMS diagnostic hook",
-        "evidence": "Final source inspection finds no process, property or shell side effect in the reviewed String.format path."
+        "evidence": "Final source inspection finds no process, property or shell side effect in the reviewed String.format path.",
+        "checks": [
+          {
+            "type": "regex-absent",
+            "path": "ojluni/src/main/java/java/lang/String.java",
+            "patterns": [
+              "bst\\.force_clear_gms",
+              "\\[RequestTokenManager\\] getToken\\(\\)",
+              "getProcessName\\s*\\(",
+              "libcore\\.io\\.Libcore"
+            ]
+          }
+        ]
       },
       "rationale": "Android 16 preserves the final A13 full-revert state: String formatting has no BlueStacks GMS diagnostic hook or side effect.",
       "necessity": "Necessary to prevent an intermediate, later-withdrawn diagnostic experiment from entering the promoted mainline.",
@@ -69295,7 +69379,23 @@
       "target_state": {
         "project": "system/libbase",
         "assertion": "missing property lookup returns the caller default without a null descriptor read",
-        "evidence": "Current properties.cpp retains the immediate pi-null return used by the final A13 revert state."
+        "evidence": "Current properties.cpp retains the immediate pi-null return used by the final A13 revert state.",
+        "checks": [
+          {
+            "type": "regex-present",
+            "path": "properties.cpp",
+            "patterns": [
+              "if\\s*\\(pi\\s*==\\s*nullptr\\)\\s*return\\s+default_value\\s*;"
+            ]
+          },
+          {
+            "type": "regex-absent",
+            "path": "properties.cpp",
+            "patterns": [
+              "__system_property_read\\s*\\(pi\\s*,"
+            ]
+          }
+        ]
       },
       "rationale": "The complete A13 revert is preserved by the unchanged Android-16 implementation: an absent prop_info returns the caller-provided default and never enters the read callback path.",
       "necessity": "Necessary to represent the final A13 decision and prevent resurrection of the unsafe intermediate hook.",
@@ -69619,7 +69719,16 @@
       "target_state": {
         "project": "tools/dexter",
         "assertion": "current large generated fixtures use the current selective LFS policy",
-        "evidence": ".gitattributes and git lfs ls-files agree on the two currently large fixtures."
+        "evidence": ".gitattributes and git lfs ls-files agree on the two currently large fixtures.",
+        "checks": [
+          {
+            "type": "lfs-paths",
+            "paths": [
+              "testdata/expected/large.code_coverage",
+              "testdata/expected/large.verbose_cfg"
+            ]
+          }
+        ]
       },
       "rationale": "A13 moved 16 then-large generated test artifacts to LFS. Android 16 retains the reviewed test artifacts and applies LFS only to the two outputs that remain large in the current upstream snapshot: large.code_coverage and large.verbose_cfg. Restoring old LFS attributes for now-small or regenerated files would add storage indirection without preserving behavior.",
       "necessity": "Necessary as repository storage policy only for current large objects.",

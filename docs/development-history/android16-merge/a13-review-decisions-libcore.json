@@ -60,7 +60,19 @@
       "target_state": {
         "project": "libcore",
         "assertion": "String formatting contains no reverted BlueStacks GMS diagnostic hook",
-        "evidence": "Final source inspection finds no process, property or shell side effect in the reviewed String.format path."
+        "evidence": "Final source inspection finds no process, property or shell side effect in the reviewed String.format path.",
+        "checks": [
+          {
+            "type": "regex-absent",
+            "path": "ojluni/src/main/java/java/lang/String.java",
+            "patterns": [
+              "bst\\.force_clear_gms",
+              "\\[RequestTokenManager\\] getToken\\(\\)",
+              "getProcessName\\s*\\(",
+              "libcore\\.io\\.Libcore"
+            ]
+          }
+        ]
       },
       "rationale": "Android 16 preserves the final A13 full-revert state: String formatting has no BlueStacks GMS diagnostic hook or side effect.",
       "necessity": "Necessary to prevent an intermediate, later-withdrawn diagnostic experiment from entering the promoted mainline.",

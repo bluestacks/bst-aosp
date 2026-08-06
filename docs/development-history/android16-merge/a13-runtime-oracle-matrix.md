@@ -20,6 +20,11 @@ mapping points from A13 `device/generic/common` to Android-16
 Build-time VINTF and generated-manifest uniqueness pass, while runtime service
 registration remains part of this matrix.
 
+Commit-free equivalence is separately executable rather than accepted from
+prose alone. [`a13-target-state-validation.json`](a13-target-state-validation.json)
+binds the ten equivalent entries and thirteen checks to Android root
+`c4d2b530567706a7250b77e9db9a0cbafb18f903`; all checks pass with zero errors.
+
 ## Patch-To-Oracle Mapping
 
 `prepared` means the executable gate exists but has not run against the new

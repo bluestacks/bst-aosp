@@ -2,12 +2,12 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 1790,
-    "existing_files": 1789,
-    "bytes": 77229799,
-    "text_lines": 1339300,
+    "files": 1791,
+    "existing_files": 1790,
+    "bytes": 77252681,
+    "text_lines": 1339871,
     "by_stage": {
-      "android16-promotion": 607,
+      "android16-promotion": 608,
       "aosp16-development": 845,
       "generated": 15,
       "reference": 45,
@@ -16,14 +16,14 @@
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 1536,
+      "tracked": 1537,
       "untracked": 238
     },
     "by_availability": {
       "generated": 15,
       "local-only": 238,
       "removed-tombstone": 1,
-      "repository": 1536
+      "repository": 1537
     },
     "findings_by_severity": {
       "P2": 1,
@@ -1087,11 +1087,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 2120,
-      "sha256": "0855b9d489ef92d0c0b84c6e97c109d2dbed72815d8fd3b884a3710f93c459f9",
+      "bytes": 2177,
+      "sha256": "cc36ed401c56ad0d9d11e2af74d08aecf115c7946a174ee53a3e59ed4995ca94",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 46,
+      "line_count": 47,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [
@@ -1143,6 +1143,7 @@
         "scripts/merge_aosp16_to_android16.sh",
         "scripts/patch-goldfish-emuhwc2-vsync-sp.py",
         "scripts/patch-goldfish-hwc2-bst-product.py",
+        "scripts/prepare_android16_package_inputs.sh",
         "scripts/publish_android16_components.py",
         "scripts/render_a13_port_audit.py",
         "scripts/resolve_kernel_conflicts.py",
@@ -10724,11 +10725,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 10357,
-      "sha256": "f529a6f3125c766cac9674a8a4b6a30191de1e7bb44a9d90220e35b893d12e09",
+      "bytes": 11528,
+      "sha256": "aa0dcc7d443231d76f868f9375ed95b30e8d3e42cf4f6364130a988e65173239",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 150,
+      "line_count": 165,
       "line_endings": "lf",
       "stage": "aosp16-development",
       "timeline_refs": [
@@ -10760,8 +10761,11 @@
         "scripts/g1_build_pack.sh",
         "scripts/g1_copy_bst_apks.sh",
         "scripts/g1_pack_root.sh",
+        "scripts/g1_property_verify.ps1",
         "scripts/g1_reset_data_wipe.ps1",
-        "scripts/g1_win_deploy.ps1"
+        "scripts/g1_runtime_regression.ps1",
+        "scripts/g1_win_deploy.ps1",
+        "scripts/prepare_android16_package_inputs.sh"
       ],
       "validation_evidence": {
         "status": "pass",
@@ -13168,11 +13172,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 9489,
-      "sha256": "e7d1a6edbb3d2222bea5e8d01d51f698ef348fc74baa79acf6b7a6831eb7c965",
+      "bytes": 13739,
+      "sha256": "5cac0fdc05401e831600fb7c7ff8b52225395c13c11ddcf5f2038caef3d7b2e5",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 187,
+      "line_count": 264,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -13193,7 +13197,8 @@
       "result": "current",
       "replacement": null,
       "dependencies": [
-        "scripts/g1_stage_system.sh"
+        "scripts/g1_stage_system.sh",
+        "scripts/prepare_android16_package_inputs.sh"
       ],
       "validation_evidence": {
         "status": "pass",
@@ -13676,11 +13681,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 1747,
-      "sha256": "109a9759b8a1b27822ca213790d6bb62fae12914da128250141bbb18b295bf7f",
+      "bytes": 2077,
+      "sha256": "9575b350e0a2896f7e992b004184131f7d06eeea63e5cb08ad9feff5ac23396f",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 46,
+      "line_count": 52,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [],
@@ -46994,11 +46999,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 5754,
-      "sha256": "b9084a5ef9d8d60839949ce7282b64e55850f4a52d8dde4ac77df15ab3fa3250",
+      "bytes": 5974,
+      "sha256": "d2e32ee605d3b8ea01e130785a9b9cb4dfe539856ed7064783b867b9bada3514",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 85,
+      "line_count": 86,
       "line_endings": "lf",
       "stage": "aosp16-development",
       "timeline_refs": [
@@ -47049,6 +47054,7 @@
         "scripts/lib/android16_env.sh",
         "scripts/merge_aosp16_to_android16.sh",
         "scripts/p2_mech2_apply.py",
+        "scripts/prepare_android16_package_inputs.sh",
         "scripts/validate_project_files.py"
       ],
       "validation_evidence": {
@@ -58364,11 +58370,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 4394,
-      "sha256": "442fe0e987190e02374f12c4f62ac4d4a151fcee962d4981bc06ba069fb7d99b",
+      "bytes": 4710,
+      "sha256": "c09ff5308846266b917f9066ce62f83865d508d9996e828e12c96d1bac2e495e",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 104,
+      "line_count": 107,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -58572,11 +58578,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 3316,
-      "sha256": "402c9fec08b41c6226d8516ee8edc63b2cdfec73f48a0bf85f9e18a0d9137741",
+      "bytes": 3847,
+      "sha256": "b1618ef69b81d505c3253a986f7c0170182ed45cc0aa1aa0eef2b821cbc5cde6",
       "media_type": "application/x-sh",
       "encoding": "utf-8-sig",
-      "line_count": 76,
+      "line_count": 81,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -58603,7 +58609,9 @@
         "scripts/g1_build_app_player.sh",
         "scripts/g1_build_libs.sh",
         "scripts/g1_pack_root.sh",
+        "scripts/g1_property_verify.ps1",
         "scripts/g1_reset_data_wipe.ps1",
+        "scripts/g1_runtime_regression.ps1",
         "scripts/g1_win_deploy.ps1"
       ],
       "validation_evidence": {
@@ -59021,11 +59029,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 6172,
-      "sha256": "9bca67a2187a1cfc7bb3891dca9b90da2fa21d80dc4a74edebfbf969c338eb25",
+      "bytes": 8247,
+      "sha256": "9006c53f8d38d4801f7b6a3f2cbf48f583e0dde950bb79abb64e88a7ab056078",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 170,
+      "line_count": 214,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -59401,11 +59409,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 57683,
-      "sha256": "5b51fc1eb5748d90c200ba706fc4a7d92904745dd9a248dfbafb54f9a79604a9",
+      "bytes": 57734,
+      "sha256": "cde06036f2a5cd59cb113954589273d7690ead442e5a51b3364ed69b0c87b10c",
       "media_type": "text/x-python",
       "encoding": "utf-8-sig",
-      "line_count": 1558,
+      "line_count": 1559,
       "line_endings": "lf",
       "stage": "shared",
       "timeline_refs": [
@@ -59453,6 +59461,7 @@
         "scripts/p2_mech2_apply.py",
         "scripts/patch-goldfish-emuhwc2-vsync-sp.py",
         "scripts/patch-goldfish-hwc2-bst-product.py",
+        "scripts/prepare_android16_package_inputs.sh",
         "scripts/validate_project_files.py"
       ],
       "validation_evidence": {
@@ -69775,6 +69784,45 @@
         ]
       },
       "preservation": "historical-first-class",
+      "missing_links": []
+    },
+    {
+      "path": "scripts/prepare_android16_package_inputs.sh",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 13881,
+      "sha256": "ff6328ab809531f7f34538dfc29ce30a62007ce8045b2963b08559cbbac276eb",
+      "media_type": "application/x-sh",
+      "encoding": "utf-8-sig",
+      "line_count": 418,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Assemble the Android-16 app-player payload from reviewable, immutable inputs.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pending",
+        "checks": [
+          "bash-n"
+        ]
+      },
+      "preservation": "active",
       "missing_links": []
     },
     {

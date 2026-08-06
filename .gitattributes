@@ -26,6 +26,7 @@
 /scripts/manage_binary_artifacts.py text eol=lf
 /scripts/patch-goldfish-emuhwc2-vsync-sp.py text eol=lf
 /scripts/patch-goldfish-hwc2-bst-product.py text eol=lf
+/scripts/prepare_android16_package_inputs.sh text eol=lf
 /scripts/publish_android16_components.py text eol=lf
 /scripts/resolve_kernel_conflicts.py text eol=lf
 /scripts/rewrite_a16_commit_messages.sh text eol=lf

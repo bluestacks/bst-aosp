@@ -3,6 +3,8 @@ param(
     [string]$AdbExe = "C:\Program Files\BlueStacks_nxt\HD-Adb.exe",
     [string]$Serial,
     [int]$AdbTimeoutSec = 20,
+    [int]$StabilityWindowSec = 95,
+    [int]$StabilityPollSec = 5,
     [switch]$CheckOnly
 )
 
@@ -12,6 +14,8 @@ if ($CheckOnly) {
     Write-Host "A16DBG:ANDROID16: runtime-regression CHECK OK; guest was not queried"
     exit 0
 }
+if ($StabilityWindowSec -lt 15) { throw "StabilityWindowSec must be at least 15" }
+if ($StabilityPollSec -lt 1) { throw "StabilityPollSec must be positive" }
 
 function Invoke-AdbBounded {
     param(
@@ -80,12 +84,47 @@ $home = Invoke-AdbBounded -Arguments @(
 )
 if ($home -notmatch '^com\.uncube\.launcher3/') { $failures += "home_resolver" }
 
+$bootIdBefore = (Invoke-AdbBounded -Arguments @(
+    "shell", "cat", "/proc/sys/kernel/random/boot_id"
+)).Trim()
+$systemServerPidBefore = (Invoke-AdbBounded -Arguments @(
+    "shell", "pidof", "system_server"
+)).Trim()
+if ($bootIdBefore -notmatch '^[0-9a-f-]{36}$') { $failures += "boot_id_before" }
+if ($systemServerPidBefore -notmatch '^\d+$') { $failures += "system_server_pid_before" }
+
 [void](Invoke-AdbBounded -Arguments @("logcat", "-c"))
 [void](Invoke-AdbBounded -Arguments @(
     "shell", "am", "start", "-a", "android.intent.action.MAIN",
     "-c", "android.intent.category.HOME"
 ))
-Start-Sleep -Seconds 15
+$stabilityTimer = [System.Diagnostics.Stopwatch]::StartNew()
+while ($stabilityTimer.Elapsed.TotalSeconds -lt $StabilityWindowSec) {
+    $remaining = $StabilityWindowSec - [int]$stabilityTimer.Elapsed.TotalSeconds
+    Start-Sleep -Seconds ([Math]::Min($StabilityPollSec, [Math]::Max(1, $remaining)))
+    try {
+        $state = (Invoke-AdbBounded -Arguments @("get-state")).Trim()
+        $bootIdNow = (Invoke-AdbBounded -Arguments @(
+            "shell", "cat", "/proc/sys/kernel/random/boot_id"
+        )).Trim()
+        $systemServerPidNow = (Invoke-AdbBounded -Arguments @(
+            "shell", "pidof", "system_server"
+        )).Trim()
+    } catch {
+        throw "Runtime stability failed after $([int]$stabilityTimer.Elapsed.TotalSeconds)s: $($_.Exception.Message)"
+    }
+    if ($state -ne "device") {
+        throw "Runtime stability failed: HD-Adb state changed to '$state'"
+    }
+    if ($bootIdNow -ne $bootIdBefore) {
+        throw "Runtime stability failed: guest boot ID changed from $bootIdBefore to $bootIdNow"
+    }
+    if ($systemServerPidNow -ne $systemServerPidBefore) {
+        throw "Runtime stability failed: system_server PID changed from $systemServerPidBefore to $systemServerPidNow"
+    }
+}
+$stabilityTimer.Stop()
+
 $activities = Invoke-AdbBounded -Arguments @("shell", "dumpsys", "activity", "activities")
 if ($activities -notmatch 'mResumedActivity:.*com\.uncube\.launcher3') {
     $failures += "launcher_not_resumed"
@@ -95,6 +134,11 @@ if ($logs -match 'PackageStateInternal\.getAppId\(\).*null object reference' -or
     $logs -match 'AppsFilterBase\.shouldFilterApplication' -or
     $logs -match 'Process com\.android\.systemui has crashed too many times') {
     $failures += "package_state_crash"
+}
+if ($logs -match '(?i)WATCHDOG KILLING SYSTEM PROCESS' -or
+    $logs -match '(?i)Exit zygote because system server.*terminated' -or
+    $logs -match '(?i)system_server.*(?:died|has terminated)') {
+    $failures += "system_server_watchdog"
 }
 
 try {

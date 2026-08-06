@@ -33,6 +33,7 @@ These are the maintained promotion/mainline entry points. They reject an
 | `g1_boot_verify.ps1` | Evaluates the Layer 2 boot oracle | Starts/stops the local instance and reads logs |
 | `g1_property_verify.ps1` | Compares property payloads with guest runtime values | Temporarily enables the BlueStacks getprop diagnostic switch |
 | `g1_runtime_regression.ps1` | Checks Launcher stability, shared folders, Houdini, audio, and graphics | Starts HOME and reads bounded ADB diagnostics |
+| `prepare_android16_package_inputs.sh` | Assembles or verifies the fixed Baklava APK input bundle | Reads immutable Git/LFS inputs and a hash-pinned external Root; optionally installs ignored app-player staging links |
 | `lib/android16_env.sh` | Shared tree and artifact identity gate | None when sourced; writes identity only on request |
 
 Run `--check` on the supported pipeline entry before target-tree work. Static

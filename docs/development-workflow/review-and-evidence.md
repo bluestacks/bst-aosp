@@ -44,3 +44,9 @@ working tree.
 A work unit is complete only when its required gate passes by readback. A
 missing remote build or boot gate is reported as pending; it is not converted
 into a local pass.
+
+For BlueStacks guest validation, host `[Ready]` is only one startup oracle. An
+accepted run must also keep HD-Adb online and preserve the guest boot ID and
+`system_server` PID for at least 95 seconds after HOME launch. Watchdog or
+zygote/system-server restart evidence overrides earlier ready and
+`sys.boot_completed=1` markers.

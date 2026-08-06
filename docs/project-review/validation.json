@@ -3,7 +3,7 @@
   "scope": "local repository only; Android source trees are not read",
   "counts": {
     "expected-failure": 1,
-    "pass": 691
+    "pass": 692
   },
   "checks": [
     {
@@ -3713,6 +3713,12 @@
     {
       "path": "scripts/patch-ueventd-bluestacks-devices.py",
       "check": "python-ast",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "path": "scripts/prepare_android16_package_inputs.sh",
+      "check": "bash-n",
       "status": "pass",
       "detail": ""
     },

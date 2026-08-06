@@ -12,7 +12,8 @@
 # 调试约束：禁 m clean + 禁 apk 重编（g1_copy_bst_apks 用 prebuilt）。
 set -uo pipefail
 HOST="${BST_REMOTE_HOST:-markxu@172.16.6.191}"
-ARC=~/bst-aosp
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+ARC=$(cd -- "$SCRIPT_DIR/.." && pwd)
 
 DO_BUILD=1; DO_VERIFY=1; DO_DEPLOY=1; DO_PACK=1; CHECK_ONLY=0
 for a in "$@"; do
@@ -69,8 +70,12 @@ if [ "$DO_DEPLOY" = 1 ]; then
 fi
 
 if [ "$DO_VERIFY" = 1 ]; then
-  step "win: g1_boot_verify.ps1 (Layer2 boot oracle, [Ready] tag)"
+  step "win: g1_boot_verify.ps1 (Layer2 boot and 95s stability oracle)"
   powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$ARC/scripts/g1_boot_verify.ps1" -TimeoutSec 600 || { echo "VERIFY FAILED"; exit 1; }
+  step "win: g1_property_verify.ps1 (post-data BlueStacks properties)"
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$ARC/scripts/g1_property_verify.ps1" || { echo "PROPERTY VERIFY FAILED"; exit 1; }
+  step "win: g1_runtime_regression.ps1 (Launcher and guest services)"
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$ARC/scripts/g1_runtime_regression.ps1" || { echo "RUNTIME REGRESSION FAILED"; exit 1; }
 fi
 
-step "DONE. boot oracle 结果见上；详见 G1-RESTORE.md §6 + porting-log。"
+step "DONE. boot/property/runtime 结果见上；详见 G1-RESTORE.md §6 + porting-log。"

@@ -130,6 +130,7 @@ ANDROID16_ACTIVE_SCRIPTS = {
     "scripts/merge_aosp16_to_android16.sh",
     "scripts/patch-goldfish-emuhwc2-vsync-sp.py",
     "scripts/patch-goldfish-hwc2-bst-product.py",
+    "scripts/prepare_android16_package_inputs.sh",
 }
 SHARED_REPOSITORY_TOOLS = {
     "scripts/generate_project_review.py",

@@ -25,7 +25,7 @@ ssh markxu@172.16.6.191 \
 # 全流程前预检（同样不 build/pack/deploy）
 bash scripts/g1_build_pack.sh --check
 
-# build + pack + deploy + boot oracle
+# build + pack + deploy + boot/property/runtime gates
 bash scripts/g1_build_pack.sh
 ```
 
@@ -40,7 +40,7 @@ OUT_DIR 和 `android_x86_64`。命中 `~/aosp16` 即失败。
 > 调试约束：**禁 `m clean`（用 installclean）+ 禁 apk 重编**（apk 用 prebuilt，g1_copy_bst_apks 从 apks_Baklava64 拷）。
 
 ```bash
-# 全流程（远程 build/pack → win deploy → win boot verify）
+# 全流程（远程 build/pack → win deploy → boot/property/runtime verify）
 bash scripts/g1_build_pack.sh
 # 调试提速：跳过 m droid（用现有 OUT），只 pack+deploy+verify
 bash scripts/g1_build_pack.sh --no-build
@@ -67,7 +67,22 @@ bash scripts/g1_build_pack.sh --pack-only
 7. win 干净首启：`scripts/g1_reset_data_wipe.ps1`从已验证的
    `Data.vhdx.wipe20260717-141744` 恢复 `Data.vhdx`并回读 SHA-256。
 8. win `g1_boot_verify.ps1`：读部署 identity，Layer2 7 个 oracle 任一
-   缺失即返回非零。
+   缺失即返回非零；随后至少稳定 95 秒，watchdog、system_server 终止或
+   zygote 因 system_server 退出均判失败，不能只凭 host `[Ready]` 通过。
+9. win `g1_property_verify.ps1`：逐文件比较 post-data 属性和运行时值，
+   `bst.max_fps`、缺失属性或只读覆盖不一致均阻断。
+10. win `g1_runtime_regression.ps1`：启动 uncube HOME，并在 95 秒窗口内
+   轮询 ADB、boot ID 和 `system_server` PID，再验证 shared folder、Houdini、
+   网络、telephony、Widevine 和核心 Binder 服务。
+
+Baklava 外部 APK 输入在打包前由
+`scripts/prepare_android16_package_inputs.sh --install` 组装或复核。脚本只
+接受固定 Git/LFS commit、固定 legacy Root SHA-256 和 markxu-owned 路径；
+已存在 bundle 必须先通过完整 manifest、config 和 APK ZIP 校验才能复用。
+`--install` 必须位于 app-player `apks`/`datafs` 已创建 staging 之后、Root
+recipe 执行 `copy_data_apks` 之前；不能提前到 `build.sh` 入口，否则
+`create_apk_folder` 会删除刚安装的 staging。仅预检现有 bundle 使用
+`--verify-only`，该模式不组装或安装任何内容。
 
 **fastboot.vdi 重建**（kernel-a16 + 修复版 bs_bootlog initrd；非每次，仅 kernel/bs_bootlog 变时）：
 ```bash

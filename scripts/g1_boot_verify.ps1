@@ -3,7 +3,7 @@ param(
     [string]$PlayerExe = "C:\Program Files\BlueStacks_nxt\HD-Player.exe",
     [string]$LogDir = "C:\ProgramData\BlueStacks_nxt\Logs",
     [int]$TimeoutSec = 600,
-    [int]$StabilizationSec = 75,
+    [int]$StabilizationSec = 95,
     [string]$ArtifactIdentity = "C:\ProgramData\BlueStacks_nxt\Engine\Tiramisu64\Root.vhd.identity",
     [switch]$CheckOnly
 )
@@ -76,7 +76,10 @@ foreach ($name in @("Player.log", "Player.log.1", "BstkCore.log")) {
 $fatalPatterns = @(
     @{ id = "package_state_null"; rx = "PackageStateInternal\.getAppId\(\).*null object reference" },
     @{ id = "apps_filter_crash"; rx = "AppsFilterBase\.shouldFilterApplication" },
-    @{ id = "systemui_crash_loop"; rx = "Process com\.android\.systemui has crashed too many times" }
+    @{ id = "systemui_crash_loop"; rx = "Process com\.android\.systemui has crashed too many times" },
+    @{ id = "system_server_watchdog"; rx = "WATCHDOG KILLING SYSTEM PROCESS|watchdog.*system_server" },
+    @{ id = "system_server_terminated"; rx = "system server.*has terminated|system_server.*(?:died|terminated)" },
+    @{ id = "zygote_system_server_exit"; rx = "Exit zygote because system server.*terminated" }
 )
 $stabilityFailures = @()
 foreach ($pat in $fatalPatterns) {

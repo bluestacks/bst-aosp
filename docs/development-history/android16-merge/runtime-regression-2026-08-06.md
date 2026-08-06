@@ -142,6 +142,83 @@ Binder services. Fake-Wi-Fi API presentation, real camera frames, media
 playback, and external network reachability remain explicit application or host
 oracles; service presence alone must not be reported as those behaviors passing.
 
+The stability gate is 95 seconds by default because the old deployed guest can
+remain superficially ready for about 82 seconds between watchdog resets. During
+that window the gate polls HD-Adb and verifies that the guest boot ID and
+`system_server` PID do not change. It also rejects watchdog, zygote/system-server
+termination, package-state, and repeated SystemUI crash signatures. A host
+`[Ready]` state is never accepted as a substitute for these guest checks.
+
+## Read-only HD Regression
+
+The running old instance was inspected without restart, deployment, Data
+changes, log clearing, or HOME launch. HD-Player remained present and the host
+log still reported `[Ready]`, but `HD-Adb devices` reported
+`emulator-5554 offline`. The readback snapshot contained at least 42 watchdog
+events, 142 zygote SIGKILL lines, and 672 zygote service lifecycle lines; the
+live logs continued to accumulate events afterward. The repeating sequence is
+approximately 81 to 83 seconds:
+
+1. the kernel emits blocked-task, memory, and backtrace sysrq output;
+2. watchdog terminates `system_server`;
+3. zygote exits because its system server terminated;
+4. zygote and framework services restart.
+
+The first retained event in `Player.log.1` occurs at host time `19:58:48` with
+guest uptime 6068 seconds. At `20:55:00`, the retained context identifies the
+watchdog process and the terminated system-server PID before zygote restarts.
+Rotated logs may omit earlier cycles, so this is a lower bound, not the onset
+time. The memory dump still shows roughly 3.3 GiB free in DMA32, so the evidence
+does not support whole-guest memory exhaustion as the cause.
+
+The exact Java handler that watchdog considered blocked is not available in the
+serial Player log. It may be present under guest `/data/anr`, but live Data is
+not mounted and the instance is not restarted while it is offline. The next
+clean-Data validation must capture logcat and ANR evidence before ADB loss. This
+old instance therefore fails boot validation; the host-ready marker is a false
+positive and provides no credit to the current source commits.
+
+Legacy light and power HAL VINTF registration errors also repeat in the log.
+They are tracked as compatibility noise pending a new-image reproduction and
+are not asserted as the watchdog root cause. Repeated audioserver requests for
+the missing activity service are consistent with system-server unavailability,
+not an independent audio pass or failure.
+
+## Deterministic APK Inputs
+
+The Baklava config originally resolved through links outside the markxu-owned
+workspace, and the generated staging directory lacked 17 configured payloads
+plus three packaging inputs. The active build now uses a self-contained,
+reviewable bundle assembled only from immutable Git/LFS identities and an exact
+markxu-owned legacy Root backup. It does not read or modify another developer's
+process or workspace.
+
+- preparation script: `scripts/prepare_android16_package_inputs.sh`
+- bundle: `~/a16-package-inputs/bst-v5.22.210-A16-e7a61686`
+- size/files/APKs: 507,407,646 bytes / 62 files / 49 APKs
+- BlueStacks A16 input commit:
+  `e7a61686ae5b7c599f0c1e650ea900ac922f97c7`
+- Baklava config SHA-256:
+  `cb82f64d7c5728e7b5ced336ec01e7dffca43a6f7ec973dc0f99fc199c670010`
+- Chrome/Trichrome source commit:
+  `fac0e983ac95f32510406e4bf1d2e9eb8eef3cbc`
+- legacy Root SHA-256:
+  `6ed535717f89bdac8e6318924f39246fe10a95f1adb701f6096d13f43e7153b1`
+
+Independent readback verified `SOURCE.identity`, every `SHA256SUMS` entry, all
+35 config or auxiliary paths, and every staged APK as a ZIP. Both active
+Baklava config links resolve inside the markxu-owned bundle. Existing bundles
+are now verified and reused rather than overwritten; a missing or mismatched
+identity fails before installation.
+
+The full-build release staging previously retained files from the August 5
+target-only package because the app-player copy phase uses merging `cp -ar`
+semantics. Conflicting duplicate APK hashes proved that this could create a
+mixed-source Root. The stale active staging and outputs were moved intact to
+`~/releases/Baklava64/.pre-full-build-20260806`; they were not deleted. The
+current build must create fresh active staging before any artifact can receive
+the current-build identity.
+
 ## Full Build In Progress
 
 The release-complete app-player build started after the requested 19:30 China

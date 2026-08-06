@@ -2,28 +2,28 @@
   "schema_version": 1,
   "generated_from": ".",
   "summary": {
-    "files": 1810,
-    "existing_files": 1809,
-    "bytes": 77360608,
-    "text_lines": 1342222,
+    "files": 1811,
+    "existing_files": 1810,
+    "bytes": 77368898,
+    "text_lines": 1342431,
     "by_stage": {
-      "android16-promotion": 618,
-      "aosp16-development": 847,
+      "android16-promotion": 633,
+      "aosp16-development": 840,
       "generated": 15,
       "reference": 45,
-      "shared": 285
+      "shared": 278
     },
     "by_git_state": {
       "generated": 15,
       "removed": 1,
-      "tracked": 1556,
+      "tracked": 1557,
       "untracked": 238
     },
     "by_availability": {
       "generated": 15,
       "local-only": 238,
       "removed-tombstone": 1,
-      "repository": 1556
+      "repository": 1557
     },
     "findings_by_severity": {
       "P2": 1,
@@ -12753,8 +12753,8 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 8030,
-      "sha256": "04a3f15e32094a90f7fb82f393250e30a5aace8bf1fc94ed2b22910cb559f1f9",
+      "bytes": 8057,
+      "sha256": "0cbe568d5f463db612515e95676e8f83115f1387d162e951453a974f65d154b3",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
       "line_count": 60,
@@ -57788,21 +57788,21 @@
       "encoding": "utf-8-sig",
       "line_count": 1035,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Compare every final A13 branch patch with AOSP16 and Android-16 trees.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -57811,7 +57811,7 @@
           "python-ast"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -58460,23 +58460,23 @@
       "encoding": "utf-8-sig",
       "line_count": 146,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [
         "G1"
       ],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Fail-closed ADB allowlist oracle for the promoted Android-16 guest.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -58485,7 +58485,7 @@
           "powershell-parser"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -59017,23 +59017,23 @@
       "encoding": "utf-8-sig",
       "line_count": 217,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [
         "G1"
       ],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Frame-pacing and bounded CPU oracle for the promoted Android-16 guest.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -59042,7 +59042,7 @@
           "powershell-parser"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -59052,11 +59052,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 6722,
-      "sha256": "868a94c9e0263ccfca0682d03c53b82d53abcea5759142f96dbe9505f5d06904",
+      "bytes": 8063,
+      "sha256": "4741ed3f6b7e986109b436258161c75e5c49ab16ae366d127d0cd3649a48087a",
       "media_type": "text/plain",
       "encoding": "utf-8-sig",
-      "line_count": 167,
+      "line_count": 198,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -59579,21 +59579,21 @@
       "encoding": "utf-8-sig",
       "line_count": 349,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Generate a one-entry-per-commit A13 promotion review ledger.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -59602,7 +59602,7 @@
           "python-ast"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -60021,21 +60021,21 @@
       "encoding": "utf-8-sig",
       "line_count": 205,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Map explicit A13 commit references in Android-16 promotion commits.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -60044,7 +60044,7 @@
           "python-ast"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -60060,21 +60060,21 @@
       "encoding": "utf-8-sig",
       "line_count": 118,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Merge deterministic A13 audit batches and verify complete project coverage.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -60083,7 +60083,7 @@
           "python-ast"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -72406,21 +72406,21 @@
       "encoding": "utf-8-sig",
       "line_count": 167,
       "line_endings": "lf",
-      "stage": "aosp16-development",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": "android-13/AOSP16 bring-up inputs",
-      "target_tree": "aosp16",
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Render compact Markdown from the A13 three-tree audit JSON files.",
-      "necessity": "Required for provenance, replay analysis, or failure-to-fix traceability.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
       "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
       "security": {
         "status": "clear-by-pattern-scan",
         "severity": null,
         "findings": []
       },
-      "result": "recorded",
+      "result": "current",
       "replacement": null,
       "dependencies": [],
       "validation_evidence": {
@@ -72429,7 +72429,7 @@
           "python-ast"
         ]
       },
-      "preservation": "historical-first-class",
+      "preservation": "active",
       "missing_links": []
     },
     {
@@ -72788,6 +72788,45 @@
       "missing_links": []
     },
     {
+      "path": "scripts/validate_a13_target_commits.py",
+      "exists": true,
+      "git_state": "tracked",
+      "availability": "repository",
+      "authority": "repository-authoritative",
+      "content_source": "git-index",
+      "bytes": 5722,
+      "sha256": "d9046922971148764e698fe24595c4536e83906faa78100c482fbf68a8c50ac8",
+      "media_type": "text/x-python",
+      "encoding": "utf-8-sig",
+      "line_count": 155,
+      "line_endings": "lf",
+      "stage": "android16-promotion",
+      "timeline_refs": [],
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
+      "source_commit": null,
+      "target_commit": null,
+      "purpose": "Validate every recorded A13-to-Android-16 target commit against a checkout.",
+      "necessity": "Review as an active entry point, helper, or compatibility surface.",
+      "performance": "No guest runtime cost by itself; may materially affect build, copy, or packaging time.",
+      "security": {
+        "status": "clear-by-pattern-scan",
+        "severity": null,
+        "findings": []
+      },
+      "result": "current",
+      "replacement": null,
+      "dependencies": [],
+      "validation_evidence": {
+        "status": "pass",
+        "checks": [
+          "python-ast"
+        ]
+      },
+      "preservation": "active",
+      "missing_links": []
+    },
+    {
       "path": "scripts/validate_project_files.py",
       "exists": true,
       "git_state": "tracked",
@@ -72878,10 +72917,10 @@
       "encoding": "utf-8-sig",
       "line_count": 20,
       "line_endings": "lf",
-      "stage": "shared",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": null,
-      "target_tree": null,
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Repository configuration or project entry document.",
@@ -72911,16 +72950,16 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 1666,
-      "sha256": "a4afd0d5e83c53285c048826905cffaa357f2244b8b0dfb9ab55db012d27b5fe",
+      "bytes": 2092,
+      "sha256": "a092d86c61b6a2dd28cca6e389a673b9119874de6d47f796d83671fac940ab81",
       "media_type": "text/markdown",
       "encoding": "utf-8-sig",
-      "line_count": 39,
+      "line_count": 46,
       "line_endings": "lf",
-      "stage": "shared",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": null,
-      "target_tree": null,
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Android-16 Native-Bridge Oracle",
@@ -72952,11 +72991,11 @@
       "availability": "repository",
       "authority": "repository-authoritative",
       "content_source": "git-index",
-      "bytes": 5057,
-      "sha256": "29b40d67f9fb178f04f5820d7883a5112a157688f32ec6817d15409adb6c7d43",
+      "bytes": 5831,
+      "sha256": "c3cf295c2ce31bf5016d306a3aed84e15e1e4f310588d4592a7ede31bfb12d79",
       "media_type": "application/x-sh",
       "encoding": "utf-8-sig",
-      "line_count": 136,
+      "line_count": 152,
       "line_endings": "lf",
       "stage": "android16-promotion",
       "timeline_refs": [
@@ -72999,10 +73038,10 @@
       "encoding": "utf-8-sig",
       "line_count": 22,
       "line_endings": "lf",
-      "stage": "shared",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": null,
-      "target_tree": null,
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "if !defined(__aarch64__)",
@@ -73038,10 +73077,10 @@
       "encoding": "utf-8-sig",
       "line_count": 32,
       "line_endings": "lf",
-      "stage": "shared",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": null,
-      "target_tree": null,
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "if !defined(__aarch64__)",
@@ -73077,10 +73116,10 @@
       "encoding": "utf-8-sig",
       "line_count": 94,
       "line_endings": "lf",
-      "stage": "shared",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": null,
-      "target_tree": null,
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Repository configuration or project entry document.",
@@ -73116,10 +73155,10 @@
       "encoding": "utf-8-sig",
       "line_count": 10,
       "line_endings": "lf",
-      "stage": "shared",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": null,
-      "target_tree": null,
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Repository configuration or project entry document.",
@@ -73155,10 +73194,10 @@
       "encoding": "utf-8-sig",
       "line_count": 10,
       "line_endings": "lf",
-      "stage": "shared",
+      "stage": "android16-promotion",
       "timeline_refs": [],
-      "origin_tree": null,
-      "target_tree": null,
+      "origin_tree": "aosp16 validated development line",
+      "target_tree": "android-16 mainline",
       "source_commit": null,
       "target_commit": null,
       "purpose": "Repository configuration or project entry document.",

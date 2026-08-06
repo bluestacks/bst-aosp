@@ -40,6 +40,19 @@ historical promotion checkpoint rather than the active gate.
 The camera HAL is inline in the current mainline root, so a duplicate camera
 submodule is intentionally excluded.
 
+After regenerating the A13 ledger, validate every recorded target commit
+against the target checkout. The gate resolves normal submodules, rejects
+uninitialized gitlinks, maps root-owned paths such as `hardware/bst/camera` to
+the root repository, requires each commit to be reachable from the current
+component HEAD, and enforces the `[A16] ` subject prefix:
+
+```bash
+python3 scripts/validate_a13_target_commits.py \
+  --ledger docs/development-history/android16-merge/a13-patch-ledger.json \
+  --android16-root "$HOME/android-16" \
+  --output /tmp/a13-target-commit-validation.json
+```
+
 ### 3. Compare and Merge
 
 - Compare by project and file; do not infer coverage from a hand-maintained

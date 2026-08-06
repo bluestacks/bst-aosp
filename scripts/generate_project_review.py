@@ -107,8 +107,10 @@ SECRET_ASSIGNMENT_RE = re.compile(
 )
 MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
 ANDROID16_ACTIVE_SCRIPTS = {
+    "scripts/audit_a13_port_coverage.py",
     "scripts/audit_a16_merge.sh",
     "scripts/audit_android16_promotion.py",
+    "scripts/g1_adb_policy_regression.ps1",
     "scripts/g1_apply_boot_overlays.sh",
     "scripts/g1_app_runtime_oracle.ps1",
     "scripts/g1_boot_verify.ps1",
@@ -117,6 +119,7 @@ ANDROID16_ACTIVE_SCRIPTS = {
     "scripts/g1_build_libs.sh",
     "scripts/g1_build_pack.sh",
     "scripts/g1_copy_bst_apks.sh",
+    "scripts/g1_fps_regression.ps1",
     "scripts/g1_pack_root.sh",
     "scripts/g1_property_verify.ps1",
     "scripts/g1_rebuild_graphics.sh",
@@ -126,12 +129,17 @@ ANDROID16_ACTIVE_SCRIPTS = {
     "scripts/g1_start_pack_remote.sh",
     "scripts/g1_win_deploy.ps1",
     "scripts/g8_disable_vendor_hal_rc.sh",
+    "scripts/generate_a13_patch_ledger.py",
     "scripts/generate_android16_patch_inventory.py",
     "scripts/lib/android16_env.sh",
+    "scripts/map_a13_target_commits.py",
+    "scripts/merge_a13_audit_batches.py",
     "scripts/merge_aosp16_to_android16.sh",
     "scripts/patch-goldfish-emuhwc2-vsync-sp.py",
     "scripts/patch-goldfish-hwc2-bst-product.py",
     "scripts/prepare_android16_package_inputs.sh",
+    "scripts/render_a13_port_audit.py",
+    "scripts/validate_a13_target_commits.py",
 }
 SHARED_REPOSITORY_TOOLS = {
     "scripts/generate_project_review.py",
@@ -329,7 +337,10 @@ def classify_stage(path: str, text: str | None) -> str:
         return "shared"
     if path in ANDROID16_ACTIVE_SCRIPTS:
         return "android16-promotion"
-    if lower.startswith("tests/android16-runtime-oracle/"):
+    if lower.startswith((
+        "tests/android16-runtime-oracle/",
+        "tests/android16-nativebridge-oracle/",
+    )):
         return "android16-promotion"
     if lower.startswith("references/"):
         return "reference"
@@ -1562,3 +1573,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    "scripts/map_a13_target_commits.py",
+    "scripts/merge_a13_audit_batches.py",

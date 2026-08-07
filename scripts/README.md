@@ -19,7 +19,7 @@ before work starts.
 
 | Entry | Role | Side effects |
 |---|---|---|
-| `g1_build_app_player.sh` | Canonical full Android-16 build and app-player package | Builds only the linked target tree with at most eight jobs; records app-player, HD, VBox, graphics and payload identity; requires new Root/system/fastboot artifacts; verifies Root/fastboot UUIDs and packaged SDK identity; rejects an image missing uncube, `libflutter.so`, `mountsf`, or the BlueStacks build identity |
+| `g1_build_app_player.sh` | Canonical incremental Android-16 build and app-player package | Preserves `out_nxt_Baklava64`, runs only `m init systemimage`, and skips the legacy app-player `android` target that deletes images; incrementally repackages Root/fastboot with at most eight jobs; records app-player, HD, VBox, graphics and payload identity; requires new Root/system/fastboot artifacts; verifies Root/fastboot UUIDs and packaged SDK identity; rejects an image missing uncube, `libflutter.so`, `mountsf`, or the BlueStacks build identity |
 | `g1_build_android16.sh` | Target-only Layer 1 Android-16 build and graphics stage | Builds under the validated Android-16 root; does not create a release-complete Root |
 | `g1_build_libs.sh` | Builds and hashes required HD guest native libraries | Builds under the validated Android-16 root |
 | `g1_build_pack.sh` | Orchestrates build, Root packaging, deploy, and complete Layer 2 verification | Builds hash-bound test APKs, then runs boot, property, Launcher/HAL, FPS, app-visible media, ARM64 translation, and fail-closed ADB oracles |

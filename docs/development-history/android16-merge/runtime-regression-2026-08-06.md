@@ -227,9 +227,9 @@ and EGL, Widevine HIDL services, Houdini/native-bridge payload presence, and the
 core `bst.*` instance properties. Telephony identity changes made after this
 artifact cannot be credited by this run.
 
-## Next Build Gate
+## Historical Build Gate
 
-The next build must start after 19:30 China Standard Time, use only
+The August 6 build was required to start after 19:30 China Standard Time, use only
 `~/android-16`, lunch `android_x86_64-trunk_staging-eng`, and run with at most
 eight jobs. Before deployment, bind the root and component commits to hashes of
 the new Root, `system.img`, and `system.sfs`. Boot, property, Launcher, shared
@@ -480,6 +480,14 @@ The incremental retry runs only as `markxu`, PID `1616258`, with log
 workspace is queried, waited on, stopped or used. Runtime regression remains
 blocked until this attempt exits zero and all artifact hashes and embedded
 payloads pass readback.
+
+The time gate was removed by the August 7 follow-up instruction. Subsequent
+builds start immediately and must be incremental: preserve
+`out_nxt_Baklava64`, run only `m init systemimage`, and bypass the legacy
+app-player `android` dependency because it deletes all generated images before
+calling `iso_img`. Packaging-side libraries, APKs, Root, and fastboot are still
+regenerated with at most eight jobs. No clean build or output-tree deletion is
+permitted for this regression cycle.
 
 ## August 7 Boot Classpath Failure
 

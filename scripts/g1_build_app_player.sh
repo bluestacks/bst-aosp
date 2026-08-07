@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run the canonical app-player Android-16 build and packaging flow.
+# Run the canonical incremental app-player Android-16 build and packaging flow.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,6 +16,7 @@ EXPECTED_FASTBOOT_VDI_UUID="${BST_FASTBOOT_VDI_UUID:-91b80c95-aa7d-459d-93e4-c47
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --check) CHECK_ONLY=1 ;;
+    --incremental) ;;
     --jobs)
       shift
       [ "$#" -gt 0 ] || { echo "--jobs requires a value" >&2; exit 2; }
@@ -216,7 +217,7 @@ export USE_CCACHE="${USE_CCACHE:-1}"
 export BST_A16_PACKAGE_INSTALLER="$PACKAGE_INPUT_INSTALLER"
 export BST_A16_PACKAGE_BUNDLE="$PACKAGE_INPUT_BUNDLE"
 
-echo "A16DBG:ANDROID16: app-player build start $(date -Is) jobs=$JOBS factor=$JOB_FACTOR"
+echo "A16DBG:ANDROID16: incremental app-player build start $(date -Is) jobs=$JOBS factor=$JOB_FACTOR"
 BUILD_MARKER="$(mktemp)"
 PACKAGED_BUILD_PROP=""
 cleanup_build_inputs() {
@@ -224,7 +225,32 @@ cleanup_build_inputs() {
   [ -z "$PACKAGED_BUILD_PROP" ] || rm -f "$PACKAGED_BUILD_PROP"
 }
 trap cleanup_build_inputs EXIT
-bash "$BUILD_SCRIPT"
+
+# Keep the audited Android output tree intact. Only rebuild the changed init
+# module and the system image before repackaging the guest artifacts.
+(
+  set +u
+  cd "$BST_ANDROID16_ROOT"
+  export OUT_DIR="$BST_OUT_DIR_NAME"
+  # shellcheck disable=SC1091
+  source build/envsetup.sh >/dev/null
+  lunch android_x86_64-trunk_staging-eng >/dev/null
+  m -j"$JOBS" init systemimage
+)
+
+# The legacy app-player "android" target deletes every image before invoking
+# iso_img. Android was updated above, so mark only that dependency as satisfied
+# and incrementally rebuild the packaging-side libraries, APKs, Root and
+# fastboot artifacts.
+make -j"$JOBS" -o android -f "$BUILD_MAKEFILE" vbox \
+  OEM="$OEM" \
+  IMAGE=Baklava64 \
+  ANDROIDOUTPUTLOC="$ANDROIDOUTPUTLOC" \
+  PKG="${BRANCH}_Baklava64-${ANDROID_BUILD_NUMBER}" \
+  ENABLE_DEXOPT="$ENABLE_DEXOPT" \
+  IS_HYPERV_BUILD=0 \
+  PARALLEL_NX_PROC="$JOB_FACTOR" \
+  ANDROID_SDK_PATH="${ANDROID_SDK_PATH:-/home/build/workspace/android-sdk/sdk}"
 
 SYSTEM_IMG="$BST_RELEASE_ROOT/system.img"
 SYSTEM_SFS="$BST_RELEASE_ROOT/system.sfs"
@@ -318,4 +344,4 @@ bst_write_identity_file "$VHD.identity" "$VHD"
   printf 'package_sums_sha256=%s\n' "$PACKAGE_SUMS_SHA256"
 } >> "$VHD.identity"
 cat "$VHD.identity"
-echo "A16DBG:ANDROID16: app-player build DONE $(date -Is)"
+echo "A16DBG:ANDROID16: incremental app-player build DONE $(date -Is)"

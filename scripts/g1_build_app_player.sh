@@ -11,6 +11,8 @@ source "$SCRIPT_DIR/lib/android16_env.sh"
 
 CHECK_ONLY=0
 JOBS="${BST_BUILD_JOBS:-8}"
+EXPECTED_ROOT_VHD_UUID="${BST_ROOT_VHD_UUID:-54e9ad31-a169-4d5b-a0e0-705d62e96e71}"
+EXPECTED_FASTBOOT_VDI_UUID="${BST_FASTBOOT_VDI_UUID:-91b80c95-aa7d-459d-93e4-c479f5babbb7}"
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --check) CHECK_ONLY=1 ;;
@@ -23,6 +25,56 @@ while [ "$#" -gt 0 ]; do
   esac
   shift
 done
+
+read_vhd_uuid() {
+  python3 - "$1" <<'PY'
+import pathlib
+import sys
+import uuid
+
+path = pathlib.Path(sys.argv[1])
+with path.open("rb") as stream:
+    stream.seek(-512, 2)
+    footer = stream.read(512)
+if len(footer) != 512 or footer[:8] != b"conectix":
+    raise SystemExit(f"invalid VHD footer: {path}")
+print(uuid.UUID(bytes_le=footer[68:84]))
+PY
+}
+
+read_vdi_uuid() {
+  python3 - "$1" <<'PY'
+import pathlib
+import sys
+import uuid
+
+path = pathlib.Path(sys.argv[1])
+with path.open("rb") as stream:
+    stream.seek(64)
+    signature = stream.read(4)
+    stream.seek(392)
+    raw_uuid = stream.read(16)
+if signature != b"\x7f\x10\xda\xbe" or len(raw_uuid) != 16:
+    raise SystemExit(f"invalid VDI header: {path}")
+print(uuid.UUID(bytes_le=raw_uuid))
+PY
+}
+
+write_vdi_uuid() {
+  python3 - "$1" "$2" <<'PY'
+import pathlib
+import sys
+import uuid
+
+path = pathlib.Path(sys.argv[1])
+with path.open("r+b") as stream:
+    stream.seek(64)
+    if stream.read(4) != b"\x7f\x10\xda\xbe":
+        raise SystemExit(f"invalid VDI header: {path}")
+    stream.seek(392)
+    stream.write(uuid.UUID(sys.argv[2]).bytes_le)
+PY
+}
 
 case "$JOBS" in
   ''|*[!0-9]*) echo "jobs must be an integer from 1 through 8" >&2; exit 2 ;;
@@ -153,6 +205,7 @@ export ANDROID_BUILD_NUMBER=local
 export ANDROIDOUTPUTLOC="$HOME/releases"
 export PARALLEL_NX_PROCESSORS_BUILD_SH="$JOB_FACTOR"
 export PARALLEL_NX_PROCESSORS_MAKEFILE="$JOB_FACTOR"
+export BST_BUILD_JOBS="$JOBS"
 export APP_PLAYER_DIR="$BST_APP_PLAYER_ROOT"
 export HD_SOURCE_TOP="$BST_HD_SOURCE_TOP"
 export ALLOW_MISSING_DEPENDENCIES=true
@@ -165,8 +218,10 @@ export BST_A16_PACKAGE_BUNDLE="$PACKAGE_INPUT_BUNDLE"
 
 echo "A16DBG:ANDROID16: app-player build start $(date -Is) jobs=$JOBS factor=$JOB_FACTOR"
 BUILD_MARKER="$(mktemp)"
+PACKAGED_BUILD_PROP=""
 cleanup_build_inputs() {
   rm -f "$BUILD_MARKER"
+  [ -z "$PACKAGED_BUILD_PROP" ] || rm -f "$PACKAGED_BUILD_PROP"
 }
 trap cleanup_build_inputs EXIT
 bash "$BUILD_SCRIPT"
@@ -182,6 +237,20 @@ for artifact in "$SYSTEM_IMG" "$SYSTEM_SFS" "$VHD" "$FASTBOOT_VDI"; do
     exit 1
   }
 done
+VHD_UUID="$(read_vhd_uuid "$VHD")"
+[ "$VHD_UUID" = "$EXPECTED_ROOT_VHD_UUID" ] || {
+  echo "Root.vhd UUID mismatch: expected $EXPECTED_ROOT_VHD_UUID, got $VHD_UUID" >&2
+  exit 1
+}
+FASTBOOT_VDI_UUID="$(read_vdi_uuid "$FASTBOOT_VDI")"
+[ "$FASTBOOT_VDI_UUID" = "$EXPECTED_FASTBOOT_VDI_UUID" ] || {
+  write_vdi_uuid "$FASTBOOT_VDI" "$EXPECTED_FASTBOOT_VDI_UUID"
+  FASTBOOT_VDI_UUID="$(read_vdi_uuid "$FASTBOOT_VDI")"
+}
+[ "$FASTBOOT_VDI_UUID" = "$EXPECTED_FASTBOOT_VDI_UUID" ] || {
+  echo "fastboot.vdi UUID mismatch: expected $EXPECTED_FASTBOOT_VDI_UUID, got $FASTBOOT_VDI_UUID" >&2
+  exit 1
+}
 
 debugfs -R 'stat /bin/mountsf' "$SYSTEM_IMG" 2>&1 | grep -q 'Inode:' || {
   echo "packaged system.img is missing /bin/mountsf" >&2
@@ -203,8 +272,30 @@ debugfs -R 'cat /build.prop' "$SYSTEM_IMG" 2>/dev/null |
     exit 1
   }
 
+TARGET_BUILD_PROP="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/x86_64/system/build.prop"
+[ -f "$TARGET_BUILD_PROP" ] || { echo "missing target build.prop: $TARGET_BUILD_PROP" >&2; exit 1; }
+PACKAGED_BUILD_PROP="$(mktemp)"
+debugfs -R 'cat /build.prop' "$SYSTEM_IMG" 2>/dev/null > "$PACKAGED_BUILD_PROP"
+PLATFORM_SDK_PROPERTIES='ro.build.version.sdk ro.build.version.preview_sdk ro.build.version.preview_sdk_fingerprint ro.build.version.codename ro.build.version.all_codenames ro.build.version.known_codenames'
+for prop in $PLATFORM_SDK_PROPERTIES; do
+  target_value="$(grep -m1 "^${prop}=" "$TARGET_BUILD_PROP" || true)"
+  packaged_value="$(grep -m1 "^${prop}=" "$PACKAGED_BUILD_PROP" || true)"
+  [ -n "$target_value" ] && [ "$packaged_value" = "$target_value" ] || {
+    echo "packaged platform SDK identity mismatch for $prop: target='$target_value' packaged='$packaged_value'" >&2
+    exit 1
+  }
+done
+PLATFORM_SDK_IDENTITY_SHA256="$({
+  for prop in $PLATFORM_SDK_PROPERTIES; do
+    grep -m1 "^${prop}=" "$PACKAGED_BUILD_PROP"
+  done
+} | sha256sum | awk '{print $1}')"
+
 bst_write_identity_file "$VHD.identity" "$VHD"
 {
+  printf 'vhd_uuid=%s\n' "$VHD_UUID"
+  printf 'fastboot_vdi_uuid=%s\n' "$FASTBOOT_VDI_UUID"
+  printf 'platform_sdk_identity_sha256=%s\n' "$PLATFORM_SDK_IDENTITY_SHA256"
   printf 'system_img_sha256=%s\n' "$(sha256sum "$SYSTEM_IMG" | awk '{print $1}')"
   printf 'system_sfs_sha256=%s\n' "$(sha256sum "$SYSTEM_SFS" | awk '{print $1}')"
   printf 'fastboot_vdi_sha256=%s\n' "$(sha256sum "$FASTBOOT_VDI" | awk '{print $1}')"

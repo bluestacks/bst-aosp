@@ -31,21 +31,38 @@ function Get-LogLinesSince {
 Write-Host "A16DBG:G1: boot-verify start timeout=${TimeoutSec}s"
 Write-Host "A16DBG:G1: deployed artifact identity:"
 Get-Content $ArtifactIdentity
-Get-Process -Name "HD-Player","BstkSVC","BstkVMMgr" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-CimInstance Win32_Process | Where-Object {
+    $_.Name -eq "HD-Player.exe" -and $_.CommandLine -match '--instance\s+Tiramisu64(?:\s|$)'
+} | ForEach-Object {
+    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+}
 Start-Sleep -Seconds 2
 $before = Get-Date
 Start-Process -FilePath $PlayerExe -ArgumentList "--instance","Tiramisu64" -WindowStyle Hidden
 $patterns = @(
     @{ id="system_mounted"; rx="A16DBG: system mounted" },
-    @{ id="init_second"; rx="init second stage started" },
-    @{ id="odsign"; rx="odsign.key.done" },
+    @{ id="init_second"; rx="stage2 about to exec /init" },
+    @{ id="odsign"; rx="On-device signing done\." },
     @{ id="boot_completed"; rx="processing action \(sys\.boot_completed=1\)" },
     @{ id="activity"; rx="hcallOnActivityDisplayed" },
     # Host ready mark: newer builds log tag [Ready]; older paths used "Player state: ready"
     @{ id="ready"; rx="Player state: ready|\[Ready\]" },
     @{ id="hide_boot"; rx="fUiHideBootProgressBar" }
 )
+$fatalPatterns = @(
+    @{ id = "vm_start_failed"; rx = "GlueStartVM failed" },
+    @{ id = "zygote_preload_failed"; rx = "Error preloading android\.app\.SystemServiceRegistry" },
+    @{ id = "zygote_boot_class_missing"; rx = "NoClassDefFoundError: Class not found using the boot class loader" },
+    @{ id = "zygote_fatal"; rx = "System zygote died with fatal exception" },
+    @{ id = "package_state_null"; rx = "PackageStateInternal\.getAppId\(\).*null object reference" },
+    @{ id = "apps_filter_crash"; rx = "AppsFilterBase\.shouldFilterApplication" },
+    @{ id = "systemui_crash_loop"; rx = "Process com\.android\.systemui has crashed too many times" },
+    @{ id = "system_server_watchdog"; rx = "WATCHDOG KILLING SYSTEM PROCESS|watchdog.*system_server" },
+    @{ id = "system_server_terminated"; rx = "system server.*has terminated|system_server.*(?:died|terminated)" },
+    @{ id = "zygote_system_server_exit"; rx = "Exit zygote because system server.*terminated" }
+)
 $found = @{}
+$fatalFound = @{}
 $deadline = (Get-Date).AddSeconds($TimeoutSec)
 while ((Get-Date) -lt $deadline) {
     Start-Sleep -Seconds 15
@@ -59,12 +76,19 @@ while ((Get-Date) -lt $deadline) {
             if ($logs | Select-String -Pattern $pat.rx -Quiet) { $found[$pat.id] = $true }
         }
     }
+    foreach ($pat in $fatalPatterns) {
+        if (-not $fatalFound.ContainsKey($pat.id) -and
+            ($logs | Select-String -Pattern $pat.rx -Quiet)) {
+            $fatalFound[$pat.id] = $true
+        }
+    }
     $elapsed = [int]((Get-Date) - $before).TotalSeconds
     Write-Host "[$elapsed s] oracles: $($found.Keys.Count)/$($patterns.Count)"
-    if ($found.Keys.Count -ge $patterns.Count) { break }
+    if ($found.Keys.Count -ge $patterns.Count -or $fatalFound.Keys.Count -gt 0) { break }
 }
 
-if ($found.Keys.Count -ge $patterns.Count -and $StabilizationSec -gt 0) {
+if ($found.Keys.Count -ge $patterns.Count -and $fatalFound.Keys.Count -eq 0 -and
+    $StabilizationSec -gt 0) {
     Write-Host "A16DBG:G1: boot oracles complete; stabilizing for ${StabilizationSec}s"
     Start-Sleep -Seconds $StabilizationSec
 }
@@ -73,17 +97,10 @@ $stabilityLogs = @()
 foreach ($name in @("Player.log", "Player.log.1", "BstkCore.log")) {
     $stabilityLogs += Get-LogLinesSince -Path (Join-Path $LogDir $name) -Since $before
 }
-$fatalPatterns = @(
-    @{ id = "package_state_null"; rx = "PackageStateInternal\.getAppId\(\).*null object reference" },
-    @{ id = "apps_filter_crash"; rx = "AppsFilterBase\.shouldFilterApplication" },
-    @{ id = "systemui_crash_loop"; rx = "Process com\.android\.systemui has crashed too many times" },
-    @{ id = "system_server_watchdog"; rx = "WATCHDOG KILLING SYSTEM PROCESS|watchdog.*system_server" },
-    @{ id = "system_server_terminated"; rx = "system server.*has terminated|system_server.*(?:died|terminated)" },
-    @{ id = "zygote_system_server_exit"; rx = "Exit zygote because system server.*terminated" }
-)
-$stabilityFailures = @()
+$stabilityFailures = @($fatalFound.Keys)
 foreach ($pat in $fatalPatterns) {
-    if ($stabilityLogs | Select-String -Pattern $pat.rx -Quiet) {
+    if ($stabilityFailures -notcontains $pat.id -and
+        ($stabilityLogs | Select-String -Pattern $pat.rx -Quiet)) {
         $stabilityFailures += $pat.id
     }
 }

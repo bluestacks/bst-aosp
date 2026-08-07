@@ -480,3 +480,92 @@ The incremental retry runs only as `markxu`, PID `1616258`, with log
 workspace is queried, waited on, stopped or used. Runtime regression remains
 blocked until this attempt exits zero and all artifact hashes and embedded
 payloads pass readback.
+
+## August 7 Boot Classpath Failure
+
+The later diagnostic package regenerated the Android image and both VM media.
+The outer ZIP wrapper failed only because the temporary HD input does not
+contain `Source/Core/ImageData/Baklava64/Android.bstk.in`; the Root and fastboot
+artifacts required for boot diagnosis were complete. They are diagnostic
+evidence, not release artifacts:
+
+- Root.vhd SHA-256:
+  `933d9da8f89e35b4dc62dc81bb7fb259b8dbef7a2d65d78e41ed36f347deac8e`;
+- `system.img` SHA-256:
+  `04edeb708696c4b9aed83ca71fcfa6f5d2cfb482a98b8b24b897650af7242e4f`;
+- `system.sfs` SHA-256:
+  `2027962cddd57e9217ba8fce89d3e45a49575708f9291da5c2b637df0a7d4b53`;
+- generated `fastboot.vdi` SHA-256:
+  `846db00ff33b30dd85ba3872d44d9da932905eb53fa4d1c4d317d067d69ed6a1`;
+- Root VHD footer UUID:
+  `54e9ad31-a169-4d5b-a0e0-705d62e96e71`.
+
+The generated fastboot had UUID `5a7e1b10-3459-48c5-a885-a577bc05e57c`, while
+the Windows Tiramisu64 media registry requires
+`91b80c95-aa7d-459d-93e4-c479f5babbb7`. The first deployment therefore did not
+exercise the new fastboot. After changing only the VDI header UUID, the VM
+started with the new fastboot and reproduced the same guest failure. The
+canonical build now normalizes the generated VDI header before hashing it,
+records `fastboot_vdi_uuid`, and the Windows deploy gate verifies both its hash
+and UUID before replacing either medium.
+
+A temporary one-line framework trace proved that all three BlueStacks service
+registrations complete successfully. Each zygote reached `vpn_management`,
+then failed before `country_detector` with:
+
+```text
+Error preloading android.app.SystemServiceRegistry.
+NoClassDefFoundError: Class not found using the boot class loader
+System zygote died with fatal exception
+```
+
+The next bytecode reference is `android.location.CountryDetector`, which is in
+`/system/framework/framework-location.jar`. The jar exists in the generated
+system image and is declared by `bootclasspath.pb`, but that entry has
+`min_sdk_version=Baklava`. A markxu-only initrd probe on the local Tiramisu64
+instance captured the values used by `derive_classpath`:
+
+```text
+ro.build.version.sdk=36
+ro.build.version.codename=REL
+ro.build.version.known_codenames=...Tiramisu
+```
+
+The generated classpath consequently omitted the A16 split framework jars.
+The Android target build itself has `codename=Baklava`, `preview_sdk=1`, and a
+known-codename list through Baklava. The app-player package replaced those
+with release-style values, and the retained Data property files further
+overrode the known-codename list with the A13-era value. This is the direct
+cause of the zygote failure; it is not a missing BST Manager class or service
+registration port.
+
+The final source adaptation is intentionally narrow. `system/core` continues
+to load all four BlueStacks property files at their A13-compatible precedence,
+but ignores their six platform SDK negotiation keys. The temporary packaging
+flow copies those same six keys from the audited Android target build into the
+packaged `build.prop`; all other BlueStacks release identity remains intact.
+The package gate compares every key and records their aggregate SHA-256.
+
+Current Android identities are:
+
+- root: `cdd6dac760126b41b3a287bcb54354c7f1d38575`,
+  `[A16] Protect Android 16 boot classpath identity`;
+- `system/core`: `468929f9d60e19438849413880ef120245786c19`,
+  `[A16] Load guest properties after data mount`;
+- `device/generic/common`: `be9c8bc58a7bc1d4989d96b3ddcd5ee01144bf53`,
+  `[A16] Limit kernel build parallelism`;
+- `frameworks/base`: `5acece03e566c739235304c30a81afb7e7a3256c`;
+  the temporary registration trace commit was removed.
+
+The concurrency correction is also necessary: the old kernel task derived 20
+inner jobs from `/sys/devices/system/cpu/present` even when outer Ninja used
+`-j8`. It now accepts only `BST_BUILD_JOBS` values 1 through 8 and defaults to
+8; the canonical wrapper exports the validated value. The change has no guest
+runtime cost and prevents build-host contention.
+
+Boot validation is still **failed/pending**, not passed. The source and package
+fixes have not yet been rebuilt and deployed. A clean-Data run must prove that
+`framework-location.jar` is present in the runtime BOOTCLASSPATH, zygote passes
+`country_detector`, SystemServer reaches boot completion, and Launcher and all
+remaining regression oracles stay stable. No Henry process or workspace was
+waited on, stopped, modified, or used during this diagnosis.

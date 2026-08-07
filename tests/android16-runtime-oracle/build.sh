@@ -47,13 +47,13 @@ BRANCH=$(git -C "$ANDROID_ROOT" branch --show-current)
 
 ANDROID_JAR="$ANDROID_ROOT/prebuilts/sdk/current/public/android.jar"
 AAPT2="$ANDROID_ROOT/prebuilts/sdk/tools/linux/bin/aapt2"
-D8="$ANDROID_ROOT/prebuilts/r8/d8"
+D8_JAR="$ANDROID_ROOT/prebuilts/r8/r8.jar"
 ZIPALIGN="$ANDROID_ROOT/prebuilts/sdk/tools/linux/bin/zipalign"
-APKSIGNER="$ANDROID_ROOT/prebuilts/sdk/tools/linux/bin/apksigner"
-for input in "$ANDROID_JAR" "$AAPT2" "$D8" "$ZIPALIGN" "$APKSIGNER"; do
+APKSIGNER_JAR="$ANDROID_ROOT/prebuilts/sdk/tools/linux/lib/apksigner.jar"
+for input in "$ANDROID_JAR" "$AAPT2" "$D8_JAR" "$ZIPALIGN" "$APKSIGNER_JAR"; do
   [[ -e "$input" ]] || { echo "missing Android-16 prebuilt: $input" >&2; exit 2; }
 done
-for tool in javac keytool zip sha256sum; do
+for tool in java javac keytool zip sha256sum; do
   command -v "$tool" >/dev/null || { echo "missing host tool: $tool" >&2; exit 2; }
 done
 
@@ -73,7 +73,8 @@ mapfile -t SOURCES < <(find "$SCRIPT_DIR/src" -type f -name '*.java' -print | so
 javac -g:none -encoding UTF-8 -source 8 -target 8 -bootclasspath "$ANDROID_JAR" \
   -d "$WORK/classes" "${SOURCES[@]}"
 mapfile -t CLASSES < <(find "$WORK/classes" -type f -name '*.class' -print | sort)
-"$D8" --lib "$ANDROID_JAR" --min-api 30 --output "$WORK/dex" "${CLASSES[@]}"
+java -cp "$D8_JAR" com.android.tools.r8.D8 --lib "$ANDROID_JAR" \
+  --min-api 30 --output "$WORK/dex" "${CLASSES[@]}"
 "$AAPT2" link -I "$ANDROID_JAR" --manifest "$SCRIPT_DIR/AndroidManifest.xml" \
   --min-sdk-version 30 --target-sdk-version 35 --version-code 1 --version-name 1 \
   -o "$WORK/unsigned.apk"
@@ -83,9 +84,9 @@ cp "$WORK/unsigned.apk" "$WORK/unaligned.apk"
 keytool -genkeypair -keystore "$WORK/oracle.keystore" -storepass android \
   -keypass android -alias androiddebugkey -dname "CN=A16 Runtime Oracle" \
   -keyalg RSA -validity 10000 -noprompt >/dev/null 2>&1
-"$APKSIGNER" sign --ks "$WORK/oracle.keystore" --ks-pass pass:android \
+java -jar "$APKSIGNER_JAR" sign --ks "$WORK/oracle.keystore" --ks-pass pass:android \
   --key-pass pass:android --out "$OUTPUT" "$WORK/aligned.apk"
-"$APKSIGNER" verify "$OUTPUT"
+java -jar "$APKSIGNER_JAR" verify "$OUTPUT"
 
 APK_SHA=$(sha256sum "$OUTPUT" | awk '{print $1}')
 SOURCE_SHA=$(

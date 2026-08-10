@@ -19,6 +19,10 @@ features from scratch.
   executable and host/manual acceptance gates.
 - [`runtime-regression-2026-08-06.md`](runtime-regression-2026-08-06.md): current
   launcher/property/HAL findings, active build identity and regression record.
+- [`runtime-regression-2026-08-11.md`](runtime-regression-2026-08-11.md):
+  runtime-validated explicit property fix, narrow incremental build and package
+  identity, formal 6.12 AHCI failure, 5.15 userspace fallback, and the remaining
+  host/guest shared-folder and IME contract gaps.
 - [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
   candidate, target-branch ancestry, final artifact/boot evidence and open
   publication blockers.
@@ -59,8 +63,12 @@ features from scratch.
   branch track `bst-v5.22.210-A16`. The build, package, and boot evidence
   remains bound to `2be2bd594015046288f67420c72ac3d964595d14` and is historical
   for the new root; a new incremental build and boot regression are required.
-  Full runtime acceptance also remains blocked by exact `bst.*` lookup/shared
-  folders.
+  That historical runtime acceptance was blocked by exact `bst.*` lookup and
+  shared folders. The 2026-08-11 local follow-up resolves and validates exact
+  `bst.*` reads, but has not been pushed. Its complete 6.12 artifact still
+  fails ATA IDENTIFY; a mixed new-Root/known-green-5.15 userspace baseline
+  passes 7/7 boot and property checks but remains blocked by the Hyper-V
+  shared-folder and IME listener contracts.
 - [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
   rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes
   and current 7/7 boot evidence.

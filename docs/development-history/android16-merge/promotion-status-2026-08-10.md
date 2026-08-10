@@ -97,21 +97,20 @@ identity consumers are also affected. Details and required evidence are in
 ### Publication topology
 
 All gitlinks changed relative to `bst-v5.22.210-A16` were checked against a
-canonical BlueStacks organization URL with `git ls-remote`. The following
-repositories return `Repository not found` and require manual creation/upload:
+canonical BlueStacks organization URL with `git ls-remote`. The three
+previously missing A16 repositories were created and populated on 2026-08-10:
 
-| Project path | Required BlueStacks repository | Fork state |
-| --- | --- | --- |
-| `external/ffmpeg` | `bluestacks/external-ffmpeg-a16` | `mark-bst/external-ffmpeg-a16` exists |
-| `external/stagefright-plugins` | `bluestacks/external-stagefright-plugins-a16` | `mark-bst/external-stagefright-plugins-a16` exists |
-| `external/v86d` | `bluestacks/external-v86d-a16` | `mark-bst/external-v86d-a16` is also missing |
+| Project path | BlueStacks repository | `aosp16-bst` | `aosp16-bst-merge` |
+| --- | --- | --- | --- |
+| `external/ffmpeg` | `bluestacks/external-ffmpeg-a16` | `5caa26d67340b43aebef124bcb7e968ba37f6cb6` | `b58396a9a465ec3875e01d1719bd0beea971b359` |
+| `external/stagefright-plugins` | `bluestacks/external-stagefright-plugins-a16` | `0b53a655eef7a8be53bfbcaefaca06d1a52a6add` | `6462e1ed74e9c91b4bf336713c8f928afeb3a4fc` |
+| `external/v86d` | `bluestacks/external-v86d-a16` | `bf5f11a175a6740dd29cd224c804e03b2ac80558` | `49e046362296556bc38b45bb4d971965eab21dfe` |
 
-Every other changed gitlink has a reachable BlueStacks repository. The
-`external/v86d` repository is a component-publication blocker, while the other
-two can be reviewed from their existing forks pending organization upload.
-Root publication must not be described as topology-complete until all three
-BlueStacks repositories and the `external/v86d` fork are readable and contain
-the referenced commits.
+Root commit `cac24e164bb53210c4f003405d3f00ded63c37da` changes only the
+three `.gitmodules` URLs from temporary `mark-bst` locations to the formal
+BlueStacks repositories. The gitlinks are unchanged and exactly match the
+published merge tips. Repository topology is complete for these components;
+the remaining release blocker is runtime acceptance, not repository upload.
 
 ## Rejected Or Superseded Changes
 
@@ -143,11 +142,15 @@ that known limitation.
 - Published root `2be2bd594015046288f67420c72ac3d964595d14` to
   `mark-bst/android-16:aosp16-bst-merge` with a lease against the prior
   `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8` tip.
+- Published both required branches to the new BlueStacks FFmpeg, Stagefright
+  plugin, and v86d A16 repositories and read all six refs back successfully.
+- Published root follow-up `cac24e164bb53210c4f003405d3f00ded63c37da`,
+  which points those three module URLs at their formal BlueStacks repositories.
 - Opened Draft PR
   [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3)
   from `mark-bst:aosp16-bst-merge` to
-  `bluestacks:bst-v5.22.210-A16`. GitHub reports 85 commits and 1,191 changed
-  files. No reviewer was requested.
+  `bluestacks:bst-v5.22.210-A16`. GitHub reports 86 commits and 1,191 changed
+  files; the pull request remains Draft.
 - Closed superseded PR
   [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2),
   which targeted the old `aosp16-bst` branch, and linked it to PR #3.

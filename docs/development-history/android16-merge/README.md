@@ -48,15 +48,16 @@ features from scratch.
   [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3),
   from `mark-bst:aosp16-bst-merge` to
   `bluestacks:bst-v5.22.210-A16`.
-- Current published review root: `2be2bd594015046288f67420c72ac3d964595d14`.
+- Current published review root: `cac24e164bb53210c4f003405d3f00ded63c37da`.
   Incremental Android/image/package build and minimum Layer 2 boot validation
   pass; clean Data reached 7/7 at 170 seconds plus 95 seconds stability. The
   prepublication audit covers 1,026 repositories with 974 base and 51 merge
   projects, no detached HEADs, gitlink mismatches, or nonconforming commits.
   All 11 ahead component tips and the root tip were subsequently published and
-  read back from `mark-bst`. Full runtime acceptance remains blocked by exact
-  `bst.*` lookup/shared folders, and three BlueStacks organization repositories
-  remain pending manual upload as recorded in `promotion-status-2026-08-10.md`.
+  read back from `mark-bst`. The FFmpeg, Stagefright plugin, and v86d A16
+  repositories were then created under BlueStacks, populated with exact base
+  and merge branch tips, and selected by the root `.gitmodules`. Full runtime
+  acceptance remains blocked by exact `bst.*` lookup/shared folders.
 - [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
   rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes
   and current 7/7 boot evidence.

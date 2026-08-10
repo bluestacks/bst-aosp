@@ -138,6 +138,7 @@ VBOX_HEAD="$(git -C "$VBOX_ROOT" rev-parse HEAD)"
   echo "VBox guest additions checkout contains unresolved index entries" >&2
   exit 1
 }
+VBOX_DIFF_SHA256="$(git -C "$VBOX_ROOT" diff --binary HEAD -- | sha256sum | awk '{print $1}')"
 [ "$VBOX_HEAD" = "$EXPECTED_VBOX_HEAD" ] || {
   echo "unexpected VBox guest additions HEAD: $VBOX_HEAD" >&2
   exit 1
@@ -182,6 +183,7 @@ echo "A16DBG:IDENTITY: hd_head=$HD_HEAD"
 echo "A16DBG:IDENTITY: hd_diff_sha256=$HD_DIFF_SHA256"
 echo "A16DBG:IDENTITY: hd_stage2_sha256=$HD_STAGE2_SHA256"
 echo "A16DBG:IDENTITY: vbox_head=$VBOX_HEAD"
+echo "A16DBG:IDENTITY: vbox_diff_sha256=$VBOX_DIFF_SHA256"
 echo "A16DBG:IDENTITY: build_script_sha256=$BUILD_SCRIPT_SHA256"
 echo "A16DBG:IDENTITY: build_makefile_sha256=$BUILD_MAKEFILE_SHA256"
 echo "A16DBG:IDENTITY: sfs_script_sha256=$SFS_SCRIPT_SHA256"
@@ -232,7 +234,7 @@ cleanup_build_inputs() {
 trap cleanup_build_inputs EXIT
 
 # Keep the audited Android output tree intact. Rebuild the changed dependency
-# closure through init and systemimage before repackaging the guest artifacts.
+# closure through init, systemimage and kernel before repackaging the guest artifacts.
 if [ "$PACKAGE_RESUME" -eq 0 ]; then
   (
     set +u
@@ -241,7 +243,7 @@ if [ "$PACKAGE_RESUME" -eq 0 ]; then
     # shellcheck disable=SC1091
     source build/envsetup.sh >/dev/null
     lunch android_x86_64-trunk_staging-eng >/dev/null
-    m -j"$JOBS" init systemimage
+    m -j"$JOBS" init systemimage kernel
   )
 else
   echo "A16DBG:ANDROID16: resume packaging from existing Android output"
@@ -381,6 +383,7 @@ bst_write_identity_file "$VHD.identity" "$VHD"
   printf 'hd_diff_sha256=%s\n' "$HD_DIFF_SHA256"
   printf 'hd_stage2_sha256=%s\n' "$HD_STAGE2_SHA256"
   printf 'vbox_head=%s\n' "$VBOX_HEAD"
+  printf 'vbox_diff_sha256=%s\n' "$VBOX_DIFF_SHA256"
   printf 'build_script_sha256=%s\n' "$BUILD_SCRIPT_SHA256"
   printf 'build_makefile_sha256=%s\n' "$BUILD_MAKEFILE_SHA256"
   printf 'sfs_script_sha256=%s\n' "$SFS_SCRIPT_SHA256"

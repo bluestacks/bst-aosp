@@ -131,3 +131,26 @@ blocker is open. The pull request description must state that minimum boot is
 green but full runtime acceptance is not. The PR must not be merged until the
 exact property and shared-folder gates pass or the reviewer explicitly accepts
 that known limitation.
+
+## Publication Result
+
+- Created `mark-bst/system-sepolicy-a16` from the BlueStacks repository and
+  published `acff98d684732d0ca05aff5f2799dfd3b32ed921` on
+  `aosp16-bst-merge`.
+- Published and read back the 10 other component tips that were ahead of their
+  audited forks: bionic, generic common/x86_64, BoringSSL, frameworks base and
+  telephony, libcore, Connectivity, NetworkStack, and system core.
+- Published root `2be2bd594015046288f67420c72ac3d964595d14` to
+  `mark-bst/android-16:aosp16-bst-merge` with a lease against the prior
+  `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8` tip.
+- Opened Draft PR
+  [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3)
+  from `mark-bst:aosp16-bst-merge` to
+  `bluestacks:bst-v5.22.210-A16`. GitHub reports 85 commits and 1,191 changed
+  files. No reviewer was requested.
+- Closed superseded PR
+  [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2),
+  which targeted the old `aosp16-bst` branch, and linked it to PR #3.
+
+PR #3 remains draft and must wait for the runtime blocker and manual repository
+uploads documented above. No PR was merged.

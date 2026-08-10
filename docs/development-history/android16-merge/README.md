@@ -38,17 +38,25 @@ features from scratch.
 - Projects carrying promoted or mainline-resolution changes:
   `aosp16-bst-merge`.
 - Development fork: `mark-bst`.
-- Integration target: `bluestacks/android-16:aosp16-bst`.
+- Integration target: `bluestacks/android-16:bst-v5.22.210-A16`.
 - Withdrawn root pull request:
   [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1).
-- Current replacement pull request:
+- Superseded pull request:
   [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2),
-  from `mark-bst:aosp16-bst-merge` to `bluestacks:aosp16-bst`.
-- Current published review root: `5c8f8eb90d60afbb6cb4b21566552b6a8f3bd1e8`.
-  Target-only `m droid`, supplemental guest libraries, `systemimage`, package,
-  Windows deployment and Layer 2 boot validation pass; boot reached 7/7 at
-  168 seconds. The final remote audit covers 1026 repositories with 975 base
-  and 50 merge projects, zero remote mismatches and zero structural errors.
+  closed after the target changed from `aosp16-bst`.
+- Current Draft pull request:
+  [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3),
+  from `mark-bst:aosp16-bst-merge` to
+  `bluestacks:bst-v5.22.210-A16`.
+- Current published review root: `2be2bd594015046288f67420c72ac3d964595d14`.
+  Incremental Android/image/package build and minimum Layer 2 boot validation
+  pass; clean Data reached 7/7 at 170 seconds plus 95 seconds stability. The
+  prepublication audit covers 1,026 repositories with 974 base and 51 merge
+  projects, no detached HEADs, gitlink mismatches, or nonconforming commits.
+  All 11 ahead component tips and the root tip were subsequently published and
+  read back from `mark-bst`. Full runtime acceptance remains blocked by exact
+  `bst.*` lookup/shared folders, and three BlueStacks organization repositories
+  remain pending manual upload as recorded in `promotion-status-2026-08-10.md`.
 - [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
   rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes
   and current 7/7 boot evidence.

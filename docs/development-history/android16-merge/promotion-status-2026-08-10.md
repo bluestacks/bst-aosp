@@ -146,6 +146,12 @@ that known limitation.
   plugin, and v86d A16 repositories and read all six refs back successfully.
 - Published root follow-up `cac24e164bb53210c4f003405d3f00ded63c37da`,
   which points those three module URLs at their formal BlueStacks repositories.
+- The remote build workspace remains at validated root
+  `2be2bd594015046288f67420c72ac3d964595d14` because its GitHub fetch timed
+  out during the metadata-only follow-up sync. Its pre-existing `.gitignore`
+  remains the sole worktree modification. Before the next build, fast-forward
+  the root to `cac24e164bb53210c4f003405d3f00ded63c37da` and rerun identity
+  preflight; no artifact is attributed to the metadata-only root commit.
 - Opened Draft PR
   [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3)
   from `mark-bst:aosp16-bst-merge` to

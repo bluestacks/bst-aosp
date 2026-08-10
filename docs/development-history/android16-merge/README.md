@@ -49,6 +49,9 @@ features from scratch.
   from `mark-bst:aosp16-bst-merge` to
   `bluestacks:bst-v5.22.210-A16`.
 - Current published review root: `cac24e164bb53210c4f003405d3f00ded63c37da`.
+  The build, package, and boot evidence remains bound to
+  `2be2bd594015046288f67420c72ac3d964595d14`; the follow-up changes only three
+  `.gitmodules` URLs and leaves every component gitlink unchanged.
   Incremental Android/image/package build and minimum Layer 2 boot validation
   pass; clean Data reached 7/7 at 170 seconds plus 95 seconds stability. The
   prepublication audit covers 1,026 repositories with 974 base and 51 merge

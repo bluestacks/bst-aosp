@@ -6,12 +6,12 @@
   authority, both used read-only.
 - Target: `~/android-16`, branch `aosp16-bst-merge`, product
   `android_x86_64-trunk_staging-eng`.
-- Candidate root: `d3e80def2ce05594d50cee4819e8a85c20757617`.
+- Candidate root: `90f87eed8d0bbd1bed49f077f775309bd9f2d843`.
 - Target branch: `bluestacks/android-16:bst-v5.22.210-A16` at
   `33cdca5464ea1a50e98058a40c36bf3121dbe2b7` when frozen.
-- Component disposition: all 45 promoted components are published on
+- Component disposition: all 51 promoted components are published on
   `bluestacks/*:bst-v5.22.210-A16`; source and target readback are exact.
-- Merge methods: 31 fast-forward/exact, three normal merges, ten reviewed
+- Merge methods: 37 fast-forward/exact, three normal merges, ten reviewed
   promotion-tree history merges, and one target-first kernel 6.12 merge.
 - Layer 1: passed for historical root `2be2bd594015046288f67420c72ac3d964595d14`;
   pending for the current candidate.
@@ -21,7 +21,8 @@
 
 The initial root-level target replay was a no-op at `2be2bd594015046288f67420c72ac3d964595d14`.
 Component-level target history was subsequently merged before root publication.
-The resulting root is `d3e80def2ce05594d50cee4819e8a85c20757617`;
+The component-content root is `d3e80def2ce05594d50cee4819e8a85c20757617`.
+The current metadata head is `90f87eed8d0bbd1bed49f077f775309bd9f2d843`;
 the pre-existing unstaged root `.gitignore` remained untouched.
 
 Detailed component decisions and all final tips are recorded in
@@ -47,7 +48,8 @@ Detailed component decisions and all final tips are recorded in
 
 The following artifacts validate root `2be2bd594015046288f67420c72ac3d964595d14`,
 not the current component-merge root. They must not be attributed to
-`d3e80def2ce05594d50cee4819e8a85c20757617`.
+`d3e80def2ce05594d50cee4819e8a85c20757617` or metadata head
+`90f87eed8d0bbd1bed49f077f775309bd9f2d843`.
 
 | Evidence | Result |
 | --- | --- |
@@ -93,7 +95,7 @@ identity consumers are also affected. Details and required evidence are in
 
 ### Regression debt
 
-- Incrementally build current root `d3e80def2ce05594d50cee4819e8a85c20757617`
+- Incrementally build current root `90f87eed8d0bbd1bed49f077f775309bd9f2d843`
   and repeat the short boot/Launcher/Settings smoke.
 - Repeat full runtime regression after the exact-property fix.
 - Run real shared-folder host/guest transfer, camera frames, audio
@@ -119,8 +121,11 @@ previously missing A16 repositories were created and populated on 2026-08-10:
 Root commit `cac24e164bb53210c4f003405d3f00ded63c37da` first changed the three
 `.gitmodules` URLs from temporary `mark-bst` locations to the formal
 BlueStacks repositories. Root `d3e80def2ce05594d50cee4819e8a85c20757617`
-then advances 14 gitlinks after the complete component-target merge. Repository
-topology is complete; build and runtime acceptance remain open.
+then advances 14 gitlinks after the complete component-target merge.
+Root `90f87eed8d0bbd1bed49f077f775309bd9f2d843` publishes the six omitted
+ALSA/HAL target tips, removes every remaining personal-fork URL, and makes all
+eight explicit branch fields track `bst-v5.22.210-A16`. Repository topology is
+complete; build and runtime acceptance remain open.
 
 ## Rejected Or Superseded Changes
 
@@ -156,23 +161,25 @@ that known limitation.
   plugin, and v86d A16 repositories and read all six refs back successfully.
 - Published root follow-up `cac24e164bb53210c4f003405d3f00ded63c37da`,
   which points those three module URLs at their formal BlueStacks repositories.
-- Published all 45 promoted component tips to the BlueStacks
+- Published all 51 promoted component tips to the BlueStacks
   `bst-v5.22.210-A16` branches and read back both source and target tips with
   zero mismatches.
 - Published root `d3e80def2ce05594d50cee4819e8a85c20757617`, which advances the
   14 component gitlinks changed by the target-history merges.
-- The remote build workspace remains at
-  `cac24e164bb53210c4f003405d3f00ded63c37da` because fetching the component
-  merge root timed out after ten minutes. Its index is empty and the
-  pre-existing `.gitignore` remains the sole ordinary tracked-file change;
-  component worktrees contain the published final tips. Before the next build,
-  fast-forward the root to `d3e80def2ce05594d50cee4819e8a85c20757617`
-  and rerun identity preflight. No existing artifact is attributed to the
-  current root.
+- Published root `90f87eed8d0bbd1bed49f077f775309bd9f2d843`, which removes the six
+  remaining personal-fork URLs and switches all explicit submodule branches to
+  `bst-v5.22.210-A16` without changing gitlinks.
+- The remote build workspace was fast-forwarded to
+  `90f87eed8d0bbd1bed49f077f775309bd9f2d843` through a verified 2 KB root
+  bundle with recursive submodule fetching disabled. Its index is empty, the
+  pre-existing `.gitignore` remains the sole ordinary tracked-file change, and
+  component worktrees contain the published final tips. Identity preflight is
+  still required before the next build; no existing artifact is attributed to
+  the current root.
 - Opened Draft PR
   [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3)
   from `mark-bst:aosp16-bst-merge` to
-  `bluestacks:bst-v5.22.210-A16`. Its description now records the 45-component
+  `bluestacks:bst-v5.22.210-A16`. Its description now records the 51-component
   closure, new root, stale validation boundary and open runtime blocker; the
   pull request remains Draft.
 - Closed superseded PR

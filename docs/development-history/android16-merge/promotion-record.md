@@ -154,7 +154,7 @@ PR #2 was later closed and superseded by Draft PR
 [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3),
 which targets `bst-v5.22.210-A16`. On 2026-08-10 every promoted component was
 merged or fast-forwarded into its BlueStacks target branch before the root PR
-was updated. Final readback reported 45/45 exact target tips and 45/45 exact
+was updated. Final readback reported 51/51 exact target tips and 51/51 exact
 source tips.
 
 Root `d3e80def2ce05594d50cee4819e8a85c20757617` records the 14 gitlinks that
@@ -163,6 +163,12 @@ Android 16 kernel 6.12 target and `baklava64` identity while explicitly porting
 the missing SquashFS configuration. See
 [`component-target-merge-2026-08-10.md`](component-target-merge-2026-08-10.md)
 for the full matrix and conflict decisions.
+
+Root `90f87eed8d0bbd1bed49f077f775309bd9f2d843` is the final ownership metadata
+follow-up. Six omitted ALSA/HAL components were fast-forwarded on their
+BlueStacks target branches before their personal-fork URLs were replaced. The
+final `.gitmodules` contains only BlueStacks URLs and every explicit branch
+tracks `bst-v5.22.210-A16`.
 
 No build or boot validation is attributed to this new root. The latest green
 artifact evidence remains bound to `2be2bd594015046288f67420c72ac3d964595d14`.

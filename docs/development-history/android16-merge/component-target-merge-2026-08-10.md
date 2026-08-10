@@ -4,9 +4,10 @@
 
 This record closes component publication for Draft PR
 [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3).
-It covers the 42 changed root gitlinks plus the three media repositories whose
-URLs were moved from temporary forks to BlueStacks. App-player auxiliary
-modules and `scratch-gaurav` remain outside scope.
+It covers 42 changed existing root gitlinks plus nine added components: three
+media repositories and six legacy ALSA/HAL repositories whose URLs were moved
+from temporary forks to BlueStacks. App-player auxiliary modules and
+`scratch-gaurav` remain outside scope.
 
 The operation used only `~/android-16` component worktrees. It did not build,
 deploy, read artifacts from `~/aosp16/out*`, or affect another user's process.
@@ -24,11 +25,11 @@ No force push or destructive reset was used.
    before selecting a normal or history-only merge.
 5. Push only ancestry-preserving updates to both the source merge branch and
    the BlueStacks `bst-v5.22.210-A16` branch.
-6. Read both remote tips back for all 45 components.
+6. Read both remote tips back for all 51 components.
 7. Update the 14 root gitlinks whose final merge SHA changed and publish root
    `d3e80def2ce05594d50cee4819e8a85c20757617`.
 
-Final readback: `45/45` BlueStacks target tips and `45/45` source merge tips
+Final readback: `51/51` BlueStacks target tips and `51/51` source merge tips
 equal the reviewed local tip. All final subjects start with `[A16]`.
 
 ## Final Component Matrix
@@ -80,6 +81,31 @@ equal the reviewed local tip. All final subjects start with `[A16]`.
 | `external/ffmpeg` | `b58396a9a465ec3875e01d1719bd0beea971b359` | fast-forward/exact |
 | `external/stagefright-plugins` | `6462e1ed74e9c91b4bf336713c8f928afeb3a4fc` | fast-forward/exact |
 | `external/v86d` | `49e046362296556bc38b45bb4d971965eab21dfe` | fast-forward/exact |
+| `hardware/bst/audio` | `ac13f7b60680f60a3b0efc031aaa42019be254be` | fast-forward/exact |
+| `hardware/bst/lights` | `d7fb147bdaf6c5675ba98c308c0411c8f6762bdd` | fast-forward/exact |
+| `hardware/bst/memtrack` | `d3596f32d4f042ccbb17653ab84132cfa07080d0` | fast-forward/exact |
+| `hardware/bst/power` | `2b2e3e1dd69985937d122b400dded54532e8519f` | fast-forward/exact |
+| `external/alsa-lib` | `e54ae1267d274487fbe06df176eeca0147edd7c3` | fast-forward/exact |
+| `external/alsa-utils` | `12f8c54f77f40bacd87bc0ec4c9f3c6bfb66d47f` | fast-forward/exact |
+
+## Submodule Ownership Closure
+
+The final `.gitmodules` audit found six remaining `mark-bst` URLs. Each
+BlueStacks repository already existed and its `bst-v5.22.210-A16` tip was the
+direct parent of the root-pinned `[A16]` adaptation. The six target branches
+were fast-forwarded and read back before the URLs changed:
+
+- `bluestacks/hardware-bst-audio-a13`
+- `bluestacks/hardware-bst-lights-a13`
+- `bluestacks/hardware-bst-memtrack-a13`
+- `bluestacks/hardware-bst-power-a13`
+- `bluestacks/external-alsa-lib-a13`
+- `bluestacks/external-alsa-utils-a13`
+
+Root `90f87eed8d0bbd1bed49f077f775309bd9f2d843` contains zero `mark-bst`
+submodule URLs. Every URL belongs to the BlueStacks organization, and all eight
+explicit branch fields track `bst-v5.22.210-A16`. This metadata follow-up does
+not change a component gitlink.
 
 ## Divergent Component Review
 
@@ -155,17 +181,18 @@ evidence is bound to root
 `2be2bd594015046288f67420c72ac3d964595d14`. Root
 `d3e80def2ce05594d50cee4819e8a85c20757617` changes component identities and
 includes real target deltas in `bionic`, `build/make`, and the kernel config.
-No build or boot test was run during this publication operation, so the older
-artifacts cannot validate the new root.
+Root `90f87eed8d0bbd1bed49f077f775309bd9f2d843` adds only the final canonical
+submodule URL/branch metadata. No build or boot test was run during this
+publication operation, so the older artifacts cannot validate the current
+component content.
 
 Draft PR #3 must remain unmerged until a target-only incremental build and
 focused boot/runtime regression pass. The existing exact `bst.*` lookup and
 shared-folder blocker also remains open.
 
-The remote build workspace root remains at
-`cac24e164bb53210c4f003405d3f00ded63c37da`: fetching the new PR head timed
-out after ten minutes. Its index is empty and its only ordinary tracked-file
-change is the pre-existing `.gitignore`; the component worktrees contain the
-published final tips. Do not start the next build until the root is
-fast-forwarded to `d3e80def2ce05594d50cee4819e8a85c20757617` and the target
-identity preflight passes.
+The remote build workspace was fast-forwarded to
+`90f87eed8d0bbd1bed49f077f775309bd9f2d843` through a verified 2 KB root
+bundle with recursive submodule fetching disabled. Its index is empty, its
+component worktrees contain the published final tips, and its only ordinary
+tracked-file change is the pre-existing `.gitignore`. The target identity
+preflight remains mandatory before the next build.

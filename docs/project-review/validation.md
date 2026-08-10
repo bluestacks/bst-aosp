@@ -3,7 +3,7 @@
 > This validation reads only this repository. Historical Bash is normalized
 > in memory for parsing so archived byte identity is not changed.
 
-- Results: `expected-failure`=1, `pass`=702
+- Results: `expected-failure`=1, `pass`=703
 - Allowlist: [`validation-allowlist.json`](validation-allowlist.json)
 
 ## Exceptions

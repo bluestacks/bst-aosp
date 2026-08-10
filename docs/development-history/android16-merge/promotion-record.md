@@ -147,3 +147,24 @@ the process deviation are recorded in
 PR #2 remains open and conflict-free. Its description was updated to the
 current topology, artifact hashes, 7/7 boot result, runtime limitations and
 publication evidence. This workflow did not merge the PR.
+
+## Component Target Merge Closure
+
+PR #2 was later closed and superseded by Draft PR
+[bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3),
+which targets `bst-v5.22.210-A16`. On 2026-08-10 every promoted component was
+merged or fast-forwarded into its BlueStacks target branch before the root PR
+was updated. Final readback reported 45/45 exact target tips and 45/45 exact
+source tips.
+
+Root `d3e80def2ce05594d50cee4819e8a85c20757617` records the 14 gitlinks that
+changed during component merging. The special kernel merge preserves the
+Android 16 kernel 6.12 target and `baklava64` identity while explicitly porting
+the missing SquashFS configuration. See
+[`component-target-merge-2026-08-10.md`](component-target-merge-2026-08-10.md)
+for the full matrix and conflict decisions.
+
+No build or boot validation is attributed to this new root. The latest green
+artifact evidence remains bound to `2be2bd594015046288f67420c72ac3d964595d14`.
+PR #3 therefore remains Draft pending a new incremental build, focused boot
+regression, and closure of the exact `bst.*` lookup/shared-folder blocker.

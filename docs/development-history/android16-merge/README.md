@@ -22,6 +22,9 @@ features from scratch.
 - [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
   candidate, target-branch ancestry, final artifact/boot evidence and open
   publication blockers.
+- [`component-target-merge-2026-08-10.md`](component-target-merge-2026-08-10.md):
+  final 45-component target publication, divergent-merge decisions, kernel
+  6.12 handling, remote readback, root gitlinks and validation boundary.
 - [`a13-hal-vintf-review.md`](a13-hal-vintf-review.md): six prepared corrections
   for retained x86_64 HIDL service declarations.
 - [`timeline.md`](timeline.md): generated cont.103-cont.106 chronology.
@@ -48,19 +51,14 @@ features from scratch.
   [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3),
   from `mark-bst:aosp16-bst-merge` to
   `bluestacks:bst-v5.22.210-A16`.
-- Current published review root: `cac24e164bb53210c4f003405d3f00ded63c37da`.
-  The build, package, and boot evidence remains bound to
-  `2be2bd594015046288f67420c72ac3d964595d14`; the follow-up changes only three
-  `.gitmodules` URLs and leaves every component gitlink unchanged.
-  Incremental Android/image/package build and minimum Layer 2 boot validation
-  pass; clean Data reached 7/7 at 170 seconds plus 95 seconds stability. The
-  prepublication audit covers 1,026 repositories with 974 base and 51 merge
-  projects, no detached HEADs, gitlink mismatches, or nonconforming commits.
-  All 11 ahead component tips and the root tip were subsequently published and
-  read back from `mark-bst`. The FFmpeg, Stagefright plugin, and v86d A16
-  repositories were then created under BlueStacks, populated with exact base
-  and merge branch tips, and selected by the root `.gitmodules`. Full runtime
-  acceptance remains blocked by exact `bst.*` lookup/shared folders.
+- Current published review root: `d3e80def2ce05594d50cee4819e8a85c20757617`.
+  All 45 promoted components were published to and read back from both their
+  source merge branch and the BlueStacks `bst-v5.22.210-A16` target branch.
+  Fourteen root gitlinks advanced after divergent component merges. The build,
+  package, and boot evidence remains bound to
+  `2be2bd594015046288f67420c72ac3d964595d14` and is historical for the new
+  root; a new incremental build and boot regression are required. Full runtime
+  acceptance also remains blocked by exact `bst.*` lookup/shared folders.
 - [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
   rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes
   and current 7/7 boot evidence.

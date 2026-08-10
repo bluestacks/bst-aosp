@@ -6,20 +6,26 @@
   authority, both used read-only.
 - Target: `~/android-16`, branch `aosp16-bst-merge`, product
   `android_x86_64-trunk_staging-eng`.
-- Candidate root: `2be2bd594015046288f67420c72ac3d964595d14`.
+- Candidate root: `d3e80def2ce05594d50cee4819e8a85c20757617`.
 - Target branch: `bluestacks/android-16:bst-v5.22.210-A16` at
   `33cdca5464ea1a50e98058a40c36bf3121dbe2b7` when frozen.
-- Merge disposition: the target tip is the merge base and an ancestor of the
-  candidate; target-only commits and paths are empty. No synthetic merge commit
-  is necessary.
-- Layer 1: incremental Android/image/package build passed.
-- Layer 2: clean-Data 7/7 boot plus 95-second stability passed; visible Launcher
-  frame confirmed.
+- Component disposition: all 45 promoted components are published on
+  `bluestacks/*:bst-v5.22.210-A16`; source and target readback are exact.
+- Merge methods: 31 fast-forward/exact, three normal merges, ten reviewed
+  promotion-tree history merges, and one target-first kernel 6.12 merge.
+- Layer 1: passed for historical root `2be2bd594015046288f67420c72ac3d964595d14`;
+  pending for the current candidate.
+- Layer 2: clean-Data 7/7 boot plus 95-second stability passed for the
+  historical root; pending for the current candidate.
 - Extended regression: failed on exact `bst.*` lookup and shared-folder mount.
 
-The target merge was explicitly replayed after the freeze. Git returned
-`Already up to date`, kept HEAD at `2be2bd594015046288f67420c72ac3d964595d14`,
-and left the pre-existing unstaged root `.gitignore` untouched.
+The initial root-level target replay was a no-op at `2be2bd594015046288f67420c72ac3d964595d14`.
+Component-level target history was subsequently merged before root publication.
+The resulting root is `d3e80def2ce05594d50cee4819e8a85c20757617`;
+the pre-existing unstaged root `.gitignore` remained untouched.
+
+Detailed component decisions and all final tips are recorded in
+[`component-target-merge-2026-08-10.md`](component-target-merge-2026-08-10.md).
 
 ## Completed Work
 
@@ -37,7 +43,11 @@ and left the pre-existing unstaged root `.gitignore` untouched.
 - Preserved original development records and classified rejected fixes instead
   of rewriting them as successes.
 
-## Current Evidence
+## Historical Validation Evidence
+
+The following artifacts validate root `2be2bd594015046288f67420c72ac3d964595d14`,
+not the current component-merge root. They must not be attributed to
+`d3e80def2ce05594d50cee4819e8a85c20757617`.
 
 | Evidence | Result |
 | --- | --- |
@@ -83,8 +93,8 @@ identity consumers are also affected. Details and required evidence are in
 
 ### Regression debt
 
-- Repeat the short boot/Launcher/Settings smoke after the no-op target merge
-  readback.
+- Incrementally build current root `d3e80def2ce05594d50cee4819e8a85c20757617`
+  and repeat the short boot/Launcher/Settings smoke.
 - Repeat full runtime regression after the exact-property fix.
 - Run real shared-folder host/guest transfer, camera frames, audio
   playback/capture, Widevine protected playback, and translated ARM64 app
@@ -106,11 +116,11 @@ previously missing A16 repositories were created and populated on 2026-08-10:
 | `external/stagefright-plugins` | `bluestacks/external-stagefright-plugins-a16` | `0b53a655eef7a8be53bfbcaefaca06d1a52a6add` | `6462e1ed74e9c91b4bf336713c8f928afeb3a4fc` |
 | `external/v86d` | `bluestacks/external-v86d-a16` | `bf5f11a175a6740dd29cd224c804e03b2ac80558` | `49e046362296556bc38b45bb4d971965eab21dfe` |
 
-Root commit `cac24e164bb53210c4f003405d3f00ded63c37da` changes only the
-three `.gitmodules` URLs from temporary `mark-bst` locations to the formal
-BlueStacks repositories. The gitlinks are unchanged and exactly match the
-published merge tips. Repository topology is complete for these components;
-the remaining release blocker is runtime acceptance, not repository upload.
+Root commit `cac24e164bb53210c4f003405d3f00ded63c37da` first changed the three
+`.gitmodules` URLs from temporary `mark-bst` locations to the formal
+BlueStacks repositories. Root `d3e80def2ce05594d50cee4819e8a85c20757617`
+then advances 14 gitlinks after the complete component-target merge. Repository
+topology is complete; build and runtime acceptance remain open.
 
 ## Rejected Or Superseded Changes
 
@@ -146,20 +156,27 @@ that known limitation.
   plugin, and v86d A16 repositories and read all six refs back successfully.
 - Published root follow-up `cac24e164bb53210c4f003405d3f00ded63c37da`,
   which points those three module URLs at their formal BlueStacks repositories.
+- Published all 45 promoted component tips to the BlueStacks
+  `bst-v5.22.210-A16` branches and read back both source and target tips with
+  zero mismatches.
+- Published root `d3e80def2ce05594d50cee4819e8a85c20757617`, which advances the
+  14 component gitlinks changed by the target-history merges.
 - The remote build workspace remains at validated root
   `2be2bd594015046288f67420c72ac3d964595d14` because its GitHub fetch timed
   out during the metadata-only follow-up sync. Its pre-existing `.gitignore`
   remains the sole worktree modification. Before the next build, fast-forward
-  the root to `cac24e164bb53210c4f003405d3f00ded63c37da` and rerun identity
-  preflight; no artifact is attributed to the metadata-only root commit.
+  the root to `d3e80def2ce05594d50cee4819e8a85c20757617` and rerun identity
+  preflight; no existing artifact is attributed to the current root.
 - Opened Draft PR
   [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3)
   from `mark-bst:aosp16-bst-merge` to
-  `bluestacks:bst-v5.22.210-A16`. GitHub reports 86 commits and 1,191 changed
-  files; the pull request remains Draft.
+  `bluestacks:bst-v5.22.210-A16`. Its description now records the 45-component
+  closure, new root, stale validation boundary and open runtime blocker; the
+  pull request remains Draft.
 - Closed superseded PR
   [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2),
   which targeted the old `aosp16-bst` branch, and linked it to PR #3.
 
-PR #3 remains draft and must wait for the runtime blocker and manual repository
-uploads documented above. No PR was merged.
+PR #3 remains Draft and must wait for a new incremental build, boot regression,
+and the runtime blocker. No repository upload remains pending and no PR was
+merged.

@@ -153,6 +153,8 @@ done
 BUILD_MAKEFILE="$BST_APP_PLAYER_ROOT/buildscripts/Makefile"
 SFS_SCRIPT="$BST_APP_PLAYER_ROOT/buildscripts/make-baklava-system-sfs.sh"
 MOUNTSF_PAYLOAD="$BST_APP_PLAYER_ROOT/bst/bin/mountsf"
+EXPECTED_KERNEL_CLANG_REV="${BST_EXPECTED_KERNEL_CLANG_REV:-r563880c}"
+EXPECTED_KERNEL_CLANG_BIN="$BST_ANDROID16_ROOT/prebuilts/clang/host/linux-x86/clang-$EXPECTED_KERNEL_CLANG_REV/bin/clang"
 PACKAGE_INPUT_INSTALLER="$SCRIPT_DIR/prepare_android16_package_inputs.sh"
 PACKAGE_INPUT_BUNDLE="${BST_A16_PACKAGE_BUNDLE:-$HOME/a16-package-inputs/bst-v5.22.210-A16-e7a61686}"
 for input in "$BUILD_MAKEFILE" "$SFS_SCRIPT" "$MOUNTSF_PAYLOAD" \
@@ -160,6 +162,15 @@ for input in "$BUILD_MAKEFILE" "$SFS_SCRIPT" "$MOUNTSF_PAYLOAD" \
     "$PACKAGE_INPUT_BUNDLE/SHA256SUMS"; do
   [ -f "$input" ] || { echo "missing app-player packaging input: $input" >&2; exit 1; }
 done
+[ -x "$EXPECTED_KERNEL_CLANG_BIN" ] || {
+  echo "missing expected kernel clang: $EXPECTED_KERNEL_CLANG_BIN" >&2
+  exit 1
+}
+grep -Fqx "CLANG_PREBUILT_BIN := \$(ANDROIDHOME)/prebuilts/clang/host/linux-x86/clang-${EXPECTED_KERNEL_CLANG_REV}/bin" \
+  "$BUILD_MAKEFILE" || {
+  echo "app-player Makefile does not use kernel clang $EXPECTED_KERNEL_CLANG_REV" >&2
+  exit 1
+}
 APP_PLAYER_DIR="$BST_APP_PLAYER_ROOT" BST_A16_PACKAGE_BUNDLE="$PACKAGE_INPUT_BUNDLE" \
   bash "$PACKAGE_INPUT_INSTALLER" --verify-only
 UNCUBE_APK="$PACKAGE_INPUT_BUNDLE/payload/com.uncube.launcher3.apk"
@@ -171,6 +182,7 @@ MOUNTSF_SHA256="$(sha256sum "$MOUNTSF_PAYLOAD" | awk '{print $1}')"
 UNCUBE_APK_SHA256="$(sha256sum "$UNCUBE_APK" | awk '{print $1}')"
 PACKAGE_SOURCE_IDENTITY_SHA256="$(sha256sum "$PACKAGE_INPUT_BUNDLE/SOURCE.identity" | awk '{print $1}')"
 PACKAGE_SUMS_SHA256="$(sha256sum "$PACKAGE_INPUT_BUNDLE/SHA256SUMS" | awk '{print $1}')"
+KERNEL_CLANG_SHA256="$(sha256sum "$EXPECTED_KERNEL_CLANG_BIN" | awk '{print $1}')"
 BUILD_FLOW_DIFF_SHA256="$(
   git -C "$BST_APP_PLAYER_ROOT" diff --binary HEAD -- \
     buildscripts/build.sh buildscripts/Makefile buildscripts/make-baklava-system-sfs.sh |
@@ -192,6 +204,8 @@ echo "A16DBG:IDENTITY: mountsf_sha256=$MOUNTSF_SHA256"
 echo "A16DBG:IDENTITY: uncube_apk_sha256=$UNCUBE_APK_SHA256"
 echo "A16DBG:IDENTITY: package_source_identity_sha256=$PACKAGE_SOURCE_IDENTITY_SHA256"
 echo "A16DBG:IDENTITY: package_sums_sha256=$PACKAGE_SUMS_SHA256"
+echo "A16DBG:IDENTITY: kernel_clang_revision=$EXPECTED_KERNEL_CLANG_REV"
+echo "A16DBG:IDENTITY: kernel_clang_sha256=$KERNEL_CLANG_SHA256"
 
 if [ "$CHECK_ONLY" -eq 1 ]; then
   echo "A16DBG:ANDROID16: app-player build CHECK OK; no build started"
@@ -392,6 +406,8 @@ bst_write_identity_file "$VHD.identity" "$VHD"
   printf 'uncube_apk_sha256=%s\n' "$UNCUBE_APK_SHA256"
   printf 'package_source_identity_sha256=%s\n' "$PACKAGE_SOURCE_IDENTITY_SHA256"
   printf 'package_sums_sha256=%s\n' "$PACKAGE_SUMS_SHA256"
+  printf 'kernel_clang_revision=%s\n' "$EXPECTED_KERNEL_CLANG_REV"
+  printf 'kernel_clang_sha256=%s\n' "$KERNEL_CLANG_SHA256"
 } >> "$VHD.identity"
 cat "$VHD.identity"
 echo "A16DBG:ANDROID16: incremental app-player build DONE $(date -Is)"

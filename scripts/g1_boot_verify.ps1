@@ -50,6 +50,7 @@ $patterns = @(
     @{ id="hide_boot"; rx="fUiHideBootProgressBar" }
 )
 $fatalPatterns = @(
+    @{ id = "kernel_panic"; rx = "Kernel panic - not syncing" },
     @{ id = "vm_start_failed"; rx = "GlueStartVM failed" },
     @{ id = "zygote_preload_failed"; rx = "Error preloading android\.app\.SystemServiceRegistry" },
     @{ id = "zygote_boot_class_missing"; rx = "NoClassDefFoundError: Class not found using the boot class loader" },

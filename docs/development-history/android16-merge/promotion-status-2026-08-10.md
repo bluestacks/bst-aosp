@@ -161,12 +161,14 @@ that known limitation.
   zero mismatches.
 - Published root `d3e80def2ce05594d50cee4819e8a85c20757617`, which advances the
   14 component gitlinks changed by the target-history merges.
-- The remote build workspace remains at validated root
-  `2be2bd594015046288f67420c72ac3d964595d14` because its GitHub fetch timed
-  out during the metadata-only follow-up sync. Its pre-existing `.gitignore`
-  remains the sole worktree modification. Before the next build, fast-forward
-  the root to `d3e80def2ce05594d50cee4819e8a85c20757617` and rerun identity
-  preflight; no existing artifact is attributed to the current root.
+- The remote build workspace remains at
+  `cac24e164bb53210c4f003405d3f00ded63c37da` because fetching the component
+  merge root timed out after ten minutes. Its index is empty and the
+  pre-existing `.gitignore` remains the sole ordinary tracked-file change;
+  component worktrees contain the published final tips. Before the next build,
+  fast-forward the root to `d3e80def2ce05594d50cee4819e8a85c20757617`
+  and rerun identity preflight. No existing artifact is attributed to the
+  current root.
 - Opened Draft PR
   [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3)
   from `mark-bst:aosp16-bst-merge` to

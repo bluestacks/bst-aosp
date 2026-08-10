@@ -161,3 +161,11 @@ artifacts cannot validate the new root.
 Draft PR #3 must remain unmerged until a target-only incremental build and
 focused boot/runtime regression pass. The existing exact `bst.*` lookup and
 shared-folder blocker also remains open.
+
+The remote build workspace root remains at
+`cac24e164bb53210c4f003405d3f00ded63c37da`: fetching the new PR head timed
+out after ten minutes. Its index is empty and its only ordinary tracked-file
+change is the pre-existing `.gitignore`; the component worktrees contain the
+published final tips. Do not start the next build until the root is
+fast-forwarded to `d3e80def2ce05594d50cee4819e8a85c20757617` and the target
+identity preflight passes.

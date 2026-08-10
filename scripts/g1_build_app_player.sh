@@ -10,6 +10,7 @@ export BST_ALLOWED_ROOT_DIRTY_PATHS="${BST_ALLOWED_ROOT_DIRTY_PATHS:-.gitignore}
 source "$SCRIPT_DIR/lib/android16_env.sh"
 
 CHECK_ONLY=0
+PACKAGE_RESUME=0
 JOBS="${BST_BUILD_JOBS:-8}"
 EXPECTED_ROOT_VHD_UUID="${BST_ROOT_VHD_UUID:-54e9ad31-a169-4d5b-a0e0-705d62e96e71}"
 EXPECTED_FASTBOOT_VDI_UUID="${BST_FASTBOOT_VDI_UUID:-91b80c95-aa7d-459d-93e4-c479f5babbb7}"
@@ -17,6 +18,7 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --check) CHECK_ONLY=1 ;;
     --incremental) ;;
+    --package-resume) PACKAGE_RESUME=1 ;;
     --jobs)
       shift
       [ "$#" -gt 0 ] || { echo "--jobs requires a value" >&2; exit 2; }
@@ -207,6 +209,9 @@ export ANDROIDOUTPUTLOC="$HOME/releases"
 export PARALLEL_NX_PROCESSORS_BUILD_SH="$JOB_FACTOR"
 export PARALLEL_NX_PROCESSORS_MAKEFILE="$JOB_FACTOR"
 export BST_BUILD_JOBS="$JOBS"
+# Some legacy app-player mmm calls omit an explicit -j value. Soong appends
+# NINJA_ARGS after its inferred default, keeping those nested builds capped.
+export NINJA_ARGS="${NINJA_ARGS:+$NINJA_ARGS }-j$JOBS"
 export APP_PLAYER_DIR="$BST_APP_PLAYER_ROOT"
 export HD_SOURCE_TOP="$BST_HD_SOURCE_TOP"
 export ALLOW_MISSING_DEPENDENCIES=true
@@ -226,23 +231,67 @@ cleanup_build_inputs() {
 }
 trap cleanup_build_inputs EXIT
 
-# Keep the audited Android output tree intact. Only rebuild the changed init
-# module and the system image before repackaging the guest artifacts.
-(
-  set +u
-  cd "$BST_ANDROID16_ROOT"
-  export OUT_DIR="$BST_OUT_DIR_NAME"
-  # shellcheck disable=SC1091
-  source build/envsetup.sh >/dev/null
-  lunch android_x86_64-trunk_staging-eng >/dev/null
-  m -j"$JOBS" init systemimage
-)
+# Keep the audited Android output tree intact. Rebuild the changed dependency
+# closure through init and systemimage before repackaging the guest artifacts.
+if [ "$PACKAGE_RESUME" -eq 0 ]; then
+  (
+    set +u
+    cd "$BST_ANDROID16_ROOT"
+    export OUT_DIR="$BST_OUT_DIR_NAME"
+    # shellcheck disable=SC1091
+    source build/envsetup.sh >/dev/null
+    lunch android_x86_64-trunk_staging-eng >/dev/null
+    m -j"$JOBS" init systemimage
+  )
+else
+  echo "A16DBG:ANDROID16: resume packaging from existing Android output"
+fi
 
 # The legacy app-player "android" target deletes every image before invoking
 # iso_img. Android was updated above, so mark only that dependency as satisfied
 # and incrementally rebuild the packaging-side libraries, APKs, Root and
 # fastboot artifacts.
-make -j"$JOBS" -o android -f "$BUILD_MAKEFILE" vbox \
+ANDROID_SYSTEM_STAGING_SOURCE="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/x86_64/system"
+SYSTEM_STAGING="$BST_RELEASE_ROOT/system"
+[ -d "$ANDROID_SYSTEM_STAGING_SOURCE" ] || {
+  echo "missing Android system staging source: $ANDROID_SYSTEM_STAGING_SOURCE" >&2
+  exit 1
+}
+[ "$(bst_realpath "$SYSTEM_STAGING")" = "$(bst_realpath "$BST_RELEASE_ROOT")/system" ] || {
+  echo "refusing to reset unexpected system staging path: $SYSTEM_STAGING" >&2
+  exit 1
+}
+if [ "$PACKAGE_RESUME" -eq 1 ]; then
+  [ -d "$SYSTEM_STAGING" ] && [ ! -L "$SYSTEM_STAGING" ] || {
+    echo "system staging is unavailable for package resume: $SYSTEM_STAGING" >&2
+    exit 1
+  }
+  STALE_STAGING_FILES=0
+elif [ -e "$SYSTEM_STAGING" ]; then
+  [ -d "$SYSTEM_STAGING" ] && [ ! -L "$SYSTEM_STAGING" ] || {
+    echo "system staging is not a real directory: $SYSTEM_STAGING" >&2
+    exit 1
+  }
+  ! mountpoint -q "$SYSTEM_STAGING" || {
+    echo "refusing to reset mounted system staging: $SYSTEM_STAGING" >&2
+    exit 1
+  }
+  STALE_STAGING_FILES="$(find "$SYSTEM_STAGING" -xdev -type f | wc -l)"
+  sudo -n find "$SYSTEM_STAGING" -xdev -mindepth 1 -delete || {
+    echo "unable to reset generated system staging with non-interactive sudo" >&2
+    exit 1
+  }
+else
+  STALE_STAGING_FILES=0
+  mkdir -p "$SYSTEM_STAGING"
+fi
+echo "A16DBG:ANDROID16: reset generated system staging files=$STALE_STAGING_FILES"
+
+MAKE_OLD_TARGETS=(-o android)
+if [ "$PACKAGE_RESUME" -eq 1 ]; then
+  MAKE_OLD_TARGETS+=(-o libs -o apks -o datafs)
+fi
+make -j"$JOBS" "${MAKE_OLD_TARGETS[@]}" -f "$BUILD_MAKEFILE" vbox \
   OEM="$OEM" \
   IMAGE=Baklava64 \
   ANDROIDOUTPUTLOC="$ANDROIDOUTPUTLOC" \
@@ -278,30 +327,28 @@ FASTBOOT_VDI_UUID="$(read_vdi_uuid "$FASTBOOT_VDI")"
   exit 1
 }
 
-debugfs -R 'stat /bin/mountsf' "$SYSTEM_IMG" 2>&1 | grep -q 'Inode:' || {
+debugfs -R 'stat /bin/mountsf' "$SYSTEM_IMG" 2>&1 | grep 'Inode:' >/dev/null || {
   echo "packaged system.img is missing /bin/mountsf" >&2
   exit 1
 }
 debugfs -R 'stat /priv-app/com.uncube.launcher3/com.uncube.launcher3.apk' "$SYSTEM_IMG" 2>&1 |
-  grep -q 'Inode:' || {
+  grep 'Inode:' >/dev/null || {
     echo "packaged system.img is missing the uncube HOME launcher" >&2
     exit 1
   }
 debugfs -R 'stat /priv-app/com.uncube.launcher3/lib/x86_64/libflutter.so' "$SYSTEM_IMG" 2>&1 |
-  grep -q 'Inode:' || {
+  grep 'Inode:' >/dev/null || {
     echo "packaged system.img is missing the uncube launcher native runtime" >&2
     exit 1
   }
-debugfs -R 'cat /build.prop' "$SYSTEM_IMG" 2>/dev/null |
-  grep -q '^ro.build.display.id=BlueStacks-' || {
-    echo "packaged system.img is missing the BlueStacks build identity" >&2
-    exit 1
-  }
-
 TARGET_BUILD_PROP="$BST_ANDROID16_ROOT/$BST_OUT_DIR_NAME/target/product/x86_64/system/build.prop"
 [ -f "$TARGET_BUILD_PROP" ] || { echo "missing target build.prop: $TARGET_BUILD_PROP" >&2; exit 1; }
 PACKAGED_BUILD_PROP="$(mktemp)"
 debugfs -R 'cat /build.prop' "$SYSTEM_IMG" 2>/dev/null > "$PACKAGED_BUILD_PROP"
+grep '^ro.build.display.id=BlueStacks-' "$PACKAGED_BUILD_PROP" >/dev/null || {
+  echo "packaged system.img is missing the BlueStacks build identity" >&2
+  exit 1
+}
 PLATFORM_SDK_PROPERTIES='ro.build.version.sdk ro.build.version.preview_sdk ro.build.version.preview_sdk_fingerprint ro.build.version.codename ro.build.version.all_codenames ro.build.version.known_codenames'
 for prop in $PLATFORM_SDK_PROPERTIES; do
   target_value="$(grep -m1 "^${prop}=" "$TARGET_BUILD_PROP" || true)"

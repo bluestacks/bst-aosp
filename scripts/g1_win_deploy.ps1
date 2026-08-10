@@ -46,7 +46,8 @@ function Get-VdiUuid {
         [void]$stream.Seek(64, [System.IO.SeekOrigin]::Begin)
         $signature = [byte[]]::new(4)
         if ($stream.Read($signature, 0, $signature.Length) -ne $signature.Length -or
-            [BitConverter]::ToUInt32($signature, 0) -ne 0xBEDA107F) {
+            $signature[0] -ne 0x7f -or $signature[1] -ne 0x10 -or
+            $signature[2] -ne 0xda -or $signature[3] -ne 0xbe) {
             throw "Invalid VDI signature: $Path"
         }
         [void]$stream.Seek(392, [System.IO.SeekOrigin]::Begin)
@@ -62,8 +63,6 @@ function Get-VdiUuid {
 
 Set-Location $EngineDir
 Write-Host "A16DBG:G1: win-deploy start" -ForegroundColor Cyan
-Get-Process -Name "HD-Player","BstkSVC","BstkVMMgr" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 2
 Remove-Item Root.vhd.new -Force -ErrorAction SilentlyContinue
 Remove-Item Root.vhd.identity.new -Force -ErrorAction SilentlyContinue
 Remove-Item fastboot.vdi.new -Force -ErrorAction SilentlyContinue
@@ -105,6 +104,12 @@ if ($identity["vhd_uuid"].ToLowerInvariant() -ne $ExpectedRootUuid.ToLowerInvari
     $localVhdUuid.ToLowerInvariant() -ne $ExpectedRootUuid.ToLowerInvariant()) {
     throw "Root.vhd UUID mismatch: expected=$ExpectedRootUuid identity=$($identity['vhd_uuid']) footer=$localVhdUuid"
 }
+$tiramisuPlayers = Get-CimInstance Win32_Process -Filter "Name = 'HD-Player.exe'" |
+    Where-Object { $_.CommandLine -match '--instance\s+Tiramisu64(?:\s|$)' }
+$tiramisuPlayers | ForEach-Object {
+    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+}
+Start-Sleep -Seconds 2
 $ts = Get-Date -Format "yyyyMMdd-HHmm"
 Copy-Item Root.vhd "Root.vhd.bak.$ts" -Force -ErrorAction SilentlyContinue
 Copy-Item fastboot.vdi "fastboot.vdi.bak.$ts" -Force -ErrorAction SilentlyContinue

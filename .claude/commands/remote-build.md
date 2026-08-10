@@ -1,6 +1,6 @@
 ---
 description: 远程 lunch + m 构建，后台化 + 回读日志/exit code/产物
-allowed-tools: Bash(ssh:*), Bash(scp:*), Read, Write, CronCreate, CronDelete, CronList
+allowed-tools: Bash(ssh:*), Bash(scp:*), Read, Write
 ---
 在远程 Ubuntu 主机跑 AOSP 构建，按 `.claude/rules/remote-build.md` 后台化、断线可恢复。
 
@@ -16,13 +16,14 @@ allowed-tools: Bash(ssh:*), Bash(scp:*), Read, Write, CronCreate, CronDelete, Cr
    ```
    保存 resolved tree、branch、HEAD、OUT_DIR 和 product；任一不符即停止。
 
-3. **发起后台构建**（单次 `bash -lc` 保证 envsetup 持久）：
+3. **发起后台增量构建**（单次 `bash -lc` 保证 envsetup 持久）：
    ```bash
-   ssh <host> 'cd <remote-root> && nohup bash -lc "source build/envsetup.sh && lunch <target> && m <module>; echo EXIT=\$? > /tmp/build_exit" > /tmp/build.log 2>&1 & echo PID=$!'
+   ssh <host> 'nohup sh -c '\''bash ~/bst-aosp/scripts/g1_build_app_player.sh --incremental --jobs 8; rc=$?; printf "%s\n" "$rc" > ~/android16-incremental.rc; exit "$rc"'\'' > ~/android16-incremental.log 2>&1 < /dev/null & echo PID=$!'
    ```
-   记下 PID 与 `/tmp/build.log`、`/tmp/build_exit` 路径到 summary。
+   记下 PID 与 log/rc 路径到 summary。保留
+   `out_nxt_Baklava64`，不允许默认 clean/installclean。
 
-4. **轮询**：用 `CronCreate` 排程（如每 10 分钟）：
+4. **轮询**：手动回读已记录的 PID/log/rc，不建立定时任务：
    ```bash
    ssh <host> 'ps -p <pid> >/dev/null && echo RUNNING || echo DONE; tail -n 50 /tmp/build.log; cat /tmp/build_exit 2>/dev/null'
    ```
@@ -35,6 +36,6 @@ allowed-tools: Bash(ssh:*), Bash(scp:*), Read, Write, CronCreate, CronDelete, Cr
 
 ## 注意
 
-- 全量 `m dist` 走 prompt 确认（耗时巨大）。
-- 迭代清理用 `installclean`（比 `m clean` 轻）；全量 `m clean` 需用户确认。
+- 当前主线仅运行增量入口，不设启动时间门槛或编译完成超时。
+- `installclean`、`m clean`、删除 OUT 和全量 `m dist` 都需用户单独明确授权。
 - 大镜像**不**回传本体，只回传 log + `ls -la` + 远程路径。

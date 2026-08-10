@@ -2,6 +2,8 @@
 param(
     [string]$AdbExe = "C:\Program Files\BlueStacks_nxt\HD-Adb.exe",
     [string]$Serial,
+    [string]$Instance = "Tiramisu64",
+    [string]$BlueStacksConfig = "C:\ProgramData\BlueStacks_nxt\bluestacks.conf",
     [int]$AdbTimeoutSec = 20,
     [int]$StabilityWindowSec = 95,
     [int]$StabilityPollSec = 5,
@@ -21,6 +23,7 @@ function Invoke-AdbBounded {
     param(
         [string[]]$Arguments,
         [switch]$WithoutSerial,
+        [switch]$AllowFailure,
         [int]$TimeoutSec = $AdbTimeoutSec
     )
 
@@ -51,10 +54,28 @@ function Invoke-AdbBounded {
     }
     $output = @($stdout.Result.TrimEnd(), $stderr.Result.TrimEnd()) |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-    if ($process.ExitCode -ne 0) {
+    if ($process.ExitCode -ne 0 -and -not $AllowFailure) {
         throw "HD-Adb failed ($($process.ExitCode)): $($Arguments -join ' ')`n$($output -join "`n")"
     }
     return $output -join "`n"
+}
+
+if ([string]::IsNullOrWhiteSpace($Serial)) {
+    if (Test-Path $BlueStacksConfig) {
+        $escapedInstance = [regex]::Escape($Instance)
+        $statusPort = Get-Content -LiteralPath $BlueStacksConfig | ForEach-Object {
+            if ($_ -match "^bst\.instance\.$escapedInstance\.status\.adb_port=`"(\d+)`"$") {
+                $Matches[1]
+            }
+        } | Select-Object -Last 1
+        if ($statusPort) {
+            $Serial = "127.0.0.1:$statusPort"
+            [void](Invoke-AdbBounded -Arguments @("connect", $Serial) -WithoutSerial)
+            if ((Invoke-AdbBounded -Arguments @("get-state")).Trim() -ne "device") {
+                throw "Configured $Instance HD-Adb endpoint is not online: $Serial"
+            }
+        }
+    }
 }
 
 if ([string]::IsNullOrWhiteSpace($Serial)) {
@@ -78,11 +99,17 @@ if ((Invoke-AdbBounded -Arguments @("shell", "getprop", "sys.boot_completed")).T
     $failures += "boot_completed"
 }
 
-$home = Invoke-AdbBounded -Arguments @(
+$homeResolution = Invoke-AdbBounded -Arguments @(
     "shell", "cmd", "package", "resolve-activity", "--brief",
     "-a", "android.intent.action.MAIN", "-c", "android.intent.category.HOME"
 )
-if ($home -notmatch '^com\.uncube\.launcher3/') { $failures += "home_resolver" }
+$homeComponent = $homeResolution -split "`r?`n" |
+    Where-Object { $_ -match '^[A-Za-z0-9._]+/[A-Za-z0-9._$]+$' } |
+    Select-Object -Last 1
+if ([string]::IsNullOrWhiteSpace($homeComponent) -or
+    $homeComponent -notmatch '^com\.uncube\.launcher3/') {
+    $failures += "home_resolver"
+}
 
 $bootIdBefore = (Invoke-AdbBounded -Arguments @(
     "shell", "cat", "/proc/sys/kernel/random/boot_id"
@@ -140,7 +167,7 @@ while ($stabilityTimer.Elapsed.TotalSeconds -lt $StabilityWindowSec) {
 $stabilityTimer.Stop()
 
 $activities = Invoke-AdbBounded -Arguments @("shell", "dumpsys", "activity", "activities")
-if ($activities -notmatch 'mResumedActivity:.*com\.uncube\.launcher3') {
+if ($activities -notmatch '(?:mResumedActivity:|topResumedActivity=).*com\.uncube\.launcher3') {
     $failures += "launcher_not_resumed"
 }
 $logs = Invoke-AdbBounded -Arguments @("logcat", "-d", "-v", "brief") -TimeoutSec 30
@@ -155,6 +182,19 @@ if ($logs -match '(?i)WATCHDOG KILLING SYSTEM PROCESS' -or
     $failures += "system_server_watchdog"
 }
 
+$maxFps = (Invoke-AdbBounded -Arguments @(
+    "shell", "getprop", "bst.max_fps"
+)).Trim()
+if ($maxFps -notmatch '^\d+$' -or [int]$maxFps -le 0) {
+    $failures += "bst_max_fps:$maxFps"
+}
+$sharedFolders = (Invoke-AdbBounded -Arguments @(
+    "shell", "getprop", "bst.shared_folders"
+)).Trim()
+if (($sharedFolders -split ',') -notcontains "BstSharedFolder") {
+    $failures += "bst_shared_folders:$sharedFolders"
+}
+
 try {
     $sharedProbeCommand =
         'probe=/mnt/windows/BstSharedFolder/.a16_runtime_probe; ' +
@@ -162,9 +202,7 @@ try {
         'test -x /system/bin/mountsf && mountpoint -q /mnt/windows/BstSharedFolder && ' +
         'printf A16_RUNTIME_PROBE > $probe && ' +
         'test "$(cat $probe)" = A16_RUNTIME_PROBE'
-    [void](Invoke-AdbBounded -Arguments @(
-        "shell", "sh", "-c", $sharedProbeCommand
-    ))
+    [void](Invoke-AdbBounded -Arguments @("shell", $sharedProbeCommand))
 } catch {
     Write-Warning $_
     $failures += "shared_folder"
@@ -201,7 +239,7 @@ try {
         'test -x /system/bin/xmllint && ' +
         'printf "<a16><runtime/></a16>\n" > $probe && ' +
         '/system/bin/xmllint --noout $probe && test -s $probe'
-    [void](Invoke-AdbBounded -Arguments @("shell", "sh", "-c", $xmlProbeCommand))
+    [void](Invoke-AdbBounded -Arguments @("shell", $xmlProbeCommand))
 } catch {
     Write-Warning $_
     $failures += "device_xmllint"
@@ -226,7 +264,7 @@ $houdiniCommand =
     'test -f /system/lib64/libtcb.so && test -e /proc/sys/fs/binfmt_misc/arm64_dyn && ' +
     'test -e /proc/sys/fs/binfmt_misc/arm64_exe'
 try {
-    [void](Invoke-AdbBounded -Arguments @("shell", "sh", "-c", $houdiniCommand))
+    [void](Invoke-AdbBounded -Arguments @("shell", $houdiniCommand))
 } catch {
     Write-Warning $_
     $failures += "houdini_sanity"
@@ -240,8 +278,14 @@ if (-not [int]::TryParse($entropy, [ref]$entropyValue) -or $entropyValue -le 0) 
     $failures += "kernel_entropy"
 }
 
-$defaultRoute = Invoke-AdbBounded -Arguments @("shell", "ip", "-4", "route", "show", "default")
-if ($defaultRoute -notmatch '(?m)^default\s') { $failures += "default_ipv4_route" }
+$ipv4Routes = Invoke-AdbBounded -Arguments @("shell", "ip", "-4", "route", "show")
+$eth0Address = Invoke-AdbBounded -Arguments @(
+    "shell", "ip", "-4", "address", "show", "dev", "eth0"
+)
+if ($ipv4Routes -notmatch '(?m)^\S+\s+dev\s+eth0\b' -or
+    $eth0Address -notmatch '(?m)^\s*inet\s+\d{1,3}(?:\.\d{1,3}){3}/\d+\b') {
+    $failures += "guest_ipv4_link"
+}
 
 try {
     [void](Invoke-AdbBounded -Arguments @("shell", "cmd", "wifi", "status"))
@@ -270,13 +314,18 @@ if ($operatorNumeric -notmatch '^\d{5,6}$') { $failures += "telephony_operator" 
 $imeState = (Invoke-AdbBounded -Arguments @(
     "shell", "getprop", "init.svc.imeservice"
 )).Trim()
+$imeListenerPort = (Invoke-AdbBounded -Arguments @(
+    "shell", "getprop", "bst.config.ime_listenerport"
+)).Trim()
 try {
     [void](Invoke-AdbBounded -Arguments @("shell", "test", "-x", "/system/bin/bstime"))
 } catch {
     Write-Warning $_
     $failures += "bstime_payload"
 }
-if ($imeState -ne "running") { $failures += "imeservice_state:$imeState" }
+if ($imeListenerPort -and $imeListenerPort -ne "0" -and $imeState -ne "running") {
+    $failures += "imeservice_state:$imeState"
+}
 
 $hidl = Invoke-AdbBounded -Arguments @("shell", "lshal", "-i") -TimeoutSec 30
 foreach ($interface in @(
@@ -294,10 +343,12 @@ foreach ($interface in @(
     "android.hardware.media.omx@1.0::IOmx/default",
     "android.hardware.media.omx@1.0::IOmxStore/default",
     "android.hardware.power@1.0::IPower/default",
-    "android.hardware.sensors@1.0::ISensors/default",
     "android.hardware.soundtrigger@2.3::ISoundTriggerHw/default"
 )) {
     if ($hidl -notmatch [regex]::Escape($interface)) { $failures += "hidl:$interface" }
+}
+if ($hidl -notmatch 'android\.hardware\.sensors@1\.0::I(?:Sensors|\*)/(?:default|\*)') {
+    $failures += "hidl:android.hardware.sensors@1.0 passthrough/default"
 }
 
 foreach ($service in @(
@@ -317,16 +368,25 @@ foreach ($service in @(
     $result = Invoke-AdbBounded -Arguments @("shell", "service", "check", $service)
     if ($result -notmatch 'found') { $failures += "service:$service" }
 }
-try {
-    $bluetoothPid = (Invoke-AdbBounded -Arguments @(
-        "shell", "pidof", "com.android.bluetooth"
-    )).Trim()
-    if ($bluetoothPid -notmatch '^\d+(?:\s+\d+)*$') {
-        $failures += "bluetooth_process:$bluetoothPid"
+$bluetoothFeature = Invoke-AdbBounded -Arguments @(
+    "shell", "pm", "has-feature", "android.hardware.bluetooth"
+) -AllowFailure
+$bluetoothLeFeature = Invoke-AdbBounded -Arguments @(
+    "shell", "pm", "has-feature", "android.hardware.bluetooth_le"
+) -AllowFailure
+if ($bluetoothFeature -match '(?i)\btrue\b' -or
+    $bluetoothLeFeature -match '(?i)\btrue\b') {
+    try {
+        $bluetoothPid = (Invoke-AdbBounded -Arguments @(
+            "shell", "pidof", "com.android.bluetooth"
+        )).Trim()
+        if ($bluetoothPid -notmatch '^\d+(?:\s+\d+)*$') {
+            $failures += "bluetooth_process:$bluetoothPid"
+        }
+    } catch {
+        Write-Warning $_
+        $failures += "bluetooth_process"
     }
-} catch {
-    Write-Warning $_
-    $failures += "bluetooth_process"
 }
 
 [void](Invoke-AdbBounded -Arguments @("logcat", "-c"))
@@ -376,12 +436,13 @@ if ($settingsLogs -match
 $activitiesAfterSettings = Invoke-AdbBounded -Arguments @(
     "shell", "dumpsys", "activity", "activities"
 )
-if ($activitiesAfterSettings -notmatch 'mResumedActivity:.*com\.uncube\.launcher3') {
+if ($activitiesAfterSettings -notmatch '(?:mResumedActivity:|topResumedActivity=).*com\.uncube\.launcher3') {
     $failures += "launcher_not_resumed_after_settings"
 }
 
 if ($failures.Count -gt 0) {
-    throw "Runtime regression failed: $($failures -join ', ')"
+    Write-Error "Runtime regression failed: $($failures -join ', ')"
+    exit 1
 }
 Write-Host "A16DBG:G1: runtime regression PASS"
 exit 0

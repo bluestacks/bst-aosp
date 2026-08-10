@@ -19,6 +19,9 @@ features from scratch.
   executable and host/manual acceptance gates.
 - [`runtime-regression-2026-08-06.md`](runtime-regression-2026-08-06.md): current
   launcher/property/HAL findings, active build identity and regression record.
+- [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
+  candidate, target-branch ancestry, final artifact/boot evidence and open
+  publication blockers.
 - [`a13-hal-vintf-review.md`](a13-hal-vintf-review.md): six prepared corrections
   for retained x86_64 HIDL service declarations.
 - [`timeline.md`](timeline.md): generated cont.103-cont.106 chronology.

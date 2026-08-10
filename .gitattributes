@@ -37,6 +37,7 @@
 /scripts/g1_reset_data_wipe.ps1 text eol=crlf
 /scripts/g1_runtime_regression.ps1 text eol=crlf
 /scripts/g1_win_deploy.ps1 text eol=crlf
+/scripts/g1_win_shared_folder_config.ps1 text eol=crlf
 /tests/android16-runtime-oracle/build.sh text eol=lf
 /tests/android16-runtime-oracle/AndroidManifest.xml text eol=lf
 /tests/android16-runtime-oracle/src/**/*.java text eol=lf

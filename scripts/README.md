@@ -30,6 +30,7 @@ before work starts.
 | `g1_copy_bst_apks.sh` | Injects required BlueStacks APK payloads | Copies three required APKs |
 | `g8_disable_vendor_hal_rc.sh` | Applies the recorded vendor HAL startup policy | Moves selected RC files to a backup directory |
 | `g1_win_deploy.ps1` | Deploys Root and fastboot with SHA-256 and UUID readback | Atomically replaces the two Windows engine media after both pass identity checks |
+| `g1_win_shared_folder_config.ps1` | Resolves local Tiramisu64 shared-folder template paths | Backs up and updates only the installed Windows VM configs; does not modify app-player, HD, or Android source |
 | `g1_reset_data_wipe.ps1` | Restores the verified clean Data snapshot with SHA-256 readback | Stops the local instance and replaces `Data.vhdx` |
 | `g1_boot_verify.ps1` | Evaluates the Layer 2 boot oracle | Starts/stops only Tiramisu64 and fails early on VM, zygote preload, boot-classpath, or system-server fatal signatures |
 | `g1_property_verify.ps1` | Compares property payloads with guest runtime values | Temporarily enables the BlueStacks getprop diagnostic switch |

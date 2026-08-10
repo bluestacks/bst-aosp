@@ -4,8 +4,8 @@
 # 流程见 patches/android-16/checkpoints/G1-RESTORE.md + docs/build-commands.md G1 节。
 #
 # 用法（Git Bash on win host）：
-#   bash scripts/g1_build_pack.sh                # 全流程（build+pack+deploy+verify）
-#   bash scripts/g1_build_pack.sh --no-build     # 跳过 m droid（调试提速，用现有 OUT）
+#   bash scripts/g1_build_pack.sh                # 增量 build+pack+deploy+verify
+#   bash scripts/g1_build_pack.sh --no-build     # 跳过增量 build（调试提速，用现有 OUT）
 #   bash scripts/g1_build_pack.sh --no-verify    # 跳过 boot_verify（只 pack+deploy）
 #   bash scripts/g1_build_pack.sh --pack-only    # 只 stage+copy_apks+pack（不 build/deploy/verify）
 #
@@ -57,7 +57,7 @@ fi
 # --- 远程：build + pack ---
 step "remote: g1_build_app_player.sh (canonical Android-16 build + package)"
 if [ "$DO_BUILD" = 1 ]; then
-  ssh "$HOST" 'bash ~/bst-aosp/scripts/g1_build_app_player.sh' || { echo "BUILD/PACK FAILED"; exit 1; }
+  ssh "$HOST" 'bash ~/bst-aosp/scripts/g1_build_app_player.sh --incremental --jobs 8' || { echo "BUILD/PACK FAILED"; exit 1; }
 else
   echo "  (skipped --no-build; 用现有 OUT)"
 fi

@@ -43,7 +43,7 @@ $patterns = @(
     @{ id="system_mounted"; rx="A16DBG: system mounted" },
     @{ id="init_second"; rx="stage2 about to exec /init" },
     @{ id="odsign"; rx="On-device signing done\." },
-    @{ id="boot_completed"; rx="processing action \(sys\.boot_completed=1\)" },
+    @{ id="boot_completed"; rx="processing action \(sys\.boot_completed=1\)|wait_for_boot_completed done" },
     @{ id="activity"; rx="hcallOnActivityDisplayed" },
     # Host ready mark: newer builds log tag [Ready]; older paths used "Player state: ready"
     @{ id="ready"; rx="Player state: ready|\[Ready\]" },
@@ -59,7 +59,8 @@ $fatalPatterns = @(
     @{ id = "systemui_crash_loop"; rx = "Process com\.android\.systemui has crashed too many times" },
     @{ id = "system_server_watchdog"; rx = "WATCHDOG KILLING SYSTEM PROCESS|watchdog.*system_server" },
     @{ id = "system_server_terminated"; rx = "system server.*has terminated|system_server.*(?:died|terminated)" },
-    @{ id = "zygote_system_server_exit"; rx = "Exit zygote because system server.*terminated" }
+    @{ id = "zygote_system_server_exit"; rx = "Exit zygote because system server.*terminated" },
+    @{ id = "rescue_party_reboot"; rx = "reboot: Restarting system with command 'RescueParty'" }
 )
 $found = @{}
 $fatalFound = @{}

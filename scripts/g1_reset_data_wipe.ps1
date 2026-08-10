@@ -12,7 +12,11 @@ if ($CheckOnly) {
     Write-Host "A16DBG:ANDROID16: data-reset CHECK OK snapshot=$wipe; no process stopped and no file copied"
     exit 0
 }
-Get-Process -Name "HD-Player","BstkSVC","BstkVMMgr" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+$tiramisuPlayers = Get-CimInstance Win32_Process -Filter "Name = 'HD-Player.exe'" |
+    Where-Object { $_.CommandLine -match '--instance\s+Tiramisu64(?:\s|$)' }
+$tiramisuPlayers | ForEach-Object {
+    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+}
 Start-Sleep -Seconds 2
 $sourceHash = (Get-FileHash $wipe -Algorithm SHA256).Hash
 Copy-Item $wipe $data -Force

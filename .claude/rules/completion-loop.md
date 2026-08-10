@@ -23,7 +23,7 @@
 
 ## AOSP 特别说明
 
-- **长任务**：远程 build 可能数小时。Validate 的 Layer 1 发起后台任务后即可继续 checkpoint/review 准备；用 `CronCreate` 周期轮询，完成回读后才算 Validate 过。
+- **长任务**：远程 build 可能数小时。Validate 的 Layer 1 发起后台任务后即可继续 checkpoint/review 准备；使用已记录的 PID/log/rc 手动回读，不设完成超时，完成回读后才算 Validate 过。
 - **boot-pending**：Layer 2 因耗时本会话跑不完时，summary 标 `verification: build-only, boot-pending` 并登记 `progress/`；循环可对 Layer 1 收敛，但必须显式上报 Layer 2 未闭环。
 
 ## 手动调用仍然可用

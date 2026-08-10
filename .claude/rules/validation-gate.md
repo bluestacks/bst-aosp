@@ -18,8 +18,10 @@ HEAD、OUT_DIR、product 和 app-player link readback。完整 Root 必须由该
 
 ```bash
 ssh <host> 'cd <remote-root> && bash -lc "source build/envsetup.sh && lunch <target> && m <module>"'
-# 全量镜像: m dist → out/dist/*.img；迭代清理: installclean（比 m clean 轻）
+# 当前发布包: bash ~/bst-aosp/scripts/g1_build_app_player.sh --incremental --jobs 8
 ```
+保留 `out_nxt_Baklava64`，不执行 `installclean`/`clean`，不删除
+OUT。编译没有墙钟起始限制或完成超时；全量路径需单独授权。
 
 回读：真实 exit code（`echo $?`）+ 产物
 `ls -la out/target/product/<device>/*.img`（mtime）+ SHA-256 + identity

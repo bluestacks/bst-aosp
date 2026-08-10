@@ -23,13 +23,16 @@
    ```bash
    ssh <host> 'ps -p <pid> && tail -n 50 <abs-log>'
    ```
-5. **轮询**：用 `CronCreate` 排程周期 `ssh <host> 'tail -n 50 <log>; ps -p <pid>'`；进程退出后回读 exit code（`wait`/日志末尾）+ 产物 `ls -la`。
+5. **轮询**：手动回读已记录的 PID/log/rc，不创建定时任务；进程退出后回读 exit code + 产物 `ls -la`。
 6. **环境持久性**：`source build/envsetup.sh && lunch <target>` 必须在**同一个** `bash -lc` 调用里——SSH 每次开新 shell，envsetup 不跨调用持久。
 7. **产物身份**：成功必须生成 `tree + branch + HEAD + OUT_DIR +
    artifact SHA-256` sidecar。stage、pack、deploy、boot 各阶段读回并保持同一
    HEAD。
 8. **产物**：大镜像（GB 级）**不回传本体**，只回传 log + `ls -la` + 远程路径；小产物（patch diff、单模块产物）可 scp。
-9. **清理**：迭代用 `installclean`；全量 `m clean` 极慢，需用户确认。
+9. **增量优先**：当前主线使用
+   `g1_build_app_player.sh --incremental --jobs 8`，保留
+   `out_nxt_Baklava64`。不设墙钟起始限制或完成超时。
+   `installclean`、`m clean`、删除 OUT 和全量构建均需单独明确授权。
 
 ## 反模式（禁止）
 

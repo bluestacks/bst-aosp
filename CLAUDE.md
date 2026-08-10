@@ -80,9 +80,11 @@ promotion 见
 **Layer 1 — 编译验证（远程，完整 AOSP 树）**
 ```bash
 ssh <host> 'cd <remote-root> && bash -lc "source build/envsetup.sh && lunch <target> && m <module>"'
-# 全量镜像: m dist → out/dist/*.img；迭代清理: installclean
+# 当前主线默认: bash ~/bst-aosp/scripts/g1_build_app_player.sh --incremental --jobs 8
 ```
 回读：真实 exit code（`echo $?`）+ 产物 `ls -la out/target/product/<device>/*.img`。
+保留 `out_nxt_Baklava64`，禁止默认执行 `installclean`/`clean` 或删除 OUT。
+编译不设墙钟起始限制或完成超时；全量编译须用户单独明确授权。
 
 当前主线在执行 build 前必须先跑
 `bash scripts/g1_build_android16.sh --check`，并读回 resolved tree、branch、

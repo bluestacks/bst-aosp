@@ -93,6 +93,21 @@ development tree or any uncommitted project is fatal. Build, system stage, Root
 image, deployment, and boot evidence must share the same source HEAD and
 artifact hash.
 
+The current Android-16 regression cycle is incremental only. Its canonical
+entry is:
+
+```bash
+bash scripts/g1_build_app_player.sh --incremental --jobs 8
+```
+
+Preserve `out_nxt_Baklava64`; do not run clean targets, delete the output tree,
+or invoke the legacy app-player `android` prerequisite that removes generated
+images. The build has no wall-clock start gate or completion timeout and must
+run naturally to success or failure. A full build requires a separate explicit
+authorization. Packaging may regenerate system.sfs, Root, and fastboot from the
+incrementally updated target image because those artifacts are the runtime
+evidence boundary.
+
 ### 5. Publish
 
 - Push changed component repositories to `mark-bst:aosp16-bst-merge`.

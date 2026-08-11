@@ -123,9 +123,11 @@ Root commit `cac24e164bb53210c4f003405d3f00ded63c37da` first changed the three
 BlueStacks repositories. Root `d3e80def2ce05594d50cee4819e8a85c20757617`
 then advances 14 gitlinks after the complete component-target merge.
 Root `90f87eed8d0bbd1bed49f077f775309bd9f2d843` publishes the six omitted
-ALSA/HAL target tips, removes every remaining personal-fork URL, and makes all
-eight explicit branch fields track `bst-v5.22.210-A16`. Repository topology is
-complete; build and runtime acceptance remain open.
+ALSA/HAL target tips, removes every remaining personal-fork URL, and at this
+snapshot made eight explicit branch fields track `bst-v5.22.210-A16`. Root
+`7470f85005bebe91becf3e66c8183107aae4f6f0` later removed those branch keys;
+the root gitlinks are now the only component revision authority. Repository
+topology is complete; build and runtime acceptance remain open.
 
 ## Rejected Or Superseded Changes
 

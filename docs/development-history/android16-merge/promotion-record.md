@@ -167,8 +167,10 @@ for the full matrix and conflict decisions.
 Root `90f87eed8d0bbd1bed49f077f775309bd9f2d843` is the final ownership metadata
 follow-up. Six omitted ALSA/HAL components were fast-forwarded on their
 BlueStacks target branches before their personal-fork URLs were replaced. The
-final `.gitmodules` contains only BlueStacks URLs and every explicit branch
-tracks `bst-v5.22.210-A16`.
+ownership checkpoint `.gitmodules` contains only BlueStacks URLs. Its eight
+explicit branch fields originally tracked `bst-v5.22.210-A16`; root
+`7470f85005bebe91becf3e66c8183107aae4f6f0` subsequently removed all branch
+keys so root gitlinks remain authoritative.
 
 No build or boot validation is attributed to this new root. The latest green
 artifact evidence remains bound to `2be2bd594015046288f67420c72ac3d964595d14`.

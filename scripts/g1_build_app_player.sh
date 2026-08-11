@@ -138,6 +138,7 @@ VBOX_HEAD="$(git -C "$VBOX_ROOT" rev-parse HEAD)"
   echo "VBox guest additions checkout contains unresolved index entries" >&2
   exit 1
 }
+VBOX_DIFF_SHA256="$(git -C "$VBOX_ROOT" diff --binary HEAD -- | sha256sum | awk '{print $1}')"
 [ "$VBOX_HEAD" = "$EXPECTED_VBOX_HEAD" ] || {
   echo "unexpected VBox guest additions HEAD: $VBOX_HEAD" >&2
   exit 1
@@ -152,6 +153,8 @@ done
 BUILD_MAKEFILE="$BST_APP_PLAYER_ROOT/buildscripts/Makefile"
 SFS_SCRIPT="$BST_APP_PLAYER_ROOT/buildscripts/make-baklava-system-sfs.sh"
 MOUNTSF_PAYLOAD="$BST_APP_PLAYER_ROOT/bst/bin/mountsf"
+EXPECTED_KERNEL_CLANG_REV="${BST_EXPECTED_KERNEL_CLANG_REV:-r563880c}"
+EXPECTED_KERNEL_CLANG_BIN="$BST_ANDROID16_ROOT/prebuilts/clang/host/linux-x86/clang-$EXPECTED_KERNEL_CLANG_REV/bin/clang"
 PACKAGE_INPUT_INSTALLER="$SCRIPT_DIR/prepare_android16_package_inputs.sh"
 PACKAGE_INPUT_BUNDLE="${BST_A16_PACKAGE_BUNDLE:-$HOME/a16-package-inputs/bst-v5.22.210-A16-e7a61686}"
 for input in "$BUILD_MAKEFILE" "$SFS_SCRIPT" "$MOUNTSF_PAYLOAD" \
@@ -159,6 +162,15 @@ for input in "$BUILD_MAKEFILE" "$SFS_SCRIPT" "$MOUNTSF_PAYLOAD" \
     "$PACKAGE_INPUT_BUNDLE/SHA256SUMS"; do
   [ -f "$input" ] || { echo "missing app-player packaging input: $input" >&2; exit 1; }
 done
+[ -x "$EXPECTED_KERNEL_CLANG_BIN" ] || {
+  echo "missing expected kernel clang: $EXPECTED_KERNEL_CLANG_BIN" >&2
+  exit 1
+}
+grep -Fqx "CLANG_PREBUILT_BIN := \$(ANDROIDHOME)/prebuilts/clang/host/linux-x86/clang-${EXPECTED_KERNEL_CLANG_REV}/bin" \
+  "$BUILD_MAKEFILE" || {
+  echo "app-player Makefile does not use kernel clang $EXPECTED_KERNEL_CLANG_REV" >&2
+  exit 1
+}
 APP_PLAYER_DIR="$BST_APP_PLAYER_ROOT" BST_A16_PACKAGE_BUNDLE="$PACKAGE_INPUT_BUNDLE" \
   bash "$PACKAGE_INPUT_INSTALLER" --verify-only
 UNCUBE_APK="$PACKAGE_INPUT_BUNDLE/payload/com.uncube.launcher3.apk"
@@ -170,6 +182,7 @@ MOUNTSF_SHA256="$(sha256sum "$MOUNTSF_PAYLOAD" | awk '{print $1}')"
 UNCUBE_APK_SHA256="$(sha256sum "$UNCUBE_APK" | awk '{print $1}')"
 PACKAGE_SOURCE_IDENTITY_SHA256="$(sha256sum "$PACKAGE_INPUT_BUNDLE/SOURCE.identity" | awk '{print $1}')"
 PACKAGE_SUMS_SHA256="$(sha256sum "$PACKAGE_INPUT_BUNDLE/SHA256SUMS" | awk '{print $1}')"
+KERNEL_CLANG_SHA256="$(sha256sum "$EXPECTED_KERNEL_CLANG_BIN" | awk '{print $1}')"
 BUILD_FLOW_DIFF_SHA256="$(
   git -C "$BST_APP_PLAYER_ROOT" diff --binary HEAD -- \
     buildscripts/build.sh buildscripts/Makefile buildscripts/make-baklava-system-sfs.sh |
@@ -182,6 +195,7 @@ echo "A16DBG:IDENTITY: hd_head=$HD_HEAD"
 echo "A16DBG:IDENTITY: hd_diff_sha256=$HD_DIFF_SHA256"
 echo "A16DBG:IDENTITY: hd_stage2_sha256=$HD_STAGE2_SHA256"
 echo "A16DBG:IDENTITY: vbox_head=$VBOX_HEAD"
+echo "A16DBG:IDENTITY: vbox_diff_sha256=$VBOX_DIFF_SHA256"
 echo "A16DBG:IDENTITY: build_script_sha256=$BUILD_SCRIPT_SHA256"
 echo "A16DBG:IDENTITY: build_makefile_sha256=$BUILD_MAKEFILE_SHA256"
 echo "A16DBG:IDENTITY: sfs_script_sha256=$SFS_SCRIPT_SHA256"
@@ -190,6 +204,8 @@ echo "A16DBG:IDENTITY: mountsf_sha256=$MOUNTSF_SHA256"
 echo "A16DBG:IDENTITY: uncube_apk_sha256=$UNCUBE_APK_SHA256"
 echo "A16DBG:IDENTITY: package_source_identity_sha256=$PACKAGE_SOURCE_IDENTITY_SHA256"
 echo "A16DBG:IDENTITY: package_sums_sha256=$PACKAGE_SUMS_SHA256"
+echo "A16DBG:IDENTITY: kernel_clang_revision=$EXPECTED_KERNEL_CLANG_REV"
+echo "A16DBG:IDENTITY: kernel_clang_sha256=$KERNEL_CLANG_SHA256"
 
 if [ "$CHECK_ONLY" -eq 1 ]; then
   echo "A16DBG:ANDROID16: app-player build CHECK OK; no build started"
@@ -232,7 +248,7 @@ cleanup_build_inputs() {
 trap cleanup_build_inputs EXIT
 
 # Keep the audited Android output tree intact. Rebuild the changed dependency
-# closure through init and systemimage before repackaging the guest artifacts.
+# closure through init, systemimage and kernel before repackaging the guest artifacts.
 if [ "$PACKAGE_RESUME" -eq 0 ]; then
   (
     set +u
@@ -241,7 +257,7 @@ if [ "$PACKAGE_RESUME" -eq 0 ]; then
     # shellcheck disable=SC1091
     source build/envsetup.sh >/dev/null
     lunch android_x86_64-trunk_staging-eng >/dev/null
-    m -j"$JOBS" init systemimage
+    m -j"$JOBS" init systemimage kernel
   )
 else
   echo "A16DBG:ANDROID16: resume packaging from existing Android output"
@@ -358,6 +374,15 @@ for prop in $PLATFORM_SDK_PROPERTIES; do
     exit 1
   }
 done
+EARLY_BOOT_PROPERTIES='sys.use_memfd'
+for prop in $EARLY_BOOT_PROPERTIES; do
+  target_value="$(grep -m1 "^${prop}=" "$TARGET_BUILD_PROP" || true)"
+  packaged_value="$(grep -m1 "^${prop}=" "$PACKAGED_BUILD_PROP" || true)"
+  [ -n "$target_value" ] && [ "$packaged_value" = "$target_value" ] || {
+    echo "packaged early-boot property mismatch for $prop: target='$target_value' packaged='$packaged_value'" >&2
+    exit 1
+  }
+done
 PLATFORM_SDK_IDENTITY_SHA256="$({
   for prop in $PLATFORM_SDK_PROPERTIES; do
     grep -m1 "^${prop}=" "$PACKAGED_BUILD_PROP"
@@ -381,6 +406,7 @@ bst_write_identity_file "$VHD.identity" "$VHD"
   printf 'hd_diff_sha256=%s\n' "$HD_DIFF_SHA256"
   printf 'hd_stage2_sha256=%s\n' "$HD_STAGE2_SHA256"
   printf 'vbox_head=%s\n' "$VBOX_HEAD"
+  printf 'vbox_diff_sha256=%s\n' "$VBOX_DIFF_SHA256"
   printf 'build_script_sha256=%s\n' "$BUILD_SCRIPT_SHA256"
   printf 'build_makefile_sha256=%s\n' "$BUILD_MAKEFILE_SHA256"
   printf 'sfs_script_sha256=%s\n' "$SFS_SCRIPT_SHA256"
@@ -389,6 +415,8 @@ bst_write_identity_file "$VHD.identity" "$VHD"
   printf 'uncube_apk_sha256=%s\n' "$UNCUBE_APK_SHA256"
   printf 'package_source_identity_sha256=%s\n' "$PACKAGE_SOURCE_IDENTITY_SHA256"
   printf 'package_sums_sha256=%s\n' "$PACKAGE_SUMS_SHA256"
+  printf 'kernel_clang_revision=%s\n' "$EXPECTED_KERNEL_CLANG_REV"
+  printf 'kernel_clang_sha256=%s\n' "$KERNEL_CLANG_SHA256"
 } >> "$VHD.identity"
 cat "$VHD.identity"
 echo "A16DBG:ANDROID16: incremental app-player build DONE $(date -Is)"

@@ -2,7 +2,10 @@
 param(
     [string]$AdbExe = "C:\Program Files\BlueStacks_nxt\HD-Adb.exe",
     [string]$Serial,
+    [string]$Instance = "Tiramisu64",
+    [string]$BlueStacksConfig = "C:\ProgramData\BlueStacks_nxt\bluestacks.conf",
     [switch]$StrictMutable,
+    [switch]$StrictReadOnly,
     [switch]$CheckOnly
 )
 
@@ -12,6 +15,11 @@ $propertyFiles = @(
     [pscustomobject]@{ Path = "/data/.bstconf.prop"; Required = $true },
     [pscustomobject]@{ Path = "/data/.vendor.prop"; Required = $true },
     [pscustomobject]@{ Path = "/data/.additional_system.prop"; Required = $false }
+)
+$criticalExactNames = @(
+    "bst.max_fps",
+    "bst.shared_folders",
+    "bst.wifi_mac_addr"
 )
 
 if (-not (Test-Path $AdbExe)) { throw "HD-Adb missing: $AdbExe" }
@@ -32,12 +40,33 @@ function Invoke-Adb {
 function Resolve-AdbSerial {
     if (-not [string]::IsNullOrWhiteSpace($Serial)) { return $Serial }
 
+    if (Test-Path -LiteralPath $BlueStacksConfig) {
+        $escapedInstance = [regex]::Escape($Instance)
+        $statusPort = Get-Content -LiteralPath $BlueStacksConfig | ForEach-Object {
+            if ($_ -match "^bst\.instance\.$escapedInstance\.status\.adb_port=`"(\d+)`"$") {
+                $Matches[1]
+            }
+        } | Select-Object -Last 1
+        if ($statusPort) {
+            $configuredSerial = "127.0.0.1:$statusPort"
+            $connectOutput = @(& $AdbExe connect $configuredSerial 2>&1)
+            if ($LASTEXITCODE -ne 0) {
+                throw "HD-Adb connect failed ($LASTEXITCODE): $configuredSerial`n$($connectOutput -join "`n")"
+            }
+            $stateOutput = @(& $AdbExe -s $configuredSerial get-state 2>&1)
+            if ($LASTEXITCODE -ne 0 -or ($stateOutput -join "`n").Trim() -ne "device") {
+                throw "Configured $Instance HD-Adb endpoint is not online: $configuredSerial"
+            }
+            return $configuredSerial
+        }
+    }
+
     $output = @(& $AdbExe devices 2>&1)
     if ($LASTEXITCODE -ne 0) {
         throw "HD-Adb devices failed ($LASTEXITCODE):`n$($output -join "`n")"
     }
     $devices = @($output | ForEach-Object {
-        if ($_ -match '^(\S+)\s+device\s*$') { $Matches[1] }
+        if ($_ -match '^(\S+)\s+device(?:\s|$)') { $Matches[1] }
     })
     if ($devices.Count -eq 0) { throw "No online HD-Adb device found" }
     if ($devices.Count -gt 1) {
@@ -88,16 +117,13 @@ Invoke-Adb -Arguments @("get-state") | Out-Null
 
 $fileProperties = [ordered]@{}
 try {
-    # A13 hides bst.* from toolbox getprop unless this diagnostic switch is enabled.
-    Invoke-Adb -Arguments @("shell", "setprop bst.debug.show_prop 1") | Out-Null
-
     $duplicateProperties = @()
     $missingFiles = @()
     foreach ($file in $propertyFiles) {
         $path = $file.Path
         $lines = Invoke-Adb -Arguments @(
             "shell",
-            "su -c 'if test -r $path; then cat $path; else echo __BST_PROPERTY_FILE_MISSING__; fi'"
+            "if test -r $path; then cat $path; else echo __BST_PROPERTY_FILE_MISSING__; fi"
         )
         if ($lines -contains "__BST_PROPERTY_FILE_MISSING__") {
             if ($file.Required) { $missingFiles += $path }
@@ -109,12 +135,35 @@ try {
         $duplicateProperties += $parsed.Duplicates
     }
 
+    # A13 hides bst.* only from bulk output. Named lookups are a runtime contract
+    # used by mountsf, FPS configuration, and Wi-Fi identity consumers.
+    Invoke-Adb -Arguments @("shell", "setprop bst.debug.show_prop 0") | Out-Null
+    $exactLookupMismatch = @()
+    foreach ($name in $criticalExactNames) {
+        $expected = $null
+        foreach ($path in $fileProperties.Keys) {
+            if ($fileProperties[$path].Contains($name)) {
+                $expected = [string]$fileProperties[$path][$name]
+            }
+        }
+        $actual = ((Invoke-Adb -Arguments @("shell", "getprop", $name)) -join "`n").Trim()
+        if ($null -eq $expected -or $actual -cne $expected) {
+            $exactLookupMismatch += "$name expected=[$expected] actual=[$actual]"
+        }
+    }
+
+    $hiddenRuntime = ConvertFrom-GetProp -Lines (Invoke-Adb -Arguments @("shell", "getprop"))
+    $bulkVisibilityLeak = @($hiddenRuntime.Keys | Where-Object {
+        ([string]$_).StartsWith("bst")
+    })
+
+    Invoke-Adb -Arguments @("shell", "setprop bst.debug.show_prop 1") | Out-Null
     $runtime = ConvertFrom-GetProp -Lines (Invoke-Adb -Arguments @("shell", "getprop"))
     if ($runtime.Count -eq 0) { throw "getprop returned no parseable properties" }
 
     $labelLines = Invoke-Adb -Arguments @(
         "shell",
-        "su -c 'ls -lZ $($fileProperties.Keys -join ' ') 2>&1'"
+        "ls -lZ $($fileProperties.Keys -join ' ') 2>&1"
     )
     $unlabeled = @($labelLines | Select-String -SimpleMatch "u:object_r:unlabeled:s0")
 
@@ -150,7 +199,7 @@ try {
         Write-Host ("  [FILE] {0}: {1} properties" -f $path, $fileProperties[$path].Count)
     }
     $labelLines | ForEach-Object { Write-Host "  [LABEL] $_" }
-    Write-Host "  missing_files=$($missingFiles.Count) duplicate_entries=$($duplicateProperties.Count) exact=$exact missing=$($missing.Count) ro_mismatch=$($readonlyMismatch.Count) critical_mismatch=$($criticalMismatch.Count) mutable_mismatch=$($mutableMismatch.Count)"
+    Write-Host "  missing_files=$($missingFiles.Count) duplicate_entries=$($duplicateProperties.Count) exact=$exact missing=$($missing.Count) exact_lookup_mismatch=$($exactLookupMismatch.Count) bulk_visibility_leak=$($bulkVisibilityLeak.Count) ro_mismatch=$($readonlyMismatch.Count) critical_mismatch=$($criticalMismatch.Count) mutable_mismatch=$($mutableMismatch.Count)"
 
     foreach ($path in $missingFiles) { Write-Error "Required property file is absent: $path" -ErrorAction Continue }
     foreach ($item in $duplicateProperties) {
@@ -158,12 +207,30 @@ try {
     }
     foreach ($item in $mutableMismatch) { Write-Warning "Runtime-updated mutable property: $item" }
     foreach ($item in $missing) { Write-Error "Missing runtime property: $item" -ErrorAction Continue }
-    foreach ($item in $readonlyMismatch) { Write-Error "Read-only override mismatch: $item" -ErrorAction Continue }
+    foreach ($item in $exactLookupMismatch) { Write-Error "Exact property lookup mismatch: $item" -ErrorAction Continue }
+    if ($bulkVisibilityLeak.Count -gt 0) {
+        Write-Error "BlueStacks properties leaked into bulk getprop: $($bulkVisibilityLeak -join ', ')" -ErrorAction Continue
+    }
+    if ($readonlyMismatch.Count -gt 0) {
+        $readonlyWriter = if ($StrictReadOnly) { "Error" } else { "Warning" }
+        $readonlyMismatch | Select-Object -First 20 | ForEach-Object {
+            if ($readonlyWriter -eq "Error") {
+                Write-Error "Read-only template mismatch: $_" -ErrorAction Continue
+            } else {
+                Write-Warning "Read-only template mismatch: $_"
+            }
+        }
+        if ($readonlyMismatch.Count -gt 20) {
+            Write-Warning "$($readonlyMismatch.Count - 20) additional read-only template mismatches omitted"
+        }
+    }
     foreach ($item in $criticalMismatch) { Write-Error "Critical property mismatch: $item" -ErrorAction Continue }
     foreach ($item in $unlabeled) { Write-Warning "Externally generated property file is unlabeled: $item" }
 
-    $failureCount = $missingFiles.Count + $missing.Count + $readonlyMismatch.Count + $criticalMismatch.Count
+    $failureCount = $missingFiles.Count + $missing.Count + $exactLookupMismatch.Count +
+        $bulkVisibilityLeak.Count + $criticalMismatch.Count
     if ($StrictMutable) { $failureCount += $mutableMismatch.Count }
+    if ($StrictReadOnly) { $failureCount += $readonlyMismatch.Count }
     if ($failureCount -gt 0) { throw "Property verification failed with $failureCount blocking finding(s)" }
 
     Write-Host "A16DBG:G1: property-verify PASS"

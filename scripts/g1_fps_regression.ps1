@@ -74,16 +74,16 @@ function Get-GuestScalar {
     return (Invoke-AdbBounded -Arguments $Arguments).Trim()
 }
 
-function Get-VsyncPeriodNs {
-    $output = Invoke-AdbBounded -Arguments @("shell", "dumpsys", "SurfaceFlinger", "--latency") `
+function Get-SchedulerPeriodNs {
+    $output = Invoke-AdbBounded -Arguments @("shell", "dumpsys", "SurfaceFlinger") `
         -TimeoutSec 45
     foreach ($line in $output -split "`n") {
-        if ($line -match '^\s*(\d{6,12})\s*$') {
+        if ($line -match '^\s*app duration:\s+(\d{6,12}) ns(?:\s|$)') {
             $period = [int64]$Matches[1]
             if ($period -gt 1000000 -and $period -lt 1000000000) { return $period }
         }
     }
-    throw "SurfaceFlinger --latency did not expose a refresh period: $output"
+    throw "SurfaceFlinger did not expose the Scheduler app duration: $output"
 }
 
 function Assert-VsyncPeriod {
@@ -179,17 +179,17 @@ $changed = $false
 Write-Host "A16DBG:G1: fps regression serial=$Serial original=$originalFps test=$TestFps"
 try {
     Set-GuestFps -Fps $originalFps
-    Assert-VsyncPeriod -Fps $originalFps -ActualPeriod (Get-VsyncPeriodNs)
+    Assert-VsyncPeriod -Fps $originalFps -ActualPeriod (Get-SchedulerPeriodNs)
 
     Set-GuestFps -Fps $TestFps
     $changed = $true
-    Assert-VsyncPeriod -Fps $TestFps -ActualPeriod (Get-VsyncPeriodNs)
+    Assert-VsyncPeriod -Fps $TestFps -ActualPeriod (Get-SchedulerPeriodNs)
     Measure-ProcessCpu -Fps $TestFps -SurfaceFlingerPid $surfaceFlingerPid `
         -ComposerPid $composer.Pid -ClockTicks $clockTicks
 
     Set-GuestFps -Fps $originalFps
     $changed = $false
-    Assert-VsyncPeriod -Fps $originalFps -ActualPeriod (Get-VsyncPeriodNs)
+    Assert-VsyncPeriod -Fps $originalFps -ActualPeriod (Get-SchedulerPeriodNs)
     Measure-ProcessCpu -Fps $originalFps -SurfaceFlingerPid $surfaceFlingerPid `
         -ComposerPid $composer.Pid -ClockTicks $clockTicks
 

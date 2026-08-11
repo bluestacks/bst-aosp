@@ -59,13 +59,14 @@ features from scratch.
   [bluestacks/android-16#4](https://github.com/bluestacks/android-16/pull/4),
   from `bluestacks:aosp16-bst-merge` to
   `bluestacks:bst-v5.22.210-A16`.
-- Current published review root: `abf041cae9dfe1c32a150d8d2b97898b8c63529b`.
+- Current published review root: `7470f85005bebe91becf3e66c8183107aae4f6f0`.
   All 51 promoted components were published to and read back from both their
   source merge branch and the BlueStacks `bst-v5.22.210-A16` target branch.
   Fourteen root gitlinks advanced after divergent component merges. The final
   ownership commit `90f87eed8d0bbd1bed49f077f775309bd9f2d843`
-  removes all personal-fork URLs and makes every explicit
-  branch track `bst-v5.22.210-A16`. The build, package, and boot evidence
+  removes all personal-fork URLs. Root `7470f850` removes the eight explicit
+  branch keys, leaving each root gitlink as the component revision authority.
+  The build, package, and boot evidence
   remains bound to `2be2bd594015046288f67420c72ac3d964595d14` and is historical
   for the new root; a new incremental build and boot regression are required.
   That historical runtime acceptance was blocked by exact `bst.*` lookup and

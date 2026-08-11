@@ -15,7 +15,9 @@ The tested Android identity was:
 - pre-validation root: `79c454e9f5acde60ecb1055e56228df33001f0cc`
 - post-validation root: `725e4bf76345b3634050a66213a51d9d97e476e6`
 - pre-regression published root: `cff3fa6662d36951d289bf21d1a69323f9712b1d`
-- current published validation root: `abf041cae9dfe1c32a150d8d2b97898b8c63529b`
+- runtime-validated root: `abf041cae9dfe1c32a150d8d2b97898b8c63529b`
+- current published metadata root: `7470f85005bebe91becf3e66c8183107aae4f6f0`
+  (same component gitlinks; removes the eight `.gitmodules` branch keys)
 - system/core: `95459cc5d51c568baf9c4f816cf247b77f9bacfc`
 - kernel-a16: `7df56582487e17e5737d5c3c2f567722335a15bc`
 - device/generic/common: `bc5c95abb9d3d35cc131ffdac488593edaf3c981`
@@ -414,3 +416,6 @@ Keep PR #4 in Draft. Required remaining gates are:
 Component publication is complete: all three tips above exist on BlueStacks
 `bst-v5.22.210-A16`, and root `aosp16-bst-merge` was published and read back at
 `abf041cae9dfe1c32a150d8d2b97898b8c63529b` before this record was finalized.
+Metadata successor `7470f85005bebe91becf3e66c8183107aae4f6f0`
+removes only the eight `.gitmodules` branch keys and does not change a component
+gitlink or claim a new runtime validation.

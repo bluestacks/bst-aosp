@@ -103,9 +103,11 @@ were fast-forwarded and read back before the URLs changed:
 - `bluestacks/external-alsa-utils-a13`
 
 Root `90f87eed8d0bbd1bed49f077f775309bd9f2d843` contains zero `mark-bst`
-submodule URLs. Every URL belongs to the BlueStacks organization, and all eight
-explicit branch fields track `bst-v5.22.210-A16`. This metadata follow-up does
-not change a component gitlink.
+submodule URLs. Every URL belongs to the BlueStacks organization. At that
+checkpoint, eight explicit branch fields tracked `bst-v5.22.210-A16`; root
+`7470f85005bebe91becf3e66c8183107aae4f6f0` subsequently removed every branch
+key so gitlinks remain the only component revision authority. Neither metadata
+follow-up changes a component gitlink.
 
 ## Divergent Component Review
 

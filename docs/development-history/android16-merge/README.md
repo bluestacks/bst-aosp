@@ -20,9 +20,9 @@ features from scratch.
 - [`runtime-regression-2026-08-06.md`](runtime-regression-2026-08-06.md): current
   launcher/property/HAL findings, active build identity and regression record.
 - [`runtime-regression-2026-08-11.md`](runtime-regression-2026-08-11.md):
-  runtime-validated explicit property fix, narrow incremental build and package
-  identity, formal 6.12 AHCI failure, 5.15 userspace fallback, and the remaining
-  host/guest shared-folder and IME contract gaps.
+  runtime-validated explicit property fix, 6.12 AHCI/APIC and ashmem resolution,
+  narrow incremental build and package identity, and the remaining host/guest
+  shared-folder and IME contract gaps.
 - [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
   candidate, target-branch ancestry, final artifact/boot evidence and open
   publication blockers.
@@ -44,31 +44,37 @@ features from scratch.
 - Unchanged projects: `aosp16-bst`.
 - Projects carrying promoted or mainline-resolution changes:
   `aosp16-bst-merge`.
-- Development fork: `mark-bst`.
+- Formal component owner: `bluestacks`; personal forks are historical evidence
+  only and are forbidden in the current root metadata and publication flow.
 - Integration target: `bluestacks/android-16:bst-v5.22.210-A16`.
 - Withdrawn root pull request:
   [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1).
 - Superseded pull request:
   [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2),
   closed after the target changed from `aosp16-bst`.
-- Current Draft pull request:
+- Superseded publication pull request:
   [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3),
-  from `mark-bst:aosp16-bst-merge` to
+  whose personal-fork source is retained only as historical evidence.
+- Current Draft pull request:
+  [bluestacks/android-16#4](https://github.com/bluestacks/android-16/pull/4),
+  from `bluestacks:aosp16-bst-merge` to
   `bluestacks:bst-v5.22.210-A16`.
-- Current published review root: `90f87eed8d0bbd1bed49f077f775309bd9f2d843`.
+- Current published review root: `abf041cae9dfe1c32a150d8d2b97898b8c63529b`.
   All 51 promoted components were published to and read back from both their
   source merge branch and the BlueStacks `bst-v5.22.210-A16` target branch.
   Fourteen root gitlinks advanced after divergent component merges. The final
-  metadata follow-up removes all personal-fork URLs and makes every explicit
+  ownership commit `90f87eed8d0bbd1bed49f077f775309bd9f2d843`
+  removes all personal-fork URLs and makes every explicit
   branch track `bst-v5.22.210-A16`. The build, package, and boot evidence
   remains bound to `2be2bd594015046288f67420c72ac3d964595d14` and is historical
   for the new root; a new incremental build and boot regression are required.
   That historical runtime acceptance was blocked by exact `bst.*` lookup and
-  shared folders. The 2026-08-11 local follow-up resolves and validates exact
-  `bst.*` reads, but has not been pushed. Its complete 6.12 artifact still
-  fails ATA IDENTIFY; a mixed new-Root/known-green-5.15 userspace baseline
-  passes 7/7 boot and property checks but remains blocked by the Hyper-V
-  shared-folder and IME listener contracts.
+  shared folders. The 2026-08-11 follow-up resolves and validates exact `bst.*`
+  reads, 6.12 interrupt delivery, and memfd-backed legacy gralloc. Those
+  component and root commits are published in Draft PR #4. The current
+  diagnostic Root/fastboot pair passes 7/7 boot and property checks but is not
+  a final unified package, and the Hyper-V shared-folder and IME listener
+  contracts remain blocked.
 - [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
   rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes
   and current 7/7 boot evidence.

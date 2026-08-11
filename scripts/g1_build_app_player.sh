@@ -374,6 +374,15 @@ for prop in $PLATFORM_SDK_PROPERTIES; do
     exit 1
   }
 done
+EARLY_BOOT_PROPERTIES='sys.use_memfd'
+for prop in $EARLY_BOOT_PROPERTIES; do
+  target_value="$(grep -m1 "^${prop}=" "$TARGET_BUILD_PROP" || true)"
+  packaged_value="$(grep -m1 "^${prop}=" "$PACKAGED_BUILD_PROP" || true)"
+  [ -n "$target_value" ] && [ "$packaged_value" = "$target_value" ] || {
+    echo "packaged early-boot property mismatch for $prop: target='$target_value' packaged='$packaged_value'" >&2
+    exit 1
+  }
+done
 PLATFORM_SDK_IDENTITY_SHA256="$({
   for prop in $PLATFORM_SDK_PROPERTIES; do
     grep -m1 "^${prop}=" "$PACKAGED_BUILD_PROP"

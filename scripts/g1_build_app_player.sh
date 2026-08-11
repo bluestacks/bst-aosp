@@ -303,6 +303,11 @@ else
 fi
 echo "A16DBG:ANDROID16: reset generated system staging files=$STALE_STAGING_FILES"
 
+# Stage the verified goldfish closure immediately before Root packaging. This
+# also normalizes Android OUT because the legacy Makefile merges that directory
+# into release staging after this point.
+bash "$SCRIPT_DIR/g1_rebuild_graphics.sh" --stage-only
+
 MAKE_OLD_TARGETS=(-o android)
 if [ "$PACKAGE_RESUME" -eq 1 ]; then
   MAKE_OLD_TARGETS+=(-o libs -o apks -o datafs)

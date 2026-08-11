@@ -61,7 +61,8 @@ $fatalPatterns = @(
     @{ id = "system_server_watchdog"; rx = "WATCHDOG KILLING SYSTEM PROCESS|watchdog.*system_server" },
     @{ id = "system_server_terminated"; rx = "system server.*has terminated|system_server.*(?:died|terminated)" },
     @{ id = "zygote_system_server_exit"; rx = "Exit zygote because system server.*terminated" },
-    @{ id = "rescue_party_reboot"; rx = "reboot: Restarting system with command 'RescueParty'" }
+    @{ id = "rescue_party_reboot"; rx = "reboot: Restarting system with command 'RescueParty'" },
+    @{ id = "kernel_rcu_stall"; rx = "rcu_preempt detected expedited stalls on CPUs/tasks" }
 )
 $found = @{}
 $fatalFound = @{}

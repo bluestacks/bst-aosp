@@ -121,8 +121,19 @@ for abi in lib lib64; do
   HWC_SRC="$VENDOR_ROOT/$abi/hw/hwcomposer.android_x86_64.so"
   [ -f "$HWC_SRC" ] || HWC_SRC="$VENDOR_ROOT/$abi/hw/hwcomposer.default.so"
   require_file "$HWC_SRC"
-  cp -a "$HWC_SRC" "$SYS/vendor/$abi/hw/hwcomposer.default.so"
-  rm -f "$SYS/vendor/$abi/hw/gralloc.default.so"
+  HWC_DEFAULT="$VENDOR_ROOT/$abi/hw/hwcomposer.default.so"
+  [ "$HWC_SRC" = "$HWC_DEFAULT" ] || cp -a "$HWC_SRC" "$HWC_DEFAULT"
+  cp -a "$HWC_DEFAULT" "$SYS/vendor/$abi/hw/hwcomposer.default.so"
+
+  # Root.vdi packaging later merges the Android product directory back into
+  # release staging. Normalize both trees so that stale provider aliases cannot
+  # reappear in the packaged image and alter HAL selection order.
+  for hw_root in "$VENDOR_ROOT/$abi/hw" "$SYS/vendor/$abi/hw"; do
+    rm -f \
+      "$hw_root/gralloc.android_x86_64.so" \
+      "$hw_root/gralloc.default.so" \
+      "$hw_root/hwcomposer.android_x86_64.so"
+  done
 done
 
 BP="$SYS/build.prop"
@@ -133,6 +144,18 @@ done
 
 echo "A16DBG:G1: staged graphics closure readback"
 for abi in lib lib64; do
+  for stale in \
+    "$VENDOR_ROOT/$abi/hw/gralloc.android_x86_64.so" \
+    "$VENDOR_ROOT/$abi/hw/gralloc.default.so" \
+    "$VENDOR_ROOT/$abi/hw/hwcomposer.android_x86_64.so" \
+    "$SYS/vendor/$abi/hw/gralloc.android_x86_64.so" \
+    "$SYS/vendor/$abi/hw/gralloc.default.so" \
+    "$SYS/vendor/$abi/hw/hwcomposer.android_x86_64.so"; do
+    [ ! -e "$stale" ] || {
+      echo "A16DBG:G1: stale graphics provider survived normalization: $stale" >&2
+      exit 1
+    }
+  done
   sha256sum \
     "$SYS/vendor/$abi/egl/"*.so \
     "$SYS/vendor/$abi/libOpenglSystemCommon.so" \

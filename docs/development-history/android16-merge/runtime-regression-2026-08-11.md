@@ -359,18 +359,37 @@ Bluetooth, system_server PID, boot ID, and process stability did not fail.
 
 ### FPS Oracle And Board Path
 
+The A13 source does use an emulator HWC route, but that statement is not an
+exact module-name or interface contract. Code-level readback shows:
+
+- `device/generic/common/packages.mk` declares `hwcomposer.x86`;
+- `hardware/libhardware/modules/hwcomposer/Android.bp` builds the legacy sample
+  `hwcomposer.default` implementation;
+- the A13-based external goldfish tree contains `system/hwc2/Android.mk`, but
+  its top-level `Android.mk` does not include that directory by default.
+
+Android 16 therefore cannot preserve the A13 behavior by omitting HWC or by
+assuming that the A13 product module name identifies a directly reusable
+binary. Composer 2.1 requires a working HWC2 provider. The minimal promotion
+keeps the goldfish emulation backend and adapts only its build/API boundary;
+it does not introduce a different board or renderer. No A13 build or runtime
+validation was run for this review.
+
 The first FPS run incorrectly used the first line of
 `dumpsys SurfaceFlinger --latency`. On the Windows `android_x86_64` board this
 is the native goldfish HWC2 display's fixed 60 Hz nominal period, not the
-Scheduler override controlled by `bst.max_fps`. The test therefore reported a
-false failure at 30 FPS even though the Scheduler changed its work duration.
+Scheduler override controlled by `bst.max_fps`. The goldfish build names the
+module `hwcomposer.android_x86_64.so`; target staging copies the same bytes to
+`hwcomposer.default.so` because the guest has no `ro.hardware.hwcomposer`
+override. The test therefore reported a false failure at 30 FPS even though
+the Scheduler changed its work duration.
 
 The Android 13/A16 `HWC2OnFbAdapter` polling code in `hardware/interfaces` is
 present in target commit `bf800caa090008c2fbbc1723c6fe814ece6f7eb9`, but it is
-a framebuffer fallback. The active board loads
-`hwcomposer.android_x86_64.so` as a native HWC2 device, so that adapter is not
-the runtime authority. The active A16 implementation is the existing
-SurfaceFlinger Scheduler override in `frameworks/native`.
+a framebuffer fallback. The active board loads the staged
+`hwcomposer.default.so`, sourced from the external goldfish native HWC2 build,
+so that adapter is not the runtime authority. The active A16 implementation is
+the existing SurfaceFlinger Scheduler override in `frameworks/native`.
 
 `g1_fps_regression.ps1` now reads the Scheduler `app duration` from the normal
 SurfaceFlinger dump. It still verifies property readback, restores the original
@@ -419,14 +438,68 @@ the same connection behavior. This is a host listener lifecycle gap, not an
 A13-to-A16 source omission. App-player/HD changes remain outside this
 submission and were not modified.
 
+## Formal Goldfish Package Regression, 2026-08-12
+
+The formal graphics source is
+`goldfish-opengl-pie@f6841e72d677a02de240231b56045663948032e1` on
+`bst-v5.22.210-A16`, based on A13 commit
+`2834e90ad3443b0d348fab68204688369974f985`. Android-16 remained at root
+`ddc1eeba951ccddea52ef1937138facdf3241909` on `aosp16-bst-merge` with
+`OUT_DIR=out_nxt_Baklava64`. The targeted goldfish dependency build completed;
+the second HWC-only invocation reported no work. No A13 build was run.
+
+Review found that `Root.vdi` packaging merges the Android product `system`
+directory back into release staging after the graphics overlay. This restored
+stale `gralloc.default`, `gralloc.android_x86_64`, and
+`hwcomposer.android_x86_64` aliases even though the pre-package staging tree
+had been cleaned. The active workflow now normalizes both generated trees and
+runs the verified stage-only gate immediately before Root packaging. This is a
+packaging determinism fix, not another graphics implementation patch.
+
+`g1_build_app_player.sh --package-resume --jobs 8` completed without an Android
+platform rebuild. Final image readback found exactly these providers for both
+32-bit and 64-bit ABIs:
+
+- `gralloc.bst.so`
+- `hwcomposer.default.so`
+
+No stale alias survived in `system.img`. Image-extracted files matched release
+staging byte for byte:
+
+| Artifact | SHA256 |
+| --- | --- |
+| 32-bit `gralloc.bst.so` | `a9707a818357a6b58f4a6f36aa208f298bd417ded380749a2805cda845ac0ecc` |
+| 32-bit `hwcomposer.default.so` | `fb91de2aeaed19fc015451ae646e067222843bf12aa1244b2cb3d5f0ed7bdd13` |
+| 64-bit `gralloc.bst.so` | `012a1fd684cee4c9240b5a6fc92ba1acacfb7c35822e0633e87700e9ebd750d7` |
+| 64-bit `hwcomposer.default.so` | `7f2c0d402f17bcd37e9b62bf2ee2aebf3bbc639bc55e9c63093d8f360155a642` |
+| `Root.vhd` | `80b25fa7a55ff43b9e1bf4aad7bad9d9c291ecda28d8fb73b2a9d47b2300e7cc` |
+| `system.img` | `ca781e2413d41ec37210bff5df2bf9c4f0b09e458dea10cf236984fc92c9f492` |
+| `system.sfs` | `f0a865b407bb22b21e385c611b536645be7768e6c0a2d76f30d28763141fc726` |
+| `fastboot.vdi` | `80557dd7f7bffa428c85b3fad75e3f3ba6b91dffd4d4d80938cae0a7b5049911` |
+
+Windows deployment verified Root UUID
+`54e9ad31-a169-4d5b-a0e0-705d62e96e71` and fastboot UUID
+`91b80c95-aa7d-459d-93e4-c479f5babbb7`. The formal 6.12 pair did not complete
+boot: only `system_mounted` and `init_second` passed. The kernel repeatedly
+reported `rcu_preempt detected expedited stalls` on CPU3 from about guest
+second 90 through the 600-second timeout. `odsign`, boot completion, Launcher
+activity, player ready, and boot-progress hiding did not occur.
+
+This failure happens before Composer, SurfaceFlinger, or Launcher can provide
+a runtime oracle. It neither validates nor disproves the formal HWC behavior;
+graphics runtime validation remains blocked by the 6.12 kernel/fastboot issue.
+The verifier now treats this RCU-stall signature as fatal so future runs fail
+at the causal symptom instead of waiting for every userspace oracle to time
+out.
+
 ## Publication Gate
 
 Keep PR #4 in Draft. Required remaining gates are:
 
-1. run the canonical incremental package-resume flow once more so Root and the
-   Rust/ASHMEM-enabled 6.12 fastboot share one formal identity;
-2. deploy that non-diagnostic pair and repeat boot, property, FPS, Launcher,
-   Houdini, HAL, ADB-policy, and stability gates;
+1. resolve the repeatable CPU3 RCU stall in the formal 6.12 fastboot, then
+   rebuild only its affected dependency closure;
+2. redeploy the formal pair and repeat boot, property, FPS, Launcher, Houdini,
+   HWC, HAL, ADB-policy, and stability gates;
 3. establish and validate the intended Hyper-V or VBox shared-folder contract;
 4. start the host IME listener or formally change its lifecycle contract;
 5. resolve or explicitly accept the old GMS biometric and Play Store

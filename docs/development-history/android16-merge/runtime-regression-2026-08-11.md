@@ -16,8 +16,8 @@ The tested Android identity was:
 - post-validation root: `725e4bf76345b3634050a66213a51d9d97e476e6`
 - pre-regression published root: `cff3fa6662d36951d289bf21d1a69323f9712b1d`
 - runtime-validated root: `abf041cae9dfe1c32a150d8d2b97898b8c63529b`
-- current published metadata root: `7470f85005bebe91becf3e66c8183107aae4f6f0`
-  (same component gitlinks; removes the eight `.gitmodules` branch keys)
+- current published metadata root: `ddc1eeba951ccddea52ef1937138facdf3241909`
+  (same component gitlinks; uses branchless dedicated A16 repository URLs)
 - system/core: `95459cc5d51c568baf9c4f816cf247b77f9bacfc`
 - kernel-a16: `7df56582487e17e5737d5c3c2f567722335a15bc`
 - device/generic/common: `bc5c95abb9d3d35cc131ffdac488593edaf3c981`
@@ -53,6 +53,27 @@ three regression component tips were published and read back from BlueStacks:
 - `kernel-common-a16`: `7df56582487e17e5737d5c3c2f567722335a15bc`
 - `device-generic-x86_64-a16`: `efd29005bbfaf29d13d8e8de952cb10faa7e71ff`
 - `device-generic-common-a16`: `bc5c95abb9d3d35cc131ffdac488593edaf3c981`
+
+## A16 ALSA And HAL Repository Ownership
+
+The six promoted components below originally retained formal BlueStacks A13
+repository URLs. Their current gitlink commits were published without history
+rewrites to both `bst-v5.22.210-A16` and `aosp16-bst-merge` in dedicated A16
+repositories, then independently read back:
+
+| Path | A16 repository | Published SHA |
+| --- | --- | --- |
+| `hardware/bst/audio` | `hardware-bst-audio-a16` | `ac13f7b60680f60a3b0efc031aaa42019be254be` |
+| `hardware/bst/lights` | `hardware-bst-lights-a16` | `d7fb147bdaf6c5675ba98c308c0411c8f6762bdd` |
+| `hardware/bst/memtrack` | `hardware-bst-memtrack-a16` | `d3596f32d4f042ccbb17653ab84132cfa07080d0` |
+| `hardware/bst/power` | `hardware-bst-power-a16` | `2b2e3e1dd69985937d122b400dded54532e8519f` |
+| `external/alsa-lib` | `external-alsa-lib-a16` | `e54ae1267d274487fbe06df176eeca0147edd7c3` |
+| `external/alsa-utils` | `external-alsa-utils-a16` | `12f8c54f77f40bacd87bc0ec4c9f3c6bfb66d47f` |
+
+Root `ddc1eeba951ccddea52ef1937138facdf3241909` changes only those
+six `.gitmodules` URLs. It retains 1025 BlueStacks URLs, zero branch keys, and
+the same six component gitlinks, so it does not claim new build or runtime
+validation.
 
 ## Initial Runtime Baseline
 
@@ -418,4 +439,7 @@ Component publication is complete: all three tips above exist on BlueStacks
 `abf041cae9dfe1c32a150d8d2b97898b8c63529b` before this record was finalized.
 Metadata successor `7470f85005bebe91becf3e66c8183107aae4f6f0`
 removes only the eight `.gitmodules` branch keys and does not change a component
-gitlink or claim a new runtime validation.
+gitlink or claim a new runtime validation. Successor
+`ddc1eeba951ccddea52ef1937138facdf3241909` changes only the six legacy
+ALSA/HAL repository URLs to their dedicated A16 owners and likewise does not
+claim a new runtime validation.

@@ -39,6 +39,7 @@ if [ "$MODE" = "build" ]; then
   export ALLOW_MISSING_DEPENDENCIES=true BST_BUILD_WITH_DEXPREOPT=true USE_OPENGL_RENDERER=true
   export BUILD_EMULATOR_OPENGL=true BUILD_EMULATOR_OPENGL_DRIVER=true
   export BST_BUILD_EXTERNAL_GOLDFISH=true
+  export USE_CCACHE="${USE_CCACHE:-1}"
   source build/envsetup.sh
   lunch "$BST_LUNCH_TARGET"
   set -u

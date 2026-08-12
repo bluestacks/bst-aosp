@@ -23,6 +23,10 @@ features from scratch.
   runtime-validated explicit property fix, 6.12 AHCI/APIC and ashmem resolution,
   narrow incremental build and package identity, and the remaining host/guest
   shared-folder and IME contract gaps.
+- [`formal-regression-followup-2026-08-12.md`](formal-regression-followup-2026-08-12.md):
+  formal graphics package A/B boot results, byte-level fastboot comparison,
+  revised intermittent RCU finding, repeated host-contract failures and the
+  active goldfish `EmuHWC2` dynamic-FPS omission.
 - [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
   candidate, target-branch ancestry, final artifact/boot evidence and open
   publication blockers.

@@ -492,14 +492,37 @@ The verifier now treats this RCU-stall signature as fatal so future runs fail
 at the causal symptom instead of waiting for every userspace oracle to time
 out.
 
+### Follow-up Correction, 2026-08-12
+
+The statement above records the first formal-run result, but the failure is not
+repeatable by fastboot identity. Keeping the same new Root.vhd and switching to
+the previous fastboot produced 7/7 with a 95-second stability window. Switching
+back to the exact rebuilt fastboot SHA256 `80557dd7...` then also produced 7/7.
+
+Read-only extraction found identical kernel bytes and identical hashes for all
+24 initrd files, including every kernel module and boot script. Only cpio
+timestamp metadata differs. The corrected conclusion is therefore an
+intermittent RCU/IPI failure consistent with a race around VBox guest-module
+loading, not a proven corrupt or incompatible fastboot payload. The HGCM and
+malformed guest property messages also occur in successful boots and are not
+causal evidence by themselves.
+
+Formal graphics runtime is no longer blocked by every boot, but it exposed a
+repeatable dynamic-FPS failure: the active external goldfish `EmuHWC2` does not
+observe `bst.max_fps` or emit the refresh callback needed to enter the existing
+Scheduler override. The framebuffer fallback implementation in
+`hardware/interfaces` is not the loaded HWC. Full evidence and revised gates
+are in
+[`formal-regression-followup-2026-08-12.md`](formal-regression-followup-2026-08-12.md).
+
 ## Publication Gate
 
 Keep PR #4 in Draft. Required remaining gates are:
 
-1. resolve the repeatable CPU3 RCU stall in the formal 6.12 fastboot, then
-   rebuild only its affected dependency closure;
-2. redeploy the formal pair and repeat boot, property, FPS, Launcher, Houdini,
-   HWC, HAL, ADB-policy, and stability gates;
+1. quantify and resolve the intermittent CPU3 RCU stall around the formal 6.12
+   VBox guest-module load path without hiding it behind retries;
+2. adapt dynamic FPS to the active external goldfish `EmuHWC2`, then repeat
+   targeted compile, packaging, FPS, Launcher, HWC and stability gates;
 3. establish and validate the intended Hyper-V or VBox shared-folder contract;
 4. start the host IME listener or formally change its lifecycle contract;
 5. resolve or explicitly accept the old GMS biometric and Play Store

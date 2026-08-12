@@ -53,18 +53,27 @@
   `a878d3c8`、Layer2 7/7 @161s（cont.101）。
 - 已撤回候选的历史验证：1016/1016 submodule，985 × `aosp16-bst` +
   31 × `aosp16-bst-merge`，Android-16 Layer2 7/7 @123s（cont.106）。
-- 当前 A13 权威补齐根提交为 `9ae09dd212ac1ecedfa7e41782e92d8f7a640d24`。
-  审计覆盖 1026 个 repo：975 × `aosp16-bst` + 50 ×
-  `aosp16-bst-merge`，无 detached HEAD、gitlink mismatch、remote mismatch
-  或不规范提交标题；15 个 publication topology 问题仍待发布前处理。
-- 当前 target-only `check-vintf-all` 和 `m droid` 已通过，产品为
-  `android_x86_64-trunk_staging-eng`，只使用 `~/android-16/out`。当前根尚未
-  stage/package/deploy/boot，因此不得沿用历史候选的 7/7 启动结论。
+- 当前已发布审查根为 `cff3fa6662d36951d289bf21d1a69323f9712b1d`。
+  审计覆盖 1025 个 submodule：974 × `aosp16-bst` + 51 ×
+  `aosp16-bst-merge`，无 detached HEAD 或 gitlink mismatch；`.gitmodules`
+  及组件实际发布 remote 必须全部属于 `bluestacks`，不得保留个人 fork。
+- 当前 target-only 产品为 `android_x86_64-trunk_staging-eng`，只使用
+  `~/android-16/out_nxt_Baklava64`。Android userspace 在历史 5.15 kernel
+  混合诊断基线、以及 6.12 kernel（恢复 logical-flat APIC 修 ATA IDENTIFY
+  + `sys.use_memfd`/`CONFIG_ASHMEM` 修 ashmem 后）上均通过 7/7 boot oracle；
+  但 formal 6.12 target artifact 仍因间歇性 CPU3 RCU 冷启竞态（`vboxguest.ko`
+  加载期）与可复现的动态 FPS（`EmuHWC2` 缺 `bst.max_fps` observer）回归
+  不得声明最终 boot green。详见
+  `docs/development-history/android16-merge/formal-regression-followup-2026-08-12.md`。
 - 原根 PR
   [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1)
   已关闭；替代 PR
   [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2)
   已通过目标树构建、打包、远程 SHA 回读和 Windows 7/7 启动验证。
+- 当前 Draft PR 为
+  [bluestacks/android-16#4](https://github.com/bluestacks/android-16/pull/4)，
+  从 `bluestacks:aosp16-bst-merge` 合入
+  `bluestacks:bst-v5.22.210-A16`。PR #1-#3 均为历史或已取代记录。
 - 当前 multi-repo branch 合规：未修改项目必须为 `aosp16-bst`；承载
   promotion 或后续修改的项目为 `aosp16-bst-merge`。不得用 detached
   HEAD 代替分支状态。
@@ -127,7 +136,7 @@ HEAD、OUT_DIR 和 product。活动 build/stage/pack 禁止使用
 - `/save-summary` — checkpoint：写 `.claude/plan.md` + `.claude/summary.md`（AOSP 字段：定制 id、源 commit、冲突解决、upstream delta、verification、host-compat）。
 - `/remote-build` — 远程 lunch + m，后台化 + 回读日志/exit code/产物。
 - `/port-patch` — 识别（diff 取一条定制）→ 研究 → rebase → 记冲突 → 更新 registry。
-- `/promote-android16` — freeze → audit → compare/merge → target-only validation → fork push → root PR。
+- `/promote-android16` — freeze → audit → compare/merge → target-only validation → BlueStacks component target push → root PR。
 - `/boot-verify` — 取 kernel/串口 log，跑 Layer 2 oracle 套件。
 
 ## Where things live

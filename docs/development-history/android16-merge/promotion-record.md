@@ -172,7 +172,16 @@ explicit branch fields originally tracked `bst-v5.22.210-A16`; root
 `7470f85005bebe91becf3e66c8183107aae4f6f0` subsequently removed all branch
 keys so root gitlinks remain authoritative.
 
-No build or boot validation is attributed to this new root. The latest green
-artifact evidence remains bound to `2be2bd594015046288f67420c72ac3d964595d14`.
-PR #3 therefore remains Draft pending a new incremental build, focused boot
-regression, and closure of the exact `bst.*` lookup/shared-folder blocker.
+No build or boot validation is attributed to ownership commit `90f87eed`. PR #3
+was subsequently superseded by Draft PR
+[bluestacks/android-16#4](https://github.com/bluestacks/android-16/pull/4),
+from `bluestacks:aosp16-bst-merge` to
+`bluestacks:bst-v5.22.210-A16`. Current published root
+`cff3fa6662d36951d289bf21d1a69323f9712b1d` contains 1025 BlueStacks-owned
+submodule URLs and no personal-fork URL. Exact `bst.*` reads now pass, and the
+6.12 ATA IDENTIFY failure is resolved (logical-flat APIC restore). PR #4
+remains Draft because of the remaining runtime gates: intermittent CPU3 RCU
+cold-start stall, the repeatable dynamic-FPS regression on the active goldfish
+`EmuHWC2`, the shared-folder/IME host contracts, and the VBox 6.12 source
+formalization. See `formal-regression-followup-2026-08-12.md` for the current
+gate list.

@@ -1,0 +1,13 @@
+diff --git a/java/src/com/android/inputmethod/latin/BstImeBridge.java b/java/src/com/android/inputmethod/latin/BstImeBridge.java
+index 4b04cb895..a8c05e921 100644
+--- a/java/src/com/android/inputmethod/latin/BstImeBridge.java
++++ b/java/src/com/android/inputmethod/latin/BstImeBridge.java
+@@ -141,7 +141,7 @@ final class BstImeBridge {
+     private void listen() {
+         while (mRunning) {
+             try (ServerSocket serverSocket = new ServerSocket(
+-                    0, 4, InetAddress.getLoopbackAddress())) {
++                    0, 4, InetAddress.getByName("127.0.0.1"))) {
+                 serverSocket.setReuseAddress(true);
+                 mServerSocket = serverSocket;
+                 setProperty(LISTENER_PORT_PROPERTY,

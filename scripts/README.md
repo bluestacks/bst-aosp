@@ -19,7 +19,7 @@ before work starts.
 
 | Entry | Role | Side effects |
 |---|---|---|
-| `g1_build_app_player.sh` | Canonical incremental Android-16 build and app-player package | Preserves `out_nxt_Baklava64`, runs only `m init systemimage`, and skips the legacy app-player `android` target that deletes images; incrementally repackages Root/fastboot with at most eight jobs; records app-player, HD, VBox, graphics and payload identity; requires new Root/system/fastboot artifacts; verifies Root/fastboot UUIDs and packaged SDK identity; rejects an image missing uncube, `libflutter.so`, `mountsf`, or the BlueStacks build identity |
+| `g1_build_app_player.sh` | Canonical incremental Android-16 build and app-player package | Validates app-player/Android/HD/VBox/graphics identities, then delegates to `build_Baklava64.sh`; preserves the `out_nxt_Baklava64` object graph, limits work to eight jobs, maps package-resume/package-only to the canonical package-only mode, and verifies the completed Root, fastboot, payload, provider, and source identities |
 | `g1_build_android16.sh` | Target-only Layer 1 Android-16 build and graphics stage | Builds under the validated Android-16 root; does not create a release-complete Root |
 | `g1_build_libs.sh` | Builds and hashes required HD guest native libraries | Builds under the validated Android-16 root |
 | `g1_build_pack.sh` | Orchestrates build, Root packaging, deploy, and complete Layer 2 verification | Builds hash-bound test APKs, then runs boot, property, Launcher/HAL, FPS, app-visible media, ARM64 translation, and fail-closed ADB oracles |
@@ -32,7 +32,7 @@ before work starts.
 | `g1_win_deploy.ps1` | Deploys Root and fastboot with SHA-256 and UUID readback | Atomically replaces the two Windows engine media after both pass identity checks |
 | `g1_win_shared_folder_config.ps1` | Resolves local Tiramisu64 shared-folder template paths | Backs up and updates only the installed Windows VM configs; does not modify app-player, HD, or Android source |
 | `g1_reset_data_wipe.ps1` | Restores the verified clean Data snapshot with SHA-256 readback | Stops the local instance and replaces `Data.vhdx` |
-| `g1_boot_verify.ps1` | Evaluates the Layer 2 boot oracle | Starts/stops only Tiramisu64 and fails early on VM, zygote preload, boot-classpath, or system-server fatal signatures |
+| `g1_boot_verify.ps1` | Evaluates the Layer 2 boot and graphics oracle | Starts/stops only Tiramisu64; requires the expected host GL vendor and a decoded non-black guest framebuffer; fails on VM, zygote preload, boot-classpath, or system-server fatal signatures without using a Windows screenshot |
 | `g1_property_verify.ps1` | Compares property payloads with guest runtime values | Temporarily enables the BlueStacks getprop diagnostic switch |
 | `g1_runtime_regression.ps1` | Checks Launcher/Settings stability, shared-folder I/O, Houdini, network identity, and HAL registration | Starts activities, writes two fixed temporary probe files, removes them, and reads bounded ADB diagnostics |
 | `g1_fps_regression.ps1` | Verifies dynamic `bst.max_fps` frame pacing and bounded renderer CPU | Temporarily changes FPS, measures SurfaceFlinger/composer, and restores the original value |

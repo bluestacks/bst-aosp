@@ -1,0 +1,10 @@
+diff --git a/android_x86_64.mk b/android_x86_64.mk
+--- a/android_x86_64.mk
++++ b/android_x86_64.mk
+@@ -24,5 +24,6 @@ $(call inherit-product,device/generic/common/x86_64.mk)
+ # BlueStacks runtime services required by the Windows Android-x86_64 image.
+ PRODUCT_PACKAGES += \
+     hwservicemanager \
++    hwservicemanager_compat_symlink_module \
+     vndservicemanager \
+     android.hardware.power-service.example

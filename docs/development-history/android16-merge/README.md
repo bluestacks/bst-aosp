@@ -27,6 +27,15 @@ features from scratch.
   formal graphics package A/B boot results, byte-level fastboot comparison,
   revised intermittent RCU finding, repeated host-contract failures and the
   active goldfish `EmuHWC2` dynamic-FPS omission.
+- [`henry-compatible-build-flow-2026-08-13.md`](henry-compatible-build-flow-2026-08-13.md):
+  Baklava64 build-script adaptation, incremental semantics, A13 isolation, and
+  validation evidence.
+- [`graphics-black-screen-2026-08-15.md`](graphics-black-screen-2026-08-15.md):
+  vendor/system Binder root cause, AOSP16-matching fix, guest-framebuffer
+  oracle, compatibility review, and clean-package acceptance gates.
+- [`runtime-regression-2026-08-15.md`](runtime-regression-2026-08-15.md):
+  published runtime fixes, one-time clean and subsequent incremental evidence,
+  canonical package flow, code review, and the formal regression matrix.
 - [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
   candidate, target-branch ancestry, final artifact/boot evidence and open
   publication blockers.

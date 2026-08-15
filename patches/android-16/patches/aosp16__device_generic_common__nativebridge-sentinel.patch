@@ -1,0 +1,20 @@
+diff --git a/nativebridge/libnb.cpp b/nativebridge/libnb.cpp
+index 549d7e5..ec59678 100755
+--- a/nativebridge/libnb.cpp
++++ b/nativebridge/libnb.cpp
+@@ -451,13 +451,8 @@ static inline void patch_houdini(const unsigned char* base)
+ 
+ bool bst_is_ndk_translation_app(void)
+ {
+-    const char *path = "/system/lib64/arm64/libtcb.so";
+-
+-    if (access(path, F_OK) == 0) {
+-        return false;
+-    }
+-
+-    return true;
++    // Zygote bind-mounts arm64_ndk only for packages selected for NDK translation.
++    return access("/system/lib64/arm64/libnative_bridge_vdso.so", F_OK) == 0;
+ }
+ 
+ static inline ATTR_FORCE_INLINE android::NativeBridgeCallbacks* my_get_callbacks(void*& native_handle)

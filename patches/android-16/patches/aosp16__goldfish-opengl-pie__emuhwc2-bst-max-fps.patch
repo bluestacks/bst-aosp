@@ -1,0 +1,125 @@
+diff --git a/system/hwc2/EmuHWC2.cpp b/system/hwc2/EmuHWC2.cpp
+index cf610a7d..f7101d64 100644
+--- a/system/hwc2/EmuHWC2.cpp
++++ b/system/hwc2/EmuHWC2.cpp
+@@ -23,6 +23,11 @@
+ #include <cassert>
+ #include <memory>
+ #include <errno.h>
++#ifdef BST_ANDROID16_GUEST
++#include <cstdlib>
++#include <cutils/properties.h>
++#include <utils/Timers.h>
++#endif
+ #include <log/log.h>
+ #include <sync/sync.h>
+ 
+@@ -1151,6 +1156,39 @@ std::string EmuHWC2::Display::Config::toString() const {
+ 
+ 
+ // VsyncThread function
++#ifdef BST_ANDROID16_GUEST
++bool EmuHWC2::Display::VsyncThread::syncBstMaxFpsLocked() {
++    char value[PROPERTY_VALUE_MAX] = {};
++    property_get("bst.max_fps", value, "0");
++    const long maxFps = std::strtol(value, nullptr, 10);
++    if (maxFps <= 0 || maxFps > 240) {
++        return false;
++    }
++
++    const uint32_t refreshPeriod = static_cast<uint32_t>(1000000000LL / maxFps);
++    if (refreshPeriod == 0 || refreshPeriod == mDisplay.mVsyncPeriod) {
++        return false;
++    }
++
++    mDisplay.mVsyncPeriod = refreshPeriod;
++    if (mDisplay.mActiveConfig) {
++        const auto configId = mDisplay.mActiveConfig->getId();
++        if (configId < mDisplay.mConfigs.size()) {
++            mDisplay.mConfigs[configId]->setAttribute(
++                    Attribute::VsyncPeriod, static_cast<int32_t>(refreshPeriod));
++        }
++    }
++    ALOGI("bst.max_fps=%ld changed vsync period to %u ns", maxFps, refreshPeriod);
++    return true;
++}
++
++void EmuHWC2::Display::VsyncThread::updateWaitTimeLocked(struct timespec* waitTime) const {
++    const uint64_t period = mDisplay.mVsyncPeriod;
++    waitTime->tv_sec = static_cast<time_t>(period / 1000000000ULL);
++    waitTime->tv_nsec = static_cast<long>(period % 1000000000ULL);
++}
++#endif
++
+ bool EmuHWC2::Display::VsyncThread::threadLoop() {
+     struct timespec rt;
+     if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
+@@ -1166,6 +1204,10 @@ bool EmuHWC2::Display::VsyncThread::threadLoop() {
+ #endif
+     int lastSent = 0;
+     bool vsyncEnabled = false;
++#ifdef BST_ANDROID16_GUEST
++    bool fpsChanged = false;
++    int64_t nextFpsSyncNs = 0;
++#endif
+     struct timespec wait_time;
+     wait_time.tv_sec = 0;
+     wait_time.tv_nsec = mDisplay.mVsyncPeriod;
+@@ -1181,12 +1223,42 @@ bool EmuHWC2::Display::VsyncThread::threadLoop() {
+ 
+         std::unique_lock<std::mutex> lock(mDisplay.mStateMutex);
+         vsyncEnabled = (mDisplay.mVsyncEnabled == Vsync::Enable);
++#ifdef BST_ANDROID16_GUEST
++        fpsChanged = false;
++        if (vsyncEnabled) {
++            const int64_t nowNs = systemTime(SYSTEM_TIME_MONOTONIC);
++            if (nowNs >= nextFpsSyncNs) {
++                fpsChanged = syncBstMaxFpsLocked();
++                nextFpsSyncNs = nowNs + 1000000000LL;
++            }
++            updateWaitTimeLocked(&wait_time);
++        }
++#endif
+         lock.unlock();
+ 
+         if (!vsyncEnabled) {
+             continue;
+         }
+ 
++#ifdef BST_ANDROID16_GUEST
++        if (fpsChanged) {
++            hwc2_callback_data_t refreshData = nullptr;
++            hwc2_function_pointer_t refreshPtr = nullptr;
++            {
++                std::unique_lock<std::mutex> callbackLock(mDisplay.mDevice.mStateMutex);
++                const auto callback = mDisplay.mDevice.mCallbacks.find(Callback::Refresh);
++                if (callback != mDisplay.mDevice.mCallbacks.end()) {
++                    refreshData = callback->second.data;
++                    refreshPtr = callback->second.pointer;
++                }
++            }
++            if (refreshPtr) {
++                auto refresh = reinterpret_cast<HWC2_PFN_REFRESH>(refreshPtr);
++                refresh(refreshData, mDisplay.mId);
++            }
++        }
++#endif
++
+         if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
+             ALOGE("%s: error in vsync thread clock_gettime: %s",
+                  __FUNCTION__, strerror(errno));
+diff --git a/system/hwc2/EmuHWC2.h b/system/hwc2/EmuHWC2.h
+index 01267259..9dd3176b 100644
+--- a/system/hwc2/EmuHWC2.h
++++ b/system/hwc2/EmuHWC2.h
+@@ -307,6 +307,10 @@ private:
+             virtual ~VsyncThread() {}
+         private:
+             Display& mDisplay;
++#ifdef BST_ANDROID16_GUEST
++            bool syncBstMaxFpsLocked();
++            void updateWaitTimeLocked(struct timespec* waitTime) const;
++#endif
+             bool threadLoop() final;
+         };
+ 

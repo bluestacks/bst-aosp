@@ -38,6 +38,26 @@ the current solution.
 The remaining sections intentionally preserve what was observed on August 13
 and should be read as superseded development history.
 
+## 2026-08-16 Idle-VSync Follow-up
+
+Runtime activity proved that `a899e765` applies 30 and 60 FPS correctly when
+hardware VSync is enabled. SurfaceFlinger normally disables hardware VSync at
+idle, however, and the implementation places both its one-second property poll
+and refresh propagation behind that enabled check. An idle property update can
+therefore remain unapplied indefinitely. The minimal follow-up moves the
+bounded poll, wait-period update, and out-of-lock refresh before the disabled
+early return while retaining VSync callbacks only for the enabled state. Full
+evidence and the clean-package gate are in
+[`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md).
+
+The follow-up is now closed by goldfish commit
+`09383b110ce5dc925614ff74d70ddb46f16fe4e0` and app-player gitlink commit
+`5f38c99f71667ce69fdf7c5489db7b078bdb2d84`. The clean-derived package passed
+two cold boots and the idle-state FPS oracle measured `60 -> 30 -> 60` with
+0.00% period delta and bounded compositor CPU. This status supersedes the
+historical Layer 2 blocker and open-item list below; those sections remain as
+the original development record.
+
 ## Scope And Identity
 
 | Item | Identity |

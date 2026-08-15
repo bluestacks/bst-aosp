@@ -4,6 +4,16 @@ Stage: Android-16 mainline maintenance
 Status: source fixes published; clean Android build complete; canonical package
 and formal runtime regression in progress
 
+> **2026-08-16 status note:** this file preserves the previous clean-build
+> cycle and its identities. After the hwservicemanager restart fix, the user
+> explicitly authorized one new OUT reset and clean baseline. Current work and
+> the rule that every later build is incremental are recorded in
+> [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md).
+> That successor cycle is complete for black screen, properties, launcher,
+> ADB policy, dynamic FPS, application behavior, Camera2, and Houdini/binfmt.
+> Hyper-V shared folders remain blocked by the missing coordinated host/guest
+> transport contract.
+
 ## Scope
 
 This cycle follows the black-screen root cause and targeted validation in

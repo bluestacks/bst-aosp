@@ -7,9 +7,9 @@ module, app-player payload, or publication component.
 The app runs as an ordinary app UID and emits one `A16ORACLE:PASS` or
 `A16ORACLE:FAIL` line for each contract:
 
-- BlueStacks `WifiInfo`/`DhcpInfo`, Wi-Fi transport presentation, and the
-  `eth0` to `wlan0` Java facade;
-- app-UID bionic property compatibility for the synthetic board platform and
+- BlueStacks `WifiInfo`/`DhcpInfo`, ordinary-app MAC redaction, the configured
+  Wi-Fi or Ethernet presentation, and the `eth0` to `wlan0` Java facade;
+- app-UID direct bionic synthesis of the missing board-platform property and
   hardened secure/debuggable values;
 - software Canvas pixel output through the Android graphics API;
 - an initialized and playing `AudioTrack`;
@@ -27,9 +27,12 @@ bash tests/android16-runtime-oracle/build.sh \
 
 The build script rejects any path containing `aosp16`, does not read `out*`,
 and writes only the requested APK, identity sidecar, and a temporary directory.
-The Windows runner installs the APK, grants only its declared runtime
-permissions, collects bounded logcat evidence, verifies the DownloadProvider
-denial UID, and uninstalls the app in `finally`.
+The APK includes a minimal x86_64 JNI library that calls
+`__system_property_get` directly, so the synthetic missing-property hook is
+tested in the app process instead of through the incompatible `getprop`
+property-find path. The Windows runner installs the APK, grants only its
+declared runtime permissions, collects bounded logcat evidence, verifies the
+DownloadProvider denial UID, and uninstalls the app in `finally`.
 
 This oracle still does not prove audible host output, microphone capture,
 Widevine playback, translated ARM64 native execution, host taskbar/recents

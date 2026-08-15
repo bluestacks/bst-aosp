@@ -78,10 +78,11 @@ public final class OracleActivity extends Activity {
             pass("maps", "oracle=true,houdini=true");
 
             String cpuinfo = readText("/proc/cpuinfo");
-            require(cpuinfo.contains("ARMv8 processor")
+            require((cpuinfo.contains("ARMv8 processor")
+                            || cpuinfo.contains("AArch64 Processor"))
                             && cpuinfo.contains("CPU architecture: 8"),
                     "arm64 cpuinfo view missing");
-            pass("cpuinfo", "armv8=true,architecture=8");
+            pass("cpuinfo", "armv8-or-aarch64=true,architecture=8");
 
             pass("process", "uid=" + Process.myUid() + ",is64Bit=" + Process.is64Bit()
                     + ",os.arch=" + System.getProperty("os.arch"));

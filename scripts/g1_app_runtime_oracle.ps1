@@ -86,7 +86,8 @@ if ($identity.stage -ne "android16-promotion" -or
     $identity.tree -notmatch '(?:^|/)android-16$' -or
     $identity.tree -match 'aosp16' -or
     $identity.head -notmatch '^[0-9a-f]{40}$' -or
-    $identity.oracle_source_sha256 -notmatch '^[0-9a-f]{64}$') {
+    $identity.oracle_source_sha256 -notmatch '^[0-9a-f]{64}$' -or
+    $identity.native_elf_sha256 -notmatch '^[0-9a-f]{64}$') {
     throw "Oracle APK was not built from the Android-16 promotion tree"
 }
 

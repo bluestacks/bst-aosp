@@ -50,6 +50,34 @@ AAPT2="$ANDROID_ROOT/prebuilts/sdk/tools/linux/bin/aapt2"
 D8_JAR="$ANDROID_ROOT/prebuilts/r8/r8.jar"
 ZIPALIGN="$ANDROID_ROOT/prebuilts/sdk/tools/linux/bin/zipalign"
 APKSIGNER_JAR="$ANDROID_ROOT/prebuilts/sdk/tools/linux/lib/apksigner.jar"
+mapfile -t CLANG_CANDIDATES < <(
+  find "$ANDROID_ROOT/prebuilts/clang/host/linux-x86" -path '*/bin/clang' \
+    -type f -print | sort -V
+)
+mapfile -t READOBJ_CANDIDATES < <(
+  find "$ANDROID_ROOT/prebuilts/clang/host/linux-x86" -path '*/bin/llvm-readobj' \
+    -type f -print | sort -V
+)
+mapfile -t LIBC_STUB_CANDIDATES < <(
+  find "$ANDROID_ROOT/prebuilts/vndk" \
+    -path '*/x86_64/arch-x86_64/shared/llndk-stub/libc.so' \
+    -type f -print | sort -V
+)
+[[ ${#CLANG_CANDIDATES[@]} -gt 0 ]] || {
+  echo "missing Android-16 x86_64-capable clang" >&2
+  exit 2
+}
+[[ ${#READOBJ_CANDIDATES[@]} -gt 0 ]] || {
+  echo "missing Android-16 llvm-readobj" >&2
+  exit 2
+}
+[[ ${#LIBC_STUB_CANDIDATES[@]} -gt 0 ]] || {
+  echo "missing Android x86_64 LLNDK libc stub" >&2
+  exit 2
+}
+CLANG=${CLANG_CANDIDATES[-1]}
+READOBJ=${READOBJ_CANDIDATES[-1]}
+LIBC_STUB=${LIBC_STUB_CANDIDATES[-1]}
 for input in "$ANDROID_JAR" "$AAPT2" "$D8_JAR" "$ZIPALIGN" "$APKSIGNER_JAR"; do
   [[ -e "$input" ]] || { echo "missing Android-16 prebuilt: $input" >&2; exit 2; }
 done
@@ -66,7 +94,23 @@ mkdir -p "$(dirname "$OUTPUT")"
 rm -f "$OUTPUT" "$OUTPUT.identity"
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/a16-runtime-oracle.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
-mkdir -p "$WORK/classes" "$WORK/dex"
+mkdir -p "$WORK/classes" "$WORK/dex" "$WORK/apk/lib/x86_64"
+
+"$CLANG" --target=x86_64-linux-android35 -fPIC -shared -nostdlib \
+  -fno-stack-protector -Wl,--build-id=sha1 -Wl,--no-undefined \
+  -Wl,-soname,liba16propertyoracle.so -L"$(dirname "$LIBC_STUB")" \
+  -o "$WORK/apk/lib/x86_64/liba16propertyoracle.so" \
+  "$SCRIPT_DIR/native/property_oracle.c" -Wl,--no-as-needed -lc
+"$READOBJ" --file-headers "$WORK/apk/lib/x86_64/liba16propertyoracle.so" |
+  grep -q 'Arch: x86_64' || {
+    echo "property oracle is not x86_64" >&2
+    exit 2
+  }
+"$READOBJ" --dynamic-table "$WORK/apk/lib/x86_64/liba16propertyoracle.so" |
+  grep -q 'Shared library: \[libc.so\]' || {
+    echo "property oracle does not declare libc.so" >&2
+    exit 2
+  }
 
 mapfile -t SOURCES < <(find "$SCRIPT_DIR/src" -type f -name '*.java' -print | sort)
 [[ ${#SOURCES[@]} -gt 0 ]] || { echo "oracle Java sources missing" >&2; exit 2; }
@@ -79,7 +123,8 @@ java -cp "$D8_JAR" com.android.tools.r8.D8 --lib "$ANDROID_JAR" \
   --min-sdk-version 30 --target-sdk-version 35 --version-code 1 --version-name 1 \
   -o "$WORK/unsigned.apk"
 cp "$WORK/unsigned.apk" "$WORK/unaligned.apk"
-(cd "$WORK/dex" && zip -q "$WORK/unaligned.apk" classes.dex)
+cp "$WORK/dex/classes.dex" "$WORK/apk/classes.dex"
+(cd "$WORK/apk" && zip -q -r "$WORK/unaligned.apk" classes.dex lib)
 "$ZIPALIGN" -f 4 "$WORK/unaligned.apk" "$WORK/aligned.apk"
 keytool -genkeypair -keystore "$WORK/oracle.keystore" -storepass android \
   -keypass android -alias androiddebugkey -dname "CN=A16 Runtime Oracle" \
@@ -89,8 +134,10 @@ java -jar "$APKSIGNER_JAR" sign --ks "$WORK/oracle.keystore" --ks-pass pass:andr
 java -jar "$APKSIGNER_JAR" verify "$OUTPUT"
 
 APK_SHA=$(sha256sum "$OUTPUT" | awk '{print $1}')
+NATIVE_SHA=$(sha256sum "$WORK/apk/lib/x86_64/liba16propertyoracle.so" | awk '{print $1}')
 SOURCE_SHA=$(
-  find "$SCRIPT_DIR" -type f \( -name '*.java' -o -name 'AndroidManifest.xml' \) \
+  find "$SCRIPT_DIR" -type f \( -name '*.java' -o -name '*.c' -o -name '*.sh' \
+    -o -name 'AndroidManifest.xml' \) \
     -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}'
 )
 {
@@ -99,6 +146,7 @@ SOURCE_SHA=$(
   echo "branch=$BRANCH"
   echo "head=$(git -C "$ANDROID_ROOT" rev-parse HEAD)"
   echo "oracle_source_sha256=$SOURCE_SHA"
+  echo "native_elf_sha256=$NATIVE_SHA"
   echo "apk_sha256=$APK_SHA"
 } >"$OUTPUT.identity"
 echo "A16DBG:ANDROID16: runtime oracle APK=$OUTPUT sha256=$APK_SHA"

@@ -2,6 +2,7 @@ package com.bluestacks.a16oracle;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.BroadcastOptions;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -50,8 +51,11 @@ public final class OracleActivity extends Activity {
     private static final String TAG = "A16RuntimeOracle";
     private static final String RETRY_DOWNLOADS =
             "android.provider.downloads.action.RETRY_DOWNLOADS";
+    private static final String REDACTED_MAC_ADDRESS = "02:00:00:00:00:00";
     private static final int PERMISSION_REQUEST = 16;
     private boolean mStarted;
+
+    private static native boolean hasSyntheticBoardPlatform();
 
     private interface CheckedTest {
         String run() throws Exception;
@@ -174,7 +178,8 @@ public final class OracleActivity extends Activity {
         require("\"BlueStacks\"".equals(info.getSSID())
                         || "BlueStacks".equals(info.getSSID()),
                 "unexpected SSID " + info.getSSID());
-        require(isMac(info.getMacAddress()), "invalid Wi-Fi MAC " + info.getMacAddress());
+        require(REDACTED_MAC_ADDRESS.equals(info.getMacAddress()),
+                "unprivileged WifiInfo exposed MAC " + info.getMacAddress());
         require(isMac(info.getBSSID()), "invalid BSSID " + info.getBSSID());
 
         DhcpInfo dhcp = manager.getDhcpInfo();
@@ -188,10 +193,8 @@ public final class OracleActivity extends Activity {
         require(NetworkInterface.getByName("eth0") == null,
                 "physical eth0 leaked to app UID");
         String interfaceMac = formatMac(wlan.getHardwareAddress());
-        require(info.getMacAddress().equalsIgnoreCase(interfaceMac),
-                "WifiInfo/NetworkInterface MAC mismatch "
-                        + info.getMacAddress() + "/" + interfaceMac);
-        return "ssid=" + info.getSSID() + ",mac=" + interfaceMac;
+        require(isMac(interfaceMac), "invalid app-visible wlan0 MAC " + interfaceMac);
+        return "ssid=" + info.getSSID() + ",wifiInfoMac=redacted,wlan0Mac=" + interfaceMac;
     }
 
     @SuppressWarnings("deprecation")
@@ -202,12 +205,17 @@ public final class OracleActivity extends Activity {
         require(active != null, "active network missing");
         NetworkCapabilities capabilities = manager.getNetworkCapabilities(active);
         require(capabilities != null, "active capabilities missing");
-        require(capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI),
-                "active network is not presented as Wi-Fi: " + capabilities);
+        boolean wifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+        boolean ethernet = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET);
+        require(wifi ^ ethernet,
+                "active network must expose exactly one configured transport: " + capabilities);
         NetworkInfo legacy = manager.getActiveNetworkInfo();
-        require(legacy != null && legacy.getType() == ConnectivityManager.TYPE_WIFI,
-                "legacy active network type is not Wi-Fi");
-        return capabilities.toString();
+        require(legacy != null && legacy.isConnected(), "legacy active network is disconnected");
+        require(legacy.getType() == ConnectivityManager.TYPE_WIFI
+                        || legacy.getType() == ConnectivityManager.TYPE_ETHERNET,
+                "unexpected legacy active network type " + legacy.getType());
+        return "capability=" + (wifi ? "wifi" : "ethernet")
+                + ",legacy=" + legacy.getTypeName();
     }
 
     private String checkSkiaRender() {
@@ -228,15 +236,14 @@ public final class OracleActivity extends Activity {
     }
 
     private String checkBionicProperties() throws Exception {
-        String boardPlatform = appGetprop("ro.board.platform2");
+        System.loadLibrary("a16propertyoracle");
         String debuggable = appGetprop("ro.debuggable");
         String secure = appGetprop("ro.secure");
-        require("ngg-client".equals(boardPlatform),
-                "missing synthetic ro.board.platform2: " + boardPlatform);
+        require(hasSyntheticBoardPlatform(),
+                "direct bionic read did not synthesize ro.board.platform2");
         require("0".equals(debuggable), "ro.debuggable was not hidden: " + debuggable);
         require("1".equals(secure), "ro.secure was not hardened: " + secure);
-        return "platform=" + boardPlatform + ",debuggable=" + debuggable
-                + ",secure=" + secure;
+        return "platform=ngg-client,debuggable=" + debuggable + ",secure=" + secure;
     }
 
     private static String appGetprop(String name) throws Exception {
@@ -279,10 +286,12 @@ public final class OracleActivity extends Activity {
                 .setBufferSizeInBytes(samples.length * 2)
                 .build();
         try {
-            require(track.getState() == AudioTrack.STATE_INITIALIZED,
-                    "AudioTrack initialization failed");
+            require(track.getState() == AudioTrack.STATE_NO_STATIC_DATA,
+                    "unexpected empty static AudioTrack state " + track.getState());
             int written = track.write(samples, 0, samples.length);
             require(written == samples.length, "short AudioTrack write " + written);
+            require(track.getState() == AudioTrack.STATE_INITIALIZED,
+                    "AudioTrack did not initialize after static data write");
             track.play();
             Thread.sleep(120);
             require(track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING,
@@ -426,7 +435,9 @@ public final class OracleActivity extends Activity {
         Intent retry = new Intent(RETRY_DOWNLOADS)
                 .setPackage("com.android.providers.downloads")
                 .putExtra("a16_oracle_uid", Process.myUid());
-        sendBroadcast(retry);
+        BroadcastOptions options = BroadcastOptions.makeBasic()
+                .setShareIdentityEnabled(true);
+        sendBroadcast(retry, null, options.toBundle());
         Thread.sleep(1500);
         return "uid=" + Process.myUid();
     }

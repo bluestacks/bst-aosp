@@ -36,6 +36,11 @@ features from scratch.
 - [`runtime-regression-2026-08-15.md`](runtime-regression-2026-08-15.md):
   published runtime fixes, one-time clean and subsequent incremental evidence,
   canonical package flow, code review, and the formal regression matrix.
+- [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md):
+  final restart black-screen closure, clean-build and incremental package
+  identities, repeated guest-framebuffer proof, corrected app/Houdini
+  oracles, idle-FPS fix, camera frame recovery, and the external shared-folder
+  dependency.
 - [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
   candidate, target-branch ancestry, final artifact/boot evidence and open
   publication blockers.
@@ -68,10 +73,15 @@ features from scratch.
 - Superseded publication pull request:
   [bluestacks/android-16#3](https://github.com/bluestacks/android-16/pull/3),
   whose personal-fork source is retained only as historical evidence.
-- Current Draft pull request:
+- Merged promotion pull request:
   [bluestacks/android-16#4](https://github.com/bluestacks/android-16/pull/4),
   from `bluestacks:aosp16-bst-merge` to
   `bluestacks:bst-v5.22.210-A16`.
+- Current follow-up Draft pull request:
+  [bluestacks/android-16#5](https://github.com/bluestacks/android-16/pull/5),
+  carrying the four post-merge root commits and six runtime-validated gitlink
+  updates from `aosp16-bst-merge` at `eb146d4c3b26dbd8447e74f343020015ee85ced7`
+  onto `bst-v5.22.210-A16` at `a94003163555d715df85fdc486ff09d037597253`.
 - Current published review root: `ddc1eeba951ccddea52ef1937138facdf3241909`.
   All 51 promoted components were published to and read back from both their
   source merge branch and the BlueStacks `bst-v5.22.210-A16` target branch.

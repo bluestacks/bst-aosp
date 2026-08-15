@@ -8,7 +8,7 @@ committed.
 The APK contains only an `arm64-v8a` JNI library. Its activity exercises
 regular, `FastNative` and `CriticalNative` calls, then requires its own process
 maps to contain both the test library and `libhoudini.so`. It also verifies the
-translated process sees the supplied ARMv8 `/proc/cpuinfo` view. The Windows
+translated process sees the supplied ARMv8/AArch64 `/proc/cpuinfo` view. The Windows
 runner independently checks PackageManager selected `arm64-v8a`, scans for
 native or Java crashes, and uninstalls the APK in `finally`.
 

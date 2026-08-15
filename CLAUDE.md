@@ -47,31 +47,32 @@
 
 ## 当前阶段
 
-**AOSP16-to-Android-16 promotion 正在完成 A13 权威补齐与当前树验证。**
+**AOSP16-to-Android-16 promotion 已进入已验证 follow-up PR 的审查阶段。**
 
 - AOSP16 开发线最终绿基线：Root.vhd `02690d11`、system.img
   `a878d3c8`、Layer2 7/7 @161s（cont.101）。
 - 已撤回候选的历史验证：1016/1016 submodule，985 × `aosp16-bst` +
   31 × `aosp16-bst-merge`，Android-16 Layer2 7/7 @123s（cont.106）。
-- 当前已发布审查根为 `cff3fa6662d36951d289bf21d1a69323f9712b1d`。
-  审计覆盖 1025 个 submodule：974 × `aosp16-bst` + 51 ×
-  `aosp16-bst-merge`，无 detached HEAD 或 gitlink mismatch；`.gitmodules`
-  及组件实际发布 remote 必须全部属于 `bluestacks`，不得保留个人 fork。
+- 当前已验证并发布的 Android 根为
+  `eb146d4c3b26dbd8447e74f343020015ee85ced7`。组件和根指针 follow-up
+  已进入 Draft PR #5；`.gitmodules` 及组件实际发布 remote 必须全部属于
+  `bluestacks`，不得保留个人 fork。
 - 当前 target-only 产品为 `android_x86_64-trunk_staging-eng`，只使用
-  `~/android-16/out_nxt_Baklava64`。Android userspace 在历史 5.15 kernel
-  混合诊断基线、以及 6.12 kernel（恢复 logical-flat APIC 修 ATA IDENTIFY
-  + `sys.use_memfd`/`CONFIG_ASHMEM` 修 ashmem 后）上均通过 7/7 boot oracle；
-  但 formal 6.12 target artifact 仍因间歇性 CPU3 RCU 冷启竞态（`vboxguest.ko`
-  加载期）与可复现的动态 FPS（`EmuHWC2` 缺 `bst.max_fps` observer）回归
-  不得声明最终 boot green。详见
-  `docs/development-history/android16-merge/formal-regression-followup-2026-08-12.md`。
+  `~/android-16/out_nxt_Baklava64`。一次性 clean baseline 已完成；其后禁止
+  再删 OUT 或默认全量编译，所有修改只走 canonical incremental build/package。
+  最终包在 10/10 次完整冷启动中通过 boot、95 秒稳定性和 guest framebuffer
+  oracle，CPU3 RCU stall 为 0/10；动态 FPS、属性、Launcher、IME、普通应用、
+  Houdini、Camera2、Play/GMS 和 ADB policy 均已通过。唯一未闭环项是 Hyper-V
+  shared folder：当前 host/guest 都没有维护中的 `bstfolder` transport provider，
+  不能在 Android/goldfish 提交范围内伪造通过。详见
+  `docs/development-history/android16-merge/restart-regression-closure-2026-08-16.md`。
 - 原根 PR
   [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1)
   已关闭；替代 PR
   [bluestacks/android-16#2](https://github.com/bluestacks/android-16/pull/2)
   已通过目标树构建、打包、远程 SHA 回读和 Windows 7/7 启动验证。
-- 当前 Draft PR 为
-  [bluestacks/android-16#4](https://github.com/bluestacks/android-16/pull/4)，
+- PR #4 已合并。当前 follow-up Draft PR 为
+  [bluestacks/android-16#5](https://github.com/bluestacks/android-16/pull/5)，
   从 `bluestacks:aosp16-bst-merge` 合入
   `bluestacks:bst-v5.22.210-A16`。PR #1-#3 均为历史或已取代记录。
 - 当前 multi-repo branch 合规：未修改项目必须为 `aosp16-bst`；承载

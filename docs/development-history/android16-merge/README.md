@@ -82,26 +82,16 @@ features from scratch.
   carrying the four post-merge root commits and six runtime-validated gitlink
   updates from `aosp16-bst-merge` at `eb146d4c3b26dbd8447e74f343020015ee85ced7`
   onto `bst-v5.22.210-A16` at `a94003163555d715df85fdc486ff09d037597253`.
-- Current published review root: `ddc1eeba951ccddea52ef1937138facdf3241909`.
-  All 51 promoted components were published to and read back from both their
-  source merge branch and the BlueStacks `bst-v5.22.210-A16` target branch.
-  Fourteen root gitlinks advanced after divergent component merges. The final
-  ownership commit `90f87eed8d0bbd1bed49f077f775309bd9f2d843`
-  removes all personal-fork URLs. Root `7470f850` removes the eight explicit
-  branch keys, leaving each root gitlink as the component revision authority.
-  Root `ddc1eeba` moves the four legacy BST HAL and two ALSA URLs from their
-  Android 13 source repositories to dedicated BlueStacks `-a16` repositories
-  without changing a gitlink.
-  The build, package, and boot evidence
-  remains bound to `2be2bd594015046288f67420c72ac3d964595d14` and is historical
-  for the new root; a new incremental build and boot regression are required.
-  That historical runtime acceptance was blocked by exact `bst.*` lookup and
-  shared folders. The 2026-08-11 follow-up resolves and validates exact `bst.*`
-  reads, 6.12 interrupt delivery, and memfd-backed legacy gralloc. Those
-  component and root commits are published in Draft PR #4. The current
-  diagnostic Root/fastboot pair passes 7/7 boot and property checks but is not
-  a final unified package, and the Hyper-V shared-folder and IME listener
-  contracts remain blocked.
+- Current validated review root: `eb146d4c3b26dbd8447e74f343020015ee85ced7`.
+  PR #4 is merged; Draft PR #5 carries four follow-up root commits and six
+  component gitlink updates onto target root
+  `a94003163555d715df85fdc486ff09d037597253`. The clean-derived final package
+  passed 10/10 cold boots and the property, Launcher, IME, FPS, ordinary-app,
+  Houdini, Camera2, Play/GMS and ADB-policy gates. The sole remaining gate is
+  Hyper-V shared-folder transport: neither the current host nor guest supplies
+  a maintained provider, and the saved A13 artifacts contain only the same
+  nonfunctional mount caller. See
+  [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md).
 - [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
   rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes
   and current 7/7 boot evidence.

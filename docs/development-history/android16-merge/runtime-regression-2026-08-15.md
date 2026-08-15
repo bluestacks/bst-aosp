@@ -194,21 +194,26 @@ vendor so this host-side false pass cannot recur unnoticed.
 
 ## Formal Runtime Matrix
 
+The entries below were closed by the clean-derived final package and successor
+evidence recorded on 2026-08-16. The pre-package observations above remain
+historical context; they are not the final acceptance state.
+
 | Gate | Status |
 | --- | --- |
-| canonical package identity and graphics provider uniqueness | pending |
-| repeated cold boot and guest framebuffer | pending |
-| post-data property load and ABI identity | pending |
-| Launcher / Settings / HD-facing lifecycle | pending |
-| dynamic FPS 60 -> 30 -> 60 and CPU bound | pending |
-| IME listener and `bstime` lifecycle | pending |
-| app-visible graphics/audio/camera/network | pending |
-| ARM64 Houdini application and binfmt | pending |
-| Play Store / GMS startup | pending |
-| ADB policy | pending |
-| shared-folder host-visible round trip | blocked by host protocol contract |
-| intermittent CPU3 RCU cold-boot rate | pending repeated boots |
+| canonical package identity and graphics provider uniqueness | PASS: final Root/fastboot identity and component closure read back |
+| repeated cold boot and guest framebuffer | PASS: 10/10 cold boots, all framebuffer probes non-black |
+| post-data property load and ABI identity | PASS: 455 exact properties, zero critical mismatch |
+| Launcher / Settings / HD-facing lifecycle | PASS |
+| dynamic FPS 60 -> 30 -> 60 and CPU bound | PASS: exact periods, 0.00% delta, bounded CPU |
+| IME listener and `bstime` lifecycle | PASS: `imeservice` running, loopback listener on 40143 |
+| app-visible graphics/audio/camera/network | PASS: ordinary-app oracle plus a non-empty Camera2 frame |
+| ARM64 Houdini application and binfmt | PASS |
+| Play Store / GMS startup | PASS: Vending/GMS alive after 60 seconds, no target crash/ANR |
+| ADB policy | PASS |
+| shared-folder host-visible round trip | BLOCKED-EXTERNAL: no maintained Hyper-V host/guest provider |
+| intermittent CPU3 RCU cold-boot rate | PASS for current package: 0/10 cold boots |
 
 The Windows workstation is locked. All formal graphics evidence must come
 from guest ADB `screencap` and decoded pixel readback; Windows screenshots are
-not an accepted oracle.
+not an accepted oracle. Full identities and hashes are in
+[`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md).

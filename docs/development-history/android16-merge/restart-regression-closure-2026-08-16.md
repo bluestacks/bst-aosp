@@ -32,10 +32,13 @@ The Android root includes device/generic/x86_64 commit
 
 The graphics route was restored to the Intel host path and the
 hwservicemanager compatibility link was published. The final clean-derived,
-incrementally packaged image passed two consecutive cold boots. All eight boot
-oracles passed after 95-second stabilization windows. Guest framebuffer
-readback reported non-black ratios of `0.997611` and `0.974381`; a later
-Launcher-specific readback reported `0.999425`. The HOME resolver, focused
+incrementally packaged image passed ten consecutive cold boots. All eight boot
+oracles passed after every 95-second stabilization window, with no RCU stall
+signature. Guest framebuffer readback remained non-black on all ten boots;
+representative ratios were `0.997611`, `0.974381`, and `0.999425`. The current
+post-restart frame is 1600x900 with ratio `0.974425` and SHA-256
+`0566ab3357c18ed7855ec26a24af6acab7b44ea36ca2e4605b47a4023694ca9e`.
+The HOME resolver, focused
 activity, and top-resumed activity all identify
 `com.uncube.launcher3/com.bluestacks.launcher.activity.HomeActivity`.
 
@@ -83,6 +86,9 @@ permitted.
 | Runtime app oracle | PASS | Wi-Fi, network presentation, direct bionic property read, Skia, AudioTrack, Camera2 frame, and DownloadProvider denial passed under an ordinary app UID. |
 | Dynamic FPS | PASS | Idle-state `60 -> 30 -> 60` periods were exact; SurfaceFlinger/composer CPU deltas remained bounded. |
 | Camera frame | PASS | `/dev/video0` exists, both 6.12 modules are loaded, and Camera2 returned a 320x240, 115,200-byte YUV frame. |
+| IME | PASS | `init.svc.imeservice=running`, `bstime` is alive, and the loopback listener is bound on port 40143. |
+| Play Store / GMS | PASS | Play resolved and launched; Vending and GMS remained alive for 60 seconds without target crash-buffer, fatal, or ANR evidence. |
+| RCU cold-boot rate | PASS | The current final package completed 10/10 cold boots with zero RCU stall signatures. |
 | Shared folder | BLOCKED-EXTERNAL | Hyper-V selects `bstfolder`. Historical guest source was recovered, but its retired UHD transport and a matching modern host service are absent. |
 
 The final incremental package is bound to app-player `5f38c99f71667ce69fdf7c5489db7b078bdb2d84`
@@ -172,9 +178,9 @@ an A16-compiled compatibility pair:
   matching the running kernel release.
 
 The disciplined recovery restored that source, enabled it only for
-Baklava64 so A13 Kbuild behavior remains unchanged, remove the temporary skip,
-rebuild both modules against the clean Android 16 kernel output, package them
-in the initrd, and require a non-empty Camera2 frame. The packaged module
+Baklava64 so A13 Kbuild behavior remains unchanged, removed the temporary skip,
+rebuilt both modules against the clean Android 16 kernel output, packaged them
+in the initrd, and required a non-empty Camera2 frame. The packaged module
 hashes are `31bfb0b77775f105dc790969f8cf1be0a4d5ced36d50237fe84c5debc429eb9d`
 for `bstcamera.ko` and
 `ff562da1b04a6dd1f158807cdc7b1ce65bbc1a33c591e004900fd5faaa8e76e5`
@@ -214,6 +220,18 @@ Current HD routes shared-folder management only through
 `Source/vmmgr/vbox`; the Hyper-V backend has no equivalent registration path.
 Therefore recovering the old filesystem source or changing the guest mount
 command alone cannot restore the end-to-end contract.
+
+The A13 tree also contains a second, unintegrated experiment at
+`external/bluestacks/bstfolder/Main.cpp`. It connects `AF_VSOCK` to host CID 2,
+port 50000, then mounts 9P with `trans=fd`. It is not an A13 production
+baseline: no product makefile includes the executable, both A13 and A16 BST
+kernel defconfigs disable VSOCK and 9P, and a read-only full scan of the saved
+A13 `Root.vhd` and fastboot image found only the `mountsf` shell script, with
+no `bstfolder.ko`, daemon, or 9P/VSOCK payload. Current HD source and the
+installed player binary contain no Plan9 service implementation; Windows has
+no corresponding Hyper-V guest communication service registration. Enabling
+the A13 client alone would therefore add an unsupported protocol endpoint and
+cannot be accepted as a minimal port.
 
 This cannot be repaired honestly by changing permissions, falsifying the
 hypervisor property, or treating an empty guest directory as a mount. Closure

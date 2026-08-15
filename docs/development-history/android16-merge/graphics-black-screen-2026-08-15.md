@@ -209,6 +209,11 @@ stability window. Final framebuffer evidence was 1600x900,
 Property verification passed. Dynamic FPS remains independently open: changing
 60 to 30 FPS left the measured period at 16,666,666 ns.
 
+A second cold restart reached 8/8 at 34 seconds and completed in 131 seconds.
+Its 1600x900 framebuffer had `non_black_ratio=0.974425` and SHA-256
+`9f921d7b4439cfcf706a007fd1af82d86d1b5a0a2f85b33bfddb980d4a830018`;
+all host-vendor, guest-framebuffer, and stability gates passed again.
+
 ## Remaining Acceptance Gates
 
 1. Repeat the fixed cold boot enough times to establish restart stability.

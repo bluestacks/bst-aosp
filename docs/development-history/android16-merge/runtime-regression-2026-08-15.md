@@ -1,8 +1,7 @@
 # Android-16 Clean-Build Runtime Regression, 2026-08-15
 
 Stage: Android-16 mainline maintenance
-Status: source fixes published; clean Android build complete; canonical package
-and formal runtime regression in progress
+Status: historical cycle closed by the 2026-08-16 successor package
 
 > **2026-08-16 status note:** this file preserves the previous clean-build
 > cycle and its identities. After the hwservicemanager restart fix, the user
@@ -10,9 +9,9 @@ and formal runtime regression in progress
 > the rule that every later build is incremental are recorded in
 > [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md).
 > That successor cycle is complete for black screen, properties, launcher,
-> ADB policy, dynamic FPS, application behavior, Camera2, and Houdini/binfmt.
-> Hyper-V shared folders remain blocked by the missing coordinated host/guest
-> transport contract.
+> ADB policy, dynamic FPS, application behavior, Camera2, Houdini/binfmt, and
+> shared folders. The shared-folder diagnosis and later closure are recorded
+> in [`shared-folder-regression-2026-08-16.md`](shared-folder-regression-2026-08-16.md).
 
 ## Scope
 
@@ -210,7 +209,7 @@ historical context; they are not the final acceptance state.
 | ARM64 Houdini application and binfmt | PASS |
 | Play Store / GMS startup | PASS: Vending/GMS alive after 60 seconds, no target crash/ANR |
 | ADB policy | PASS |
-| shared-folder host-visible round trip | BLOCKED-EXTERNAL: no maintained Hyper-V host/guest provider |
+| shared-folder host-visible round trip | SUPERSEDED/PASS: successor package mounted four exports and passed bidirectional exact readback across cold restarts |
 | intermittent CPU3 RCU cold-boot rate | PASS for current package: 0/10 cold boots |
 
 The Windows workstation is locked. All formal graphics evidence must come

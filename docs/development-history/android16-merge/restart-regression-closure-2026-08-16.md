@@ -81,7 +81,7 @@ permitted.
 | --- | --- | --- |
 | Exact guest properties | PASS | 455 exact values; no missing, exact, or critical mismatch. |
 | ADB policy | PASS | Restored policy SHA-256 `afaa1ab10855378ffbeaa544f8d3c0de705bee4ebc271d0974ac19a5a2f8be92`. |
-| Launcher/services | PASS | Runtime regression reached Launcher and required services; only shared-folder checks failed. |
+| Launcher/services | PASS | Runtime regression reached Launcher, Settings, developer settings, and required services. |
 | Houdini/JNI/binfmt | PASS | ARM64 JNI, regular/Fast/Critical native calls, `libhoudini.so`, translated maps, ARM64 cpuinfo, and standalone binfmt passed. |
 | Runtime app oracle | PASS | Wi-Fi, network presentation, direct bionic property read, Skia, AudioTrack, Camera2 frame, and DownloadProvider denial passed under an ordinary app UID. |
 | Dynamic FPS | PASS | Idle-state `60 -> 30 -> 60` periods were exact; SurfaceFlinger/composer CPU deltas remained bounded. |
@@ -89,15 +89,15 @@ permitted.
 | IME | PASS | `init.svc.imeservice=running`, `bstime` is alive, and the loopback listener is bound on port 40143. |
 | Play Store / GMS | PASS | Play resolved and launched; Vending and GMS remained alive for 60 seconds without target crash-buffer, fatal, or ANR evidence. |
 | RCU cold-boot rate | PASS | The current final package completed 10/10 cold boots with zero RCU stall signatures. |
-| Shared folder | BLOCKED-EXTERNAL | Hyper-V selects `bstfolder`. Historical guest source was recovered, but its retired UHD transport and a matching modern host service are absent. |
+| Shared folder | PASS | Four host exports mounted across cold restarts; exact host-to-guest and guest-to-host readback passed without UBSAN, Oops, or panic. |
 
-The final incremental package is bound to app-player `5f38c99f71667ce69fdf7c5489db7b078bdb2d84`
+The final incremental package source is committed as app-player `ea1e0f040393dac4cec6af7d6d472a8da332f9c6`
 and Android root `eb146d4c3b26dbd8447e74f343020015ee85ced7`.
 `Root.vhd` SHA-256 is
-`5b67d0ab844c8001ce9413a8f0e74104232cdf56b303d95e1ab28f4d1f2909b9`
+`a0a97e4a86ad98b6e758d24dee6e4ba0b6789240ba41ec35be92d00b9f501e1e`
 with UUID `54e9ad31-a169-4d5b-a0e0-705d62e96e71`.
 `fastboot.vdi` SHA-256 is
-`ae4769fee31a31c3fcf6bd9a442a538df4ad8437b2c092cc963d42fdd73eee535`
+`52f15b60b718fa275106303ba97a836d62bb8b97b54d144919102acf02f9336d`
 with UUID `91b80c95-aa7d-459d-93e4-c479f5babbb7`. The release archive contains
 only the six expected files; stale diagnostic VHD/VDI backups are excluded.
 
@@ -189,73 +189,43 @@ for `videobuf-core.ko`; both report
 outside the tracked/submitted component set; its local recovery and evidence
 must not be staged accidentally.
 
-## Shared-folder external dependency
+## Shared-folder root cause and closure
 
-The exact shared-folder property now loads correctly, so the earlier
-post-data property bug is not the cause. Hyper-V selects filesystem type
-`bstfolder`, but the guest advertises only `virtiofs` and `vboxsf`; it has no
-virtio-fs device and no installed `bstfolder` implementation. A fixed,
-read-only historical source was recovered from
-`bluestacks/scratch-backup` commit
-`af7c35682e563b17beea5622eb7d22f0495d5ffb` under
-`daver/hyperDroid/Linux/Modules/bstfolder`. The nine-file implementation is
-useful protocol history, but it depends on the retired UHD message APIs and
-headers (`linux/hd_guest.h` or `asm/mesg.h`) that are not present in the
-current guest. The same historical tree also contains its old host-side
-`Source/Core/SharedFolder` implementation; that code is bound to the same UHD
-protocol and is not part of current HD. Current HD history records its complete
-removal in `7afd5274d9` (`Xpl refactoring (#4705)`), including 6,045 host-side
-lines. Restoring it would reverse an architectural removal rather than perform
-an Android 16 compatibility port.
+The earlier external-provider diagnosis was an intermediate finding and is
+superseded. Later host inspection proved that the Shared Folders service and
+all four configured exports were active. The guest chose `bstfolder` from the
+Hyper-V property despite the available provider being `vboxsf`. After that
+selection was corrected for SDK 36, the first real read exposed a Linux 6.12
+UBSAN trap in VirtualBox's intentional trailing-array request structures.
 
-Current HD uses the `bstvmsg` transport. Its host registers only `gcall`,
-`hcall`, and `inp` services; there is no shared-folder service ID or
-registration. The guest kernel API exports `vmsgConnect()` but no kernel
-request/send interface sufficient to adapt the historical filesystem. HD
-contains VBox clients, while the Hyper-V host does not publish a VBox
-shared-folder export. The installed `Tiramisu64.bstk` does contain valid
-`InputMapper` and `BstSharedFolder` host paths, and the guest loads `vboxsf`
-successfully, but mount requests report `vboxsf: No shared folder specified`.
-Current HD routes shared-folder management only through
-`Source/vmmgr/vbox`; the Hyper-V backend has no equivalent registration path.
-Therefore recovering the old filesystem source or changing the guest mount
-command alone cannot restore the end-to-end contract.
+BST commit `0cddcc50776a8ef21d7ba8c8f5fd389c90053044` selects direct
+`vboxsf` mounts only on SDK 36 and later. VBox Guest Additions commit
+`af3611cc932497d7756409437fc151586e61aa72` disables bounds sanitizer
+instrumentation only for `vboxsf` on kernel 6.12. Older Android and kernel
+paths remain unchanged. The rebuilt module contains no `ud1` trap and is
+identical in build, staging, and initrd locations.
 
-The A13 tree also contains a second, unintegrated experiment at
-`external/bluestacks/bstfolder/Main.cpp`. It connects `AF_VSOCK` to host CID 2,
-port 50000, then mounts 9P with `trans=fd`. It is not an A13 production
-baseline: no product makefile includes the executable, both A13 and A16 BST
-kernel defconfigs disable VSOCK and 9P, and a read-only full scan of the saved
-A13 `Root.vhd` and fastboot image found only the `mountsf` shell script, with
-no `bstfolder.ko`, daemon, or 9P/VSOCK payload. Current HD source and the
-installed player binary contain no Plan9 service implementation; Windows has
-no corresponding Hyper-V guest communication service registration. Enabling
-the A13 client alone would therefore add an unsupported protocol endpoint and
-cannot be accepted as a minimal port.
-
-This cannot be repaired honestly by changing permissions, falsifying the
-hypervisor property, or treating an empty guest directory as a mount. Closure
-requires either a maintained host and guest `bstfolder` transport pair, or a
-host change that publishes a supported virtio-fs/VBox transport. Until that
-contract is supplied, the two shared-folder gates remain an external blocker
-and must not be reported as passing.
+Three cold boots, four mounts, bidirectional exact file transfer, a formal
+non-black guest framebuffer, and all runtime/property/FPS/ADB-policy suites
+passed without UBSAN, Oops, or panic. Full diagnosis, code review, package
+hashes, and evidence are in
+[`shared-folder-regression-2026-08-16.md`](shared-folder-regression-2026-08-16.md).
 
 ## Publication and remaining gates
 
-Goldfish commit `09383b11` and app-player gitlink commit `5f38c99f7` were
-pushed to and read back from their BlueStacks `bst-v5.22.210-A16` branches.
+Goldfish commit `09383b11`, BST commit `0cddcc50`, VBox Guest Additions commit
+`af3611cc`, and app-player commit `ea1e0f040` were pushed to and read back from
+their BlueStacks `bst-v5.22.210-A16` branches.
 The original root PR #4 was already merged. Its target is root
 `a94003163555d715df85fdc486ff09d037597253`, while the validated source root is
 four commits ahead at `eb146d4c3b26dbd8447e74f343020015ee85ced7` with six gitlink
 updates. Draft PR [#5](https://github.com/bluestacks/android-16/pull/5) carries
 that exact follow-up delta.
 
-Remaining gates:
-
-1. Review and merge Draft PR #5 after accepting the documented external gate.
-2. Supply a maintained Hyper-V host/guest shared-folder transport pair. This
-   is the sole runtime gate that cannot be closed inside the submitted Android
-   16 and goldfish component scope.
+The automated runtime gates covered by this cycle are closed. The remaining
+publication action is review and merge of Draft PR #5; its description must
+reference the companion app-player, BST, and VBox commits because they are not
+gitlinks in the Android root repository.
 
 The requested clean baseline has been consumed. Every later Android build must
 be incremental; `out_nxt_Baklava64` must not be cleared again.

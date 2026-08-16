@@ -14,7 +14,7 @@ features from scratch.
 - [`a13-authority-completion.md`](a13-authority-completion.md): current
   code-level A13 authority review, newly restored patch groups and validation
   debt after the previous PR was withdrawn.
-- [`a13-runtime-oracle-matrix.md`](a13-runtime-oracle-matrix.md): all 32
+- [`a13-runtime-oracle-matrix.md`](a13-runtime-oracle-matrix.md): all 37
   runtime-pending A13 patch entries mapped source-commit by source-commit to
   executable and host/manual acceptance gates.
 - [`runtime-regression-2026-08-06.md`](runtime-regression-2026-08-06.md): current
@@ -39,8 +39,11 @@ features from scratch.
 - [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md):
   final restart black-screen closure, clean-build and incremental package
   identities, repeated guest-framebuffer proof, corrected app/Houdini
-  oracles, idle-FPS fix, camera frame recovery, and the external shared-folder
-  dependency.
+  oracles, idle-FPS fix, camera frame recovery, and shared-folder closure.
+- [`shared-folder-regression-2026-08-16.md`](shared-folder-regression-2026-08-16.md):
+  superseded diagnosis, Linux 6.12 VBox root cause, minimal compatibility
+  review, incremental package identity, cold-restart and bidirectional I/O
+  evidence.
 - [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
   candidate, target-branch ancestry, final artifact/boot evidence and open
   publication blockers.
@@ -87,10 +90,9 @@ features from scratch.
   component gitlink updates onto target root
   `a94003163555d715df85fdc486ff09d037597253`. The clean-derived final package
   passed 10/10 cold boots and the property, Launcher, IME, FPS, ordinary-app,
-  Houdini, Camera2, Play/GMS and ADB-policy gates. The sole remaining gate is
-  Hyper-V shared-folder transport: neither the current host nor guest supplies
-  a maintained provider, and the saved A13 artifacts contain only the same
-  nonfunctional mount caller. See
+  Houdini, Camera2, Play/GMS and ADB-policy gates. A later incremental package
+  also passed four shared-folder mounts, bidirectional exact file transfer,
+  three cold boots, and the full runtime suite without kernel fault. See
   [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md).
 - [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
   rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes

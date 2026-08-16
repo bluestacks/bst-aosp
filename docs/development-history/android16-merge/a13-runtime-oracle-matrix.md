@@ -1,5 +1,16 @@
 # A13 Runtime Oracle Matrix
 
+> **2026-08-16 successor status:** the `prepared` cells below preserve the
+> state when this matrix was authored. Later clean-derived and incremental
+> packages closed the automated boot, property, HAL/service, Camera2, graphics,
+> audio API, Houdini/binfmt, FPS, ADB-policy, and shared-folder gates. See
+> [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md)
+> and [`shared-folder-regression-2026-08-16.md`](shared-folder-regression-2026-08-16.md).
+> Host-only audible output, recents interaction, broad Settings traversal,
+> locale cases, graceful shutdown, and representative third-party app checks
+> remain manual coverage boundaries; the locked Windows host does not permit
+> inferring those results from screenshots.
+
 ## Scope And Count
 
 This matrix is generated conceptually from the current 1,342-entry A13 patch

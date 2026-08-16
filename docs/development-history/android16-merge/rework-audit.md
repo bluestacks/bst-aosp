@@ -3,7 +3,9 @@
 > Historical snapshot for root `298403a` and withdrawn PR #2. Later A13
 > authority review restored additional behavior, including the full FPS
 > callback path. Current decisions and validation debt are recorded in
-> [`a13-authority-completion.md`](a13-authority-completion.md).
+> [`a13-authority-completion.md`](a13-authority-completion.md); final runtime
+> closure is recorded in
+> [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
 
 ## Status
 

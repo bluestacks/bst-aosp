@@ -1,5 +1,10 @@
 # Android-16 Runtime Regression - 2026-08-11
 
+> **Historical regression point:** later clean-derived and incremental packages
+> close the graphics, property, FPS, shared-folder, Launcher, service and GMS
+> gates that remain open inside this dated record. Current status is in
+> [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
+
 ## Scope And Discipline
 
 This regression used only the promoted target tree at

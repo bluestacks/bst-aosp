@@ -1,8 +1,13 @@
 # Android-16 Graphics Black-Screen Regression, 2026-08-15
 
 Stage: Android-16 mainline maintenance
-Status: source fix committed; targeted build and three cold boots passed; clean
-build complete; canonical package and full runtime regression in progress
+Status: historical diagnosis; closed by the final incremental packages
+
+> The canonical package and full runtime regression are complete. Repeated
+> guest framebuffer, restart and post-fix GMS evidence is recorded in
+> [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md)
+> and
+> [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
 
 ## Scope And Identity
 

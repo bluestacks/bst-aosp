@@ -1,5 +1,13 @@
 # A13 Authority Completion Review
 
+> **Historical review point:** this file preserves the authority-completion
+> candidate and the then-pending feature oracles. Those executable oracles are
+> closed by the final successor package; current status is recorded in
+> [`a13-runtime-oracle-matrix.md`](a13-runtime-oracle-matrix.md) and
+> [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
+> Protected-content playback and human-audible output remain separate coverage
+> boundaries, not inferred passes.
+
 ## Scope And Identity
 
 This review treats `~/app-player/android-13` branch `bst-v5.22.210` as the

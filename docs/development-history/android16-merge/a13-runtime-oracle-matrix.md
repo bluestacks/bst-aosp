@@ -66,16 +66,12 @@ boundary is not a product failure and is not represented as a pass.
 | Init/shutdown bundle | `bcde7cf2cb5a` | `system/core` | Current init adaptations boot cleanly and graceful shutdown writes the host marker without forced power-down | Layer 2 boot plus `bst.config.start_shutdown=1`, marker/log readback and no 20-second forced shutdown | PASS, S5 in about 2.3 seconds and sync marker present |
 | Vold/quota compatibility | `fb129833c9b2` | `system/vold` | Host-backed shared storage does not fail unsupported quota/project-ID operations | Shared-folder guest write and host ADB push/readback; scan vold errors during storage workload | PASS, 129-file bidirectional workload and no storage/kernel fault |
 
-## Final Regression Order
+## Final Regression Disposition
 
-1. Run Layer 2 boot and property gates on clean Data.
-2. Run `g1_runtime_regression.ps1`, including ADB push and Settings/developer
-   options smoke tests.
-3. Let `g1_build_pack.sh` build the two hash-bound temporary APKs and run the
-   app, native-bridge, FPS and denied-ADB oracles; do not reuse an APK from a
-   different Android root commit.
-4. Run the remaining host/manual Launcher, locale, graceful-shutdown, audible
-   audio, authorized Widevine playback and broader storage oracles listed as
-   pending above.
-5. Attach evidence to every source commit in this matrix before changing its
-   ledger text from pending to pass.
+The Layer 2 boot/property, runtime, hash-bound app/native-bridge, FPS,
+denied-ADB, Launcher, Settings, storage and graceful-shutdown steps have run and
+their results are reflected in the table above. SIM locale is product-not-
+applicable because this product publishes no telephony/subscription Binder
+API. Human-audible output, representative third-party app diversity and
+authorized protected-content playback remain explicit coverage or
+product/license boundaries; they are not converted into pass claims.

@@ -1,5 +1,10 @@
 # Android-16 Runtime Regression - 2026-08-06
 
+> **Historical reproduction record:** the pending and failed states below
+> describe this 2026-08-06 candidate, not the current package. The final
+> successor package closes the executable runtime gates; see
+> [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
+
 ## Scope
 
 This record separates failures reproduced with the previously deployed HD

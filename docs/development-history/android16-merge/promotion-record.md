@@ -3,8 +3,10 @@
 > **Superseded candidate:** PR
 > [bluestacks/android-16#1](https://github.com/bluestacks/android-16/pull/1)
 > was closed on 2026-07-31. The result below is historical evidence, not the
-> current promotion baseline. See
-> [rework-audit.md](rework-audit.md) for the active review and correction set.
+> current promotion baseline. See [rework-audit.md](rework-audit.md) for the
+> next historical correction set and
+> [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md)
+> for the final validated successor.
 
 ## Frozen Input
 

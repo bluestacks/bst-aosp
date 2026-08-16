@@ -1,5 +1,13 @@
 # Houdini 16 Integration Record
 
+> **2026-08-16 validated status:** the pending gates in the original
+> integration record have now run against the identity-bound Android 16
+> package. Direct ARM64 JNI, regular/Fast/Critical native calls, Houdini maps,
+> translated cpuinfo, binfmt execution, properties, SELinux and process
+> stability pass. Representative third-party app diversity remains a coverage
+> boundary. See
+> [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
+
 ## Scope and authority
 
 This record covers the externally supplied Android 16 Houdini package used by
@@ -91,12 +99,15 @@ offsets are derived for Houdini 16.
 | --- | --- | --- |
 | Package identity | passed | Local and remote archive SHA-256 match. |
 | Static ELF identity | passed | `houdini64` and `libhoudini.so` are x86-64; the library exports v8 `NativeBridgeItf`. |
-| `libnb` and Houdini module build | pending | Must be built from `~/android-16` with the android-x86_64 target. |
-| Product image presence and properties | pending | Verify all package files, ABI properties and ignored-input hash after image build. |
-| SELinux | pending | Compile policy, boot enforcing, and check for Houdini/binfmt denials. |
-| Binfmt registration | pending | Verify `arm64_dyn` and `arm64_exe` with `P` flag after boot. |
-| Native arm64 application | prepared | Hash-bound arm64-only JNI oracle now covers regular, FastNative and CriticalNative callbacks, Houdini/test-library maps and translated cpuinfo; execution awaits the clean promoted image. |
-| A13 compatibility oracles | pending | Verify package selection, AMD behavior, package-specific hooks and `/proc/<pid>/maps`. |
+| `libnb` and Houdini module build | passed | Built from the Android 16 `android_x86_64` target and packaged by the canonical flow. |
+| Product image presence and properties | passed | Payload, ABI identity and post-data property verification pass in the final package. |
+| SELinux | passed | Policy compiled, boot remained enforcing and the accepted runs contain no Houdini/binfmt denial. |
+| Binfmt registration | passed | `arm64_dyn` and `arm64_exe` execute the hash-bound standalone AArch64 oracle. |
+| Native arm64 application | passed | Regular, FastNative and CriticalNative calls, Houdini/test-library maps and translated cpuinfo pass. |
+| A13 compatibility oracles | passed with boundary | Direct package selection, maps, callbacks and cpuinfo mechanisms pass; representative third-party app diversity remains a coverage boundary. |
 
-The integration is not boot-verified until every pending gate has bound tree,
-branch, commit, output directory and artifact hashes.
+The integration is boot-verified against the final identity-bound package.
+Artifact and runtime details are in
+[`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md)
+and
+[`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).

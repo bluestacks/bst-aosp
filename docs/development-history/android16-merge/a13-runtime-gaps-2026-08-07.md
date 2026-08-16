@@ -1,5 +1,10 @@
 # A13 runtime gaps and final promotion disposition
 
+> **Historical candidate:** the property and feature blockers described below
+> were subsequently fixed and validated. The final A13 behavior disposition is
+> in [`a13-runtime-oracle-matrix.md`](a13-runtime-oracle-matrix.md) and
+> [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
+
 ## Identity
 
 - Stage: `android16-promotion`

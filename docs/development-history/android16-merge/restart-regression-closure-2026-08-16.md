@@ -1,5 +1,11 @@
 # Android 16 Restart Regression Closure, 2026-08-16
 
+> **Successor package:** the package identities in this record preserve the
+> restart/shared-folder closure point. A later incremental framework fix closes
+> the deterministic GMS cold-boot provider crash and supersedes the deployed
+> Root identity. See
+> [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
+
 ## Scope and constraints
 
 This record follows the restart black-screen report after the Android 16

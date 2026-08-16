@@ -27,16 +27,17 @@ The initial promotion PRs are historical. Promotion PR
 merged, and follow-up Draft PR
 [bluestacks/android-16#5](https://github.com/bluestacks/android-16/pull/5)
 carries the runtime-validated component pointers from Android root
-`eb146d4c3b26dbd8447e74f343020015ee85ced7` into
+`82f24848a502fac3b2542b54aa26398355ee082c` into
 `bst-v5.22.210-A16`.
 
 The one authorized clean Android-16 build is complete. Every later source
 change must preserve `out_nxt_Baklava64` and use the canonical incremental
-build/package flow. The final package passed 10/10 cold boots plus properties,
-Launcher, IME, FPS, app, Houdini, camera, Play/GMS and ADB policy oracles. The
-remaining Hyper-V shared-folder gate requires a maintained host/guest transport
-provider outside the submitted Android/goldfish scope; an empty directory or
-hypervisor-property override is not acceptance evidence.
+build/package flow. The clean-derived and later incremental packages passed
+repeated cold boots plus properties, Launcher, IME, FPS, app, Houdini, camera,
+Play/GMS, ADB policy, shared-folder, Settings, storage, Recents and graceful
+shutdown oracles. The final framework increment also removes the deterministic
+GMS provider crash seen after user unlock. Human-audible output and broad
+third-party app diversity remain coverage boundaries, not known regressions.
 
 This repository is documentation, scripts, patch evidence, and workflow
 scaffolding. It is not an AOSP source tree.

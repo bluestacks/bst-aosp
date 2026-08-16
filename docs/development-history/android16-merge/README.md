@@ -44,6 +44,10 @@ features from scratch.
   superseded diagnosis, Linux 6.12 VBox root cause, minimal compatibility
   review, incremental package identity, cold-restart and bidirectional I/O
   evidence.
+- [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md):
+  final recents, taskbar, Settings, storage, shutdown and service evidence;
+  deterministic GMS cold-boot crash root cause, minimal framework fix, code
+  review, incremental package identity and two-boot acceptance.
 - [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
   candidate, target-branch ancestry, final artifact/boot evidence and open
   publication blockers.
@@ -82,18 +86,20 @@ features from scratch.
   `bluestacks:bst-v5.22.210-A16`.
 - Current follow-up Draft pull request:
   [bluestacks/android-16#5](https://github.com/bluestacks/android-16/pull/5),
-  carrying the four post-merge root commits and six runtime-validated gitlink
-  updates from `aosp16-bst-merge` at `eb146d4c3b26dbd8447e74f343020015ee85ced7`
+  carrying five post-merge root commits and seven runtime-validated gitlink
+  updates from `aosp16-bst-merge` at `82f24848a502fac3b2542b54aa26398355ee082c`
   onto `bst-v5.22.210-A16` at `a94003163555d715df85fdc486ff09d037597253`.
-- Current validated review root: `eb146d4c3b26dbd8447e74f343020015ee85ced7`.
-  PR #4 is merged; Draft PR #5 carries four follow-up root commits and six
+- Current validated review root: `82f24848a502fac3b2542b54aa26398355ee082c`.
+  PR #4 is merged; Draft PR #5 carries five follow-up root commits and seven
   component gitlink updates onto target root
   `a94003163555d715df85fdc486ff09d037597253`. The clean-derived final package
   passed 10/10 cold boots and the property, Launcher, IME, FPS, ordinary-app,
   Houdini, Camera2, Play/GMS and ADB-policy gates. A later incremental package
   also passed four shared-folder mounts, bidirectional exact file transfer,
-  three cold boots, and the full runtime suite without kernel fault. See
-  [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md).
+  three cold boots, and the full runtime suite without kernel fault. The final
+  framework increment then passed two cold boots, Play/GMS startup and all
+  core regression suites without the former provider crash. See
+  [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
 - [`evidence/2026-08-05-layer2-selinux-apex-fix.json`](evidence/2026-08-05-layer2-selinux-apex-fix.json):
   rejected A13 SELinux mechanism, Android 16 adaptation, build/package hashes
   and current 7/7 boot evidence.

@@ -86,11 +86,11 @@ features from scratch.
   `bluestacks:bst-v5.22.210-A16`.
 - Current follow-up Draft pull request:
   [bluestacks/android-16#5](https://github.com/bluestacks/android-16/pull/5),
-  carrying five post-merge root commits and seven runtime-validated gitlink
+  carrying five post-merge root commits and six runtime-validated gitlink
   updates from `aosp16-bst-merge` at `82f24848a502fac3b2542b54aa26398355ee082c`
   onto `bst-v5.22.210-A16` at `a94003163555d715df85fdc486ff09d037597253`.
 - Current validated review root: `82f24848a502fac3b2542b54aa26398355ee082c`.
-  PR #4 is merged; Draft PR #5 carries five follow-up root commits and seven
+  PR #4 is merged; Draft PR #5 carries five follow-up root commits and six
   component gitlink updates onto target root
   `a94003163555d715df85fdc486ff09d037597253`. The clean-derived final package
   passed 10/10 cold boots and the property, Launcher, IME, FPS, ordinary-app,

@@ -7,7 +7,7 @@ param(
     [string]$ArtifactIdentity = "C:\ProgramData\BlueStacks_nxt\Engine\Tiramisu64\Root.vhd.identity",
     [string]$AdbExe = "C:\Program Files\BlueStacks_nxt\HD-Adb.exe",
     [string]$AdbSerial = "127.0.0.1:5556",
-    [string]$ExpectedHostGlVendor = "Intel",
+    [string]$ExpectedHostGlVendor = "",
     [int]$GraphicsProbeRetries = 5,
     [double]$MinNonBlackRatio = 0.005,
     [switch]$CheckOnly

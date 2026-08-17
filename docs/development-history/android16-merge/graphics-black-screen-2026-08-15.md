@@ -184,6 +184,22 @@ vendor in the same cold-boot log window, in addition to the guest framebuffer
 gate. That prevents an Intel-qualified regression run from passing while
 Windows silently routes a later player session to the known-bad NVIDIA path.
 
+### Host GPU routing rollback, 2026-08-17
+
+At the user's request, the host-only Intel routing change was rolled back to
+the values saved before the 2026-08-15 diagnostic:
+
+- `HD-Player.exe` and `HD-GLCheck.exe`: `GpuPreference=2`;
+- `bst.prefer_dedicated_gpu`: `1`.
+
+The original Intel result above remains historical diagnostic evidence; it is
+not the current host policy. The boot verifier no longer assumes Intel by
+default. `-ExpectedHostGlVendor` remains available when a vendor-specific run
+is intentionally requested, while the decoded non-black guest framebuffer
+continues to be mandatory. No Android, goldfish, app-player, or packaged guest
+artifact changed in this rollback. A new cold boot on the restored dedicated
+GPU route is required before that route can inherit the earlier graphics PASS.
+
 ## Post-Restart Boot Black Screen: Missing HWSM Compatibility Link
 
 The 2026-08-15 20:53 cold boot of canonical Root SHA-256 `24909e4b...`

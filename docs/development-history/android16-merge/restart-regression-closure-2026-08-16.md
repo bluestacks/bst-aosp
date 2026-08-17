@@ -51,6 +51,14 @@ activity, and top-resumed activity all identify
 This closes the reported restart black screen for the identity below. No
 Windows screenshot was used.
 
+> **Host routing update, 2026-08-17:** the user requested rollback of the
+> host-only Intel preference. Windows executable preferences are again
+> `GpuPreference=2` and `bst.prefer_dedicated_gpu=1`. This does not alter the
+> Android image or the guest-side fixes documented here, but the restored
+> dedicated-GPU route requires its own new cold-boot result. Vendor matching in
+> `g1_boot_verify.ps1` is now optional; guest framebuffer validation remains
+> fail-closed.
+
 The pre-clean package evidence was:
 
 | Artifact | SHA-256 |

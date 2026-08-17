@@ -32,7 +32,7 @@ before work starts.
 | `g1_win_deploy.ps1` | Deploys Root and fastboot with SHA-256 and UUID readback | Atomically replaces the two Windows engine media after both pass identity checks |
 | `g1_win_shared_folder_config.ps1` | Resolves local Tiramisu64 shared-folder template paths | Backs up and updates only the installed Windows VM configs; does not modify app-player, HD, or Android source |
 | `g1_reset_data_wipe.ps1` | Restores the verified clean Data snapshot with SHA-256 readback | Stops the local instance and replaces `Data.vhdx` |
-| `g1_boot_verify.ps1` | Evaluates the Layer 2 boot and graphics oracle | Starts/stops only Tiramisu64; requires the expected host GL vendor and a decoded non-black guest framebuffer; fails on VM, zygote preload, boot-classpath, or system-server fatal signatures without using a Windows screenshot |
+| `g1_boot_verify.ps1` | Evaluates the Layer 2 boot and graphics oracle | Starts/stops only Tiramisu64; requires a decoded non-black guest framebuffer and can optionally enforce `-ExpectedHostGlVendor`; fails on VM, zygote preload, boot-classpath, or system-server fatal signatures without using a Windows screenshot |
 | `g1_property_verify.ps1` | Compares property payloads with guest runtime values | Temporarily enables the BlueStacks getprop diagnostic switch |
 | `g1_runtime_regression.ps1` | Checks Launcher/Settings stability, shared-folder I/O, Houdini, network identity, and HAL registration | Starts activities, writes two fixed temporary probe files, removes them, and reads bounded ADB diagnostics |
 | `g1_fps_regression.ps1` | Verifies dynamic `bst.max_fps` frame pacing and bounded renderer CPU | Temporarily changes FPS, measures SurfaceFlinger/composer, and restores the original value |

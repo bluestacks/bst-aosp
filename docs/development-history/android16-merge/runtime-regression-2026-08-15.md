@@ -191,6 +191,13 @@ Launcher frame. This matches the earlier R236 Intel green baseline and requires
 no guest source change. The boot oracle now includes the expected host GL
 vendor so this host-side false pass cannot recur unnoticed.
 
+The host-only routing policy was subsequently rolled back on 2026-08-17 at the
+user's request. Both executable preferences were restored to
+`GpuPreference=2`, `bst.prefer_dedicated_gpu` was restored to `1`, and the boot
+oracle's vendor check became opt-in. The guest framebuffer oracle remains
+mandatory. The Intel run above is preserved as historical evidence and does
+not qualify the restored dedicated-GPU route without a new cold boot.
+
 ## Formal Runtime Matrix
 
 The entries below were closed by the clean-derived final package and successor

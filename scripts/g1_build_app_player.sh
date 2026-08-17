@@ -118,7 +118,7 @@ app_player_gitlink_head() {
 HD_ROOT="$(bst_realpath "$BST_HD_SOURCE_TOP")"
 VBOX_ROOT="$BST_APP_PLAYER_ROOT/vbox-guest-additions"
 EXPECTED_HD_HEAD="${BST_EXPECTED_HD_HEAD:-$(app_player_gitlink_head hd)}"
-EXPECTED_VBOX_HEAD="${BST_EXPECTED_VBOX_HEAD:-e23c34d1a2f2ce6beda832dfce0c71890fddb798}"
+EXPECTED_VBOX_HEAD="${BST_EXPECTED_VBOX_HEAD:-$(app_player_gitlink_head vbox-guest-additions)}"
 EXPECTED_GOLDFISH_HEAD="${BST_EXPECTED_GOLDFISH_HEAD:-$(app_player_gitlink_head ggl/goldfish-opengl-pie)}"
 for checkout in "$HD_ROOT" "$VBOX_ROOT" "$BST_GOLDFISH_OPENGL_ROOT"; do
   git -C "$checkout" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
@@ -224,12 +224,20 @@ for artifact in "$SYSTEM_IMG" "$SYSTEM_SFS" "$VHD" "$FASTBOOT_VDI"; do
   [ -f "$artifact" ] || { echo "missing canonical package artifact: $artifact" >&2; exit 1; }
 done
 for path in /bin/mountsf \
+    /vendor/bin/RTVboxGuestService \
+    /vendor/etc/init/RTVboxGuestService-vendor.rc \
     /priv-app/com.uncube.launcher3/com.uncube.launcher3.apk \
     /priv-app/com.uncube.launcher3/lib/x86_64/libflutter.so; do
   debugfs -R "stat $path" "$SYSTEM_IMG" 2>&1 | grep -q '^Inode:' || {
     echo "packaged system.img is missing $path" >&2
     exit 1
   }
+done
+for stale_path in /bin/RTVboxGuestService /etc/init/RTVboxGuestService.rc; do
+  if debugfs -R "stat $stale_path" "$SYSTEM_IMG" 2>&1 | grep -q '^Inode:'; then
+    echo "stale system RTVbox service survived packaging: $stale_path" >&2
+    exit 1
+  fi
 done
 VHD_UUID="$(read_vhd_uuid "$VHD")"
 [ "$VHD_UUID" = "$EXPECTED_ROOT_VHD_UUID" ] || {
@@ -260,6 +268,7 @@ bst_write_identity_file "$IDENTITY_TMP" "$VHD"
   printf 'hd_stage2_sha256=%s\n' "$HD_STAGE2_SHA256"
   printf 'vbox_head=%s\n' "$VBOX_HEAD"
   printf 'vbox_diff_sha256=%s\n' "$VBOX_DIFF_SHA256"
+  printf 'goldfish_head=%s\n' "$GOLDFISH_HEAD"
   printf 'canonical_build_entry_sha256=%s\n' "$(sha256sum "$CANONICAL_BUILD_ENTRY" | awk '{print $1}')"
   printf 'canonical_build_common_sha256=%s\n' "$(sha256sum "$CANONICAL_BUILD_COMMON" | awk '{print $1}')"
   printf 'build_makefile_sha256=%s\n' "$(sha256sum "$BUILD_MAKEFILE" | awk '{print $1}')"

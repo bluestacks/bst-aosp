@@ -33,6 +33,11 @@ features from scratch.
 - [`graphics-black-screen-2026-08-15.md`](graphics-black-screen-2026-08-15.md):
   vendor/system Binder root cause, AOSP16-matching fix, guest-framebuffer
   oracle, compatibility review, and clean-package acceptance gates.
+- [`graphics-policy-binder-closure-2026-08-17.md`](graphics-policy-binder-closure-2026-08-17.md):
+  replacement of the temporary no-op and unsafe mixed-Binder routes with an
+  app-only public NDK Binder graphics-policy client, plus A16 vendor-domain
+  registration for `RTVboxMM`, including rejected attempts, compatibility
+  review, build identity and repeated cold-boot evidence.
 - [`runtime-regression-2026-08-15.md`](runtime-regression-2026-08-15.md):
   published runtime fixes, one-time clean and subsequent incremental evidence,
   canonical package flow, code review, and the formal regression matrix.

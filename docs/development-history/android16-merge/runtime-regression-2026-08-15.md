@@ -12,6 +12,12 @@ Status: historical cycle closed by the 2026-08-16 successor package
 > ADB policy, dynamic FPS, application behavior, Camera2, Houdini/binfmt, and
 > shared folders. The shared-folder diagnosis and later closure are recorded
 > in [`shared-folder-regression-2026-08-16.md`](shared-folder-regression-2026-08-16.md).
+>
+> **2026-08-17 graphics-policy follow-up:** the no-op Binder isolation reviewed
+> in this historical cycle has been superseded. The current implementation
+> restores package-specific policy through public NDK Binder transactions and
+> is documented in
+> [`graphics-policy-binder-closure-2026-08-17.md`](graphics-policy-binder-closure-2026-08-17.md).
 
 ## Scope
 
@@ -223,3 +229,20 @@ The Windows workstation is locked. All formal graphics evidence must come
 from guest ADB `screencap` and decoded pixel readback; Windows screenshots are
 not an accepted oracle. Full identities and hashes are in
 [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md).
+
+## Graphics Policy And GameCenter Follow-up, 2026-08-17
+
+The A16 app-only graphics-policy client passed three cold boots and kept system
+graphics processes out of the system-Binder path. The final RTVbox vendor
+service layout passed two additional cold boots. `vndservice list` found
+`RTVboxMM`, and a forced GameCenter restart remained foreground with a decoded
+1600x900 framebuffer (`non_black_ratio=0.936593`) and no
+`Chrome_InProcGp` abort. The standard runtime regression also passed.
+
+The canonical app-player package completed on 2026-08-18 after its first image
+was correctly rejected for retaining stale system RTVbox files. A narrow
+staging cleanup and package-only rerun passed the vendor-layout gate. Two cold
+boots passed 7/7 with framebuffer ratios `0.994867` and `0.988319`; the standard
+runtime regression and a forced GameCenter restart also passed. See
+[`graphics-policy-binder-closure-2026-08-17.md`](graphics-policy-binder-closure-2026-08-17.md)
+for final hashes and evidence.

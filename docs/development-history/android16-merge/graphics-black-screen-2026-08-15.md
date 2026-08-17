@@ -8,6 +8,12 @@ Status: historical diagnosis; closed by the final incremental packages
 > [`restart-regression-closure-2026-08-16.md`](restart-regression-closure-2026-08-16.md)
 > and
 > [`runtime-oracle-closure-2026-08-16.md`](runtime-oracle-closure-2026-08-16.md).
+>
+> **2026-08-17 follow-up:** the inline no-op described below was a valid
+> black-screen isolation baseline, but it disabled package-specific graphics
+> policy. It is superseded by the direct public NDK Binder client documented in
+> [`graphics-policy-binder-closure-2026-08-17.md`](graphics-policy-binder-closure-2026-08-17.md).
+> The historical diagnosis and artifact identities below are unchanged.
 
 ## Scope And Identity
 
@@ -234,6 +240,33 @@ A second cold restart reached 8/8 at 34 seconds and completed in 131 seconds.
 Its 1600x900 framebuffer had `non_black_ratio=0.974425` and SHA-256
 `9f921d7b4439cfcf706a007fd1af82d86d1b5a0a2f85b33bfddb980d4a830018`;
 all host-vendor, guest-framebuffer, and stability gates passed again.
+
+## App-only Policy And RTVbox Closure, 2026-08-17
+
+The no-op manager described above was retained as a known-green diagnostic
+baseline, not the final feature state. A direct NDK Binder attempt initially
+failed because it loaded the system Binder client before applying its app-UID
+gate and restored six unsafe `true` failure defaults. A global vendor
+`/dev/binder` switch also rendered black and was rejected.
+
+The accepted manager now checks the UID before loading or calling system
+Binder. Only application UIDs query `bstfilterapps`; SurfaceFlinger, composer
+and system services take false A16-safe fallbacks. Three cold boots passed with
+non-black framebuffer ratios above 0.998 and no service-wait warning.
+
+Application Vulkan then exposed a separate `RTVboxMM` mismatch: the service
+was on system Binder while vendor `libvulkan_enc` queried vndbinder. The A16
+service is now built and launched as a vendor module; A13 retains its original
+system module. Two final-layout cold boots passed, `RTVboxMM` appeared in the
+vendor service list, and a forced GameCenter launch stayed foreground without
+the former Chromium GPU abort. Full details and identities are in
+[`graphics-policy-binder-closure-2026-08-17.md`](graphics-policy-binder-closure-2026-08-17.md).
+
+The canonical package completed on 2026-08-18. Its first image was rejected
+because incremental OUT retained the obsolete system RTVbox binary and rc. A
+narrow two-file staging cleanup followed by package-only rebuild passed the
+new layout gate. Two formal cold boots and the standard runtime regression
+passed without black frames, Binder waits or GPU aborts.
 
 ## Remaining Acceptance Gates
 

@@ -23,9 +23,9 @@ changed.
 | Item | Branch / commit |
 | --- | --- |
 | Android root implementation | `aosp16-bst-merge` / `fdb58550acf66d758cd0785b7d32b5760b614a61` |
-| Android root PR head | `aosp16-bst-merge` / `474358e72a78c036f3ee6c48d5516e0f57c35d5e` |
+| Android root PR head | `aosp16-bst-merge` / `901fee3084925d8581ebb3eee6501039b6dea374` |
 | Android root PR base | `bst-v5.22.210-A16` / `7e9105c` |
-| `frameworks/native` | `aosp16-bst-merge` / `5da3ce574c87f41f7b00d7e96f75f48a1d62874c` |
+| `frameworks/native` | `aosp16-bst-merge` / `626929d3cf379373e2aa768642ffbe407fa0d6e5` |
 | `system/sepolicy` | `aosp16-bst-merge` / `ef2ccbdecffe6991f58f204aee00e056f9ea08ec` |
 | app-player | `bst-v5.22.210-A16` / `1bdbf5b5f0e75cab32e2a4dee65f0bea7447ff7d` |
 | goldfish-opengl | `bst-v5.22.210-A16` / `87a539e25bbfe6f3b384118d66827b7d5c4f28b1` |
@@ -119,14 +119,14 @@ Android 13 keeps the original system module, rc and default Binder driver.
 
 | Commit | Purpose | Necessity | Performance / security | Result |
 | --- | --- | --- | --- | --- |
-| `frameworks/native` `5da3ce574` | defer the system NDK Binder client until an app UID requests graphics policy; use false A16 fallbacks | required to replace the functionally incomplete no-op without destabilizing system graphics | no non-app Binder work; cached app service handle; app API label remains authoritative | current, targeted PASS |
+| `frameworks/native` `626929d3c` | expose one manager ABI and route all vendor graphics-policy queries through the app-gated system NDK Binder client | required to remove the header ABI split while retaining real package policy | no non-app Binder work; cached app service handle; no global Binder-domain change | current, canonical PASS |
 | `system/sepolicy` `ef2ccbdec` | label `bstfilterapps` as an app-visible SystemServer service | required for the app-side client when enforcing policy is completed | read-only service discovery; no writer or bypass | current; permissive guest means enforcing acceptance is pending |
 | goldfish `8fd66dd4` | select `/dev/vndbinder` in the A16 RTVbox service entry | identifies the correct service domain while retaining the A13 default path | removes failed system-domain routing; alone still linked system Binder ABI | superseded in isolation by `87a539e2`, retained in final series |
 | goldfish `87a539e2` | build/install RTVbox as an A16 vendor module with a vendor rc | required to emit the `VNDR` Binder header and match vendor Vulkan clients | removes five-second lookup/abort; no proxy or duplicate service | current, targeted PASS |
 | app-player `87dde7fcc` | merge latest remote `bst-v5.22.210-A16` odex staging fix | required to build from the actual current branch | no graphics behavior change | current |
 | app-player `65ddb7d5f`, `9cb835667` | advance the goldfish gitlink in component-first order | required for reproducible app-player builds | metadata-only | current |
 | app-player `1bdbf5b5f` | reject missing vendor or stale system RTVbox paths and record the goldfish SHA | required because incremental OUT retained obsolete system installs | package-only check; no build behavior change | current, canonical PASS |
-| Android root `fdb58550a` | advance native and sepolicy gitlinks together | required for the root PR to reproduce the reviewed closure | metadata-only | current |
+| Android root `fdb58550a`, `901fee308` | first advance native/sepolicy together, then advance native to the unified client | required for the root PR to reproduce the reviewed closure | metadata-only | current |
 
 ## Review
 
@@ -160,10 +160,14 @@ temporary allow rule is included in this graphics fix.
 
 ### A13 compatibility
 
-All new manager behavior is selected by `BST_ANDROID16_GUEST`. The goldfish
-Make conditional leaves A13's service as a system module using its existing rc
-and default Binder driver. A13 was reviewed at source level only, as requested;
-it was not built or run.
+The manager now has one source and binary interface. Vendor behavior is selected
+by the existing `__ANDROID_VNDK__` build boundary: vendor consumers use the NDK
+system-Binder policy client, while system `libbinder` retains its legacy service
+path and defaults. `BST_ANDROID16_GUEST` remains only at genuine goldfish
+build/API and RTVbox packaging boundaries; it no longer changes the manager
+class layout. The goldfish Make conditional leaves A13's service as a system
+module using its existing rc and default Binder driver. A13 was reviewed at
+source level only, as requested; it was not built or run.
 
 ## Targeted Build Evidence
 
@@ -246,3 +250,62 @@ Final package identity:
 The functional black-screen and GameCenter Vulkan regressions are closed for
 this canonical package. SELinux enforcing-domain hardening remains explicit
 follow-up work.
+
+## Unified Native Client Follow-up, 2026-08-18
+
+Commit `626929d3cf379373e2aa768642ffbe407fa0d6e5` removes the
+`BST_ANDROID16_GUEST` class split from `BstFilterAppsManager`. All consumers now
+see the complete exported manager API. In vendor `libbinder`, the 34 graphics
+policy helpers used by goldfish are routed through the UID-gated NDK
+system-Binder client; the legacy vendor `getService()` path returns no service
+and therefore cannot synchronously query the system-only service through vendor
+Binder. Other vendor Binder services and global Binder routing are unchanged.
+
+The change also preserves the A16 compatibility aliases required by goldfish
+and fixes the existing null-service dereference in `updateIl2cppPkgs()`.
+Static review confirmed that all 30 manager methods currently called by
+goldfish are declared by the unified header and select the vendor NDK policy
+path. The complete 32/64-bit `libbinder`, OpenGL, Vulkan, HWC and HD packaging
+closure compiled incrementally with:
+
+```text
+APP_PLAYER_DIR=/home/clouddev/bst/workspace/markxu/app-player \
+  bash buildscripts/build_Baklava64.sh --incremental --jobs 8
+```
+
+The run used app-player `1bdbf5b5f0e75cab32e2a4dee65f0bea7447ff7d`,
+preserved `out_nxt_Baklava64`, performed no clean or source sync, and completed
+in 37 minutes 52 seconds. The source checkout used the updated native component
+at `626929d3c`; the generated build identity still records root
+`fdb58550acf66d758cd0785b7d32b5760b614a61` because the root gitlink commit was
+created only after validation. Root commit
+`901fee3084925d8581ebb3eee6501039b6dea374` then published that exact component
+SHA to PR #6.
+
+Follow-up package identity:
+
+- `system.img`: `fae729ef10b540ba9b5487a3f7dc6570245d83d2af5929fb352839156a305301`;
+- `system.sfs`: `d4c89576c4216ef5543e135e63dcb7b36e2afd672d158cfddce1741643bab9eb`;
+- `Root.vhd`: `940c7c8cf33244696338d75ebca37e1dda7c1603c7e2d5ee31b5e0e1ac37b8da`;
+- Root UUID: `54e9ad31-a169-4d5b-a0e0-705d62e96e71`;
+- `fastboot.vdi`: `3876ef98b220d94a9aadae2924efbc519975190af6450957fb8337198ecb0c99`;
+- fastboot UUID: `91b80c95-aa7d-459d-93e4-c479f5babbb7`;
+- generated at `2026-08-18T11:19:34+08:00`.
+
+The package contains `/vendor/bin/RTVboxGuestService` and
+`/vendor/etc/init/RTVboxGuestService-vendor.rc`; both stale system paths are
+absent. The first cold boot passed all 7 lifecycle gates. Guest framebuffer
+readback on the correct `emulator-5554` transport was 1600x900 with
+`non_black_ratio=0.988673`; the standard runtime regression passed. Forced
+GameCenter remained foreground with `non_black_ratio=0.998009`, a live
+`bstfilterapps` service and RTVbox service, and no Binder wait, RTVbox timeout,
+header mismatch, fatal signal or watchdog marker.
+
+Two later cold boots again passed all lifecycle gates and rendered GameCenter
+in host-window captures, but the local legacy HD-Adb transport remained
+offline, so those boots do not claim an additional guest-framebuffer pass. The
+host captures have SHA-256 values
+`520866291ef19798da45ec4434f6592b2151e5f8e2c50f970bb0658daa307289` and
+`dfed713265af7d19f11bc7bd5f85d1b5747e45e263307cd3d3e51c22eafb1dd7`.
+This is recorded as a validation-tool limitation rather than hidden as a guest
+graphics result.

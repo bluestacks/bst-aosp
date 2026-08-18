@@ -22,7 +22,9 @@ changed.
 
 | Item | Branch / commit |
 | --- | --- |
-| Android root | `aosp16-bst-merge` / `fdb58550acf66d758cd0785b7d32b5760b614a61` |
+| Android root implementation | `aosp16-bst-merge` / `fdb58550acf66d758cd0785b7d32b5760b614a61` |
+| Android root PR head | `aosp16-bst-merge` / `474358e72a78c036f3ee6c48d5516e0f57c35d5e` |
+| Android root PR base | `bst-v5.22.210-A16` / `7e9105c` |
 | `frameworks/native` | `aosp16-bst-merge` / `5da3ce574c87f41f7b00d7e96f75f48a1d62874c` |
 | `system/sepolicy` | `aosp16-bst-merge` / `ef2ccbdecffe6991f58f204aee00e056f9ea08ec` |
 | app-player | `bst-v5.22.210-A16` / `1bdbf5b5f0e75cab32e2a4dee65f0bea7447ff7d` |
@@ -31,6 +33,11 @@ changed.
 
 The app-player root includes the latest remote commit
 `794c8e8ce58bec84a61c03b56c956deda9b52c60` before the local A16 commits.
+
+Publication: [bluestacks/android-16 PR #6](https://github.com/bluestacks/android-16/pull/6)
+is open and ready for review. The source branch first merged the latest target
+at `7e9105c`; the resulting PR has no conflicts and changes only the
+`frameworks/native` and `system/sepolicy` gitlinks.
 
 ## Failure Sequence
 

@@ -2,19 +2,22 @@
 
 Stage: Android-16 mainline maintenance
 
-Status: accepted by incremental build, canonical package readback, clean-Data
-first boot and cold-boot runtime regression. Direct component pull request
+Status: accepted by focused incremental build, exact Root readback, clean-Data
+7/7 boot gates, live Camera and current Recents regression. Initial component
+pull request
 [bluestacks/ggl-goldfish-opengl-pie#225](https://github.com/bluestacks/ggl-goldfish-opengl-pie/pull/225)
-is open. No app-player, Android root or app-player `buildscripts` source is
-part of the change.
+is merged. The Camera follow-up is published and under review in
+[PR #226](https://github.com/bluestacks/ggl-goldfish-opengl-pie/pull/226).
+No app-player, Android root or app-player `buildscripts` source is part of the
+change.
 
 ## Scope
 
 This follow-up narrows the Camera2 and Quickstep correction after the real
 `bstfilterapps` system-Binder client was proven stable. It keeps the A13 service
 contract and default values for ordinary applications, removes package policy
-from common `frameworks/native`, and selects only the two A16 platform
-exceptions demonstrated by single-variable runtime tests.
+from common `frameworks/native`, and selects only the package-scoped A16
+exceptions demonstrated by controlled runtime A/B tests.
 
 The work used the markxu Android-16/app-player trees and the Windows
 `Tiramisu64` instance. It did not read, build or reuse AOSP16 output, run Android
@@ -28,7 +31,8 @@ The work used the markxu Android-16/app-player trees and the Windows
 | `frameworks/native` | `bst-v5.22.210-A16` / `626929d3cf379373e2aa768642ffbe407fa0d6e5` |
 | `device/generic/common` | `bst-v5.22.210-A16` / `c55b6bbddccd10329b4ec3acb48b5eaf0e27a227` |
 | goldfish base | `bst-v5.22.210-A16` / `87a539e25bbfe6f3b384118d66827b7d5c4f28b1` |
-| goldfish correction | `codex/a16-platform-graphics-policy` / `37901957f219f2d5aac6760f97e8c1f19a2e6b33` |
+| goldfish initial correction | `codex/a16-platform-graphics-policy` / `37901957f219f2d5aac6760f97e8c1f19a2e6b33` |
+| goldfish Camera2 follow-up | `codex/a16-platform-graphics-policy` / `eef4466f2dbb23f7dee318902fe410828c3af136` |
 
 The local, unpublished `frameworks/native` commit `bc0b387827` was removed.
 The checkout and target branch both resolve to `626929d3cf`; the unified
@@ -52,7 +56,7 @@ Changing all defaults to false in `frameworks/native`, using an empty manager,
 or discarding the Binder client would therefore change A13 behavior for every
 ordinary application. Those alternatives remain rejected.
 
-## Single-variable A/B
+## Controlled Runtime A/B
 
 The test Root contains the working direct Binder client and no native package
 exclusion. The original guest database was saved and restored with SHA-256
@@ -67,10 +71,23 @@ caches.
 | --- | --- |
 | all four defaults `true` | FAIL: placeholder/black preview |
 | all four `false` | PASS: live camera frame |
-| only `TTCDisabled=false` | PASS: live camera frame after cold boot |
+| only `TTCDisabled=false` | FAIL: exact same placeholder frame |
+| `TTCDisabled=false`, `GLPB=false` | PASS: live camera frame |
+| `TTCDisabled=false`, `GLUBPerf=false` | PASS: live camera frame |
+| `TTCDisabled=false`, `GLMBRH=false` | FAIL: exact same placeholder frame |
 
-Minimum: `com.android.camera2` requires only `TTCDisabled=false`. GLPB,
-GLUBPerf and GLMBRH retain the A13 default `true`.
+The earlier TTC-only pass was confounded by runtime state and is superseded by
+the repeated four-way A/B above. Camera2 needs `TTCDisabled=false` plus either
+`GLPB=false` or `GLUBPerf=false`. The source correction selects `GLPB=false`:
+program-binary initialization is outside the buffer hot path, while globally
+changing the unmap-buffer optimization would carry a broader performance
+risk. `GLUBPerf` and `GLMBRH` therefore retain the A13 default `true`.
+
+The input and capture split was also checked independently. The HP HD Camera
+produced a normal host frame, and Camera2 could save a normal JPEG while its
+TextureView preview still showed the static placeholder. This localizes the
+failure to Camera2's GLES preview policy, not the privacy shutter, host input,
+V4L2/HAL transport, YUYV conversion or still-capture path.
 
 ### Launcher3 / Quickstep Recents
 
@@ -93,8 +110,18 @@ Evidence identities:
 
 - Camera all-default failure:
   `9b4d2c219daed2d790b50439d2be07d93c83e9a8eea817bfe5de5511b7d88600`;
-- Camera TTC-only pass:
-  `f4b996412cb01c3a589f5ffb1c056c8a89b2c78e990cc2d21e87d470a56d1adb`;
+- Camera all-false pass:
+  `8d7831c9fb4d0bf1c61b68c6b9b5e71c4474da5c007d72fdcb6a365dffbf1d99`;
+- Camera TTC-only failure and GLMBRH-false failure:
+  `9b4d2c219daed2d790b50439d2be07d93c83e9a8eea817bfe5de5511b7d88600`;
+- Camera TTC+GLPB pass:
+  `3be8301ba866f1bef689adbdf5365af8b81e6e19043e30708b87165fc119eada`;
+- Camera TTC+GLUBPerf pass:
+  `6850f6044b399e2c6232407fb44fb887f125fb8f7e534f33b9f69a20a532e95a`;
+- direct host frame:
+  `926bf4190628fd5f803dd5d368f6530b26d795727535c5f24e2ea6a294fa1a9c`;
+- guest still capture:
+  `78eef84fdb426a642cc1aed40943df6144f1f8bf2fcede9c44d072ea740138b0`;
 - Recents all-default cold-boot failure:
   `7421d9eea9edd6644b29069cbbf0868cb994f8e94afb5c06f314255ce66f8116`;
 - Recents GLPB-only cold-boot pass:
@@ -102,11 +129,12 @@ Evidence identities:
 
 ## Minimal Source Correction
 
-Goldfish commit `37901957` changes only
+Goldfish commits `37901957` and `eef4466f` change only
 `system/GLESv2_enc/GL2Encoder.cpp`:
 
 - `CheckProgramBinaryNeed()` caches `false` for
-  `com.android.launcher3` before querying Binder in A16 builds;
+  `com.android.launcher3` and `com.android.camera2` before querying Binder in
+  A16 builds;
 - `TexTargetCheckDisabled()` caches `false` for
   `com.android.camera2` before querying Binder in A16 builds;
 - all other packages continue through the real `bstfilterapps` query and keep
@@ -116,8 +144,8 @@ Goldfish commit `37901957` changes only
 
 Review:
 
-- necessity: both checks directly match a reproduced A16 rendering failure and
-  its cardinality-one fix;
+- necessity: the Launcher exception is cardinality-one; the Camera exception
+  is the minimum two-policy combination selected from repeated A/B results;
 - performance: two package comparisons occur once per encoder policy cache,
   with no per-frame branch, polling, allocation or additional transaction;
 - compatibility: the existing A16 build guard removes both checks from A13;
@@ -129,13 +157,16 @@ Review:
 
 ## Build, Package And Runtime Acceptance
 
-The focused 32/64-bit graphics increment completed without cleaning the Android
-OUT tree. Packaging reused the existing app-player carrier through the
-canonical Baklava64 finalization and package validation path. An existing
-wrapper also selected its `libs` prerequisite and unnecessarily expanded one
-attempt into a large JNI build; that markxu-owned attempt was stopped and the
-package-only Make target was then invoked directly. No Henry process was read,
-waited on, signalled or changed, and no build-script source was modified.
+The focused 32/64-bit `GLESv2_enc` increment completed without cleaning the
+Android OUT tree. The canonical package-only target first regenerated the
+incremental dependency graph, but a later `frameworks/base` prerequisite
+expanded to 10828 actions. That markxu-owned attempt was stopped immediately;
+no Henry process was read, waited on, signalled or changed. The accepted Root
+was then rebuilt from the previously deployed, hash-identified Root by replacing
+only the two `libGLESv2_enc.so` files in its embedded system image. Independent
+readback preserved mode `0644`, UID/GID `0`, the `vendor_file` SELinux label,
+the VHD UUID and the unchanged fastboot image. No build-script source was
+modified.
 
 Tested source identity:
 
@@ -143,51 +174,52 @@ Tested source identity:
 - app-player carrier: `1bdbf5b5f0e75cab32e2a4dee65f0bea7447ff7d`;
 - HD: `bfbab1b0c210f7714dbdbd890187ec73d5b4a6e4`;
 - VBox: `af3611cc932497d7756409437fc151586e61aa72`;
-- goldfish: `37901957f219f2d5aac6760f97e8c1f19a2e6b33`.
+- goldfish: `eef4466f2dbb23f7dee318902fe410828c3af136`.
 
-Final package identity, generated `2026-08-19T12:35:12+08:00`:
+Final focused package identity, generated `2026-08-19T14:53:13+08:00`:
 
-- `Root.vhd`: `44e0999c7803333d4e59125164c693352ff3f7eafd3fe3daa859deb2465ad1d0`;
-- `system.img`: `22f5f220e77fe1c966b7167a7a444a32db57886158d2571b0bc6865b82dbf2ac`;
-- `system.sfs`: `9534d96c8c75c07489cee9f6a971cb18c152bee85cf4b18e1a27ca971aa5dc8b`;
+- base `Root.vhd`: `44e0999c7803333d4e59125164c693352ff3f7eafd3fe3daa859deb2465ad1d0`;
+- corrected `Root.vhd`: `7f169acf854a5ae28530a4bcb67623bc1c76bf3e8d8759a0d73c71fc6297b2e8`;
+- `system.img`: `05a20536b5bb210e94b08f6a95cf600b81e18468d731e639f86f351e378d33d0`;
+- `system.sfs`: `eccbcb02bef50220052a3f2f29757c8bcf0ac6dfaf73d611fbac77e20cd38577`;
 - `fastboot.vdi`: `2396260a7c0d6f8298048a92d00c5a34c8c47a70d1d10be4c8c9c17fde93bbac`;
 - Root UUID: `54e9ad31-a169-4d5b-a0e0-705d62e96e71`;
 - fastboot UUID: `91b80c95-aa7d-459d-93e4-c479f5babbb7`;
-- packaged 32-bit `libbinder.so`:
-  `a74c465f7c4bb775e76ba43161fa00d48ee00570c0dbfaa55bd3058717a1b3c3`;
-- packaged 64-bit `libbinder.so`:
-  `2b048d7139e38359103ef774fe62172ac20c9bfb0b00324d12bf84820363a824`.
+- packaged 32-bit `libGLESv2_enc.so`:
+  `908b3c48a072bb6ae95a41dcb1ad913665328667aa59bfbc198109e65ff74261`;
+- packaged 64-bit `libGLESv2_enc.so`:
+  `bf01ae57da9a2bf2a0759bd8827ab4a8e897658e88e140a5f2b27ad88b6809fb`.
 
-The package validator reported `core_package_identity=verified` and
-`validation_mode=canonical-app-player-package`. Deployment used the original
-clean Data base with SHA-256
+The focused package readback reported
+`core_package_identity=focused-readback-verified` and
+`validation_mode=focused-gles2-encoder-root-repack`. Deployment used the
+original clean Data base with SHA-256
 `d9baa0f42ee4636b21b9549849ae90fc4bd315e75cf28946c7b765d04ab02e9a`.
-The installed `config.db` retained its original SHA-256
-`4c2a2e5ad0ab7cf0c9048d26b2cbb1f152e3a28fa2925d0862ed51712ebb21ff`;
-therefore the result does not depend on a test-only database override.
+Before the clean-Data deployment, the active `config.db` was restored byte for
+byte to SHA-256
+`4c2a2e5ad0ab7cf0c9048d26b2cbb1f152e3a28fa2925d0862ed51712ebb21ff`.
+The accepted runtime log explicitly identifies both Camera exceptions as
+`platform default`, so the result does not depend on a test-only database
+override.
 
 Runtime acceptance:
 
-- first boot rendered GameCenter; screenshot SHA-256
-  `d6f18a4d59b27db03b8e48bf1781ec9ce490f6230f99866759083571ef3ef109`;
-- Camera2 logged exactly `TTCDisabled=0`, `GLPB=1`, `GLUBPerf=1` and
-  `GLMBRH=1`, then rendered a live 1600x900 camera frame; screenshot SHA-256
-  `a03b141a4c99a560c90fe0ec5d488872edffe411b8534001e44ce96c25b1db25`;
-- Launcher3 logged exactly `GLPB=0`, `TTCDisabled=1`, `GLUBPerf=1` and
+- the host lifecycle oracle reached all 7/7 gates in 68 seconds; its wrapper
+  later failed only because the stale `emulator-5554` ADB transport was
+  offline, after which the same modern SDK ADB connected to the live guest at
+  `127.0.0.1:5556`;
+- guest readback matched both packaged library hashes exactly;
+- Camera2 logged exactly `TTCDisabled=0`, `GLPB=0`, `GLUBPerf=1` and
   `GLMBRH=1`;
-- current Recents rendered Settings, Camera, GameCenter and Clock without
-  white cards or black/red borders; screenshot SHA-256
-  `47f1ab4fab8e1630a61dd850ec76d824b7942a8b22e3579a3039e43159d81d58`;
-- the cold boot passed all seven lifecycle gates in 115 seconds. Its 1600x900
-  framebuffer had `non_black_ratio=0.911283` and SHA-256
-  `4f9e5c3400ac5e883c12350303692f0870daad93221b2c76fdc293fe9a8c50b3`;
-- cold-reloaded Recents again rendered Camera, Clock, Settings and GameCenter
-  correctly; screenshot SHA-256
-  `dc6bd5ff66ea5858de3059bdb5e6a3b5828de156e532ea13d2f9a6b708c25449`;
-- Launcher home rendered normally after the cold test; screenshot SHA-256
-  `6dc2d69f8302aa2334f0e77b81b6ab1bdfcc01411412d97c31c541ac41cac38f`;
-- GameCenter reached its permission dialog without a new GameCenter fatal,
-  ANR, RTVbox error, `bstfilterapps` wait or Binder timeout.
+- two stable live Camera frames differed as expected, with screenshot SHA-256
+  `a36173ae9d8477a2af84546cd02a8f3f6a8d1be501e9a5bc608d72b611c6e3a3`
+  and `f7efb448667015265f8a6a34a321ea1e30c2d4d6a623fdbd814bc858260c7f0a`;
+- the already-merged Launcher3 path retained its `GLPB=0` exception;
+- current Recents rendered Settings, Camera, GameCenter and Documents without
+  white cards or black/red borders; Camera's live content also appeared in its
+  task card. Screenshot SHA-256
+  `3f60a8bd299676e0bc345df593631af2001e772542ae3de492752de8a03f088d`;
+- no Camera fatal exception, fatal signal or ANR was present after the test.
 
 The legacy HD-Adb binary must not be used for this oracle: invoking it replaces
 the modern platform-tools ADB server with an incompatible protocol version and
@@ -202,13 +234,17 @@ change and is tracked separately from the Camera/Recents acceptance.
 
 ## Publication Boundary
 
-The goldfish feature branch `codex/a16-platform-graphics-policy` is published
-to `mark-bst/ggl-goldfish-opengl-pie` and its remote tip was read back as exact
-commit `37901957f219f2d5aac6760f97e8c1f19a2e6b33`. It must be reviewed directly
-into `bluestacks/ggl-goldfish-opengl-pie:bst-v5.22.210-A16` through
-[PR #225](https://github.com/bluestacks/ggl-goldfish-opengl-pie/pull/225).
-GitHub readback shows one commit, one changed file, 16 additions, no conflicts,
-and the correct base and head branches.
+The initial goldfish correction was merged into
+`bluestacks/ggl-goldfish-opengl-pie:bst-v5.22.210-A16` through
+[PR #225](https://github.com/bluestacks/ggl-goldfish-opengl-pie/pull/225) as
+BlueStacks commit `27a021a9064bf2325e92091ab8f87471bfe7b544`. The feature branch
+`codex/a16-platform-graphics-policy` is published to
+`mark-bst/ggl-goldfish-opengl-pie` at exact commit
+`eef4466f2dbb23f7dee318902fe410828c3af136`. Because PR #225 was already
+merged before this follow-up was pushed, `eef4466f` is under direct component
+review in [PR #226](https://github.com/bluestacks/ggl-goldfish-opengl-pie/pull/226)
+against `bst-v5.22.210-A16`. GitHub readback reports one commit, one changed
+file, no conflicts and Ready to merge.
 
 Per the current module-publication rule, neither app-player nor the Android-16
 root is updated or submitted. Build identity records the tested component SHA

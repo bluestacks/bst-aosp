@@ -3,10 +3,10 @@
 Stage: Android-16 mainline maintenance
 
 Status: accepted by incremental build, canonical package readback, clean-Data
-first boot and cold-boot runtime regression. The component feature branch is
-published to the personal fork and awaits direct component PR creation. No
-app-player, Android root or app-player `buildscripts` source is part of the
-change.
+first boot and cold-boot runtime regression. Direct component pull request
+[bluestacks/ggl-goldfish-opengl-pie#225](https://github.com/bluestacks/ggl-goldfish-opengl-pie/pull/225)
+is open. No app-player, Android root or app-player `buildscripts` source is
+part of the change.
 
 ## Scope
 
@@ -205,7 +205,10 @@ change and is tracked separately from the Camera/Recents acceptance.
 The goldfish feature branch `codex/a16-platform-graphics-policy` is published
 to `mark-bst/ggl-goldfish-opengl-pie` and its remote tip was read back as exact
 commit `37901957f219f2d5aac6760f97e8c1f19a2e6b33`. It must be reviewed directly
-into `bluestacks/ggl-goldfish-opengl-pie:bst-v5.22.210-A16`.
+into `bluestacks/ggl-goldfish-opengl-pie:bst-v5.22.210-A16` through
+[PR #225](https://github.com/bluestacks/ggl-goldfish-opengl-pie/pull/225).
+GitHub readback shows one commit, one changed file, 16 additions, no conflicts,
+and the correct base and head branches.
 
 Per the current module-publication rule, neither app-player nor the Android-16
 root is updated or submitted. Build identity records the tested component SHA

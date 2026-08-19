@@ -53,6 +53,17 @@ features from scratch.
   final recents, taskbar, Settings, storage, shutdown and service evidence;
   deterministic GMS cold-boot crash root cause, minimal framework fix, code
   review, incremental package identity and two-boot acceptance.
+- [`recents-snapshot-regression-2026-08-18.md`](recents-snapshot-regression-2026-08-18.md):
+  reopened persisted task-card rendering regression, clean-Data and Quickstep
+  A/B evidence, low-resolution snapshot diagnosis and product-overlay review.
+- [`camera-recents-gamecenter-closure-2026-08-18.md`](camera-recents-gamecenter-closure-2026-08-18.md):
+  final two-layer root cause, platform graphics-policy correction, stale-file
+  audit, canonical artifact identity, clean-Data Camera/Recents/GameCenter
+  runtime acceptance and PR-only publication boundary.
+- [`graphics-platform-policy-minimal-2026-08-19.md`](graphics-platform-policy-minimal-2026-08-19.md):
+  superseding single-variable Camera2 and Launcher3 policy proof, rollback of
+  the common-native package exclusion, minimal goldfish correction, build and
+  PR-only publication record.
 - [`promotion-status-2026-08-10.md`](promotion-status-2026-08-10.md): current
   candidate, target-branch ancestry, final artifact/boot evidence and open
   publication blockers.

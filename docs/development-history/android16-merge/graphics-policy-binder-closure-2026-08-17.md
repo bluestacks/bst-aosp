@@ -309,3 +309,35 @@ host captures have SHA-256 values
 `dfed713265af7d19f11bc7bd5f85d1b5747e45e263307cd3d3e51c22eafb1dd7`.
 This is recorded as a validation-tool limitation rather than hidden as a guest
 graphics result.
+
+## Platform-package follow-up, 2026-08-18
+
+The broad claim that every application UID should consume the legacy default-on
+graphics policy is superseded. Once the direct client was reliable, Camera2 and
+Quickstep exposed A16 texture corruption because the service defaults GLPB,
+GLUBPerf, TTCDisabled, and GLMBRH to true for packages without an explicit
+rule. `frameworks/native` commit `bc0b387827` keeps those two A16 platform
+packages on the existing safe native defaults before service lookup. Ordinary
+applications, including GameCenter, retain real Binder policy.
+
+The final build/package, binary readback, two cold boots, live Camera frame,
+cold-reloaded Recents cards, and 95-second GameCenter result are documented in
+[`camera-recents-gamecenter-closure-2026-08-18.md`](camera-recents-gamecenter-closure-2026-08-18.md).
+The component commit remains local and must be published by PR; no direct
+BlueStacks target-branch push is authorized.
+
+## Minimal policy correction, 2026-08-19
+
+The 2026-08-18 `frameworks/native` platform-package exclusion was not
+published and has been removed. Native is clean at `626929d3cf`; this preserves
+the unified UID-gated NDK system-Binder client and keeps package policy out of
+common Binder code.
+
+Single-variable runtime A/B proved a narrower contract: Camera2 requires only
+`TTCDisabled=false`, while Launcher3 requires only `GLPB=false`. Goldfish commit
+`37901957f219f2d5aac6760f97e8c1f19a2e6b33` implements exactly those two cached
+encoder decisions behind the existing A16 build guard. A13 compiles the
+original path; all other policies and packages, including GameCenter, retain
+the service defaults and real Binder results. Build, package,
+runtime and publication evidence is tracked in
+[`graphics-platform-policy-minimal-2026-08-19.md`](graphics-platform-policy-minimal-2026-08-19.md).

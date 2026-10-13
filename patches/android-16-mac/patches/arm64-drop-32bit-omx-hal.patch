@@ -1,0 +1,24 @@
+diff --git a/manifest_bst_legacy_hal.xml b/manifest_bst_legacy_hal.xml
+index 115e316..2160706 100644
+--- a/manifest_bst_legacy_hal.xml
++++ b/manifest_bst_legacy_hal.xml
+@@ -40,19 +40,6 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.media.omx</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IOmx</name>
+-            <instance>default</instance>
+-        </interface>
+-        <interface>
+-            <name>IOmxStore</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.power</name>
+         <transport>hwbinder</transport>
